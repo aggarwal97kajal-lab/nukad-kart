@@ -12,3 +12,7 @@ linux/
 macos/
 windows/
 pubspec.lock
+android_extra/upload.jks
+android_extra/key.properties
+*.jks
+!android_extra/upload.jks.enc

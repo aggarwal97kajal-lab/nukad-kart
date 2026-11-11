@@ -37,11 +37,16 @@ jobs:
       - name: Keep map library classes in release build
         run: cp android_extra/proguard-rules.pro android/app/proguard-rules.pro
 
-      - name: Sign with the fixed Nukad Kart key
+      - name: Sign with the fixed Nukad Kart key (unlocked with the KEYSTORE_PASSWORD secret)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
-          cp android_extra/upload.jks android/app/upload.jks
-          cp android_extra/key.properties android/key.properties
-          python3 tool/patch_gradle.py
+          [ -n "$KEYSTORE_PASSWORD" ] || { echo "::error::KEYSTORE_PASSWORD secret missing"; exit 1; }
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in android_extra/upload.jks.enc \
+            -out android/app/upload.jks -pass env:KEYSTORE_PASSWORD
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=nukadkart\nstoreFile=upload.jks\n' \
+            "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" > android/key.properties
+          python3 tool/patch_gradle.py > /dev/null
 
       - name: Set app name
         run: sed -i 's/android:label="[^"]*"/android:label="Nukad Kart"/' android/app/src/main/AndroidManifest.xml
@@ -60,7 +65,7 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      - name: Show signing certificate (must match Firebase SHA-1 16:86:5A:2A…)
+      - name: Show signing certificate (must match Firebase SHA-1 93:52:A2:10…)
         run: keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "SHA1|SHA256"
 
       - run: cp build/app/outputs/flutter-apk/app-release.apk NukadKart.apk
