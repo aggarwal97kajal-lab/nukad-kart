@@ -3,7 +3,8 @@ Writes candidates/<key>_<n>.jpg and candidates/credits.json. Run in CI (needs in
 import json, pathlib, time, urllib.parse, urllib.request, re
 
 out = pathlib.Path("candidates"); out.mkdir(exist_ok=True)
-queries = json.load(open("tool/photo_queries.json"))
+import os
+queries = json.load(open(os.environ.get("PHOTO_QUERIES", "tool/photo_queries.json")))
 credits = {}
 UA = {"User-Agent": "NukadKartBot/1.0 (https://github.com/aggarwal97kajal-lab/nukad-kart)"}
 API = "https://commons.wikimedia.org/w/api.php"
