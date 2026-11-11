@@ -21,6 +21,20 @@ final List<String> kStatesList = kCityState.values.toSet().toList()..sort();
 const List<String> kCountries = ['India'];
 const List<String> kAddressLabels = ['Home', 'Work', 'Hotel', 'Other'];
 
+/// Header line on Home: "DELIVER TO HOME / WORK / HOTEL / <own name>".
+String deliverToLabel(String label) {
+  return switch (gLang) {
+    'hi' => switch (label) {
+        'Home' => 'घर पर डिलीवरी',
+        'Work' => 'ऑफ़िस पर डिलीवरी',
+        'Hotel' => 'होटल पर डिलीवरी',
+        _ => '$label पर डिलीवरी',
+      },
+    'hg' => '${label.toUpperCase()} PAR DELIVERY',
+    _ => 'DELIVER TO ${label.toUpperCase()}',
+  };
+}
+
 IconData labelIcon(String label) => switch (label) {
       'Home' => Icons.home_outlined,
       'Work' => Icons.work_outline,
@@ -127,11 +141,11 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         Wrap(spacing: 8, runSpacing: 8, children: [
           for (final l in kAddressLabels)
             ChoiceChip(
-              avatar: Icon(labelIcon(l), size: 17, color: label == l ? kGD : kMute),
+              avatar: Icon(labelIcon(l), size: 17, color: label == l ? kGText : kMute),
               label: Text(l),
               selected: label == l,
               showCheckmark: false,
-              labelStyle: body(13.5, color: label == l ? kGD : kInk, weight: FontWeight.w700),
+              labelStyle: body(13.5, color: label == l ? kGText : kInk, weight: FontWeight.w700),
               selectedColor: kGBg,
               backgroundColor: kCard,
               side: BorderSide(color: label == l ? kG : Color(0xFFCFD8D1), width: label == l ? 2 : 1),

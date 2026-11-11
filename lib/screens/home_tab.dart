@@ -49,7 +49,7 @@ class _HomeTabState extends State<HomeTab> {
                   behavior: HitTestBehavior.opaque,
                   onTap: () => showAddressPicker(context),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(t('DELIVER TO HOME'),
+                    Text(deliverToLabel(s.current.label),
                         style: body(11.5, color: kMute, weight: FontWeight.w700)),
                     Row(children: [
                       Flexible(

@@ -59,7 +59,7 @@ class _RatingBodyState extends State<_RatingBody> {
               label: Text(o),
               selected: tags.contains(o),
               showCheckmark: false,
-              labelStyle: body(12.5, color: tags.contains(o) ? kGD : kInk, weight: FontWeight.w700),
+              labelStyle: body(12.5, color: tags.contains(o) ? kGText : kInk, weight: FontWeight.w700),
               selectedColor: kGBg,
               backgroundColor: kCard,
               side: BorderSide(color: tags.contains(o) ? kG : kLine),

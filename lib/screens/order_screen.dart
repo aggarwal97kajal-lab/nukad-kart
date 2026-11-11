@@ -80,7 +80,7 @@ class _OrderScreenState extends State<OrderScreen> {
               : 'Keep ${rupees(o.payable)} ready — cash or scan the store’s UPI QR at your door'
                   '${o.fee > 0 ? ' (incl. ₹${o.fee} delivery fee)' : ''}.',
           icon: Icons.currency_rupee,
-          color: kGD,
+          color: kGText,
           bg: kGBg,
         ),
         SizedBox(height: 12),
