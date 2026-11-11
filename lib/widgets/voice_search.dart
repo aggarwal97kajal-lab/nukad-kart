@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'ui.dart';
+import '../l10n.dart';
 
 /// H04: "Listening…" sheet. Uses the phone's Google speech service.
 /// Returns what the person said, or null.
