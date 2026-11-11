@@ -1,0 +1,18 @@
+name = "nukad-kart-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+# Google "Web client" ID(s) from Firebase, comma separated. Filled in once Google sign-in is enabled.
+GOOGLE_CLIENT_IDS = "173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nukad-kart-db"
+database_id = "__D1_ID__"
+migrations_dir = "migrations"
+
+# Secrets (never in this file):
+#   SESSION_SECRET  - created automatically by the deploy workflow
+#   MSG91_AUTHKEY   - add yourself in Cloudflare: Workers > nukad-kart-api > Settings > Variables and Secrets

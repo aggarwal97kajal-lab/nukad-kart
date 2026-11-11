@@ -3,6 +3,7 @@ name: Build APK
 on:
   push:
     branches: [main]
+    paths-ignore: ['backend/**', '.github/workflows/deploy-backend.yml']
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - uses: subosito/flutter-action@v2
         with:
@@ -36,6 +37,12 @@ jobs:
       - name: Keep map library classes in release build
         run: cp android_extra/proguard-rules.pro android/app/proguard-rules.pro
 
+      - name: Sign with the fixed Nukad Kart key
+        run: |
+          cp android_extra/upload.jks android/app/upload.jks
+          cp android_extra/key.properties android/key.properties
+          python3 tool/patch_gradle.py
+
       - name: Set app name
         run: sed -i 's/android:label="[^"]*"/android:label="Nukad Kart"/' android/app/src/main/AndroidManifest.xml
 
@@ -52,6 +59,9 @@ jobs:
 
       - name: Build APK
         run: flutter build apk --release
+
+      - name: Show signing certificate (must match Firebase SHA-1 16:86:5A:2A…)
+        run: keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "SHA1|SHA256"
 
       - run: cp build/app/outputs/flutter-apk/app-release.apk NukadKart.apk
 
