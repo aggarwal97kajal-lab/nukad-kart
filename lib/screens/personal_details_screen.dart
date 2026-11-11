@@ -5,6 +5,8 @@ import '../l10n.dart';
 import '../services/otp_service.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
+import '../widgets/ola_map_picker.dart';
+import '../services/ola_maps.dart';
 import 'address_screen.dart';
 
 /// Shown once after Google sign-in: name, mobile (verified by SMS code) and address.
@@ -21,6 +23,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   String city = 'New Delhi';
   String country = 'India';
   Offset pinPos = Offset(0.5, 0.5);
+  double lat = 28.7158, lng = 77.1135;
+  bool _areaAuto = false;
 
   // SMS code
   String? _reqId;
@@ -129,6 +133,23 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     });
   }
 
+  void _fromMap(double la, double ln, OlaPlace? p) {
+    setState(() {
+      lat = la;
+      lng = ln;
+      if (p == null) return;
+      if (p.pin.length == 6) pin.text = p.pin;
+      if (p.area.isNotEmpty && (area.text.trim().isEmpty || _areaAuto)) {
+        area.text = p.area;
+        _areaAuto = true;
+      }
+      if (kCityState.containsKey(p.city)) {
+        city = p.city;
+        state = kCityState[p.city]!;
+      }
+    });
+  }
+
   void _save(AppState s) {
     s.saveProfile(name.text.trim(), phone.text);
     s.markPhoneVerified();
@@ -144,6 +165,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       phone: phone.text,
       px: pinPos.dx,
       py: pinPos.dy,
+      lat: lat,
+      lng: lng,
     ));
     Navigator.pop(context, true);
   }
@@ -263,10 +286,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                   : SizedBox.shrink(),
         ),
         _section('Delivery address'),
-        DemoMapPicker(pos: pinPos, onChanged: (p) => setState(() => pinPos = p)),
-        SizedBox(height: 4),
-        Text('Tap the map to put the pin on your door. Shops within 500 m of the pin are shown.',
-            style: body(11.5, color: kMute)),
+        OlaMapPicker(lat: lat, lng: lng, onChanged: _fromMap),
         Row(children: [
           Expanded(child: _field('Flat / house no.', flat, hint: 'Flat 12')),
           SizedBox(width: 10),

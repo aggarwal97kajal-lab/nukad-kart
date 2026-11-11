@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../l10n.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
+import '../widgets/ola_map_picker.dart';
+import '../services/ola_maps.dart';
 
 const Map<String, String> kCityState = {
   'New Delhi': 'Delhi',
@@ -58,6 +60,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   String state = 'Delhi';
   String country = 'India';
   Offset pinPos = Offset(0.5, 0.5);
+  double lat = 28.7158, lng = 77.1135;
+  bool _areaAuto = false;
 
   @override
   void initState() {
@@ -77,6 +81,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       city = kCityState.containsKey(e.city) ? e.city : city;
       state = kStatesList.contains(e.state) ? e.state : state;
       pinPos = Offset(e.px, e.py);
+      lat = e.lat;
+      lng = e.lng;
     }
   }
 
@@ -111,10 +117,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
               style: body(12.5, color: kMute)),
           SizedBox(height: 12),
         ],
-        DemoMapPicker(pos: pinPos, onChanged: (p) => setState(() => pinPos = p)),
-        SizedBox(height: 4),
-        Text('Tap the map to move the pin to your door. Shops within 500 m of the pin are shown.',
-            style: body(11.5, color: kMute)),
+        OlaMapPicker(lat: lat, lng: lng, onChanged: _fromMap),
         Row(children: [
           Expanded(child: _field('Flat / house no.', flat, hint: 'Flat 12')),
           SizedBox(width: 10),
@@ -186,6 +189,23 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     );
   }
 
+  void _fromMap(double la, double ln, OlaPlace? p) {
+    setState(() {
+      lat = la;
+      lng = ln;
+      if (p == null) return;
+      if (p.pin.length == 6) pin.text = p.pin;
+      if (p.area.isNotEmpty && (area.text.trim().isEmpty || _areaAuto)) {
+        area.text = p.area;
+        _areaAuto = true;
+      }
+      if (kCityState.containsKey(p.city)) {
+        city = p.city;
+        state = kCityState[p.city]!;
+      }
+    });
+  }
+
   void _save(AppState s) {
     final a = Address(
       flat: flat.text.trim(),
@@ -200,6 +220,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       label: label == 'Other' ? other.text.trim() : label,
       px: pinPos.dx,
       py: pinPos.dy,
+      lat: lat,
+      lng: lng,
     );
     if (s.name.isEmpty || widget.onboarding) s.saveProfile(a.name, a.phone);
     s.saveAddress(a, replacing: widget.editing);

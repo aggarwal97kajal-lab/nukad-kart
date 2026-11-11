@@ -71,7 +71,8 @@ const Set<String> kServiceablePins = {'110085', '110086', '110089'};
 class Address {
   final String flat, floor, area, city, state, country, pin, name, phone;
   final String label; // Home, Work, Hotel or the customer's own name
-  final double px, py; // pin position on the demo map, 0..1
+  final double px, py; // old demo map position (kept for saved data)
+  final double lat, lng; // map pin (Ola Maps)
   const Address({
     this.flat = '',
     this.floor = '',
@@ -85,6 +86,8 @@ class Address {
     this.label = 'Home',
     this.px = 0.5,
     this.py = 0.5,
+    this.lat = 28.7158,
+    this.lng = 77.1135,
   });
 
   String get short => [flat, floor, area].where((x) => x.trim().isNotEmpty).join(', ');
@@ -92,7 +95,7 @@ class Address {
 
   Map<String, dynamic> toJson() => {
         'flat': flat, 'floor': floor, 'area': area, 'city': city, 'state': state,
-        'country': country, 'pin': pin, 'name': name, 'phone': phone, 'label': label, 'px': px, 'py': py,
+        'country': country, 'pin': pin, 'name': name, 'phone': phone, 'label': label, 'px': px, 'py': py, 'lat': lat, 'lng': lng,
       };
 
   factory Address.fromJson(Map<String, dynamic> j) => Address(
@@ -108,6 +111,8 @@ class Address {
         label: '${j['label'] ?? 'Home'}',
         px: (j['px'] as num?)?.toDouble() ?? 0.5,
         py: (j['py'] as num?)?.toDouble() ?? 0.5,
+        lat: (j['lat'] as num?)?.toDouble() ?? 28.7158,
+        lng: (j['lng'] as num?)?.toDouble() ?? 77.1135,
       );
 }
 
