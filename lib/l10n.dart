@@ -11,6 +11,20 @@ String t(String en) {
 }
 
 const Map<String, Map<String, String>> _tr = {
+  // login & home extras
+  'Skip': {'hi': 'छोड़ें', 'hg': 'Skip'},
+  'Phone': {'hi': 'फ़ोन जैसा', 'hg': 'Phone jaisa'},
+  'Explore without login': {'hi': 'बिना लॉगिन देखें', 'hg': 'Bina login dekhein'},
+  'Shops and sellers within 500\u00A0m of you': {
+    'hi': 'आपके 500\u00A0मीटर के अंदर की दुकानें और ठेले',
+    'hg': 'Aapke 500\u00A0m ke andar ki dukaanein aur thele'
+  },
+  'Browse freely. Log in only when you place your first order.': {
+    'hi': 'आराम से देखिए। लॉगिन सिर्फ़ पहला ऑर्डर देते समय।',
+    'hg': 'Aaram se dekhiye. Login sirf pehla order dete waqt.'
+  },
+  'Shops near you': {'hi': 'आपके पास की दुकानें', 'hg': 'Paas ki dukaanein'},
+  'Change location': {'hi': 'जगह बदलें', 'hg': 'Location badlein'},
   // navigation
   'Home': {'hi': 'होम', 'hg': 'Home'},
   'Categories': {'hi': 'कैटेगरी', 'hg': 'Categories'},

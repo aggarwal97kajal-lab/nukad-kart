@@ -6,6 +6,7 @@ import '../widgets/ui.dart';
 import 'order_screen.dart';
 import 'store_screen.dart';
 import 'login_screen.dart';
+import '../widgets/cart_widgets.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -108,6 +109,11 @@ class _CartScreenState extends State<CartScreen> {
     if (!s.signedIn) {
       final ok = await requireLogin(context);
       if (!ok || !context.mounted) return;
+    }
+    final shop = storeById(s.cartStoreId!);
+    if (!shop.isOpen) {
+      await showShopClosed(context, shop);
+      return;
     }
     if (!s.serviceable) {
       showToast(context, 'No stores deliver to ${s.current.short}. Change your address first.');

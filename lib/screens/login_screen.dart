@@ -4,6 +4,7 @@ import '../state/app_state.dart';
 import '../widgets/ui.dart';
 import 'address_screen.dart';
 import 'home_shell.dart';
+import 'account_pages.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -24,9 +25,22 @@ class LoginScreen extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.fromLTRB(24, 10, 16, 34),
               child: Column(children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
+                Row(children: [
+                  _chip(
+                      Icons.translate,
+                      switch (AppScope.of(context).lang) { 'hi' => 'हिन्दी', 'hg' => 'Hinglish', _ => 'English' },
+                      () => showLanguageSheet(context)),
+                  SizedBox(width: 8),
+                  _chip(
+                      gDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                      switch (AppScope.of(context).theme) {
+                        AppTheme.light => t('Light'),
+                        AppTheme.dark => t('Dark'),
+                        AppTheme.system => t('Phone'),
+                      },
+                      () => showAppearanceSheet(context)),
+                  Spacer(),
+                  TextButton(
                     onPressed: () => _skip(context),
                     style: TextButton.styleFrom(
                         backgroundColor: Color(0x29FFFFFF),
@@ -35,7 +49,7 @@ class LoginScreen extends StatelessWidget {
                         padding: EdgeInsets.symmetric(horizontal: 16)),
                     child: Text(t('Skip'), style: body(13.5, color: Colors.white, weight: FontWeight.w700)),
                   ),
-                ),
+                ]),
                 Container(
                   width: 120,
                   height: 120,
@@ -56,9 +70,9 @@ class LoginScreen extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.fromLTRB(22, 30, 22, 20),
             child: Column(children: [
-              Text('Shops and sellers within 500 m of you', textAlign: TextAlign.center, style: head(21)),
+              Text(t('Shops and sellers within 500\u00A0m of you'), textAlign: TextAlign.center, style: head(21)),
               SizedBox(height: 8),
-              Text('Browse freely. Log in only when you place your first order.',
+              Text(t('Browse freely. Log in only when you place your first order.'),
                   textAlign: TextAlign.center, style: body(14, color: kMute)),
               SizedBox(height: 28),
               SizedBox(
@@ -112,6 +126,21 @@ class LoginScreen extends StatelessWidget {
       ]),
     );
   }
+
+  Widget _chip(IconData icon, String label, VoidCallback onTap) => GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 36,
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(color: Color(0x29FFFFFF), borderRadius: BorderRadius.circular(18)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 16, color: Colors.white),
+            SizedBox(width: 6),
+            Text(label, style: body(13, color: Colors.white, weight: FontWeight.w700)),
+            Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white),
+          ]),
+        ),
+      );
 
   void _skip(BuildContext context) {
     AppScope.read(context).continueAsGuest();

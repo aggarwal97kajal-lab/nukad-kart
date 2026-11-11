@@ -115,6 +115,14 @@ class Store {
   /// Shop photo. Vendors must upload a real photo of their shop to sign up.
   String get photo => 'assets/images/stores/$id.jpg';
   String get hours => '$opensAt – $openTill';
+
+  /// Open right now? Uses the shop's daily timings.
+  bool isOpenAt(DateTime t) {
+    final now = t.hour * 60 + t.minute;
+    return now >= _minutes(opensAt) && now < _minutes(openTill);
+  }
+
+  bool get isOpen => isOpenAt(DateTime.now());
   const Store(this.id, this.name, this.distanceM, this.rating, this.ratingCount, this.door,
       this.pickup, this.openTill, this.phone, {this.opensAt = '8 am', this.address = ''});
 }
@@ -124,9 +132,19 @@ const List<Store> kStores = [
       opensAt: '8 am', address: 'Shop 4, Block C Market, Sector 21, Rohini, New Delhi 110086'),
   Store('s2', 'Gupta Kirana & Dairy', 320, 4.4, 98, true, false, '9:30 pm', '+91 98765 11002',
       opensAt: '6 am', address: 'B-118, near Durga Mandir, Sector 21, Rohini, New Delhi 110086'),
-  Store('s3', 'Balaji Provision', 470, 4.2, 54, false, true, '9 pm', '+91 98765 11003',
+  // Demo: closes early so you can see a closed shop in the evening.
+  Store('s3', 'Balaji Provision', 470, 4.2, 54, false, true, '6 pm', '+91 98765 11003',
       opensAt: '9 am', address: 'Shop 11, Pocket 3 Market, Sector 22, Rohini, New Delhi 110086'),
 ];
+
+/// "9:30 pm" -> minutes after midnight.
+int _minutes(String s) {
+  final m = RegExp(r'(\d{1,2})(?::(\d{2}))?\s*(am|pm)', caseSensitive: false).firstMatch(s);
+  if (m == null) return 0;
+  var h = int.parse(m.group(1)!) % 12;
+  if (m.group(3)!.toLowerCase() == 'pm') h += 12;
+  return h * 60 + int.parse(m.group(2) ?? '0');
+}
 
 Store storeById(String id) => kStores.firstWhere((s) => s.id == id);
 

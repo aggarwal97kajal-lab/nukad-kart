@@ -60,4 +60,13 @@ void main() {
     final a = Address.fromJson(const Address(area: 'Sector 7', pin: '110085', label: 'Mummy ka ghar').toJson());
     expect(a.label, 'Mummy ka ghar');
   });
+
+  test('shop timings: open and closed', () {
+    final balaji = storeById('s3'); // 9 am - 6 pm
+    expect(balaji.isOpenAt(DateTime(2026, 11, 11, 10, 0)), isTrue);
+    expect(balaji.isOpenAt(DateTime(2026, 11, 11, 19, 30)), isFalse);
+    final gupta = storeById('s2'); // 6 am - 9:30 pm
+    expect(gupta.isOpenAt(DateTime(2026, 11, 11, 21, 15)), isTrue);
+    expect(gupta.isOpenAt(DateTime(2026, 11, 11, 21, 45)), isFalse);
+  });
 }

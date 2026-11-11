@@ -5,7 +5,7 @@ import '../widgets/ui.dart';
 import 'login_screen.dart';
 import 'home_shell.dart';
 
-/// 2.5 second animated splash: cart slides in, groceries drop in, the sparrow
+/// 3 second animated splash: cart slides in, groceries drop in, the sparrow
 /// lands, a pin drops with a 500 m ripple, then the logo opens.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    c = AnimationController(vsync: this, duration: Duration(milliseconds: 2500))
+    c = AnimationController(vsync: this, duration: Duration(milliseconds: 3000))
       ..addStatusListener((s) {
         if (s == AnimationStatus.completed) _go();
       })

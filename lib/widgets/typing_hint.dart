@@ -5,9 +5,10 @@ import 'ui.dart';
 /// H13: search hint that types a word, waits, deletes it and types the next one.
 class TypingHint extends StatefulWidget {
   final List<String> words;
+  final String prefix;
   final Color textColor;
   final Color wordColor;
-  const TypingHint({super.key, required this.words, required this.textColor, required this.wordColor});
+  const TypingHint({super.key, required this.words, this.prefix = 'Search', required this.textColor, required this.wordColor});
   @override
   State<TypingHint> createState() => _TypingHintState();
 }
@@ -29,7 +30,7 @@ class _TypingHintState extends State<TypingHint> {
 
   void _step() {
     if (!mounted) return;
-    final w = widget.words[_word % widget.words.length];
+    final w = widget.words[_word % widget.words.length].characters;
     setState(() {
       _tick++;
       if (_tick % 7 == 0) _cursor = !_cursor;
@@ -64,11 +65,11 @@ class _TypingHintState extends State<TypingHint> {
 
   @override
   Widget build(BuildContext context) {
-    final w = widget.words[_word % widget.words.length];
-    final shown = w.substring(0, _chars.clamp(0, w.length));
+    final w = widget.words[_word % widget.words.length].characters;
+    final shown = w.take(_chars.clamp(0, w.length)).toString();
     return Text.rich(
       TextSpan(children: [
-        TextSpan(text: 'Search ', style: body(14.5, color: widget.textColor)),
+        TextSpan(text: '${widget.prefix} ', style: body(14.5, color: widget.textColor)),
         TextSpan(text: '"$shown', style: body(14.5, color: widget.wordColor, weight: FontWeight.w700)),
         TextSpan(text: _cursor ? '|' : ' ', style: body(14.5, color: kG, weight: FontWeight.w300)),
         if (_chars == w.length) TextSpan(text: '"', style: body(14.5, color: widget.wordColor, weight: FontWeight.w700)),

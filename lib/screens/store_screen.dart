@@ -165,6 +165,14 @@ class _StoreScreenState extends State<StoreScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Expanded(child: Text(st.name, style: head(22))),
+          if (!st.isOpen) ...[
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(color: kRedBg, borderRadius: BorderRadius.circular(14)),
+              child: Text('Closed', style: body(13, color: kRed, weight: FontWeight.w800)),
+            ),
+            SizedBox(width: 6),
+          ],
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(color: kPillBg, borderRadius: BorderRadius.circular(14)),
@@ -172,7 +180,7 @@ class _StoreScreenState extends State<StoreScreen> {
           ),
         ]),
         line(Icons.place_outlined, '${st.distanceM} m from ${s.current.label.toLowerCase() == 'home' ? 'your home' : s.current.label}'),
-        line(Icons.schedule, '${st.hours} · Open now'),
+        line(Icons.schedule, st.isOpen ? '${st.hours} · Open now' : '${st.hours} · Closed, opens ${st.opensAt}'),
         line(Icons.storefront_outlined, st.address),
         SizedBox(height: 10),
         Wrap(spacing: 6, runSpacing: 6, children: [

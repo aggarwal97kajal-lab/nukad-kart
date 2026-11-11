@@ -8,6 +8,11 @@ import 'ui.dart';
 /// Adds a product, enforcing "one store at a time".
 Future<void> tryAddToCart(BuildContext context, String storeId, String productId) async {
   final s = AppScope.read(context);
+  final shop = storeById(storeId);
+  if (!shop.isOpen) {
+    await showShopClosed(context, shop);
+    return;
+  }
   if (s.canAddFrom(storeId)) {
     s.add(storeId, productId);
     return;
@@ -90,4 +95,25 @@ class CartBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Shown when someone tries to add from a shop that is closed for the day.
+Future<void> showShopClosed(BuildContext context, Store shop) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: kCard,
+      surfaceTintColor: kCard,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      icon: Icon(Icons.storefront_outlined, color: kRed, size: 34),
+      title: Text('Shop closed', style: head(20)),
+      content: Text(
+        '${shop.name} is closed right now. It opens at ${shop.opensAt}. '
+        'You can add its items when it opens.',
+        textAlign: TextAlign.center,
+        style: body(14, color: kMute),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK', style: body(15, color: kG, weight: FontWeight.w700)))],
+    ),
+  );
 }

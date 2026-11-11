@@ -60,6 +60,22 @@ class _HomeTabState extends State<HomeTab> {
                   ]),
                   ),
                 ),
+                // Language switch, next to the bell.
+                GestureDetector(
+                  onTap: () => showLanguageSheet(context),
+                  child: Container(
+                    height: 32,
+                    padding: EdgeInsets.symmetric(horizontal: 9),
+                    decoration: BoxDecoration(
+                        color: Color(0x29FFFFFF), borderRadius: BorderRadius.circular(16)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.translate, size: 16, color: Colors.white),
+                      SizedBox(width: 5),
+                      Text(switch (s.lang) { 'hi' => 'हिं', 'hg' => 'HG', _ => 'EN' },
+                          style: body(12.5, color: Colors.white, weight: FontWeight.w800)),
+                    ]),
+                  ),
+                ),
                 IconButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen())),
                   icon: Stack(clipBehavior: Clip.none, children: [
@@ -102,7 +118,13 @@ class _HomeTabState extends State<HomeTab> {
                     SizedBox(width: 10),
                     Expanded(
                       child: TypingHint(
-                        words: ['doodh', 'aashirvaad atta', 'tamatar', 'cheeni', 'diya & agarbatti', 'maggi'],
+                        key: ValueKey('hint-${s.lang}'),
+                        prefix: s.lang == 'hi' ? 'खोजें' : 'Search',
+                        words: switch (s.lang) {
+                          'hi' => ['दूध', 'आटा', 'टमाटर', 'चीनी', 'दीया और अगरबत्ती', 'मैगी'],
+                          'hg' => ['doodh', 'aata', 'tamatar', 'cheeni', 'diya aur agarbatti', 'maggi'],
+                          _ => ['milk', 'atta', 'tomato', 'sugar', 'diya & agarbatti', 'noodles'],
+                        },
                         textColor: Color(0xFF6B756F),
                         wordColor: Color(0xFF14201A),
                       ),
@@ -190,7 +212,8 @@ class _HomeTabState extends State<HomeTab> {
       SizedBox(height: 18),
       Text(t('Shops within 500 m'), style: head(17)),
       SizedBox(height: 10),
-      for (final st in kStores) ...[
+      // Open shops first, closed ones last.
+      for (final st in [...kStores.where((x) => x.isOpen), ...kStores.where((x) => !x.isOpen)]) ...
         _StoreCard(store: st),
         SizedBox(height: 10),
       ],
@@ -257,7 +280,7 @@ class _HomeTabState extends State<HomeTab> {
                   SizedBox(height: 2),
                   Text('${th.sells} · ${th.distanceM} m · ★ ${th.rating}', style: body(12, color: kMute)),
                   SizedBox(height: 5),
-                  Wrap(spacing: 5, children: [
+                  Wrap(spacing: 5, runSpacing: 6, children: [
                     Pill('● Live', color: kGText, bg: kPillBg),
                     if (th.door) Pill(t('Comes to door')),
                     if (th.pickup) Pill(t('Pickup at thela'), color: kBlu, bg: kBluBg),
@@ -290,7 +313,9 @@ class _StoreCard extends StatelessWidget {
             tag: 'store-photo-${store.id}',
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.asset(store.photo, width: 64, height: 64, fit: BoxFit.cover),
+              child: store.isOpen
+                  ? Image.asset(store.photo, width: 64, height: 64, fit: BoxFit.cover)
+                  : greyed(Image.asset(store.photo, width: 64, height: 64, fit: BoxFit.cover)),
             ),
           ),
           SizedBox(width: 12),
@@ -298,10 +323,14 @@ class _StoreCard extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(store.name, style: head(15)),
               SizedBox(height: 2),
-              Text('${store.distanceM} m · Open till ${store.openTill} · ★ ${store.rating}',
+              Text(
+                  store.isOpen
+                      ? '${store.distanceM} m · Open till ${store.openTill} · ★ ${store.rating}'
+                      : '${store.distanceM} m · Opens ${store.opensAt} · ★ ${store.rating}',
                   style: body(12, color: kMute)),
               SizedBox(height: 5),
-              Wrap(spacing: 5, children: [
+              Wrap(spacing: 5, runSpacing: 6, children: [
+                if (!store.isOpen) Pill('Closed', color: kRed, bg: kRedBg),
                 if (store.door) Pill(t('Door delivery')),
                 if (store.pickup) Pill(t('Pickup'), color: kBlu, bg: kBluBg),
               ]),
