@@ -73,7 +73,7 @@ class CartBar extends StatelessWidget {
                 ),
                 SizedBox(width: 12),
                 Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('${s.cartCount} item${s.cartCount > 1 ? 's' : ''} · ${store.name}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -250,9 +250,57 @@ void showToast(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
-      content: Text(text, style: body(13.5, color: Colors.white, weight: FontWeight.w500)),
-      backgroundColor: kInk,
+      content: Text(text,
+          style: body(13.5, color: gDark ? Color(0xFF14201A) : Colors.white, weight: FontWeight.w600)),
+      backgroundColor: gDark ? Color(0xFFEEF3EF) : Color(0xFF14201A),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
 }
+
+
+/// Greyed-out look for items that are out of stock.
+Widget greyed(Widget child) => ColorFiltered(
+      colorFilter: ColorFilter.matrix(<double>[
+        0.2126, 0.7152, 0.0722, 0, 0, //
+        0.2126, 0.7152, 0.0722, 0, 0, //
+        0.2126, 0.7152, 0.0722, 0, 0, //
+        0, 0, 0, 1, 0,
+      ]),
+      child: child,
+    );
+
+/// Notify-me button for out-of-stock items.
+class NotifyButton extends StatelessWidget {
+  final bool on;
+  final VoidCallback onTap;
+  const NotifyButton({super.key, required this.on, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 34,
+        width: 96,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: on ? kGBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+          border: on ? null : Border.all(color: kG, width: 1.5),
+        ),
+        child: Text(on ? '✓ ${t('Notify on')}' : '🔔 ${t('Notify')}',
+            style: body(12.5, color: on ? kGText : kG, weight: FontWeight.w700)),
+      ),
+    );
+  }
+}
+
+Widget outOfStockHeader(int n) => Padding(
+      padding: EdgeInsets.fromLTRB(0, 18, 0, 4),
+      child: Row(children: [
+        Text('${t('OUT OF STOCK')} · $n',
+            style: body(12, color: kMute, weight: FontWeight.w800).copyWith(letterSpacing: 0.8)),
+        SizedBox(width: 8),
+        Expanded(child: Container(height: 1, color: kLine)),
+      ]),
+    );

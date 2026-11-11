@@ -74,6 +74,9 @@ const Map<String, Map<String, String>> _tr = {
   'Your rating': {'hi': 'आपकी रेटिंग', 'hg': 'Aapki rating'},
   'Edit': {'hi': 'बदलें', 'hg': 'Edit'},
   'Out of stock': {'hi': 'स्टॉक में नहीं', 'hg': 'Stock khatam'},
+  'OUT OF STOCK': {'hi': 'स्टॉक में नहीं', 'hg': 'STOCK KHATAM'},
+  'Notify': {'hi': 'बताएँ', 'hg': 'Notify'},
+  'Notify on': {'hi': 'सूचना चालू', 'hg': 'Notify on'},
   // thela
   'Today’s prices': {'hi': 'आज के भाव', 'hg': 'Aaj ke daam'},
   'Request for tomorrow': {'hi': 'कल के लिए बुलाएँ', 'hg': 'Kal ke liye request'},

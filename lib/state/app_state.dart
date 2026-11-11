@@ -75,6 +75,36 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ----- out of stock: notify me -----
+  final Set<String> notifyMe = {}; // "storeId|productId"
+  final Set<String> restocked = {};
+  void Function(String storeId, String productId)? onBackInStock;
+
+  String _k(String storeId, String productId) => '$storeId|$productId';
+  int stockOf(Listing l) => restocked.contains(_k(l.storeId, l.productId)) ? 12 : l.stock;
+  bool isNotifyOn(String storeId, String productId) => notifyMe.contains(_k(storeId, productId));
+
+  /// Demo: the store "restocks" 15 s after the customer taps Notify.
+  void toggleNotify(String storeId, String productId) {
+    final k = _k(storeId, productId);
+    if (notifyMe.remove(k)) {
+      notifyListeners();
+      return;
+    }
+    notifyMe.add(k);
+    notifyListeners();
+    _timers.add(Timer(Duration(seconds: 15), () {
+      if (!notifyMe.contains(k)) return;
+      notifyMe.remove(k);
+      restocked.add(k);
+      final p = productById(productId);
+      final st = storeById(storeId);
+      notifications.insert(0, AppNotification('${p.name} ${p.size} is back!', 'Now in stock at ${st.name}'));
+      notifyListeners();
+      onBackInStock?.call(storeId, productId);
+    }));
+  }
+
   // ----- saved things -----
   final Set<String> wishlist = {};
   final Set<String> bookmarks = {};

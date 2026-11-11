@@ -4,8 +4,11 @@ import 'l10n.dart';
 import 'state/app_state.dart';
 import 'widgets/ui.dart';
 import 'screens/splash_screen.dart';
+import 'data/demo_data.dart';
+import 'widgets/cart_widgets.dart';
 
 final navKey = GlobalKey<NavigatorState>();
+final messengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +39,26 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final s = AppScope.read(context);
+    s.onBackInStock = (storeId, productId) {
+      final p = productById(productId);
+      final st = storeById(storeId);
+      messengerKey.currentState?.showSnackBar(SnackBar(
+        duration: Duration(seconds: 8),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: gDark ? Color(0xFFEEF3EF) : Color(0xFF14201A),
+        content: Text('🔔 ${p.name} ${p.size} is back at ${st.name}',
+            style: TextStyle(color: gDark ? Color(0xFF14201A) : Colors.white, fontWeight: FontWeight.w600)),
+        action: SnackBarAction(
+          label: 'Add to cart',
+          textColor: kLime,
+          onPressed: () {
+            final ctx = navKey.currentContext;
+            if (ctx != null) tryAddToCart(ctx, storeId, productId);
+          },
+        ),
+      ));
+    };
   }
 
   @override
@@ -73,6 +96,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     final brightness = gDark ? Brightness.dark : Brightness.light;
     return MaterialApp(
       navigatorKey: navKey,
+      scaffoldMessengerKey: messengerKey,
       title: 'Nukad Kart',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

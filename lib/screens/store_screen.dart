@@ -109,7 +109,9 @@ class _StoreScreenState extends State<StoreScreen> {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(children: [
-            for (final l in shown) _productRow(context, s, l),
+            for (final l in shown.where((x) => s.stockOf(x) > 0)) _productRow(context, s, l),
+            if (shown.any((x) => s.stockOf(x) == 0)) outOfStockHeader(shown.where((x) => s.stockOf(x) == 0).length),
+            for (final l in shown.where((x) => s.stockOf(x) == 0)) _productRow(context, s, l),
           ]),
         ),
         SizedBox(height: 20),
@@ -119,39 +121,50 @@ class _StoreScreenState extends State<StoreScreen> {
 
   Widget _productRow(BuildContext context, AppState s, Listing l) {
     final p = productById(l.productId);
-    final out = l.stock == 0;
-    return Opacity(
-      opacity: out ? 0.5 : 1.0,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kLine))),
-        child: Row(children: [
-          EmojiTile(p.emoji, size: 58),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, style: body(14, weight: FontWeight.w600)),
-              Text(p.size, style: body(12, color: kMute)),
-              SizedBox(height: 2),
-              Row(children: [
-                Text(rupees(l.price), style: body(15, weight: FontWeight.w800)),
-                if (l.price < p.mrp) ...[
-                  SizedBox(width: 6),
-                  Text(rupees(p.mrp),
-                      style: body(12, color: kMute).copyWith(decoration: TextDecoration.lineThrough)),
-                ],
-              ]),
-            ]),
-          ),
-          out
-              ? Pill(t('Out of stock'), color: kRed, bg: kRedBg)
-              : QtyStepper(
-                  qty: s.qtyOf(widget.store.id, p.id),
-                  onAdd: () => tryAddToCart(context, widget.store.id, p.id),
-                  onRemove: () => s.remove(p.id),
-                ),
+    final out = s.stockOf(l) == 0;
+    final info = Row(children: [
+      out ? greyed(EmojiTile(p.emoji, size: 58)) : EmojiTile(p.emoji, size: 58),
+      SizedBox(width: 12),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(p.name, style: body(14, weight: FontWeight.w600)),
+          Text(p.size, style: body(12, color: kMute)),
+          SizedBox(height: 2),
+          Row(children: [
+            Text(rupees(l.price), style: body(15, weight: FontWeight.w800)),
+            if (l.price < p.mrp) ...[
+              SizedBox(width: 6),
+              Text(rupees(p.mrp), style: body(12, color: kMute).copyWith(decoration: TextDecoration.lineThrough)),
+            ],
+          ]),
+          if (out) Text(t('OUT OF STOCK'), style: body(10.5, color: kRed, weight: FontWeight.w700)),
         ]),
       ),
+    ]);
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kLine))),
+      child: Row(children: [
+        Expanded(child: out ? Opacity(opacity: 0.45, child: IgnorePointer(child: info)) : info),
+        out
+            ? NotifyButton(
+                on: s.isNotifyOn(widget.store.id, p.id),
+                onTap: () {
+                  final wasOn = s.isNotifyOn(widget.store.id, p.id);
+                  s.toggleNotify(widget.store.id, p.id);
+                  showToast(
+                      context,
+                      wasOn
+                          ? 'Alert turned off'
+                          : '🔔 We’ll notify you when ${p.name} is back at ${widget.store.name}');
+                },
+              )
+            : QtyStepper(
+                qty: s.qtyOf(widget.store.id, p.id),
+                onAdd: () => tryAddToCart(context, widget.store.id, p.id),
+                onRemove: () => s.remove(p.id),
+              ),
+      ]),
     );
   }
 }
