@@ -31,6 +31,12 @@ for key, q in queries.items():
         print("search failed", key, e); continue
     pages = sorted((data.get("query", {}).get("pages", {}) or {}).values(), key=lambda p: p.get("index", 99))
     n = 0
+    if key == "vegetables":
+        print("DEBUG keys", list(data.keys()), "pages", len(pages))
+        for p in pages[:3]:
+            ii = (p.get("imageinfo") or [{}])[0]
+            print("DEBUG", p.get("title"), ii.get("width"), ii.get("height"), ii.get("thumburl"),
+                  strip(ii.get("extmetadata", {}).get("LicenseShortName", {}).get("value", "")))
     for p in pages:
         if n >= 6: break
         ii = (p.get("imageinfo") or [{}])[0]
