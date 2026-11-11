@@ -304,3 +304,64 @@ Widget outOfStockHeader(int n) => Padding(
         Expanded(child: Container(height: 1, color: kLine)),
       ]),
     );
+
+/// Google's four-colour "G", drawn in code (no image file needed).
+class GoogleG extends StatelessWidget {
+  final double size;
+  const GoogleG({super.key, this.size = 22});
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size.square(size), painter: _GooglePainter());
+}
+
+class _GooglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    final stroke = s * 0.2;
+    final r = (s - stroke) / 2;
+    final c = Offset(s / 2, s / 2);
+    final rect = Rect.fromCircle(center: c, radius: r);
+    double d(double deg) => deg * 3.1415926535 / 180;
+    Paint p(int color) => Paint()
+      ..color = Color(color)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke;
+    canvas.drawArc(rect, d(-40), d(-110), false, p(0xFFEA4335)); // red, top
+    canvas.drawArc(rect, d(-150), d(-65), false, p(0xFFFBBC05)); // yellow, left
+    canvas.drawArc(rect, d(-215), d(-100), false, p(0xFF34A853)); // green, bottom
+    canvas.drawArc(rect, d(45), d(-45), false, p(0xFF4285F4)); // blue, lower right
+    canvas.drawRect(
+        Rect.fromLTWH(s / 2, s / 2 - stroke / 2, r + stroke / 2, stroke), Paint()..color = Color(0xFF4285F4));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// White "Continue with Google" button, as Google's sign-in guidelines show it.
+class GoogleButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  const GoogleButton({super.key, required this.text, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 54,
+      width: double.infinity,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
+          side: BorderSide(color: Color(0xFFDADCE0), width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        onPressed: onTap,
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          GoogleG(size: 22),
+          SizedBox(width: 12),
+          Text(text, style: head(16, color: Color(0xFF1F1F1F), weight: FontWeight.w500)),
+        ]),
+      ),
+    );
+  }
+}

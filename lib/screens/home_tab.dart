@@ -38,9 +38,9 @@ class _HomeTabState extends State<HomeTab> {
                 Container(
                   width: 44,
                   height: 44,
-                  padding: EdgeInsets.all(3),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(11)),
-                  child: Image.asset('assets/images/logo.png'),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(color: Color(0xFFFDC732), borderRadius: BorderRadius.circular(11)),
+                  child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
                 ),
                 SizedBox(width: 10),
                 Expanded(

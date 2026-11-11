@@ -360,9 +360,9 @@ class AboutScreen extends StatelessWidget {
         child: Container(
           width: 110,
           height: 110,
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(26)),
-          child: Image.asset('assets/images/logo.png'),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(color: const Color(0xFFFDC732), borderRadius: BorderRadius.circular(26)),
+          child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
         ),
       ),
       const SizedBox(height: 14),

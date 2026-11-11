@@ -342,14 +342,14 @@ class _Scene extends StatelessWidget {
             width: 250,
             height: 250,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Color(0xFFFDC732),
               borderRadius: BorderRadius.circular(58),
               boxShadow: [BoxShadow(color: Color(0x59000000), blurRadius: 60, offset: Offset(0, 30))],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(58),
               child: Stack(children: [
-                Center(child: Image.asset('assets/images/logo.png', width: 232, filterQuality: FilterQuality.high)),
+                Positioned.fill(child: Image.asset('assets/images/logo.png', fit: BoxFit.cover, filterQuality: FilterQuality.high)),
                 if (shine > 0 && shine < 1)
                   Positioned(
                     left: -150 + 500 * shine,

@@ -53,9 +53,9 @@ class LoginScreen extends StatelessWidget {
                 Container(
                   width: 120,
                   height: 120,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-                  padding: EdgeInsets.all(8),
-                  child: Image.asset('assets/images/logo.png'),
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(color: Color(0xFFFDC732), borderRadius: BorderRadius.circular(30)),
+                  child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
                 ),
                 SizedBox(height: 14),
                 Text('Nukad Kart', style: head(28, color: Colors.white)),
@@ -75,39 +75,15 @@ class LoginScreen extends StatelessWidget {
               Text(t('Browse freely. Log in only when you place your first order.'),
                   textAlign: TextAlign.center, style: body(14, color: kMute)),
               SizedBox(height: 28),
-              SizedBox(
-                height: 56,
-                width: double.infinity,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: kCard,
-                    side: BorderSide(color: Color(0xFFCFD8D1), width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: () async {
-                    final ok = await googleSignInFlow(context);
-                    if (ok && context.mounted) {
-                      Navigator.of(context)
-                          .pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomeShell()), (_) => false);
-                    }
-                  },
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Container(
-                      width: 26,
-                      height: 26,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(shape: BoxShape.circle, color: Color(0xFFF1F3F4)),
-                      child: Text('G',
-                          style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: Color(0xFF4285F4))),
-                    ),
-                    SizedBox(width: 12),
-                    Text(t('Continue with Google'), style: head(16, weight: FontWeight.w500)),
-                  ]),
-                ),
+              GoogleButton(
+                text: t('Continue with Google'),
+                onTap: () async {
+                  final ok = await googleSignInFlow(context);
+                  if (ok && context.mounted) {
+                    Navigator.of(context)
+                        .pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomeShell()), (_) => false);
+                  }
+                },
               ),
               SizedBox(height: 14),
               GestureDetector(
@@ -210,7 +186,7 @@ Future<bool> requireLogin(BuildContext context) async {
           Text('Your cart is saved. The store needs your name, number and address to deliver.',
               style: body(13.5, color: kMute)),
           SizedBox(height: 16),
-          PrimaryButton(t('Continue with Google'), onTap: () => Navigator.pop(ctx, true)),
+          GoogleButton(text: t('Continue with Google'), onTap: () => Navigator.pop(ctx, true)),
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text('Keep browsing', style: body(13.5, color: kMute, weight: FontWeight.w700))),
