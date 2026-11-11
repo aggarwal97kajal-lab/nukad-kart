@@ -66,7 +66,10 @@ jobs:
         run: flutter build apk --release
 
       - name: Show signing certificate (must match Firebase SHA-1 93:52:A2:10…)
-        run: keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "SHA1|SHA256"
+        run: |
+          signer=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner
+          $signer verify --print-certs build/app/outputs/flutter-apk/app-release.apk | tee /tmp/cert.txt
+          grep -qi "SHA-1 digest: 9352a210781d39ee0c04efc3735fad0b5ea2b279" /tmp/cert.txt
 
       - run: cp build/app/outputs/flutter-apk/app-release.apk NukadKart.apk
 
