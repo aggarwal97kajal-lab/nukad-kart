@@ -1,0 +1,27 @@
+name: Fetch fonts
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  fonts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download Noto Sans (OFL licence)
+        run: |
+          base=https://github.com/notofonts/notofonts.github.io/raw/main/fonts
+          for w in Regular Medium SemiBold Bold ExtraBold; do
+            curl -fsSL -o assets/fonts/NotoSans-$w.ttf $base/NotoSans/hinted/ttf/NotoSans-$w.ttf
+          done
+          for w in Regular Bold; do
+            curl -fsSL -o assets/fonts/NotoSansDevanagari-$w.ttf $base/NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-$w.ttf
+          done
+          curl -fsSL -o assets/fonts/NotoSans-OFL.txt https://raw.githubusercontent.com/notofonts/latin-greek-cyrillic/main/OFL.txt || true
+          ls -la assets/fonts
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add assets/fonts
+          git commit -m "Add Noto Sans fonts [skip ci]" || echo "nothing to commit"
+          git push
