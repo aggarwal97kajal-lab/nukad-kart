@@ -431,6 +431,17 @@ class PrivacyScreen extends StatelessWidget {
       ),
       const SizedBox(height: 12),
       CardBox(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Moving sellers’ location', style: body(14, weight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          Text('A thela’s live location is shown only while the seller has turned on “Live” in the Partner app, '
+              'and only to customers within 500 m. The seller’s home or saved address is never shown. '
+              'When they leave your 500 m, the map stops.',
+              style: body(12.5, color: kMute)),
+        ]),
+      ),
+      const SizedBox(height: 12),
+      CardBox(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: Column(children: [
           ListTile(
@@ -490,6 +501,7 @@ class FaqScreen extends StatelessWidget {
     ['How do I delete my account?', 'Account → Account privacy → Request to delete account. Pick a reason and send the request. Order and complaint records are kept as the law requires.'],
     ['What if the store doesn’t accept?', 'If the store doesn’t accept within 5 minutes, the order is cancelled automatically. It is not counted against you.'],
     ['Can I order from two shops together?', 'No. One cart holds items from one shop. Adding from another shop asks you to start a new cart.'],
+    ['Why does a thela show “Moving away” or “Not available”?', 'Thelas move. “Here now” means the seller is inside 500 m of your address and you can see them on the map. “Moving away” means they are past 400 m and getting further. “Not available” means they left your 500 m; the map stops and you get a notification when they come back. Their location is shown only while they are Live.'],
     ['How do I order from a thela?', 'Open Moving sellers, then call or WhatsApp the seller and pay in person. You can also request them for tomorrow.'],
     ['Who gives refunds?', 'The store. Nukad Kart passes your complaint to the store and records it, and can suspend stores at fault.'],
     ['Why was my account blocked?', '3 orders not taken (or cancelled after the store accepted) in 90 days block ordering. You can appeal to the grievance officer.'],
@@ -688,5 +700,38 @@ class _DeleteFeedbackScreenState extends State<DeleteFeedbackScreen> {
       behavior: SnackBarBehavior.floating,
       content: Text('Delete request sent. Your data was removed from this phone.'),
     ));
+  }
+}
+
+
+// ---------------- Terms & conditions ----------------
+class TermsScreen extends StatelessWidget {
+  const TermsScreen({super.key});
+  static const sections = [
+    ['What Nukad Kart is', 'Nukad Kart lists registered kirana stores and moving sellers (thelas) within 500 m of your address. Orders are between you and the store or seller.'],
+    ['Payment', 'You pay the store or seller directly at delivery or pickup — cash or their UPI. Nukad Kart does not collect payment and gives no refunds; any refund comes from the store. A ₹20 delivery fee below ₹199 is charged by the store.'],
+    ['Orders and cancelling', 'A store has 5 minutes to accept, otherwise the order is cancelled. You can cancel while the order is Placed or Accepted. Cancelling after the store accepted, or not taking an order, counts towards the limit: 3 in 90 days blocks ordering on your Google account, phone and number.'],
+    ['Moving sellers (thelas) and location', 'A thela seller sets a default address once, using the address form and the map. That address is never shown to customers. While the seller has turned on “Live” in the Partner app, their phone shares its current location with Nukad Kart, and customers within 500 m see where the thela is right now on a map. When the seller turns Live off, or moves outside a customer’s 500 m, the location is no longer shown to that customer. Customers must not use a seller’s location for anything other than buying from them.'],
+    ['Seller obligations', 'Stores must upload a real photo of their own shop taken in the app at the shop’s location. A false photo or details can lead to suspension. Sellers set their own prices, which must not exceed MRP.'],
+    ['Complaints', 'Report a problem from the order screen. We pass it to the store or seller, keep a record and may suspend those at fault. Our grievance officer acknowledges within 48 hours and resolves within one month.'],
+    ['Your account', 'You can request to delete your account from Account privacy. Order and complaint records are kept as the law requires.'],
+  ];
+  @override
+  Widget build(BuildContext context) {
+    return _Page(title: 'Terms & conditions', children: [
+      Text('Demo build — final wording to be reviewed by a lawyer.', style: body(12, color: kMute)),
+      const SizedBox(height: 10),
+      for (final sct in sections)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: CardBox(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(sct[0], style: body(14.5, weight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text(sct[1], style: body(13, color: kMute)),
+            ]),
+          ),
+        ),
+    ]);
   }
 }

@@ -4,6 +4,8 @@ import '../data/demo_data.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
 import 'rating_sheet.dart';
+import '../state/thela_tracker.dart';
+import '../widgets/thela_live.dart';
 
 /// Moving sellers: no in-app orders or payments. Customers call / WhatsApp
 /// and pay in person, or send a request for tomorrow.
@@ -50,8 +52,19 @@ class ThelaScreen extends StatelessWidget {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(thela.name, style: head(19, color: Colors.white)),
-                      Text('${thela.distanceM} m away · location ${thela.lastSeenSec} s ago · ★ ${thela.rating}',
-                          style: body(12, color: kBrand)),
+                      ListenableBuilder(
+                        listenable: ThelaTracker.instance,
+                        builder: (context, _) {
+                          final lv = ThelaTracker.instance.of(thela.id);
+                          return Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                              thelaStatusPill(lv.status),
+                              Text('${thelaStatusLine(lv)} · ★ ${thela.rating}', style: body(12, color: kBrand)),
+                            ]),
+                          );
+                        },
+                      ),
                     ]),
                   ),
                 ]),
@@ -74,9 +87,34 @@ class ThelaScreen extends StatelessWidget {
           ),
         ),
         Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: ThelaLiveMap(thelaId: thela.id, emoji: thela.items.first.emoji),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: ListenableBuilder(
+            listenable: ThelaTracker.instance,
+            builder: (context, _) {
+              final st = ThelaTracker.instance.of(thela.id).status;
+              return switch (st) {
+                ThelaStatus.hereNow => NoteBox('Inside your 500 m area. The pin moves as the thela moves.',
+                    icon: Icons.check_circle_outline, color: kGText, bg: kPillBg),
+                ThelaStatus.movingAway => NoteBox('Heading out of your area. Call now if you want them to stop.',
+                    icon: Icons.directions_walk, color: kAmb, bg: kAmbBg),
+                ThelaStatus.notAvailable => NoteBox(
+                    'Not available — outside your 500 m. You’ll get a notification when they’re back in your area.',
+                    icon: Icons.notifications_none),
+              };
+            },
+          ),
+        ),
+        Padding(
           padding: EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Wrap(spacing: 6, children: [
+            Wrap(spacing: 6, runSpacing: 6, children: [
               if (thela.door) Pill(t('Comes to your door')),
               if (thela.pickup) Pill(t('Pickup at thela'), color: kBlu, bg: kBluBg),
             ]),
@@ -92,7 +130,7 @@ class ThelaScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                         border: i == thela.items.length - 1 ? null : Border(bottom: BorderSide(color: kLine))),
                     child: Row(children: [
-                      EmojiTile(thela.items[i].emoji, size: 44, bg: Color(0xFFF1F4EE)),
+                      EmojiTile(thela.items[i].emoji, size: 44, bg: kSurf),
                       SizedBox(width: 12),
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

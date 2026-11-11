@@ -100,6 +100,7 @@ class AccountTab extends StatelessWidget {
             _Row(icon: Icons.ios_share, title: t('Share this app'), onTap: () => shareApp(context)),
             _Row(icon: Icons.info_outline, title: t('About us'), onTap: () => open(const AboutScreen())),
             _Row(icon: Icons.lock_outline, title: t('Account privacy'), onTap: () => open(const PrivacyScreen())),
+            _Row(icon: Icons.gavel_outlined, title: t('Terms & conditions'), onTap: () => open(const TermsScreen())),
             _Row(
                 icon: Icons.notifications_none,
                 title: t('Notification preferences'),

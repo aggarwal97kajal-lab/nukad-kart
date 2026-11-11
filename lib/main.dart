@@ -6,6 +6,7 @@ import 'widgets/ui.dart';
 import 'screens/splash_screen.dart';
 import 'data/demo_data.dart';
 import 'widgets/cart_widgets.dart';
+import 'state/thela_tracker.dart';
 
 final navKey = GlobalKey<NavigatorState>();
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -43,6 +44,16 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     final s = AppScope.read(context);
+    ThelaTracker.instance.onBackInArea = (thelaId) {
+      final th = thelaById(thelaId);
+      s.addNotification('${th.name} is back near you', 'Within 500 m of ${s.address} now. Call or WhatsApp to buy.');
+      messengerKey.currentState?.showSnackBar(SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: gDark ? Color(0xFFF3F0E2) : Color(0xFF21331B),
+        content: Text('🛒 ${th.name} is back within 500 m',
+            style: TextStyle(color: gDark ? Color(0xFF21331B) : Colors.white, fontWeight: FontWeight.w600)),
+      ));
+    };
     s.onBackInStock = (storeId, productId) {
       final p = productById(productId);
       final st = storeById(storeId);

@@ -504,6 +504,11 @@ class AppState extends ChangeNotifier {
   final List<AppNotification> notifications = [];
   int get unreadCount => notifications.where((n) => !n.read).length;
 
+  void addNotification(String title, String body) {
+    notifications.insert(0, AppNotification(title, body));
+    notifyListeners();
+  }
+
   void markAllRead() {
     if (unreadCount == 0) return;
     for (final n in notifications) {

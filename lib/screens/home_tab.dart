@@ -10,6 +10,8 @@ import 'subcategory_screen.dart';
 import 'account_pages.dart';
 import 'address_screen.dart';
 import '../widgets/typing_hint.dart';
+import '../widgets/thela_live.dart';
+import '../state/thela_tracker.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -267,7 +269,14 @@ class _HomeTabState extends State<HomeTab> {
           style: body(12.5, color: kMute)),
       SizedBox(height: 12),
       for (final th in kThelas) ...[
-        InkWell(
+        ListenableBuilder(
+          listenable: ThelaTracker.instance,
+          builder: (context, _) {
+            final lv = ThelaTracker.instance.of(th.id);
+            final gone = lv.status == ThelaStatus.notAvailable;
+            return Opacity(
+            opacity: gone ? 0.6 : 1.0,
+            child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ThelaScreen(thela: th))),
           child: CardBox(
@@ -279,18 +288,20 @@ class _HomeTabState extends State<HomeTab> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(th.name, style: head(15)),
                   SizedBox(height: 2),
-                  Text('${th.sells} · ${th.distanceM} m · ★ ${th.rating}', style: body(12, color: kMute)),
+                  Text('${th.sells} · ★ ${th.rating}', style: body(12, color: kMute)),
                   SizedBox(height: 5),
-                  Wrap(spacing: 5, runSpacing: 6, children: [
-                    Pill('● Live', color: kGText, bg: kPillBg),
-                    if (th.door) Pill(t('Comes to door')),
-                    if (th.pickup) Pill(t('Pickup at thela'), color: kBlu, bg: kBluBg),
+                  Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                    thelaStatusPill(lv.status),
+                    Text(thelaStatusLine(lv), style: body(11.5, color: kMute)),
                   ]),
                 ]),
               ),
               Icon(Icons.chevron_right, color: kMute),
             ]),
           ),
+        ),
+            );
+          },
         ),
         SizedBox(height: 10),
       ],

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nukad_kart/data/demo_data.dart';
 import 'package:nukad_kart/state/app_state.dart';
+import 'package:nukad_kart/state/thela_tracker.dart';
 
 void main() {
   test('4 main categories and 25 subcategories', () {
@@ -68,5 +69,22 @@ void main() {
     final gupta = storeById('s2'); // 6 am - 9:30 pm
     expect(gupta.isOpenAt(DateTime(2026, 11, 11, 21, 15)), isTrue);
     expect(gupta.isOpenAt(DateTime(2026, 11, 11, 21, 45)), isFalse);
+  });
+
+  test('thela status: here now, moving away, not available after the wait', () {
+    final now = DateTime(2026, 11, 11, 18, 0, 0);
+    final t = ThelaLive(300, 0);
+    t.prev = 290;
+    expect(ThelaTracker.statusFor(t, now), ThelaStatus.hereNow);
+    t.prev = 470;
+    t.d = 480; // past 400 m and getting further
+    expect(ThelaTracker.statusFor(t, now), ThelaStatus.movingAway);
+    t.prev = 490;
+    t.d = 480; // past 400 m but coming closer
+    expect(ThelaTracker.statusFor(t, now), ThelaStatus.hereNow);
+    t.prev = 500;
+    t.d = 520; // just left: wait before hiding
+    expect(ThelaTracker.statusFor(t, now), ThelaStatus.movingAway);
+    expect(ThelaTracker.statusFor(t, now.add(ThelaTracker.outsideGrace)), ThelaStatus.notAvailable);
   });
 }
