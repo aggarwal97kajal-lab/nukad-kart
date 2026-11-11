@@ -71,7 +71,21 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       _codeError = null;
       code.clear();
     });
-    final id = await otpService.send(phone.text);
+    final resending = _reqId != null;
+    String id;
+    try {
+      if (resending) {
+        await otpService.resend(_reqId!);
+        id = _reqId!;
+      } else {
+        id = await otpService.send(phone.text);
+      }
+    } on OtpException catch (e) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      showToast(context, e.message);
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _sending = false;
@@ -89,9 +103,19 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   }
 
   Future<void> _verify() async {
-    if (_reqId == null || code.text.length != 6 || _checking) return;
+    if (_reqId == null || code.text.length != otpService.codeLength || _checking) return;
     setState(() => _checking = true);
-    final ok = await otpService.verify(_reqId!, code.text);
+    bool ok;
+    try {
+      ok = await otpService.verify(_reqId!, code.text);
+    } on OtpException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _checking = false;
+        _codeError = e.message;
+      });
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _checking = false;
@@ -202,17 +226,17 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
                         controller: code,
                         autofocus: true,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(otpService.codeLength)],
                         onChanged: (_) => setState(() => _codeError = null),
                         style: head(20).copyWith(letterSpacing: 6),
-                        decoration: _dec('6-digit code').copyWith(errorText: _codeError),
+                        decoration: _dec('${otpService.codeLength}-digit code').copyWith(errorText: _codeError),
                       ),
                     ),
                     SizedBox(width: 10),
                     SizedBox(
                       height: 50,
                       child: FilledButton(
-                        onPressed: code.text.length == 6 && !_checking ? _verify : null,
+                        onPressed: code.text.length == otpService.codeLength && !_checking ? _verify : null,
                         style: FilledButton.styleFrom(
                             backgroundColor: kG,
                             foregroundColor: kOnG,
