@@ -4,6 +4,7 @@ import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
+import '../widgets/live_map.dart';
 import 'rating_sheet.dart';
 import 'report_screen.dart';
 
@@ -49,7 +50,18 @@ class _OrderScreenState extends State<OrderScreen> {
       backgroundColor: kBg,
       appBar: simpleAppBar('Order #${o.id}', subtitle: st.name),
       body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
-        _hero(o),
+        if (o.status == OrderStatus.outForDelivery && o.door && o.times[OrderStatus.outForDelivery] != null)
+          LiveDeliveryMap(
+            key: ValueKey('map-${o.id}'),
+            startedAt: o.times[OrderStatus.outForDelivery]!,
+            eta: Duration(seconds: 6), // demo: the store marks it delivered 6 s later
+            riderName: 'Raju',
+            storeName: st.name,
+            payable: o.payable,
+            storePhone: st.phone,
+          )
+        else
+          _hero(o),
         SizedBox(height: 12),
         CardBox(
           padding: EdgeInsets.fromLTRB(16, 14, 16, 4),
@@ -64,8 +76,9 @@ class _OrderScreenState extends State<OrderScreen> {
         SizedBox(height: 12),
         NoteBox(
           o.status == OrderStatus.delivered
-              ? 'Paid ${rupees(o.total)} to the store at delivery.'
-              : 'Keep ${rupees(o.total)} ready — cash or scan the store’s UPI QR at your door.',
+              ? 'Paid ${rupees(o.payable)} to the store at delivery${o.fee > 0 ? ' (incl. ₹${o.fee} delivery fee)' : ''}.'
+              : 'Keep ${rupees(o.payable)} ready — cash or scan the store’s UPI QR at your door'
+                  '${o.fee > 0 ? ' (incl. ₹${o.fee} delivery fee)' : ''}.',
           icon: Icons.currency_rupee,
           color: kGD,
           bg: kGBg,
@@ -166,7 +179,7 @@ class _OrderScreenState extends State<OrderScreen> {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(statusLabel(o.status), style: head(19, color: Colors.white)),
-            Text(cancelled ? 'You haven’t paid anything.' : 'Total ${rupees(o.total)} · pay at delivery',
+            Text(cancelled ? 'You haven’t paid anything.' : 'Total ${rupees(o.payable)} · pay at delivery',
                 style: body(12.5, color: Color(0xFFD7EED0))),
           ]),
         ),

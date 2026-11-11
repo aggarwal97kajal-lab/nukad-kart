@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
-import 'phone_screen.dart';
+import 'address_screen.dart';
+import 'home_shell.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -21,8 +22,20 @@ class LoginScreen extends StatelessWidget {
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(24, 36, 24, 34),
+              padding: EdgeInsets.fromLTRB(24, 10, 16, 34),
               child: Column(children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => _skip(context),
+                    style: TextButton.styleFrom(
+                        backgroundColor: Color(0x29FFFFFF),
+                        foregroundColor: Colors.white,
+                        shape: StadiumBorder(),
+                        padding: EdgeInsets.symmetric(horizontal: 16)),
+                    child: Text(t('Skip'), style: body(13.5, color: Colors.white, weight: FontWeight.w700)),
+                  ),
+                ),
                 Container(
                   width: 120,
                   height: 120,
@@ -45,7 +58,7 @@ class LoginScreen extends StatelessWidget {
             child: Column(children: [
               Text('Shops and sellers within 500 m of you', textAlign: TextAlign.center, style: head(21)),
               SizedBox(height: 8),
-              Text('Order from nearby kirana stores and find sabzi thelas on your street.',
+              Text('Browse freely. Log in only when you place your first order.',
                   textAlign: TextAlign.center, style: body(14, color: kMute)),
               SizedBox(height: 28),
               SizedBox(
@@ -57,9 +70,12 @@ class LoginScreen extends StatelessWidget {
                     side: BorderSide(color: Color(0xFFCFD8D1), width: 1.5),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  onPressed: () {
-                    AppScope.read(context).signIn();
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => PhoneScreen()));
+                  onPressed: () async {
+                    final ok = await googleSignInFlow(context);
+                    if (ok && context.mounted) {
+                      Navigator.of(context)
+                          .pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomeShell()), (_) => false);
+                    }
                   },
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Container(
@@ -79,6 +95,11 @@ class LoginScreen extends StatelessWidget {
                   ]),
                 ),
               ),
+              SizedBox(height: 14),
+              GestureDetector(
+                onTap: () => _skip(context),
+                child: Text('${t('Explore without login')} →', style: body(14, color: kG, weight: FontWeight.w700)),
+              ),
               SizedBox(height: 12),
               Text('Demo build: sign-in is simulated, no real Google account is used.',
                   textAlign: TextAlign.center, style: body(11.5, color: kMute)),
@@ -91,4 +112,83 @@ class LoginScreen extends StatelessWidget {
       ]),
     );
   }
+
+  void _skip(BuildContext context) {
+    AppScope.read(context).continueAsGuest();
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => HomeShell()), (_) => false);
+  }
+}
+
+/// Demo Google account chooser, then the one-time details screen for new accounts.
+/// Returns true when the user is signed in with a complete profile.
+Future<bool> googleSignInFlow(BuildContext context) async {
+  final s = AppScope.read(context);
+  final email = await showModalBottomSheet<String>(
+    context: context,
+    backgroundColor: kCard,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Choose an account', style: head(19)),
+          SizedBox(height: 2),
+          Text('to continue to Nukad Kart (demo accounts)', style: body(12.5, color: kMute)),
+          SizedBox(height: 8),
+          for (final e in ['priya.demo@gmail.com', 'rahul.demo@gmail.com'])
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                  backgroundColor: kLime, child: Text(e[0].toUpperCase(), style: head(16, color: kGD))),
+              title: Text(e, style: body(14.5, weight: FontWeight.w600)),
+              onTap: () => Navigator.pop(ctx, e),
+            ),
+        ]),
+      ),
+    ),
+  );
+  if (email == null || !context.mounted) return false;
+  final known = s.signIn(email);
+  if (known) {
+    showToast(context, 'Welcome back${s.name.isEmpty ? '' : ', ${s.name.split(' ').first}'}');
+    return true;
+  }
+  final ok = await Navigator.push<bool>(
+      context, MaterialPageRoute(builder: (_) => AddressFormScreen(onboarding: true)));
+  if (ok == true && s.profileComplete) return true;
+  s.cancelSignIn();
+  return false;
+}
+
+/// Bottom sheet shown when a guest tries to order (G03).
+Future<bool> requireLogin(BuildContext context) async {
+  final s = AppScope.read(context);
+  if (s.signedIn) return true;
+  final go = await showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: kCard,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(18, 14, 18, 14),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Center(
+              child: Container(
+                  width: 44, height: 5, decoration: BoxDecoration(color: kLine, borderRadius: BorderRadius.circular(3)))),
+          SizedBox(height: 14),
+          Text('Log in to place your order', style: head(20)),
+          SizedBox(height: 6),
+          Text('Your cart is saved. The store needs your name, number and address to deliver.',
+              style: body(13.5, color: kMute)),
+          SizedBox(height: 16),
+          PrimaryButton(t('Continue with Google'), onTap: () => Navigator.pop(ctx, true)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Keep browsing', style: body(13.5, color: kMute, weight: FontWeight.w700))),
+        ]),
+      ),
+    ),
+  );
+  if (go != true || !context.mounted) return false;
+  return googleSignInFlow(context);
 }

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/widgets.dart';
 import '../data/demo_data.dart';
 import '../l10n.dart';
@@ -29,12 +31,14 @@ class Order {
   final List<OrderLine> lines;
   final bool door;
   final DateTime placedAt;
+  int fee = 0;
   OrderStatus status = OrderStatus.placed;
   final Map<OrderStatus, DateTime> times = {};
   Order(this.id, this.storeId, this.lines, this.door, this.placedAt) {
     times[OrderStatus.placed] = placedAt;
   }
   int get total => lines.fold(0, (s, l) => s + l.price * l.qty);
+  int get payable => total + fee;
   int get itemCount => lines.fold(0, (s, l) => s + l.qty);
   bool get isOpen =>
       status == OrderStatus.placed ||
@@ -50,6 +54,56 @@ class ThelaRequest {
   bool accepted = false;
   ThelaRequest(this.thelaId, this.slot, this.items);
 }
+
+/// Delivery fee rule: ₹20 below ₹199, free from ₹199. The fee goes to the store.
+const int kFreeDeliveryMin = 199;
+const int kDeliveryFee = 20;
+
+/// Demo: pin codes where the demo shops are. Any other pin shows "No stores available".
+const Set<String> kServiceablePins = {'110085', '110086', '110089'};
+
+class Address {
+  final String flat, floor, area, city, state, country, pin, name, phone;
+  final double px, py; // pin position on the demo map, 0..1
+  const Address({
+    this.flat = '',
+    this.floor = '',
+    required this.area,
+    this.city = 'New Delhi',
+    this.state = 'Delhi',
+    this.country = 'India',
+    required this.pin,
+    this.name = '',
+    this.phone = '',
+    this.px = 0.5,
+    this.py = 0.5,
+  });
+
+  String get short => [flat, floor, area].where((x) => x.trim().isNotEmpty).join(', ');
+  String get full => '$short, $city, $state $pin';
+
+  Map<String, dynamic> toJson() => {
+        'flat': flat, 'floor': floor, 'area': area, 'city': city, 'state': state,
+        'country': country, 'pin': pin, 'name': name, 'phone': phone, 'px': px, 'py': py,
+      };
+
+  factory Address.fromJson(Map<String, dynamic> j) => Address(
+        flat: '${j['flat'] ?? ''}',
+        floor: '${j['floor'] ?? ''}',
+        area: '${j['area'] ?? ''}',
+        city: '${j['city'] ?? 'New Delhi'}',
+        state: '${j['state'] ?? 'Delhi'}',
+        country: '${j['country'] ?? 'India'}',
+        pin: '${j['pin'] ?? ''}',
+        name: '${j['name'] ?? ''}',
+        phone: '${j['phone'] ?? ''}',
+        px: (j['px'] as num?)?.toDouble() ?? 0.5,
+        py: (j['py'] as num?)?.toDouble() ?? 0.5,
+      );
+}
+
+/// Where a guest browses from until they set an address.
+const Address kGuestLocation = Address(area: 'Sector 21, Rohini', pin: '110086');
 
 class AppNotification {
   final String title;
@@ -108,7 +162,11 @@ class AppState extends ChangeNotifier {
   // ----- saved things -----
   final Set<String> wishlist = {};
   final Set<String> bookmarks = {};
-  final List<String> addresses = ['Flat 12, Block C, Sector 21', 'Shop 4, Block C Market, Sector 21'];
+  final List<Address> addresses = [];
+  int currentIdx = -1;
+  Address get current => (currentIdx >= 0 && currentIdx < addresses.length) ? addresses[currentIdx] : kGuestLocation;
+  String get address => current.short;
+  bool get serviceable => kServiceablePins.contains(current.pin);
   final Map<String, bool> notifPrefs = {
     'Order updates': true,
     'Thela replies': true,
@@ -126,18 +184,30 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addAddress(String a) {
-    addresses.add(a);
+  void saveAddress(Address a, {Address? replacing}) {
+    final i = replacing == null ? -1 : addresses.indexOf(replacing);
+    if (i >= 0) {
+      addresses[i] = a;
+      currentIdx = i;
+    } else {
+      addresses.add(a);
+      currentIdx = addresses.length - 1;
+    }
+    if (name.isEmpty && a.name.isNotEmpty) name = a.name;
+    if (phone.isEmpty && a.phone.isNotEmpty) phone = a.phone;
     notifyListeners();
   }
 
-  void useAddress(String a) {
-    address = a;
+  void useAddress(Address a) {
+    currentIdx = addresses.indexOf(a);
     notifyListeners();
   }
 
-  void removeAddress(String a) {
+  void removeAddress(Address a) {
+    final cur = current;
     addresses.remove(a);
+    currentIdx = addresses.indexOf(cur);
+    if (currentIdx < 0 && addresses.isNotEmpty) currentIdx = 0;
     notifyListeners();
   }
 
@@ -148,33 +218,137 @@ class AppState extends ChangeNotifier {
 
   // ----- user -----
   bool signedIn = false;
+  bool guest = false; // tapped Skip on the login screen
   String name = '';
-  String email = 'demo.user@gmail.com';
+  String email = '';
   String phone = '';
-  String address = 'Block C, Sector 21';
   int strikes = 0;
   bool acceptedTerms = false;
 
-  void signIn() {
-    signedIn = true;
+  /// Saved profiles by Google account, so logging in again skips the details.
+  /// (Demo: kept on this phone. The real app keeps them on the server.)
+  final Map<String, Map<String, dynamic>> _profiles = {};
+
+  bool get profileComplete => name.trim().length >= 2 && phone.length == 10 && addresses.isNotEmpty;
+
+  void continueAsGuest() {
+    guest = true;
     notifyListeners();
   }
 
-  void saveProfile(String n, String p, String a) {
+  /// Returns true when this Google account already has name, number and address saved.
+  bool signIn(String googleEmail) {
+    email = googleEmail;
+    signedIn = true;
+    final p = _profiles[googleEmail];
+    if (p != null) {
+      _readProfile(p);
+      notifyListeners();
+      return profileComplete;
+    }
+    notifyListeners();
+    return profileComplete; // a guest who already saved an address with name and number
+
+  }
+
+  /// Backed out of the details screen: go back to guest.
+  void cancelSignIn() {
+    signedIn = false;
+    email = '';
+    guest = true;
+    notifyListeners();
+  }
+
+  void saveProfile(String n, String p) {
     name = n;
     phone = p;
-    address = a;
-    if (!addresses.contains(a)) addresses.insert(0, a);
     notifyListeners();
   }
 
   void signOut() {
+    _storeProfile();
     signedIn = false;
+    guest = false;
+    email = '';
     phone = '';
     name = '';
+    addresses.clear();
+    currentIdx = -1;
     cart.clear();
     cartStoreId = null;
     notifyListeners();
+  }
+
+  Map<String, dynamic> _profileJson() => {
+        'name': name,
+        'phone': phone,
+        'addresses': addresses.map((a) => a.toJson()).toList(),
+        'currentIdx': currentIdx,
+      };
+
+  void _readProfile(Map<String, dynamic> p) {
+    name = '${p['name'] ?? ''}';
+    phone = '${p['phone'] ?? ''}';
+    addresses
+      ..clear()
+      ..addAll(((p['addresses'] as List?) ?? []).map((e) => Address.fromJson(Map<String, dynamic>.from(e as Map))));
+    currentIdx = (p['currentIdx'] as num?)?.toInt() ?? (addresses.isEmpty ? -1 : 0);
+  }
+
+  void _storeProfile() {
+    if (signedIn && email.isNotEmpty && profileComplete) _profiles[email] = _profileJson();
+  }
+
+  // ----- saved on the phone -----
+  SharedPreferences? _prefs;
+  static const _key = 'nk_state_v1';
+
+  Future<void> load() async {
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      final raw = _prefs!.getString(_key);
+      if (raw == null) return;
+      final j = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      theme = AppTheme.values.firstWhere((v) => v.name == j['theme'], orElse: () => AppTheme.light);
+      lang = '${j['lang'] ?? 'en'}';
+      guest = j['guest'] == true;
+      signedIn = j['signedIn'] == true;
+      email = '${j['email'] ?? ''}';
+      acceptedTerms = j['acceptedTerms'] == true;
+      final prof = Map<String, dynamic>.from((j['profiles'] as Map?) ?? {});
+      prof.forEach((k, v) => _profiles[k] = Map<String, dynamic>.from(v as Map));
+      _readProfile(Map<String, dynamic>.from((j['session'] as Map?) ?? {}));
+      if (signedIn && !profileComplete) {
+        signedIn = false;
+        guest = true;
+      }
+    } catch (_) {
+      // Bad or old data: start fresh.
+    }
+  }
+
+  void _save() {
+    final p = _prefs;
+    if (p == null) return;
+    _storeProfile();
+    p.setString(
+        _key,
+        jsonEncode({
+          'theme': theme.name,
+          'lang': lang,
+          'guest': guest,
+          'signedIn': signedIn,
+          'email': email,
+          'acceptedTerms': acceptedTerms,
+          'profiles': _profiles,
+          'session': _profileJson(),
+        }));
+  }
+
+  @override
+  void notifyListeners() {
+    super.notifyListeners();
+    _save();
   }
 
   // ----- cart: one store at a time -----
@@ -223,6 +397,8 @@ class AppState extends ChangeNotifier {
     return t;
   }
 
+  int deliveryFeeFor(int itemsTotal, bool door) => door && itemsTotal < kFreeDeliveryMin ? kDeliveryFee : 0;
+
   // ----- orders (status is simulated in this demo) -----
   final List<Order> orders = [];
   int _orderSeq = 20480;
@@ -237,6 +413,7 @@ class AppState extends ChangeNotifier {
     });
     _orderSeq++;
     final o = Order('NK-$_orderSeq', sid, lines, door, DateTime.now());
+    o.fee = deliveryFeeFor(o.total, door);
     orders.insert(0, o);
     cart.clear();
     cartStoreId = null;

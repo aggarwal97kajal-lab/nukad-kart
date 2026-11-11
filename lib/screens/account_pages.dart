@@ -4,6 +4,7 @@ import '../data/demo_data.dart';
 import '../l10n.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
+import 'address_screen.dart';
 import 'orders_tab.dart';
 import 'product_screen.dart';
 import 'store_screen.dart';
@@ -183,7 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           showToast(context, 'Enter your name and a 10-digit number');
           return;
         }
-        s.saveProfile(name.text.trim(), phone.text, s.address);
+        s.saveProfile(name.text.trim(), phone.text);
         showToast(context, 'Profile saved');
         Navigator.pop(context);
       }),
@@ -223,27 +224,35 @@ class AddressBookScreen extends StatelessWidget {
       bottom: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: PrimaryButton('+ Add new address', onTap: () => _add(context)),
+          child: PrimaryButton('+ Add new address',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddressFormScreen()))),
         ),
       ),
       children: [
+        if (s.addresses.isEmpty) _empty('📍', 'No saved addresses', 'Add your home or shop address to see stores near it.'),
         for (final a in s.addresses)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: CardBox(
-              border: a == s.address ? kG : null,
+              border: a == s.current ? kG : null,
               child: Row(children: [
-                Icon(a == s.address ? Icons.home : Icons.location_on_outlined, color: kG),
+                Icon(a == s.current ? Icons.home : Icons.location_on_outlined, color: kG),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(a, style: body(14, weight: FontWeight.w600)),
-                    if (a == s.address) Text('Delivering here', style: body(12, color: kG, weight: FontWeight.w700)),
+                    Text(a.short, style: body(14, weight: FontWeight.w600)),
+                    Text('${a.city}, ${a.state} ${a.pin}', style: body(12, color: kMute)),
+                    if (a.name.isNotEmpty) Text('${a.name} · +91 ${a.phone}', style: body(12, color: kMute)),
+                    if (a == s.current) Text('Delivering here', style: body(12, color: kG, weight: FontWeight.w700)),
                   ]),
                 ),
-                if (a != s.address)
+                IconButton(
+                    onPressed: () => Navigator.push(
+                        context, MaterialPageRoute(builder: (_) => AddressFormScreen(editing: a))),
+                    icon: Icon(Icons.edit_outlined, color: kMute)),
+                if (a != s.current)
                   TextButton(onPressed: () => s.useAddress(a), child: Text('Use', style: body(13, color: kG, weight: FontWeight.w700))),
-                if (a != s.address)
+                if (a != s.current)
                   IconButton(onPressed: () => s.removeAddress(a), icon: Icon(Icons.delete_outline, color: kMute)),
               ]),
             ),
@@ -252,24 +261,6 @@ class AddressBookScreen extends StatelessWidget {
         Text('Only shops within 500 m of the selected address are shown.', style: body(12, color: kMute)),
       ],
     );
-  }
-
-  Future<void> _add(BuildContext context) async {
-    final c = TextEditingController();
-    final v = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: kCard,
-        surfaceTintColor: kCard,
-        title: Text('New address', style: head(18)),
-        content: TextField(controller: c, autofocus: true, decoration: const InputDecoration(hintText: 'House, block, sector')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('Cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, c.text.trim()), child: const Text('Save')),
-        ],
-      ),
-    );
-    if (v != null && v.length >= 5 && context.mounted) AppScope.read(context).addAddress(v);
   }
 }
 

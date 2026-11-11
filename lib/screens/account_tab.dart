@@ -48,19 +48,25 @@ class AccountTab extends StatelessWidget {
               const SizedBox(height: 10),
               Text(s.name.isEmpty ? 'Guest' : s.name, style: head(23, color: Colors.white)),
               const SizedBox(height: 4),
-              Text('+91 ${s.phone} · ${s.email}',
+              Text(s.signedIn ? '+91 ${s.phone} · ${s.email}' : 'Browsing as guest',
                   textAlign: TextAlign.center,
                   style: body(13, color: const Color(0xFFD7EED0), weight: FontWeight.w500)),
               const SizedBox(height: 10),
               GestureDetector(
-                onTap: () => open(const EditProfileScreen()),
+                onTap: () async {
+                  if (s.signedIn) {
+                    open(const EditProfileScreen());
+                  } else {
+                    await googleSignInFlow(context);
+                  }
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: const Color(0x29FFFFFF), borderRadius: BorderRadius.circular(16)),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.edit_outlined, size: 14, color: Colors.white),
+                    Icon(s.signedIn ? Icons.edit_outlined : Icons.login, size: 14, color: Colors.white),
                     const SizedBox(width: 6),
-                    Text(t('Edit profile'), style: body(12.5, color: Colors.white, weight: FontWeight.w700)),
+                    Text(s.signedIn ? t('Edit profile') : t('Log in'), style: body(12.5, color: Colors.white, weight: FontWeight.w700)),
                   ]),
                 ),
               ),
@@ -102,11 +108,12 @@ class AccountTab extends StatelessWidget {
             _Row(icon: Icons.help_outline, title: t('FAQ'), onTap: () => open(const FaqScreen())),
           ]),
           const SizedBox(height: 12),
-          _Section(children: [
-            _Row(icon: Icons.logout, title: t('Log out'), onTap: () => _logout(context)),
-          ]),
+          if (s.signedIn)
+            _Section(children: [
+              _Row(icon: Icons.logout, title: t('Log out'), onTap: () => _logout(context)),
+            ]),
           const SizedBox(height: 12),
-          Text('Nukad Kart · v0.2 demo', style: body(11.5, color: kMute)),
+          Text('Nukad Kart · v0.3 demo', style: body(11.5, color: kMute)),
         ]),
       ),
     ]);

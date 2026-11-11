@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (_left || !mounted) return;
     _left = true;
     final state = AppScope.read(context);
-    final next = (state.signedIn && state.phone.isNotEmpty) ? HomeShell() : LoginScreen();
+    final next = (state.signedIn || state.guest) ? HomeShell() : LoginScreen();
     Navigator.of(context).pushReplacement(PageRouteBuilder(
       transitionDuration: Duration(milliseconds: 350),
       pageBuilder: (_, __, ___) => next,
@@ -51,7 +51,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFF0E6326),
-      body: Container(
+      // Fades in over the plain green launch screen so there is no jump.
+      body: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: Duration(milliseconds: 220),
+        builder: (context, v, child) => Opacity(opacity: v, child: child),
+        child: Container(
         decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(0, -0.22),
@@ -71,6 +76,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
           ),
         ),
+      ),
       ),
     );
   }

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nukad Kart launch green. Same as the first frame of the Flutter splash. -->
+    <color name="nk_launch">#0E6326</color>
+</resources>

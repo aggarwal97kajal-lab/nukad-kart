@@ -65,7 +65,7 @@ class OrdersTab extends StatelessWidget {
                         Row(children: [
                           Text(o.door ? t('Door delivery') : t('Pickup'), style: body(13, color: kGText, weight: FontWeight.w600)),
                           Spacer(),
-                          Text('${rupees(o.total)} at delivery', style: body(13.5, weight: FontWeight.w800)),
+                          Text('${rupees(o.payable)} at delivery', style: body(13.5, weight: FontWeight.w800)),
                         ]),
                       ]),
                     ),

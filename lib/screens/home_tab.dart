@@ -8,6 +8,7 @@ import 'store_screen.dart';
 import 'thela_screen.dart';
 import 'subcategory_screen.dart';
 import 'account_pages.dart';
+import 'address_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -42,6 +43,9 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 SizedBox(width: 10),
                 Expanded(
+                  child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => showAddressPicker(context),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(t('DELIVER TO HOME'),
                         style: body(11.5, color: Color(0xFFBDE89A), weight: FontWeight.w700)),
@@ -53,6 +57,7 @@ class _HomeTabState extends State<HomeTab> {
                       Icon(Icons.keyboard_arrow_down, color: Colors.white),
                     ]),
                   ]),
+                  ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen())),
@@ -92,7 +97,10 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
       ),
-      Expanded(child: moving ? _movingList(context) : _shopList(context)),
+      Expanded(
+          child: !s.serviceable
+              ? _notServiceable(context, s)
+              : (moving ? _movingList(context) : _shopList(context))),
     ]);
   }
 
@@ -152,6 +160,42 @@ class _HomeTabState extends State<HomeTab> {
       ],
       Text(t('You pay the store at delivery, cash or UPI. Nukad Kart adds no fee to your bill.'),
           style: body(11.5, color: kMute)),
+    ]);
+  }
+
+  /// G05: no shops within 500 m of the chosen address.
+  Widget _notServiceable(BuildContext context, AppState s) {
+    return ListView(padding: EdgeInsets.fromLTRB(16, 18, 16, 24), children: [
+      Text('${moving ? t('Moving sellers near you') : t('Shops near you')} (0)', style: head(18)),
+      SizedBox(height: 12),
+      CardBox(
+        padding: EdgeInsets.fromLTRB(20, 28, 20, 24),
+        child: Column(children: [
+          Icon(Icons.storefront_outlined, size: 64, color: Color(0xFFC5CFC6)),
+          SizedBox(height: 10),
+          Text('No stores available', style: head(20)),
+          SizedBox(height: 6),
+          Text('We don’t deliver to ${s.current.short} yet.\nTry changing your location.',
+              textAlign: TextAlign.center, style: body(14, color: kMute)),
+          SizedBox(height: 18),
+          SizedBox(
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () => showAddressPicker(context),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: kG, foregroundColor: Colors.white, shape: StadiumBorder(), elevation: 0,
+                  padding: EdgeInsets.symmetric(horizontal: 26)),
+              icon: Icon(Icons.location_on_outlined, size: 18),
+              label: Text(t('Change location'), style: head(15, color: Colors.white)),
+            ),
+          ),
+          SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => showToast(context, 'We’ll notify you when Nukad Kart starts in ${s.current.pin}'),
+            child: Text('🔔 Tell me when Nukad Kart starts here', style: body(13, color: kG, weight: FontWeight.w700)),
+          ),
+        ]),
+      ),
     ]);
   }
 

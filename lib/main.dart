@@ -10,10 +10,13 @@ import 'widgets/cart_widgets.dart';
 final navKey = GlobalKey<NavigatorState>();
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(NukadKartApp(state: AppState()));
+  // The green launch screen stays up while saved settings load (a few ms).
+  final state = AppState();
+  await state.load();
+  runApp(NukadKartApp(state: state));
 }
 
 class NukadKartApp extends StatelessWidget {

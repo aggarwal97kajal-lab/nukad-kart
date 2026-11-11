@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+: full-screen green system splash with an empty icon (no logo). -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/nk_launch</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/nk_blank_icon</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/nk_launch</item>
+        <item name="android:statusBarColor">@color/nk_launch</item>
+        <item name="android:navigationBarColor">@color/nk_launch</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/nk_launch</item>
+    </style>
+</resources>

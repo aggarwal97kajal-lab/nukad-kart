@@ -1,0 +1,338 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../l10n.dart';
+import '../state/app_state.dart';
+import '../widgets/ui.dart';
+
+const Map<String, String> kCityState = {
+  'New Delhi': 'Delhi',
+  'Gurugram': 'Haryana',
+  'Faridabad': 'Haryana',
+  'Noida': 'Uttar Pradesh',
+  'Ghaziabad': 'Uttar Pradesh',
+  'Lucknow': 'Uttar Pradesh',
+  'Jaipur': 'Rajasthan',
+  'Mumbai': 'Maharashtra',
+  'Pune': 'Maharashtra',
+  'Bengaluru': 'Karnataka',
+  'Chandigarh': 'Chandigarh',
+};
+final List<String> kStatesList = kCityState.values.toSet().toList()..sort();
+const List<String> kCountries = ['India'];
+
+/// Structured delivery address with a map pin (G04). Returns true when saved.
+class AddressFormScreen extends StatefulWidget {
+  final bool onboarding;
+  final Address? editing;
+  const AddressFormScreen({super.key, this.onboarding = false, this.editing});
+  @override
+  State<AddressFormScreen> createState() => _AddressFormScreenState();
+}
+
+class _AddressFormScreenState extends State<AddressFormScreen> {
+  late final TextEditingController flat, floor, area, pin, name, phone;
+  String city = 'New Delhi';
+  String state = 'Delhi';
+  String country = 'India';
+  Offset pinPos = Offset(0.5, 0.5);
+
+  @override
+  void initState() {
+    super.initState();
+    final s = AppScope.read(context);
+    final e = widget.editing;
+    flat = TextEditingController(text: e?.flat ?? '');
+    floor = TextEditingController(text: e?.floor ?? '');
+    area = TextEditingController(text: e?.area ?? '');
+    pin = TextEditingController(text: e?.pin ?? '');
+    name = TextEditingController(text: e?.name ?? s.name);
+    phone = TextEditingController(text: e?.phone ?? s.phone);
+    if (e != null) {
+      city = kCityState.containsKey(e.city) ? e.city : city;
+      state = kStatesList.contains(e.state) ? e.state : state;
+      pinPos = Offset(e.px, e.py);
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in [flat, floor, area, pin, name, phone]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  bool get _valid =>
+      flat.text.trim().isNotEmpty &&
+      area.text.trim().length >= 3 &&
+      pin.text.length == 6 &&
+      name.text.trim().length >= 2 &&
+      phone.text.length == 10;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppScope.of(context);
+    return Scaffold(
+      backgroundColor: kBg,
+      appBar: simpleAppBar(widget.onboarding ? 'Almost done' : t('Delivery address'),
+          subtitle: s.signedIn ? 'Signed in as ${s.email}' : null),
+      body: ListView(padding: EdgeInsets.fromLTRB(16, 10, 16, 24), children: [
+        if (widget.onboarding) ...[
+          Text('Where should we deliver?', style: head(20)),
+          SizedBox(height: 4),
+          Text('Asked only once. Next time you log in with this Google account, you go straight in.',
+              style: body(12.5, color: kMute)),
+          SizedBox(height: 12),
+        ],
+        DemoMapPicker(pos: pinPos, onChanged: (p) => setState(() => pinPos = p)),
+        SizedBox(height: 4),
+        Text('Tap the map to move the pin to your door. Shops within 500 m of the pin are shown.',
+            style: body(11.5, color: kMute)),
+        Row(children: [
+          Expanded(child: _field('Flat / house no.', flat, hint: 'Flat 12')),
+          SizedBox(width: 10),
+          Expanded(child: _field('Floor / block', floor, hint: 'Block C', req: false)),
+        ]),
+        _field('Area / locality', area, hint: 'Sector 21, Rohini'),
+        Row(children: [
+          Expanded(
+              child: _drop('City', city, kCityState.keys.toList(), (v) {
+            setState(() {
+              city = v;
+              state = kCityState[v] ?? state;
+            });
+          })),
+          SizedBox(width: 10),
+          Expanded(child: _drop('State', state, kStatesList, (v) => setState(() => state = v))),
+        ]),
+        Row(children: [
+          Expanded(child: _drop('Country', country, kCountries, (v) => setState(() => country = v))),
+          SizedBox(width: 10),
+          Expanded(child: _field('Pin code', pin, hint: '110086', digits: 6)),
+        ]),
+        Row(children: [
+          Expanded(child: _field('Name', name, hint: 'Your name')),
+          SizedBox(width: 10),
+          Expanded(child: _field('Mobile', phone, hint: '10 digits', digits: 10)),
+        ]),
+        SizedBox(height: 12),
+        NoteBox('Demo: shops exist only for pin codes 110085, 110086 and 110089 (Rohini). '
+            'Try any other pin to see “No stores available”.'),
+        if (widget.onboarding) ...[
+          SizedBox(height: 10),
+          CardBox(
+            child: Text(
+              '3 orders placed and not taken = account blocked. A block applies to the Google account, '
+              'this phone and the mobile number together.',
+              style: body(12.5, color: kMute),
+            ),
+          ),
+        ],
+      ]),
+      bottomNavigationBar: SafeArea(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(16, 10, 16, 12),
+          decoration: BoxDecoration(color: kCard, border: Border(top: BorderSide(color: kLine))),
+          child: PrimaryButton(widget.onboarding ? 'Save & continue' : 'Save & check shops near me',
+              onTap: _valid ? () => _save(s) : null),
+        ),
+      ),
+    );
+  }
+
+  void _save(AppState s) {
+    final a = Address(
+      flat: flat.text.trim(),
+      floor: floor.text.trim(),
+      area: area.text.trim(),
+      city: city,
+      state: state,
+      country: country,
+      pin: pin.text,
+      name: name.text.trim(),
+      phone: phone.text,
+      px: pinPos.dx,
+      py: pinPos.dy,
+    );
+    if (s.name.isEmpty || widget.onboarding) s.saveProfile(a.name, a.phone);
+    s.saveAddress(a, replacing: widget.editing);
+    Navigator.pop(context, true);
+  }
+
+  Widget _label(String text, bool req) => Padding(
+        padding: EdgeInsets.only(bottom: 5, top: 12),
+        child: Text.rich(TextSpan(children: [
+          TextSpan(text: text, style: body(12.5, color: kMute, weight: FontWeight.w700)),
+          if (req) TextSpan(text: ' *', style: body(12.5, color: kRed, weight: FontWeight.w700)),
+        ])),
+      );
+
+  Widget _field(String label, TextEditingController c, {String hint = '', bool req = true, int? digits}) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _label(label, req),
+      TextField(
+        controller: c,
+        onChanged: (_) => setState(() {}),
+        keyboardType: digits != null ? TextInputType.number : TextInputType.text,
+        inputFormatters:
+            digits != null ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(digits)] : null,
+        style: body(15, weight: FontWeight.w600),
+        decoration: InputDecoration(
+          hintText: hint,
+          isDense: true,
+          filled: true,
+          fillColor: kCard,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(11), borderSide: BorderSide(color: Color(0xFFCFD8D1))),
+          focusedBorder:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(11), borderSide: BorderSide(color: kG, width: 2)),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _drop(String label, String value, List<String> items, ValueChanged<String> onChanged) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _label(label, true),
+      Container(
+        height: 46,
+        padding: EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+            color: kCard, borderRadius: BorderRadius.circular(11), border: Border.all(color: Color(0xFFCFD8D1))),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: items.contains(value) ? value : items.first,
+            isExpanded: true,
+            dropdownColor: kCard,
+            icon: Icon(Icons.keyboard_arrow_down, color: kMute),
+            style: body(15, weight: FontWeight.w600),
+            items: [
+              for (final i in items)
+                DropdownMenuItem(value: i, child: Text(i, overflow: TextOverflow.ellipsis)),
+            ],
+            onChanged: (v) {
+              if (v != null) onChanged(v);
+            },
+          ),
+        ),
+      ),
+    ]);
+  }
+}
+
+/// Demo map: streets drawn in code; tap to move the pin. The real app uses Google Maps.
+class DemoMapPicker extends StatelessWidget {
+  final Offset pos;
+  final ValueChanged<Offset> onChanged;
+  const DemoMapPicker({super.key, required this.pos, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SizedBox(
+        height: 150,
+        child: LayoutBuilder(builder: (context, c) {
+          return GestureDetector(
+            onTapDown: (d) => onChanged(Offset(
+                (d.localPosition.dx / c.maxWidth).clamp(0.05, 0.95).toDouble(),
+                (d.localPosition.dy / c.maxHeight).clamp(0.1, 0.9).toDouble())),
+            onPanUpdate: (d) => onChanged(Offset(
+                (d.localPosition.dx / c.maxWidth).clamp(0.05, 0.95).toDouble(),
+                (d.localPosition.dy / c.maxHeight).clamp(0.1, 0.9).toDouble())),
+            child: CustomPaint(
+              size: Size(c.maxWidth, c.maxHeight),
+              painter: _MiniMapPainter(pos, gDark),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _MiniMapPainter extends CustomPainter {
+  final Offset pos;
+  final bool dark;
+  _MiniMapPainter(this.pos, this.dark);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1C2A22) : Color(0xFFE8EFE4));
+    final road = Paint()
+      ..color = dark ? Color(0xFF2C3D33) : Colors.white
+      ..strokeWidth = 10;
+    for (final y in [0.3, 0.75]) {
+      canvas.drawLine(Offset(0, size.height * y), Offset(size.width, size.height * y), road);
+    }
+    for (final x in [0.25, 0.7]) {
+      canvas.drawLine(Offset(size.width * x, 0), Offset(size.width * x, size.height), road);
+    }
+    final p = Offset(pos.dx * size.width, pos.dy * size.height);
+    canvas.drawCircle(p, 46, Paint()..color = Color(0x1F1E7A2E));
+    canvas.drawCircle(
+        p,
+        46,
+        Paint()
+          ..color = kG
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5);
+    final pinPath = Path()
+      ..moveTo(p.dx, p.dy)
+      ..cubicTo(p.dx - 4, p.dy - 8, p.dx - 12, p.dy - 14, p.dx - 12, p.dy - 22)
+      ..arcToPoint(Offset(p.dx + 12, p.dy - 22), radius: Radius.circular(12))
+      ..cubicTo(p.dx + 12, p.dy - 14, p.dx + 4, p.dy - 8, p.dx, p.dy)
+      ..close();
+    canvas.drawPath(pinPath, Paint()..color = Color(0xFFD64545));
+    canvas.drawCircle(Offset(p.dx, p.dy - 22), 4.5, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniMapPainter old) => old.pos != pos || old.dark != dark;
+}
+
+/// Sheet listing saved addresses, plus "Add new address".
+Future<void> showAddressPicker(BuildContext context) async {
+  final s = AppScope.read(context);
+  final add = await showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: kCard,
+    isScrollControlled: true,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(
+              child: Container(
+                  width: 44, height: 5, decoration: BoxDecoration(color: kLine, borderRadius: BorderRadius.circular(3)))),
+          SizedBox(height: 12),
+          Text('Choose delivery location', style: head(19)),
+          SizedBox(height: 10),
+          if (s.addresses.isEmpty)
+            Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text('Browsing near ${kGuestLocation.short} (${kGuestLocation.pin}).', style: body(13, color: kMute)),
+            ),
+          for (final a in s.addresses)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(a == s.current ? Icons.radio_button_checked : Icons.radio_button_off, color: kG),
+              title: Text(a.short, style: body(14, weight: FontWeight.w600)),
+              subtitle: Text('${a.city} ${a.pin}', style: body(12, color: kMute)),
+              onTap: () {
+                s.useAddress(a);
+                Navigator.pop(ctx);
+              },
+            ),
+          SizedBox(height: 8),
+          PrimaryButton('+ Add new address', outline: true, onTap: () => Navigator.pop(ctx, true)),
+        ]),
+      ),
+    ),
+  );
+  if (add == true && context.mounted) {
+    await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => AddressFormScreen()));
+  }
+}
