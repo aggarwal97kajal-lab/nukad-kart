@@ -138,6 +138,25 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
         dividerColor: kLine,
         fontFamily: 'NotoSans',
       ),
+      // Keep every screen above the phone's own buttons / gesture bar
+      // (Android 15+ draws apps under them by default).
+      builder: (context, child) {
+        final mq = MediaQuery.of(context);
+        final b = mq.viewPadding.bottom;
+        if (b == 0) return child!;
+        return ColoredBox(
+          color: kCard,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: b),
+            child: MediaQuery(
+              data: mq.removePadding(removeBottom: true).removeViewPadding(removeBottom: true).copyWith(
+                    viewInsets: mq.viewInsets.copyWith(bottom: (mq.viewInsets.bottom - b).clamp(0.0, double.infinity)),
+                  ),
+              child: child!,
+            ),
+          ),
+        );
+      },
       home: const SplashScreen(),
     );
   }

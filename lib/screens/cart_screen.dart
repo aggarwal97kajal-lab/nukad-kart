@@ -6,6 +6,7 @@ import '../widgets/ui.dart';
 import 'order_screen.dart';
 import 'store_screen.dart';
 import 'login_screen.dart';
+import 'address_screen.dart';
 import '../widgets/cart_widgets.dart';
 
 class CartScreen extends StatefulWidget {
@@ -45,6 +46,15 @@ class _CartScreenState extends State<CartScreen> {
       backgroundColor: kBg,
       appBar: simpleAppBar(t('Your cart'), subtitle: '${st.name} · ${st.distanceM} m'),
       body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 20), children: [
+        if (isDoor) ...[
+          _addressCard(context, s),
+          if (!s.serviceable) ...[
+            SizedBox(height: 8),
+            NoteBox('${st.name} doesn’t deliver to ${s.current.label} (${s.current.pin}). '
+                'Pick another address or choose pickup.', icon: Icons.error_outline, color: kRed, bg: kRedBg),
+          ],
+          SizedBox(height: 12),
+        ],
         if (isDoor && short > 0) ...[
           _freeDeliveryNudge(context, st, items, short),
           SizedBox(height: 12),
@@ -60,7 +70,7 @@ class _CartScreenState extends State<CartScreen> {
         SizedBox(height: 8),
         Row(children: [
           Expanded(
-              child: _opt(t('Deliver to home'), s.address, true, st.door)),
+              child: _opt(t('Deliver'), 'To ${s.current.label}', true, st.door)),
           SizedBox(width: 10),
           Expanded(child: _opt(t('I’ll pick up'), 'At the shop counter', false, st.pickup)),
         ]),
@@ -115,8 +125,8 @@ class _CartScreenState extends State<CartScreen> {
       await showShopClosed(context, shop);
       return;
     }
-    if (!s.serviceable) {
-      showToast(context, 'No stores deliver to ${s.current.short}. Change your address first.');
+    if ((door ?? true) && !s.serviceable) {
+      showToast(context, '${shop.name} doesn’t deliver to ${s.current.short}. Change the address or choose pickup.');
       return;
     }
     if (!s.acceptedTerms) {
@@ -163,6 +173,45 @@ class _CartScreenState extends State<CartScreen> {
           ]),
         );
       },
+    );
+  }
+
+  /// Blinkit-style: where it's going, with a Change button.
+  Widget _addressCard(BuildContext context, AppState s) {
+    final a = s.current;
+    return CardBox(
+      padding: EdgeInsets.fromLTRB(14, 12, 12, 12),
+      child: Row(children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
+          child: Icon(labelIcon(a.label), color: kGText),
+        ),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(deliverToLabel(a.label), style: body(11.5, color: kGText, weight: FontWeight.w800)),
+            Text(a.short, maxLines: 2, overflow: TextOverflow.ellipsis, style: body(14, weight: FontWeight.w600)),
+            if (a.name.isNotEmpty)
+              Text('${a.name} · +91 ${a.phone}', style: body(12, color: kMute))
+            else
+              Text('${a.city} ${a.pin}', style: body(12, color: kMute)),
+          ]),
+        ),
+        SizedBox(width: 8),
+        OutlinedButton(
+          onPressed: () => showAddressPicker(context, title: 'Select delivery address'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: kG,
+            side: BorderSide(color: kG, width: 1.5),
+            minimumSize: Size(0, 36),
+            padding: EdgeInsets.symmetric(horizontal: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: Text('Change', style: body(13, color: kG, weight: FontWeight.w800)),
+        ),
+      ]),
     );
   }
 

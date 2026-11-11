@@ -340,7 +340,7 @@ class _MiniMapPainter extends CustomPainter {
 }
 
 /// Sheet listing saved addresses, plus "Add new address".
-Future<void> showAddressPicker(BuildContext context) async {
+Future<void> showAddressPicker(BuildContext context, {String title = 'Choose delivery location'}) async {
   final s = AppScope.read(context);
   // Returns true for "add new", an Address to edit, or null.
   final res = await showModalBottomSheet<Object>(
@@ -357,7 +357,7 @@ Future<void> showAddressPicker(BuildContext context) async {
               child: Container(
                   width: 44, height: 5, decoration: BoxDecoration(color: kLine, borderRadius: BorderRadius.circular(3)))),
           SizedBox(height: 12),
-          Text('Choose delivery location', style: head(19)),
+          Text(title, style: head(19)),
           SizedBox(height: 10),
           if (s.addresses.isEmpty)
             Padding(
