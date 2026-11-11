@@ -113,16 +113,16 @@ class _VoiceSheetState extends State<_VoiceSheet> with SingleTickerProviderState
                     Container(
                         width: 110 + 40 * k,
                         height: 110 + 40 * k,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: Color(0x2E7CC242))),
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: Color(0x40F8CB46))),
                     Container(
                         width: 96 + 10 * k,
                         height: 96 + 10 * k,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: Color(0x4D7CC242))),
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: Color(0x66F8CB46))),
                     Container(
                       width: 78,
                       height: 78,
                       decoration: BoxDecoration(shape: BoxShape.circle, color: _error != null ? kMute : kG),
-                      child: Icon(_listening ? Icons.mic : Icons.mic_none, color: Colors.white, size: 36),
+                      child: Icon(_listening ? Icons.mic : Icons.mic_none, color: kOnG, size: 36),
                     ),
                   ]),
                 );

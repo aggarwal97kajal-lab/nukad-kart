@@ -17,7 +17,7 @@ class LoginScreen extends StatelessWidget {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: kGD,
+            color: kBrand,
             borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
           ),
           child: SafeArea(
@@ -43,11 +43,11 @@ class LoginScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () => _skip(context),
                     style: TextButton.styleFrom(
-                        backgroundColor: Color(0x29FFFFFF),
-                        foregroundColor: Colors.white,
+                        backgroundColor: kOnBrand,
+                        foregroundColor: kBrand,
                         shape: StadiumBorder(),
                         padding: EdgeInsets.symmetric(horizontal: 16)),
-                    child: Text(t('Skip'), style: body(13.5, color: Colors.white, weight: FontWeight.w700)),
+                    child: Text(t('Skip'), style: body(13.5, color: kBrand, weight: FontWeight.w700)),
                   ),
                 ]),
                 Container(
@@ -58,10 +58,10 @@ class LoginScreen extends StatelessWidget {
                   child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
                 ),
                 SizedBox(height: 14),
-                Text('Nukad Kart', style: head(28, color: Colors.white)),
+                Text('Nukad Kart', style: head(28, color: kOnBrand)),
                 SizedBox(height: 4),
                 Text('Apne Nukkad Ki Har Dukaan!',
-                    style: body(13.5, color: Color(0xFFBDE89A), weight: FontWeight.w600)),
+                    style: body(14, color: Color(0xCC21331B), weight: FontWeight.w600)),
               ]),
             ),
           ),
@@ -108,12 +108,12 @@ class LoginScreen extends StatelessWidget {
         child: Container(
           height: 36,
           padding: EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(color: Color(0x29FFFFFF), borderRadius: BorderRadius.circular(18)),
+          decoration: BoxDecoration(color: Color(0x1A21331B), borderRadius: BorderRadius.circular(18)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 16, color: Colors.white),
+            Icon(icon, size: 16, color: kOnBrand),
             SizedBox(width: 6),
-            Text(label, style: body(13, color: Colors.white, weight: FontWeight.w700)),
-            Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white),
+            Text(label, style: body(13, color: kOnBrand, weight: FontWeight.w700)),
+            Icon(Icons.keyboard_arrow_down, size: 16, color: kOnBrand),
           ]),
         ),
       );

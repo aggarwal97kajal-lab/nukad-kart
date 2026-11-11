@@ -26,7 +26,8 @@ class _HomeTabState extends State<HomeTab> {
     return Column(children: [
       Container(
         decoration: BoxDecoration(
-          color: kGD,
+          color: kCard,
+          border: Border(bottom: BorderSide(color: kLine)),
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -49,13 +50,13 @@ class _HomeTabState extends State<HomeTab> {
                   onTap: () => showAddressPicker(context),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(t('DELIVER TO HOME'),
-                        style: body(11.5, color: Color(0xFFBDE89A), weight: FontWeight.w700)),
+                        style: body(11.5, color: kMute, weight: FontWeight.w700)),
                     Row(children: [
                       Flexible(
                         child: Text(s.address,
-                            maxLines: 1, overflow: TextOverflow.ellipsis, style: head(16, color: Colors.white)),
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: head(16)),
                       ),
-                      Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                      Icon(Icons.keyboard_arrow_down, color: kInk),
                     ]),
                   ]),
                   ),
@@ -67,19 +68,19 @@ class _HomeTabState extends State<HomeTab> {
                     height: 32,
                     padding: EdgeInsets.symmetric(horizontal: 9),
                     decoration: BoxDecoration(
-                        color: Color(0x29FFFFFF), borderRadius: BorderRadius.circular(16)),
+                        color: kSurf, borderRadius: BorderRadius.circular(16)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.translate, size: 16, color: Colors.white),
+                      Icon(Icons.translate, size: 16, color: kInk),
                       SizedBox(width: 5),
                       Text(switch (s.lang) { 'hi' => 'हिं', 'hg' => 'HG', _ => 'EN' },
-                          style: body(12.5, color: Colors.white, weight: FontWeight.w800)),
+                          style: body(12.5, weight: FontWeight.w800)),
                     ]),
                   ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen())),
                   icon: Stack(clipBehavior: Clip.none, children: [
-                    Icon(Icons.notifications_none, color: Colors.white),
+                    Icon(Icons.notifications_none, color: kInk),
                     Positioned(
                       top: -5,
                       right: -6,
@@ -112,9 +113,9 @@ class _HomeTabState extends State<HomeTab> {
                 child: Container(
                   height: 46,
                   padding: EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
+                  decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(13)),
                   child: Row(children: [
-                    Icon(Icons.search, color: Color(0xFF14201A)),
+                    Icon(Icons.search, color: kInk),
                     SizedBox(width: 10),
                     Expanded(
                       child: TypingHint(
@@ -125,8 +126,8 @@ class _HomeTabState extends State<HomeTab> {
                           'hg' => ['doodh', 'aata', 'tamatar', 'cheeni', 'diya aur agarbatti', 'maggi'],
                           _ => ['milk', 'atta', 'tomato', 'sugar', 'diya & agarbatti', 'noodles'],
                         },
-                        textColor: Color(0xFF6B756F),
-                        wordColor: Color(0xFF14201A),
+                        textColor: kMute,
+                        wordColor: kInk,
                       ),
                     ),
                     GestureDetector(
@@ -135,7 +136,7 @@ class _HomeTabState extends State<HomeTab> {
                           context, MaterialPageRoute(builder: (_) => SearchScreen(startVoice: true))),
                       child: Padding(
                         padding: EdgeInsets.all(6),
-                        child: Icon(Icons.mic_none, color: Color(0xFF1E7A2E)),
+                        child: Icon(Icons.mic_none, color: kG),
                       ),
                     ),
                   ]),
@@ -144,7 +145,7 @@ class _HomeTabState extends State<HomeTab> {
               SizedBox(height: 12),
               Container(
                 padding: EdgeInsets.all(4),
-                decoration: BoxDecoration(color: Color(0x1FFFFFFF), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
                 child: Row(children: [
                   _seg(t('Shops'), Icons.storefront, !moving, () => setState(() => moving = false)),
                   _seg('${t('Moving sellers')} · ${kThelas.length}', Icons.shopping_cart_outlined, moving,
@@ -169,14 +170,14 @@ class _HomeTabState extends State<HomeTab> {
         child: Container(
           height: 38,
           decoration: BoxDecoration(
-              color: active ? Colors.white : Colors.transparent, borderRadius: BorderRadius.circular(9)),
+              color: active ? kBrand : Colors.transparent, borderRadius: BorderRadius.circular(9)),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, size: 16, color: active ? kGD : Color(0xFFD7EED0)),
+            Icon(icon, size: 16, color: active ? kOnBrand : kMute),
             SizedBox(width: 6),
             Flexible(
               child: Text(text,
                   overflow: TextOverflow.ellipsis,
-                  style: body(13, color: active ? kGD : Color(0xFFD7EED0), weight: active ? FontWeight.w800 : FontWeight.w600)),
+                  style: body(13, color: active ? kOnBrand : kMute, weight: active ? FontWeight.w800 : FontWeight.w600)),
             ),
           ]),
         ),
@@ -199,7 +200,7 @@ class _HomeTabState extends State<HomeTab> {
             child: SizedBox(
               width: 78,
               child: Column(children: [
-                EmojiTile(sub.emoji, size: 70, bg: Color(0xFFFFF0E8)),
+                EmojiTile(sub.emoji, size: 70, bg: kSurf),
                 SizedBox(height: 6),
                 Text(sub.name,
                     textAlign: TextAlign.center,
@@ -242,10 +243,10 @@ class _HomeTabState extends State<HomeTab> {
             child: ElevatedButton.icon(
               onPressed: () => showAddressPicker(context),
               style: ElevatedButton.styleFrom(
-                  backgroundColor: kG, foregroundColor: Colors.white, shape: StadiumBorder(), elevation: 0,
+                  backgroundColor: kG, foregroundColor: kOnG, shape: StadiumBorder(), elevation: 0,
                   padding: EdgeInsets.symmetric(horizontal: 26)),
               icon: Icon(Icons.location_on_outlined, size: 18),
-              label: Text(t('Change location'), style: head(15, color: Colors.white)),
+              label: Text(t('Change location'), style: head(15, color: kOnG)),
             ),
           ),
           SizedBox(height: 12),

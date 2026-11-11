@@ -69,7 +69,7 @@ class _StoreScreenState extends State<StoreScreen> {
             _roundButton(saved ? Icons.bookmark : Icons.bookmark_border, () {
               s.toggleBookmark(st.id);
               showToast(context, s.bookmarks.contains(st.id) ? 'Store bookmarked' : 'Bookmark removed');
-            }, color: saved ? kLime : Colors.white),
+            }, color: saved ? kBrand : Colors.white),
             SizedBox(width: 8),
           ],
           flexibleSpace: LayoutBuilder(builder: (context, c) {
@@ -228,7 +228,7 @@ class _StoreScreenState extends State<StoreScreen> {
       Container(
         height: 110,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: gDark ? Color(0xFF2A2420) : Color(0xFFFFF4EC), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
         child: Text(p.emoji, style: TextStyle(fontSize: 56)),
       ),
       if (off > 0)
@@ -238,8 +238,8 @@ class _StoreScreenState extends State<StoreScreen> {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 7, vertical: 3),
             decoration: BoxDecoration(
-                color: kG, borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomRight: Radius.circular(8))),
-            child: Text('$off% OFF', style: body(10.5, color: Colors.white, weight: FontWeight.w800)),
+                color: kGD, borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomRight: Radius.circular(8))),
+            child: Text('$off% OFF', style: body(10.5, color: kBrand, weight: FontWeight.w800)),
           ),
         ),
       Positioned(

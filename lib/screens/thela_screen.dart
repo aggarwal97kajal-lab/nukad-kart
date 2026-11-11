@@ -51,7 +51,7 @@ class ThelaScreen extends StatelessWidget {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(thela.name, style: head(19, color: Colors.white)),
                       Text('${thela.distanceM} m away · location ${thela.lastSeenSec} s ago · ★ ${thela.rating}',
-                          style: body(12, color: Color(0xFFBDE89A))),
+                          style: body(12, color: kBrand)),
                     ]),
                   ),
                 ]),

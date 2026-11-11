@@ -292,7 +292,7 @@ class _MiniMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1C2A22) : Color(0xFFE8EFE4));
+    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E261B) : Color(0xFFF4EFDC));
     final road = Paint()
       ..color = dark ? Color(0xFF2C3D33) : Colors.white
       ..strokeWidth = 10;
@@ -303,7 +303,7 @@ class _MiniMapPainter extends CustomPainter {
       canvas.drawLine(Offset(size.width * x, 0), Offset(size.width * x, size.height), road);
     }
     final p = Offset(pos.dx * size.width, pos.dy * size.height);
-    canvas.drawCircle(p, 46, Paint()..color = Color(0x1F1E7A2E));
+    canvas.drawCircle(p, 46, Paint()..color = Color(0x33F8CB46));
     canvas.drawCircle(
         p,
         46,

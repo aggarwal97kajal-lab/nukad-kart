@@ -62,7 +62,7 @@ class CartBar extends StatelessWidget {
         child: Material(
           color: kG,
           elevation: 8,
-          shadowColor: Color(0x591E7A2E),
+          shadowColor: Color(0x5921331B),
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
@@ -73,8 +73,8 @@ class CartBar extends StatelessWidget {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(color: Color(0x2EFFFFFF), borderRadius: BorderRadius.circular(10)),
-                  child: Icon(Icons.shopping_bag_outlined, color: Colors.white),
+                  decoration: BoxDecoration(color: kOnG.withAlpha(40), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(Icons.shopping_bag_outlined, color: kOnG),
                 ),
                 SizedBox(width: 12),
                 Expanded(
@@ -82,12 +82,12 @@ class CartBar extends StatelessWidget {
                     Text('${s.cartCount} item${s.cartCount > 1 ? 's' : ''} · ${store.name}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: body(11.5, color: Color(0xFFD7EED0))),
-                    Text(rupees(s.cartTotal), style: head(17, color: Colors.white)),
+                        style: body(11.5, color: kOnG.withAlpha(200))),
+                    Text(rupees(s.cartTotal), style: head(17, color: kOnG)),
                   ]),
                 ),
-                Text(t('View cart'), style: head(15, color: Colors.white)),
-                Icon(Icons.chevron_right, color: Colors.white),
+                Text(t('View cart'), style: head(15, color: gDark ? kOnG : kBrand)),
+                Icon(Icons.chevron_right, color: gDark ? kOnG : kBrand),
               ]),
             ),
           ),

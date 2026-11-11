@@ -105,7 +105,7 @@ class _LiveDeliveryMapState extends State<LiveDeliveryMap> with SingleTickerProv
                 IconButton.filled(
                   style: IconButton.styleFrom(backgroundColor: kG),
                   onPressed: () => showToast(context, 'Demo: would call ${widget.storePhone}'),
-                  icon: Icon(Icons.call, color: Colors.white, size: 20),
+                  icon: Icon(Icons.call, color: kOnG, size: 20),
                 ),
               ]),
             ),
@@ -125,8 +125,8 @@ class _RoutePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
-    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1C2A22) : Color(0xFFE9EFE5));
-    final block = Paint()..color = dark ? Color(0xFF243329) : Color(0xFFD7E6CF);
+    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E261B) : Color(0xFFF4EFDC));
+    final block = Paint()..color = dark ? Color(0xFF283224) : Color(0xFFE9E1C2);
     final road = Paint()
       ..color = dark ? Color(0xFF34473B) : Colors.white
       ..strokeWidth = 14;
@@ -192,7 +192,7 @@ class _RoutePainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
           text: '$rider · live',
-          style: TextStyle(fontFamily: 'Inter', fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white)),
+          style: TextStyle(fontFamily: 'NotoSans', fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white)),
       textDirection: TextDirection.ltr,
     )..layout();
     final r = RRect.fromRectAndRadius(

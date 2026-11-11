@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0E6326),
+      backgroundColor: Color(0xFFF8CB46),
       // Fades in over the plain green launch screen so there is no jump.
       body: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: 1.0),
@@ -61,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           gradient: RadialGradient(
             center: Alignment(0, -0.22),
             radius: 1.1,
-            colors: [Color(0xFF1E8A35), Color(0xFF0E6326), Color(0xFF08441B), Color(0xFF052E13)],
+            colors: [Color(0xFFFFE07A), Color(0xFFF8CB46), Color(0xFFEDBB33), Color(0xFFE3A91F)],
             stops: [0, 0.38, 0.7, 1],
           ),
         ),
@@ -195,7 +195,7 @@ class _Scene extends StatelessWidget {
                 opacity: t < 1.06 ? 0.0 : 1.0,
                 child: Transform.translate(
                   offset: Offset(0, -200 * (1 - pinDrop)),
-                  child: Icon(Icons.location_on, size: 44, color: kLime, shadows: [
+                  child: Icon(Icons.location_on, size: 44, color: Color(0xFF315426), shadows: [
                     Shadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 3))
                   ]),
                 ),
@@ -221,7 +221,7 @@ class _Scene extends StatelessWidget {
               height: 560,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(colors: [Color(0x60A0E65A), Color(0x1A7CC242), Color(0x00000000)], stops: [0, 0.4, 0.68]),
+                gradient: RadialGradient(colors: [Color(0x80FFFFFF), Color(0x26FFFFFF), Color(0x00FFFFFF)], stops: [0, 0.4, 0.68]),
               ),
             ),
           ),
@@ -247,7 +247,7 @@ class _Scene extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Color(0xFFBDE89A).withAlpha((op * 204).round()), width: 2),
+            border: Border.all(color: Color(0xFF21331B).withAlpha((op * 160).round()), width: 2),
           ),
         ),
       ),
@@ -301,9 +301,9 @@ class _Scene extends StatelessWidget {
             decoration: BoxDecoration(
                 color: kGD,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Color(0x80BDE89A))),
+                border: Border.all(color: Color(0x80F8CB46))),
             child: Text('500 M',
-                style: body(11, color: Color(0xFFBDE89A), weight: FontWeight.w700)
+                style: body(11, color: kBrand, weight: FontWeight.w700)
                     .copyWith(letterSpacing: 1.5)),
           ),
         ),
@@ -384,8 +384,8 @@ class _Scene extends StatelessWidget {
         opacity: tag,
         child: Text.rich(
           TextSpan(children: [
-            TextSpan(text: 'Kirana se sabzi tak, ', style: body(16, color: Color(0xFFEAF6E3), weight: FontWeight.w600)),
-            TextSpan(text: 'sab 500 m ke andar', style: body(16, color: Color(0xFFBDE89A), weight: FontWeight.w700)),
+            TextSpan(text: 'Kirana se sabzi tak, ', style: body(16, color: kOnBrand, weight: FontWeight.w600)),
+            TextSpan(text: 'sab 500\u00A0m ke andar', style: body(16, color: Color(0xFF315426), weight: FontWeight.w800)),
           ]),
           textAlign: TextAlign.center,
         ),
@@ -413,12 +413,12 @@ class _Scene extends StatelessWidget {
                   margin: EdgeInsets.symmetric(horizontal: 4),
                   padding: EdgeInsets.symmetric(horizontal: 13, vertical: 7),
                   decoration: BoxDecoration(
-                    color: Color(0x1AFFFFFF),
+                    color: Color(0x1A21331B),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Color(0x59BDE89A)),
+                    border: Border.all(color: Color(0x3321331B)),
                   ),
                   child: Text(ch[0] as String,
-                      style: body(12.5, color: Color(0xFFEAF6E3), weight: FontWeight.w600)),
+                      style: body(12.5, color: kOnBrand, weight: FontWeight.w600)),
                 ),
               ),
             );
@@ -434,14 +434,14 @@ class _Scene extends StatelessWidget {
         child: Container(
           width: 140,
           height: 5,
-          decoration: BoxDecoration(color: Color(0x26FFFFFF), borderRadius: BorderRadius.circular(3)),
+          decoration: BoxDecoration(color: Color(0x2621331B), borderRadius: BorderRadius.circular(3)),
           alignment: Alignment.centerLeft,
           child: Container(
             width: 140 * barFill,
             height: 5,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(3),
-              gradient: LinearGradient(colors: [kLime, Color(0xFFD4F5A8)]),
+              gradient: LinearGradient(colors: [Color(0xFF315426), Color(0xFF4E7A3A)]),
             ),
           ),
         ),
@@ -490,7 +490,7 @@ class _DashedCircle extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Color(0x73BDE89A)
+      ..color = Color(0x5521331B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     final r = size.width / 2;
@@ -510,7 +510,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = Color(0x0EFFFFFF)
+      ..color = Color(0x0D21331B)
       ..strokeWidth = 1.5;
     // simple perspective street grid in the lower half
     final horizon = 300.0;
@@ -536,9 +536,9 @@ class _SkylinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bld = Paint()
-      ..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF0F5A24), Color(0xFF073317)])
+      ..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x4021331B), Color(0x6621331B)])
           .createShader(Offset.zero & size);
-    final awning = Paint()..color = Color(0xFF1E7A2E);
+    final awning = Paint()..color = Color(0xFF315426);
     final scallop = Paint()..color = Color(0xD9E9F5DE);
     Paint win(double at) {
       final on = seg(t, at, at + 0.12);
@@ -591,7 +591,7 @@ class _SkylinePainter extends CustomPainter {
     canvas.drawCircle(Offset(286, 160), 15, Paint()..color = Color(0xFF388E3C));
     canvas.drawRect(Rect.fromLTWH(297, 160, 5, 30), Paint()..color = Color(0xFF0A3D18));
     // road
-    canvas.drawRect(Rect.fromLTWH(0, 176, 390, 14), Paint()..color = Color(0xFF04240F));
+    canvas.drawRect(Rect.fromLTWH(0, 176, 390, 14), Paint()..color = Color(0x8021331B));
   }
 
   @override
@@ -609,7 +609,7 @@ class _CartPainter extends CustomPainter {
     // speed lines
     if (speed > 0) {
       final sp = Paint()
-        ..color = Color.fromRGBO(155, 224, 90, speed)
+        ..color = Color.fromRGBO(49, 84, 38, speed * 0.7)
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(Offset(-90, 70), Offset(-20, 70), sp);
@@ -623,9 +623,9 @@ class _CartPainter extends CustomPainter {
       ..lineTo(206, 122)
       ..lineTo(66, 122)
       ..close();
-    canvas.drawPath(basket, Paint()..color = Color(0xFFEAF6E3));
+    canvas.drawPath(basket, Paint()..color = Color(0xFFFFF8DE));
     final mesh = Paint()
-      ..color = Color(0xFFB8DFA0)
+      ..color = Color(0xFFD9C27A)
       ..strokeWidth = 5;
     canvas.drawLine(Offset(54, 76), Offset(220, 76), mesh);
     canvas.drawLine(Offset(60, 99), Offset(212, 99), mesh);
@@ -654,7 +654,7 @@ class _CartPainter extends CustomPainter {
       canvas.drawCircle(Offset.zero, 19, Paint()..color = kGD);
       canvas.drawCircle(Offset.zero, 8, Paint()..color = Colors.white);
       final sp = Paint()
-        ..color = Color(0xFF4CAF50)
+        ..color = Color(0xFFF8CB46)
         ..strokeWidth = 3;
       canvas.drawLine(Offset(0, -15), Offset(0, 15), sp);
       canvas.drawLine(Offset(-15, 0), Offset(15, 0), sp);

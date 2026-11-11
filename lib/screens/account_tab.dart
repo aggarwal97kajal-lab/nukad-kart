@@ -25,8 +25,7 @@ class AccountTab extends StatelessWidget {
     return ListView(padding: EdgeInsets.zero, children: [
       Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [kGD, Color(0xFF1E7A2E)]),
+          color: kBrand,
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
         ),
         child: SafeArea(
@@ -39,18 +38,18 @@ class AccountTab extends StatelessWidget {
                 height: 100,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: kLime,
+                  color: kOnBrand,
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0x59FFFFFF), width: 4),
                 ),
-                child: Text(initials, style: head(36, color: kGD)),
+                child: Text(initials, style: head(36, color: kBrand)),
               ),
               const SizedBox(height: 10),
-              Text(s.name.isEmpty ? 'Guest' : s.name, style: head(23, color: Colors.white)),
+              Text(s.name.isEmpty ? 'Guest' : s.name, style: head(23, color: kOnBrand)),
               const SizedBox(height: 4),
               Text(s.signedIn ? '+91 ${s.phone} · ${s.email}' : 'Browsing as guest',
                   textAlign: TextAlign.center,
-                  style: body(13, color: const Color(0xFFD7EED0), weight: FontWeight.w500)),
+                  style: body(13, color: const Color(0xCC21331B), weight: FontWeight.w600)),
               const SizedBox(height: 10),
               GestureDetector(
                 onTap: () async {
@@ -62,11 +61,11 @@ class AccountTab extends StatelessWidget {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0x29FFFFFF), borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(color: const Color(0x1F21331B), borderRadius: BorderRadius.circular(16)),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(s.signedIn ? Icons.edit_outlined : Icons.login, size: 14, color: Colors.white),
+                    Icon(s.signedIn ? Icons.edit_outlined : Icons.login, size: 14, color: kOnBrand),
                     const SizedBox(width: 6),
-                    Text(s.signedIn ? t('Edit profile') : t('Log in'), style: body(12.5, color: Colors.white, weight: FontWeight.w700)),
+                    Text(s.signedIn ? t('Edit profile') : t('Log in'), style: body(12.5, color: kOnBrand, weight: FontWeight.w700)),
                   ]),
                 ),
               ),

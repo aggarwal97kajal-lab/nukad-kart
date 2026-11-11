@@ -97,6 +97,12 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     _applied = key;
 
     final brightness = gDark ? Brightness.dark : Brightness.light;
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: gDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarColor: kCard,
+      systemNavigationBarIconBrightness: gDark ? Brightness.light : Brightness.dark,
+    ));
     return MaterialApp(
       navigatorKey: navKey,
       scaffoldMessengerKey: messengerKey,
@@ -106,11 +112,11 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
         useMaterial3: true,
         brightness: brightness,
         colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF1E7A2E), brightness: brightness, primary: kG, surface: kCard),
+            seedColor: const Color(0xFF315426), brightness: brightness, primary: kG, surface: kCard),
         scaffoldBackgroundColor: kBg,
         canvasColor: kCard,
         dividerColor: kLine,
-        fontFamily: 'Inter',
+        fontFamily: 'NotoSans',
       ),
       home: const SplashScreen(),
     );

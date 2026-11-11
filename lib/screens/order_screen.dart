@@ -198,7 +198,7 @@ class _OrderScreenState extends State<OrderScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(statusLabel(o.status), style: head(19, color: Colors.white)),
             Text(cancelled ? 'You haven’t paid anything.' : 'Total ${rupees(o.payable)} · pay at delivery',
-                style: body(12.5, color: Color(0xFFD7EED0))),
+                style: body(12.5, color: Color(0xFFE9E3C8))),
           ]),
         ),
       ]),
@@ -229,7 +229,7 @@ class _OrderScreenState extends State<OrderScreen> {
             color: done ? kG : kCard,
             border: done ? null : Border.all(color: isNow ? kG : Color(0xFFC5CFC6), width: 3),
           ),
-          child: done ? Icon(Icons.check, size: 14, color: Colors.white) : null,
+          child: done ? Icon(Icons.check, size: 14, color: kOnG) : null,
         ),
         SizedBox(width: 12),
         Expanded(

@@ -1,38 +1,43 @@
 import 'package:flutter/material.dart';
 import '../l10n.dart';
 
-// ---------- Brand colours (from the Nukad Kart logo) ----------
-// Light and dark palettes. gDark is set by the root widget from the
-// Appearance setting (Light / Dark / Same as phone).
+// ---------- Brand colours: "Golden Corner" (brand guidelines, direction 02) ----------
+// Brand #F8CB46 · Surface #FFF8DE · Ink #21331B · Action #315426.
+// gDark is set by the root widget from the Appearance setting.
 bool gDark = false;
 Color _p(int light, int dark) => Color(gDark ? dark : light);
 
-const kGD = Color(0xFF0B5D1E); // deep green (headers, both modes)
-const kLime = Color(0xFF7CC242);
-Color get kG => _p(0xFF1E7A2E, 0xFF3A9A48);
-Color get kGText => _p(0xFF0B5D1E, 0xFF9BD873);
-Color get kGBg => _p(0xFFEAF6E3, 0xFF1D2E1F);
-Color get kPillBg => _p(0xFFD9F0CF, 0xFF223A22);
-Color get kBg => _p(0xFFF5F8F2, 0xFF0E1411);
-Color get kCard => _p(0xFFFFFFFF, 0xFF18211C);
-Color get kInk => _p(0xFF14201A, 0xFFEEF3EF);
-Color get kMute => _p(0xFF56635B, 0xFF97A39B);
-Color get kLine => _p(0xFFE3EADF, 0xFF26302A);
-Color get kAmb => _p(0xFF9A4A00, 0xFFF5B25A);
+const kBrand = Color(0xFFF8CB46); // golden yellow
+const kOnBrand = Color(0xFF21331B); // ink on yellow
+const kGD = Color(0xFF21331B); // ink: dark panels (both modes)
+const kLime = Color(0xFFF8CB46); // accent on dark panels
+Color get kG => _p(0xFF315426, 0xFFF8CB46); // action: buttons, links
+Color get kOnG => _p(0xFFFFFFFF, 0xFF21331B); // text/icons on kG
+Color get kGText => _p(0xFF315426, 0xFFF8CB46);
+Color get kGBg => _p(0xFFFFF8DE, 0xFF283224); // surface
+Color get kSurf => _p(0xFFFFF8DE, 0xFF283224);
+Color get kPillBg => _p(0xFFEAF0DF, 0xFF3A3415);
+Color get kBg => _p(0xFFFBF8EF, 0xFF141A12);
+Color get kCard => _p(0xFFFFFFFF, 0xFF1E261B);
+Color get kInk => _p(0xFF21331B, 0xFFF3F0E2);
+Color get kMute => _p(0xFF5E6A55, 0xFFA9B39F);
+Color get kLine => _p(0xFFEDE5C8, 0xFF2E3A2A);
+Color get kAmb => _p(0xFF8A4B00, 0xFFF5B25A);
 Color get kAmbBg => _p(0xFFFFF1DC, 0xFF3A2A12);
 Color get kRed => _p(0xFFB42318, 0xFFFF7A6E);
 Color get kRedBg => _p(0xFFFDECEA, 0xFF3A1A17);
-Color get kBlu => _p(0xFF175CD3, 0xFF7FB0FF);
-Color get kBluBg => _p(0xFFE8F1FD, 0xFF16263D);
-Color get kCream => _p(0xFFFFF8EC, 0xFF2A2A22);
+Color get kBlu => _p(0xFF1F4E79, 0xFF8DB8E8);
+Color get kBluBg => _p(0xFFE6EEF7, 0xFF16263D);
+Color get kCream => _p(0xFFFFF8DE, 0xFF283224);
 
-const kHead = 'Poppins';
+const kHead = 'NotoSans';
+const kFallback = ['NotoSansDevanagari'];
 
 TextStyle head(double size, {Color? color, FontWeight weight = FontWeight.w700}) =>
-    TextStyle(fontFamily: kHead, fontSize: size, fontWeight: weight, color: color ?? kInk, height: 1.2);
+    TextStyle(fontFamily: kHead, fontFamilyFallback: kFallback, fontSize: size, fontWeight: weight, color: color ?? kInk, height: 1.2);
 
 TextStyle body(double size, {Color? color, FontWeight weight = FontWeight.w400}) =>
-    TextStyle(fontFamily: 'Inter', fontSize: size, fontWeight: weight, color: color ?? kInk, height: 1.35);
+    TextStyle(fontFamily: 'NotoSans', fontFamilyFallback: kFallback, fontSize: size, fontWeight: weight, color: color ?? kInk, height: 1.35);
 
 String rupees(num v) {
   if (v == v.roundToDouble()) return '₹${v.toInt()}';
@@ -82,7 +87,7 @@ class PrimaryButton extends StatelessWidget {
           onTap: onTap,
           child: Center(
             child: Text(text,
-                style: head(15.5, color: outline ? color : Colors.white, weight: FontWeight.w700)),
+                style: head(15.5, color: outline ? color : kOnG, weight: FontWeight.w700)),
           ),
         ),
       ),
@@ -179,12 +184,12 @@ class QtyStepper extends StatelessWidget {
         InkWell(
             onTap: onRemove,
             child: SizedBox(
-                width: 28, height: 34, child: Icon(Icons.remove, color: Colors.white, size: 18))),
-        Text('$qty', style: body(14, color: Colors.white, weight: FontWeight.w700)),
+                width: 28, height: 34, child: Icon(Icons.remove, color: kOnG, size: 18))),
+        Text('$qty', style: body(14, color: kOnG, weight: FontWeight.w700)),
         InkWell(
             onTap: onAdd,
             child: SizedBox(
-                width: 28, height: 34, child: Icon(Icons.add, color: Colors.white, size: 18))),
+                width: 28, height: 34, child: Icon(Icons.add, color: kOnG, size: 18))),
       ]),
     );
   }
