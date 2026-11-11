@@ -104,7 +104,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       if (_resendIn == 0) t.cancel();
     });
     final demo = otpService.debugCode(id);
-    showToast(context, demo == null ? 'Code sent to +91 ${phone.text}' : 'Demo: your code is $demo (real app sends it by SMS)');
+    showToast(context, demo == null ? 'Code sent to +91 ${phone.text}' : 'Your code is $demo');
   }
 
   Future<void> _verify() async {
@@ -140,16 +140,18 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       lng = ln;
       if (p == null) return;
       if (p.pin.length == 6) pin.text = p.pin;
-      if (p.area.isNotEmpty && (area.text.trim().isEmpty || _areaAuto)) {
+      // A place picked from search always fills the boxes; a dragged map fills only empty or auto-filled ones.
+      if (p.area.isNotEmpty && (p.picked || area.text.trim().isEmpty || _areaAuto)) {
         area.text = p.area;
         _areaAuto = true;
       }
-      if (kCityState.containsKey(p.city)) {
+      if (learnCity(p.city, p.state) || kCityState.containsKey(p.city)) {
         city = p.city;
         state = kCityState[p.city]!;
       }
     });
   }
+
 
   bool _saving = false;
 
@@ -187,10 +189,8 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         if (!e.unavailable) {
           if (!mounted) return;
           setState(() => _saving = false);
-          showToast(context, e.code == 'phone_not_verified' || e.code == 'phone_mismatch'
-              ? 'This number could not be confirmed. Send a new code and try again.'
-              : 'Could not save your details (${e.code}). Try again.');
-          if (e.code == 'phone_not_verified' || e.code == 'phone_mismatch') {
+          showToast(context, e.message);
+          if (const {'phone_not_verified', 'phone_mismatch', 'phone_in_use'}.contains(e.code)) {
             setState(() {
               _verifiedFor = null;
               _reqId = null;

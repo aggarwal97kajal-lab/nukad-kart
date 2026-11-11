@@ -26,6 +26,15 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
   bool _looking = false;
   Timer? _debounce;
 
+  // Search
+  final _q = TextEditingController();
+  final _qFocus = FocusNode();
+  Timer? _searchDebounce;
+  List<OlaSuggestion> _results = [];
+  bool _searching = false;
+  int _searchSeq = 0;
+  OlaSuggestion? _pending; // picked from search; applied to the next address lookup
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +44,52 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchDebounce?.cancel();
+    _q.dispose();
+    _qFocus.dispose();
     super.dispose();
+  }
+
+  void _onQuery(String text) {
+    _searchDebounce?.cancel();
+    if (text.trim().length < 3) {
+      setState(() {
+        _results = [];
+        _searching = false;
+      });
+      return;
+    }
+    setState(() => _searching = true);
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () async {
+      final seq = ++_searchSeq;
+      final t = _c?.cameraPosition?.target;
+      final r = await OlaMaps.autocomplete(text, t?.latitude ?? widget.lat, t?.longitude ?? widget.lng);
+      if (!mounted || seq != _searchSeq) return;
+      setState(() {
+        _searching = false;
+        _results = r;
+      });
+    });
+  }
+
+  Future<void> _pick(OlaSuggestion sug) async {
+    _qFocus.unfocus();
+    setState(() {
+      _q.text = sug.title;
+      _results = [];
+      _searching = false;
+      _looking = true;
+    });
+    final at = await OlaMaps.locate(sug);
+    if (!mounted) return;
+    if (at == null) {
+      setState(() => _looking = false);
+      showToast(context, 'Couldn’t find that place on the map. Try another search.');
+      return;
+    }
+    _pending = sug;
+    await _c?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(at.$1, at.$2), 17));
+    _idle(); // in case the map was already there and does not report idle
   }
 
   void _idle() {
@@ -44,8 +98,11 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
       final t = _c?.cameraPosition?.target;
       if (t == null || !mounted) return;
       setState(() => _looking = true);
-      final p = await OlaMaps.reverse(t.latitude, t.longitude);
+      var p = await OlaMaps.reverse(t.latitude, t.longitude);
       if (!mounted) return;
+      final sug = _pending;
+      _pending = null;
+      if (sug != null) p = (p ?? const OlaPlace()).asPicked(title: sug.title, description: sug.description);
       setState(() {
         _looking = false;
         _place = p;
@@ -76,6 +133,66 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      TextField(
+        controller: _q,
+        focusNode: _qFocus,
+        onChanged: _onQuery,
+        textInputAction: TextInputAction.search,
+        style: body(14.5, weight: FontWeight.w600),
+        decoration: InputDecoration(
+          hintText: t('Search area, street or landmark'),
+          hintStyle: body(14, color: kMute),
+          prefixIcon: Icon(Icons.search, color: kMute),
+          suffixIcon: _searching
+              ? Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: kG)))
+              : (_q.text.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: Icon(Icons.close, color: kMute),
+                      onPressed: () => setState(() {
+                            _q.clear();
+                            _results = [];
+                          }))),
+          isDense: true,
+          filled: true,
+          fillColor: kCard,
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kLine)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kG, width: 2)),
+        ),
+      ),
+      if (_results.isNotEmpty)
+        Container(
+          margin: const EdgeInsets.only(top: 4),
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+          child: Column(children: [
+            for (final r in _results)
+              InkWell(
+                onTap: () => _pick(r),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Row(children: [
+                    Icon(Icons.place_outlined, size: 18, color: kG),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(r.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: body(14, weight: FontWeight.w700)),
+                        if (r.subtitle.isNotEmpty)
+                          Text(r.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: body(12, color: kMute)),
+                      ]),
+                    ),
+                  ]),
+                ),
+              ),
+          ]),
+        )
+      else if (!_searching && _q.text.trim().length >= 3 && _qFocus.hasFocus)
+        Padding(
+          padding: const EdgeInsets.only(top: 6, left: 4),
+          child: Text('No places found. Try a nearby landmark or move the map.', style: body(12, color: kMute)),
+        ),
+      const SizedBox(height: 8),
       ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: SizedBox(

@@ -6,7 +6,8 @@ import '../widgets/ui.dart';
 import '../widgets/ola_map_picker.dart';
 import '../services/ola_maps.dart';
 
-const Map<String, String> kCityState = {
+/// Cities in the City dropdown. Cities found on the map are added while the app runs.
+final Map<String, String> kCityState = {
   'New Delhi': 'Delhi',
   'Gurugram': 'Haryana',
   'Faridabad': 'Haryana',
@@ -19,7 +20,14 @@ const Map<String, String> kCityState = {
   'Bengaluru': 'Karnataka',
   'Chandigarh': 'Chandigarh',
 };
-final List<String> kStatesList = kCityState.values.toSet().toList()..sort();
+List<String> get kStatesList => kCityState.values.toSet().toList()..sort();
+
+/// Adds a city found on the map so the dropdowns can show it. Returns false if unusable.
+bool learnCity(String city, String state) {
+  if (city.trim().isEmpty || state.trim().isEmpty) return false;
+  kCityState.putIfAbsent(city.trim(), () => state.trim());
+  return true;
+}
 const List<String> kCountries = ['India'];
 const List<String> kAddressLabels = ['Home', 'Work', 'Hotel', 'Other'];
 
@@ -78,6 +86,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     label = e == null ? 'Home' : (custom ? 'Other' : e.label);
     other = TextEditingController(text: custom ? e.label : '');
     if (e != null) {
+      learnCity(e.city, e.state);
       city = kCityState.containsKey(e.city) ? e.city : city;
       state = kStatesList.contains(e.state) ? e.state : state;
       pinPos = Offset(e.px, e.py);
@@ -165,8 +174,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           Expanded(child: _field('Mobile', phone, hint: '10 digits', digits: 10)),
         ]),
         SizedBox(height: 12),
-        NoteBox('Demo: shops exist only for pin codes 110085, 110086 and 110089 (Rohini). '
-            'Try any other pin to see “No stores available”.'),
+        NoteBox('Nukad Kart is live in Rohini, Delhi (pin codes 110085, 110086 and 110089). More areas are coming soon.'),
         if (widget.onboarding) ...[
           SizedBox(height: 10),
           CardBox(
@@ -195,16 +203,18 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       lng = ln;
       if (p == null) return;
       if (p.pin.length == 6) pin.text = p.pin;
-      if (p.area.isNotEmpty && (area.text.trim().isEmpty || _areaAuto)) {
+      // A place picked from search always fills the boxes; a dragged map fills only empty or auto-filled ones.
+      if (p.area.isNotEmpty && (p.picked || area.text.trim().isEmpty || _areaAuto)) {
         area.text = p.area;
         _areaAuto = true;
       }
-      if (kCityState.containsKey(p.city)) {
+      if (learnCity(p.city, p.state) || kCityState.containsKey(p.city)) {
         city = p.city;
         state = kCityState[p.city]!;
       }
     });
   }
+
 
   void _save(AppState s) {
     final a = Address(

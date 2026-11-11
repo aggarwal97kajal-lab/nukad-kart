@@ -150,9 +150,6 @@ class _OrderScreenState extends State<OrderScreen> {
           PrimaryButton(t('Report a problem'), outline: true, color: kRed,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(order: o)))),
         ],
-        SizedBox(height: 10),
-        Text('Demo build: the store’s replies are simulated so you can see each step.',
-            textAlign: TextAlign.center, style: body(11, color: kMute)),
       ]),
     );
   }
@@ -311,14 +308,14 @@ class _OrderScreenState extends State<OrderScreen> {
           child: TextButton.icon(
             onPressed: () => _deliveryPersonSheet(context, s, o),
             icon: Icon(Icons.delivery_dining, color: kG, size: 18),
-            label: Text('Demo: act as the delivery person', style: body(13, color: kG, weight: FontWeight.w700)),
+            label: Text('Delivery person: enter the code', style: body(13, color: kG, weight: FontWeight.w700)),
           ),
         ),
       ]),
     );
   }
 
-  /// Demo stand-in for the store app: the delivery person types the code.
+  /// Stand-in for the store app: the delivery person types the code.
   Future<void> _deliveryPersonSheet(BuildContext context, AppState s, Order o) async {
     final c = TextEditingController();
     String? error;

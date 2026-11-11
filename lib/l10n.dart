@@ -100,6 +100,8 @@ const Map<String, Map<String, String>> _tr = {
   'Your phone number': {'hi': 'आपका फ़ोन नंबर', 'hg': 'Aapka phone number'},
   'Save & continue': {'hi': 'सेव करें और आगे बढ़ें', 'hg': 'Save karke aage badhein'},
   // account
+  'Search area, street or landmark': {'hi': 'इलाका, गली या पास की जगह खोजें', 'hg': 'Area, gali ya landmark search karein'},
+  'Privacy policy': {'hi': 'प्राइवेसी पॉलिसी', 'hg': 'Privacy policy'},
   'Edit profile': {'hi': 'प्रोफ़ाइल बदलें', 'hg': 'Profile edit karein'},
   'Appearance': {'hi': 'दिखावट', 'hg': 'Appearance'},
   'Language': {'hi': 'भाषा', 'hg': 'Bhasha'},

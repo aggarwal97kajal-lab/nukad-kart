@@ -93,8 +93,19 @@ class LoginScreen extends StatelessWidget {
                 child: Text('${t('Explore without login')} →', style: body(14, color: kG, weight: FontWeight.w700)),
               ),
               Spacer(),
-              Text('By continuing you agree to the Terms and Privacy Policy.',
-                  textAlign: TextAlign.center, style: body(11.5, color: kMute)),
+              Wrap(alignment: WrapAlignment.center, children: [
+                Text('By continuing you agree to the ', style: body(11.5, color: kMute)),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsScreen())),
+                  child: Text('Terms', style: body(11.5, color: kG, weight: FontWeight.w700).copyWith(decoration: TextDecoration.underline)),
+                ),
+                Text(' and ', style: body(11.5, color: kMute)),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                  child: Text('Privacy Policy', style: body(11.5, color: kG, weight: FontWeight.w700).copyWith(decoration: TextDecoration.underline)),
+                ),
+                Text('.', style: body(11.5, color: kMute)),
+              ]),
             ]),
           ),
         ),

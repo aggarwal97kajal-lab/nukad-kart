@@ -5,7 +5,26 @@ import '../config/keys.dart';
 /// A place found from a map pin (Ola reverse geocoding).
 class OlaPlace {
   final String formatted, area, city, state, pin;
-  const OlaPlace({this.formatted = '', this.area = '', this.city = '', this.state = '', this.pin = ''});
+
+  /// True when the customer picked this place from search (fills every box).
+  final bool picked;
+  const OlaPlace({this.formatted = '', this.area = '', this.city = '', this.state = '', this.pin = '', this.picked = false});
+
+  OlaPlace asPicked({required String title, required String description}) => OlaPlace(
+        formatted: description.isNotEmpty ? description : formatted,
+        area: area.isNotEmpty ? area : title,
+        city: city,
+        state: state,
+        pin: pin,
+        picked: true,
+      );
+}
+
+/// One search suggestion.
+class OlaSuggestion {
+  final String title, subtitle, description, placeId;
+  final double? lat, lng;
+  const OlaSuggestion(this.title, this.subtitle, this.description, this.placeId, this.lat, this.lng);
 }
 
 /// Ola Maps: map style for MapLibre + reverse geocoding.
@@ -71,6 +90,48 @@ class OlaMaps {
     if (s['sprite'] is String) s['sprite'] = withKey(s['sprite'] as String);
     if (s['glyphs'] is String) s['glyphs'] = withKey(s['glyphs'] as String);
     return jsonEncode(s);
+  }
+
+  /// Places matching [input], nearest to ([lat], [lng]) first. Empty list if Ola can't be reached.
+  static Future<List<OlaSuggestion>> autocomplete(String input, double lat, double lng) async {
+    final q = input.trim();
+    if (q.length < 3) return [];
+    try {
+      final d = await _getJson(withKey(
+          '$_base/places/v1/autocomplete?input=${Uri.encodeQueryComponent(q)}&location=$lat,$lng&radius=50000'));
+      final out = <OlaSuggestion>[];
+      for (final raw in (d['predictions'] as List? ?? [])) {
+        final m = Map<String, dynamic>.from(raw as Map);
+        final sf = Map<String, dynamic>.from((m['structured_formatting'] as Map?) ?? {});
+        final desc = '${m['description'] ?? ''}';
+        final loc = ((m['geometry'] as Map?)?['location'] as Map?);
+        out.add(OlaSuggestion(
+          '${sf['main_text'] ?? (desc.split(',').first)}',
+          '${sf['secondary_text'] ?? ''}',
+          desc,
+          '${m['place_id'] ?? ''}',
+          (loc?['lat'] as num?)?.toDouble(),
+          (loc?['lng'] as num?)?.toDouble(),
+        ));
+      }
+      return out.take(6).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Map position of a search suggestion (asks Ola for place details if the suggestion has none).
+  static Future<(double, double)?> locate(OlaSuggestion s) async {
+    if (s.lat != null && s.lng != null) return (s.lat!, s.lng!);
+    if (s.placeId.isEmpty) return null;
+    try {
+      final d = await _getJson(withKey('$_base/places/v1/details?place_id=${Uri.encodeQueryComponent(s.placeId)}'));
+      final loc = ((d['result'] as Map?)?['geometry'] as Map?)?['location'] as Map?;
+      final la = (loc?['lat'] as num?)?.toDouble(), ln = (loc?['lng'] as num?)?.toDouble();
+      return la == null || ln == null ? null : (la, ln);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Address for a point. Returns null if Ola can't be reached.

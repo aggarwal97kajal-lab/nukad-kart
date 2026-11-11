@@ -102,6 +102,7 @@ class AccountTab extends StatelessWidget {
             _Row(icon: Icons.info_outline, title: t('About us'), onTap: () => open(const AboutScreen())),
             _Row(icon: Icons.lock_outline, title: t('Account privacy'), onTap: () => open(const PrivacyScreen())),
             _Row(icon: Icons.gavel_outlined, title: t('Terms & conditions'), onTap: () => open(const TermsScreen())),
+            _Row(icon: Icons.policy_outlined, title: t('Privacy policy'), onTap: () => open(const PrivacyPolicyScreen())),
             _Row(
                 icon: Icons.notifications_none,
                 title: t('Notification preferences'),
@@ -114,7 +115,7 @@ class AccountTab extends StatelessWidget {
               _Row(icon: Icons.logout, title: t('Log out'), onTap: () => _logout(context)),
             ]),
           const SizedBox(height: 12),
-          Text('Nukad Kart · v0.3 demo', style: body(11.5, color: kMute)),
+          Text('Nukad Kart · v0.8', style: body(11.5, color: kMute)),
         ]),
       ),
     ]);

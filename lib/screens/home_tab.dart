@@ -3,6 +3,7 @@ import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
+import 'categories_tab.dart';
 import 'search_screen.dart';
 import 'store_screen.dart';
 import 'thela_screen.dart';
@@ -202,7 +203,7 @@ class _HomeTabState extends State<HomeTab> {
             child: SizedBox(
               width: 78,
               child: Column(children: [
-                EmojiTile(sub.emoji, size: 70, bg: kSurf),
+                SizedBox(width: 70, height: 70, child: EmojiTileFill(sub.emoji, bg: kSurf, photo: sub.photo)),
                 SizedBox(height: 6),
                 Text(sub.name,
                     textAlign: TextAlign.center,

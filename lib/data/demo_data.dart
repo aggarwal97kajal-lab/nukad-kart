@@ -4,7 +4,38 @@ class SubCategory {
   final String name;
   final String emoji;
   const SubCategory(this.name, this.emoji);
+
+  /// Photo for the category tile (falls back to the emoji if missing).
+  String? get photo => _subPhotoKeys[name] == null ? null : 'assets/images/categories/${_subPhotoKeys[name]}.jpg';
 }
+
+const Map<String, String> _subPhotoKeys = {
+  'Atta, rice & dal': 'atta_rice_dal',
+  'Oil, ghee & masala': 'oil_ghee_masala',
+  'Dairy, bread & eggs': 'dairy_bread_eggs',
+  'Bakery & biscuits': 'bakery_biscuits',
+  'Dry fruits & cereals': 'dry_fruits_cereals',
+  'Chicken, meat & fish': 'chicken_meat_fish',
+  'Vegetables': 'vegetables',
+  'Chips & Namkeen': 'chips_namkeen',
+  'Sweets & Chocolates': 'sweets_chocolates',
+  'Drinks & Juices': 'drinks_juices',
+  'Tea, Coffee & Milk Drinks': 'tea_coffee',
+  'Instant Food': 'instant_food',
+  'Sauces & Spreads': 'sauces_spreads',
+  'Icecreams & more': 'icecreams',
+  'Bath & Body': 'bath_body',
+  'Hair': 'hair',
+  'Skin & Face': 'skin_face',
+  'Beauty & Cosmetics': 'beauty_cosmetics',
+  'Feminine Hygiene': 'feminine_hygiene',
+  'Baby Care': 'baby_care',
+  'Health & Pharma': 'health_pharma',
+  'Cleaners & Repellents': 'cleaners_repellents',
+  'Electronics': 'electronics',
+  'Stationary & Games': 'stationary_games',
+  'Home & Pooja': 'home_pooja',
+};
 
 class MainCategory {
   final String name;

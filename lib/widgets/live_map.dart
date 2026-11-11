@@ -104,7 +104,7 @@ class _LiveDeliveryMapState extends State<LiveDeliveryMap> with SingleTickerProv
                 ),
                 IconButton.filled(
                   style: IconButton.styleFrom(backgroundColor: kG),
-                  onPressed: () => showToast(context, 'Demo: would call ${widget.storePhone}'),
+                  onPressed: () => showToast(context, 'Store number: ${widget.storePhone}'),
                   icon: Icon(Icons.call, color: kOnG, size: 20),
                 ),
               ]),

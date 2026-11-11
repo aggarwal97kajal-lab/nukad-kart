@@ -4,7 +4,8 @@
 //   POST /v1/auth/google        { idToken }                  -> { token, user, profileComplete }
 //   GET  /v1/me                                               (auth)
 //   POST /v1/me/phone           { accessToken, phone }       (auth) phone verified by MSG91
-//   PUT  /v1/me                 { name, address }            (auth)
+//   PUT  /v1/me                 { name, address? }           (auth)
+//   POST /v1/me/delete          { reason, feedback }         (auth) removes profile; next Google login starts fresh
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m)
 
 export const RADIUS_MAX_M = 500;
@@ -130,7 +131,7 @@ function publicUser(u) {
 }
 
 async function profile(db, uid) {
-  const user = await db.prepare('SELECT * FROM users WHERE id = ?').bind(uid).first();
+  const user = await db.prepare('SELECT * FROM users WHERE id = ? AND deleted_at IS NULL').bind(uid).first();
   if (!user) throw new HttpError(401, 'unknown_user');
   const { results } = await db.prepare('SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, created_at').bind(uid).all();
   const complete = !!(user.name && user.phone && user.phone_verified && results.length);
@@ -141,6 +142,8 @@ async function auth(req, env) {
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
   const s = await verifySession(token, env.SESSION_SECRET);
   if (!s) throw new HttpError(401, 'not_signed_in');
+  const live = await env.DB.prepare('SELECT id FROM users WHERE id = ? AND deleted_at IS NULL').bind(s.uid).first();
+  if (!live) throw new HttpError(401, 'not_signed_in');
   return s.uid;
 }
 
@@ -200,6 +203,8 @@ async function route(req, env) {
     if (claimed.length !== 10) throw new HttpError(400, 'bad_phone');
     const verified = await verifyMsg91(accessToken, env.MSG91_AUTHKEY);
     if (verified && verified !== claimed) throw new HttpError(401, 'phone_mismatch');
+    const other = await env.DB.prepare('SELECT id FROM users WHERE phone = ? AND id != ? AND deleted_at IS NULL').bind(claimed, uid).first();
+    if (other) throw new HttpError(409, 'phone_in_use');
     await env.DB.prepare('UPDATE users SET phone = ?, phone_verified = 1, updated_at = ? WHERE id = ?').bind(claimed, now(), uid).run();
     return json(await profile(env.DB, uid));
   }
@@ -220,6 +225,22 @@ async function route(req, env) {
     }
     await env.DB.batch(stmts);
     return json(await profile(env.DB, uid));
+  }
+
+  if (path === '/v1/me/delete' && m === 'POST') {
+    const uid = await auth(req, env);
+    const b = await body(req);
+    const t = now();
+    await env.DB.batch([
+      env.DB.prepare('INSERT INTO deletion_requests (id, user_id, reason, feedback, created_at) VALUES (?, ?, ?, ?, ?)')
+        .bind(crypto.randomUUID(), uid, String(b.reason || '').slice(0, 200), String(b.feedback || '').slice(0, 1000), t),
+      env.DB.prepare('DELETE FROM addresses WHERE user_id = ?').bind(uid),
+      // Keep only the row id (orders and complaints will point to it); personal details are wiped.
+      env.DB.prepare(
+        "UPDATE users SET google_sub = 'deleted:' || id, email = '', name = NULL, phone = NULL, phone_verified = 0, deleted_at = ?, updated_at = ? WHERE id = ?",
+      ).bind(t, t, uid),
+    ]);
+    return json({ ok: true });
   }
 
   if (path === '/v1/stores/nearby' && m === 'GET') {

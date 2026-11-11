@@ -45,7 +45,7 @@ class CategoriesTab extends StatelessWidget {
                     onTap: () =>
                         Navigator.push(context, MaterialPageRoute(builder: (_) => SubcategoryScreen(sub: sub))),
                     child: Column(children: [
-                      AspectRatio(aspectRatio: 1, child: EmojiTileFill(sub.emoji, bg: _tileBg[i])),
+                      AspectRatio(aspectRatio: 1, child: EmojiTileFill(sub.emoji, bg: _tileBg[i], photo: sub.photo)),
                       SizedBox(height: 5),
                       Text(sub.name,
                           textAlign: TextAlign.center,
@@ -67,14 +67,24 @@ class CategoriesTab extends StatelessWidget {
 class EmojiTileFill extends StatelessWidget {
   final String emoji;
   final Color bg;
-  const EmojiTileFill(this.emoji, {super.key, required this.bg});
+  final String? photo;
+  const EmojiTileFill(this.emoji, {super.key, required this.bg, this.photo});
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, c) {
+      final fallback = Text(emoji, style: TextStyle(fontSize: c.maxWidth * 0.48));
       return Container(
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
         alignment: Alignment.center,
-        child: Text(emoji, style: TextStyle(fontSize: c.maxWidth * 0.48)),
+        child: photo == null
+            ? fallback
+            : Image.asset(photo!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                cacheWidth: 300,
+                errorBuilder: (_, __, ___) => fallback),
       );
     });
   }
