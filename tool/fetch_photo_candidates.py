@@ -31,21 +31,15 @@ for key, q in queries.items():
         print("search failed", key, e); continue
     pages = sorted((data.get("query", {}).get("pages", {}) or {}).values(), key=lambda p: p.get("index", 99))
     n = 0
-    if key == "vegetables":
-        print("DEBUG keys", list(data.keys()), "pages", len(pages))
-        for p in pages[:3]:
-            ii = (p.get("imageinfo") or [{}])[0]
-            print("DEBUG", p.get("title"), ii.get("width"), ii.get("height"), ii.get("thumburl"),
-                  strip(ii.get("extmetadata", {}).get("LicenseShortName", {}).get("value", "")))
     for p in pages:
-        if n >= 6: break
+        if n >= 8: break
         ii = (p.get("imageinfo") or [{}])[0]
         meta = ii.get("extmetadata", {})
         lic = strip(meta.get("LicenseShortName", {}).get("value", ""))
         if not re.search(r"CC0|Public domain|CC BY", lic, re.I) or re.search(r"NC|ND", lic): continue
         if ii.get("width", 0) < 500 or ii.get("height", 0) < 400: continue
         thumb = ii.get("thumburl")
-        if not thumb or not thumb.lower().endswith((".jpg", ".jpeg")): continue
+        if not thumb or not thumb.split("?")[0].lower().endswith((".jpg", ".jpeg")): continue
         try:
             img = get(thumb)
         except Exception:
