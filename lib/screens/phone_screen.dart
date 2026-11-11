@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import 'package:flutter/services.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
@@ -29,18 +30,18 @@ class _PhoneScreenState extends State<PhoneScreen> {
         hintText: hint,
         prefixText: prefix,
         filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        fillColor: kCard,
+        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCFD8D1))),
+            borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Color(0xFFCFD8D1))),
         focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: kG, width: 2)),
+            borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kG, width: 2)),
       );
 
   Widget _label(String t) => Padding(
-        padding: const EdgeInsets.only(bottom: 6, top: 14),
+        padding: EdgeInsets.only(bottom: 6, top: 14),
         child: Text.rich(TextSpan(children: [
-          TextSpan(text: t, style: body(12.5, color: const Color(0xFF3B4740), weight: FontWeight.w700)),
+          TextSpan(text: t, style: body(12.5, color: kMute, weight: FontWeight.w700)),
           TextSpan(text: ' *', style: body(12.5, color: kRed, weight: FontWeight.w700)),
         ])),
       );
@@ -51,9 +52,9 @@ class _PhoneScreenState extends State<PhoneScreen> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: simpleAppBar('Almost done', subtitle: 'Signed in as ${s.email}'),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 18, 16, 24), children: [
-        Text('Your phone number', style: head(20)),
-        const SizedBox(height: 6),
+      body: ListView(padding: EdgeInsets.fromLTRB(16, 18, 16, 24), children: [
+        Text(t('Your phone number'), style: head(20)),
+        SizedBox(height: 6),
         Text('Stores and sellers use it to call you about your order. It is required to place orders.',
             style: body(13.5, color: kMute)),
         _label('Mobile number'),
@@ -68,21 +69,21 @@ class _PhoneScreenState extends State<PhoneScreen> {
         TextField(controller: _name, onChanged: (_) => setState(() {}), decoration: _dec('Your name')),
         _label('Delivery address'),
         TextField(controller: _addr, onChanged: (_) => setState(() {}), decoration: _dec('House, block, sector')),
-        const SizedBox(height: 16),
-        const CardBox(
+        SizedBox(height: 16),
+        CardBox(
           child: Text(
             '3 orders placed and not taken = account blocked. A block applies to the Google account, '
             'this phone and the mobile number together.',
             style: TextStyle(fontFamily: 'Inter', fontSize: 12.5, color: kMute, height: 1.45),
           ),
         ),
-        const SizedBox(height: 22),
-        PrimaryButton('Save & continue',
+        SizedBox(height: 22),
+        PrimaryButton(t('Save & continue'),
             onTap: _valid
                 ? () {
                     s.saveProfile(_name.text.trim(), _phone.text, _addr.text.trim());
                     Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const HomeShell()), (_) => false);
+                        MaterialPageRoute(builder: (_) => HomeShell()), (_) => false);
                   }
                 : null),
       ]),

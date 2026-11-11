@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
@@ -31,12 +32,22 @@ class _StoreScreenState extends State<StoreScreen> {
     final myRating = s.ratings[st.id];
     return Scaffold(
       backgroundColor: kBg,
-      bottomNavigationBar: const CartBar(),
+      bottomNavigationBar: CartBar(),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: kCard,
+        surfaceTintColor: kCard,
         foregroundColor: kInk,
         titleSpacing: 0,
+        actions: [
+          IconButton(
+            onPressed: () {
+              s.toggleBookmark(st.id);
+              showToast(context, s.bookmarks.contains(st.id) ? 'Store bookmarked' : 'Bookmark removed');
+            },
+            icon: Icon(s.bookmarks.contains(st.id) ? Icons.bookmark : Icons.bookmark_border,
+                color: s.bookmarks.contains(st.id) ? kG : kInk),
+          ),
+        ],
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(st.name, style: head(18)),
           Text('${st.distanceM} m · Open till ${st.openTill} · ★ ${st.rating} (${st.ratingCount})',
@@ -45,38 +56,38 @@ class _StoreScreenState extends State<StoreScreen> {
       ),
       body: ListView(padding: EdgeInsets.zero, children: [
         Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+          color: kCard,
+          padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Wrap(spacing: 6, runSpacing: 6, children: [
-              if (st.door) const Pill('Door delivery'),
-              if (st.pickup) const Pill('Pickup', color: kBlu, bg: kBluBg),
-              const Pill('Pay at delivery', color: kGD, bg: Color(0xFFD9F0CF)),
+              if (st.door) Pill(t('Door delivery')),
+              if (st.pickup) Pill(t('Pickup'), color: kBlu, bg: kBluBg),
+              Pill(t('Pay at delivery'), color: kGText, bg: kPillBg),
             ]),
             if (myRating != null) ...[
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               InkWell(
                 onTap: () => showRatingSheet(context, vendorId: st.id, vendorName: st.name, editing: true),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                   decoration: BoxDecoration(border: Border.all(color: kLine), borderRadius: BorderRadius.circular(12)),
                   child: Row(children: [
-                    Text('Your rating', style: body(12.5, color: kMute)),
-                    const SizedBox(width: 8),
+                    Text(t('Your rating'), style: body(12.5, color: kMute)),
+                    SizedBox(width: 8),
                     StarRow(value: myRating, size: 16),
-                    const Spacer(),
-                    Text('Edit', style: body(13, color: kG, weight: FontWeight.w700)),
+                    Spacer(),
+                    Text(t('Edit'), style: body(13, color: kG, weight: FontWeight.w700)),
                   ]),
                 ),
               ),
             ],
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             SizedBox(
               height: 34,
               child: ListView(scrollDirection: Axis.horizontal, children: [
                 for (final m in mains)
                   Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: EdgeInsets.only(right: 8),
                     child: ChoiceChip(
                       label: Text(m),
                       selected: filter == m,
@@ -94,14 +105,14 @@ class _StoreScreenState extends State<StoreScreen> {
             ),
           ]),
         ),
-        const Divider(height: 1, color: kLine),
+        Divider(height: 1, color: kLine),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(children: [
             for (final l in shown) _productRow(context, s, l),
           ]),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
       ]),
     );
   }
@@ -112,20 +123,20 @@ class _StoreScreenState extends State<StoreScreen> {
     return Opacity(
       opacity: out ? 0.5 : 1.0,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: kLine))),
+        padding: EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: kLine))),
         child: Row(children: [
           EmojiTile(p.emoji, size: 58),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(p.name, style: body(14, weight: FontWeight.w600)),
               Text(p.size, style: body(12, color: kMute)),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Row(children: [
                 Text(rupees(l.price), style: body(15, weight: FontWeight.w800)),
                 if (l.price < p.mrp) ...[
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(rupees(p.mrp),
                       style: body(12, color: kMute).copyWith(decoration: TextDecoration.lineThrough)),
                 ],
@@ -133,7 +144,7 @@ class _StoreScreenState extends State<StoreScreen> {
             ]),
           ),
           out
-              ? const Pill('Out of stock', color: kRed, bg: kRedBg)
+              ? Pill(t('Out of stock'), color: kRed, bg: kRedBg)
               : QtyStepper(
                   qty: s.qtyOf(widget.store.id, p.id),
                   onAdd: () => tryAddToCart(context, widget.store.id, p.id),

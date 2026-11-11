@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
@@ -20,7 +21,7 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   void initState() {
     super.initState();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+    _tick = Timer.periodic(Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
   }
@@ -47,20 +48,20 @@ class _OrderScreenState extends State<OrderScreen> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: simpleAppBar('Order #${o.id}', subtitle: st.name),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
+      body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
         _hero(o),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         CardBox(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+          padding: EdgeInsets.fromLTRB(16, 14, 16, 4),
           child: Column(children: [
-            _step('Order placed', o, OrderStatus.placed),
-            _step('Accepted by store', o, OrderStatus.accepted),
-            _step('Packed', o, OrderStatus.packed),
+            _step(t('Order placed'), o, OrderStatus.placed),
+            _step(t('Accepted by store'), o, OrderStatus.accepted),
+            _step(t('Packed'), o, OrderStatus.packed),
             _step(o.door ? 'Out for delivery' : 'Ready for pickup', o, OrderStatus.outForDelivery),
-            _step('Delivered', o, OrderStatus.delivered),
+            _step(t('Delivered'), o, OrderStatus.delivered),
           ]),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         NoteBox(
           o.status == OrderStatus.delivered
               ? 'Paid ${rupees(o.total)} to the store at delivery.'
@@ -69,16 +70,16 @@ class _OrderScreenState extends State<OrderScreen> {
           color: kGD,
           bg: kGBg,
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         CardBox(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           child: Column(children: [
             for (final l in o.lines)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(vertical: 8),
                 child: Row(children: [
                   EmojiTile(productById(l.productId).emoji, size: 40),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                       child: Text('${productById(l.productId).name} · ${productById(l.productId).size}',
                           style: body(13.5, weight: FontWeight.w600))),
@@ -91,28 +92,28 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
           ]),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         if (o.status == OrderStatus.placed)
-          PrimaryButton('Cancel order', outline: true, color: kRed, onTap: () => s.cancelOrder(o)),
+          PrimaryButton(t('Cancel order'), outline: true, color: kRed, onTap: () => s.cancelOrder(o)),
         if (o.status == OrderStatus.delivered) ...[
           if (s.ratings.containsKey(st.id))
             CardBox(
               child: Row(children: [
                 Text('Your rating for this store', style: body(12.5, color: kMute)),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 StarRow(value: s.ratings[st.id]!, size: 16),
-                const Spacer(),
+                Spacer(),
                 GestureDetector(
                   onTap: () => showRatingSheet(context, vendorId: st.id, vendorName: st.name, editing: true),
-                  child: Text('Edit', style: body(13, color: kG, weight: FontWeight.w700)),
+                  child: Text(t('Edit'), style: body(13, color: kG, weight: FontWeight.w700)),
                 ),
               ]),
             ),
-          const SizedBox(height: 10),
-          PrimaryButton('Report a problem', outline: true, color: kRed,
+          SizedBox(height: 10),
+          PrimaryButton(t('Report a problem'), outline: true, color: kRed,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(order: o)))),
         ],
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Text('Demo build: the store’s replies are simulated so you can see each step.',
             textAlign: TextAlign.center, style: body(11, color: kMute)),
       ]),
@@ -130,14 +131,14 @@ class _OrderScreenState extends State<OrderScreen> {
             width: 110,
             height: 110,
             child: Stack(alignment: Alignment.center, children: [
-              const SizedBox(
+              SizedBox(
                   width: 110, height: 110, child: CircularProgressIndicator(strokeWidth: 7, color: kG, backgroundColor: kGBg)),
-              Text('$mm:$ss', style: head(24, color: kGD)),
+              Text('$mm:$ss', style: head(24, color: kGText)),
             ]),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text('Waiting for the store to accept', textAlign: TextAlign.center, style: head(18)),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text('If the store doesn’t accept in 5 minutes, the order is cancelled automatically.',
               textAlign: TextAlign.center, style: body(12.5, color: kMute)),
         ]),
@@ -152,7 +153,7 @@ class _OrderScreenState extends State<OrderScreen> {
       _ => Icons.cancel_outlined,
     };
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(color: cancelled ? kRed : kGD, borderRadius: BorderRadius.circular(18)),
       child: Row(children: [
         Container(
@@ -161,12 +162,12 @@ class _OrderScreenState extends State<OrderScreen> {
           decoration: BoxDecoration(color: cancelled ? kRedBg : kLime, shape: BoxShape.circle),
           child: Icon(icon, color: cancelled ? kRed : kGD),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(statusLabel(o.status), style: head(19, color: Colors.white)),
             Text(cancelled ? 'You haven’t paid anything.' : 'Total ${rupees(o.total)} · pay at delivery',
-                style: body(12.5, color: const Color(0xFFD7EED0))),
+                style: body(12.5, color: Color(0xFFD7EED0))),
           ]),
         ),
       ]),
@@ -187,22 +188,22 @@ class _OrderScreenState extends State<OrderScreen> {
     final isNow = order.indexOf(st) == cur + 1 && o.isOpen;
     final time = at != null ? TimeOfDay.fromDateTime(at).format(context) : (isNow ? 'Next' : '');
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: 10),
       child: Row(children: [
         Container(
           width: 22,
           height: 22,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: done ? kG : Colors.white,
-            border: done ? null : Border.all(color: isNow ? kG : const Color(0xFFC5CFC6), width: 3),
+            color: done ? kG : kCard,
+            border: done ? null : Border.all(color: isNow ? kG : Color(0xFFC5CFC6), width: 3),
           ),
-          child: done ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+          child: done ? Icon(Icons.check, size: 14, color: Colors.white) : null,
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Text(label,
-              style: body(14, color: done || isNow ? kInk : const Color(0xFF8A948D), weight: isNow ? FontWeight.w800 : FontWeight.w600)),
+              style: body(14, color: done || isNow ? kInk : Color(0xFF8A948D), weight: isNow ? FontWeight.w800 : FontWeight.w600)),
         ),
         Text(time, style: body(12, color: kMute)),
       ]),

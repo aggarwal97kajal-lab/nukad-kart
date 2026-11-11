@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import '../data/demo_data.dart';
+import '../l10n.dart';
 
 enum OrderStatus { placed, accepted, packed, outForDelivery, delivered, rejected, autoCancelled, cancelled }
 
-String statusLabel(OrderStatus s) => switch (s) {
+String statusLabel(OrderStatus s) => t(switch (s) {
       OrderStatus.placed => 'Waiting for store',
       OrderStatus.accepted => 'Accepted by store',
       OrderStatus.packed => 'Packed',
@@ -13,7 +14,7 @@ String statusLabel(OrderStatus s) => switch (s) {
       OrderStatus.rejected => 'Rejected by store',
       OrderStatus.autoCancelled => 'Auto-cancelled',
       OrderStatus.cancelled => 'Cancelled',
-    };
+    });
 
 class OrderLine {
   final String productId;
@@ -57,7 +58,64 @@ class AppNotification {
   AppNotification(this.title, this.body) : at = DateTime.now();
 }
 
+enum AppTheme { light, dark, system }
+
 class AppState extends ChangeNotifier {
+  // ----- appearance & language -----
+  AppTheme theme = AppTheme.light;
+  String lang = 'en'; // en | hi | hg (Hinglish)
+
+  void setTheme(AppTheme v) {
+    theme = v;
+    notifyListeners();
+  }
+
+  void setLang(String v) {
+    lang = v;
+    notifyListeners();
+  }
+
+  // ----- saved things -----
+  final Set<String> wishlist = {};
+  final Set<String> bookmarks = {};
+  final List<String> addresses = ['Flat 12, Block C, Sector 21', 'Shop 4, Block C Market, Sector 21'];
+  final Map<String, bool> notifPrefs = {
+    'Order updates': true,
+    'Thela replies': true,
+    'Offers from nearby shops': false,
+    'Festival specials': true,
+  };
+
+  void toggleWishlist(String productId) {
+    wishlist.contains(productId) ? wishlist.remove(productId) : wishlist.add(productId);
+    notifyListeners();
+  }
+
+  void toggleBookmark(String storeId) {
+    bookmarks.contains(storeId) ? bookmarks.remove(storeId) : bookmarks.add(storeId);
+    notifyListeners();
+  }
+
+  void addAddress(String a) {
+    addresses.add(a);
+    notifyListeners();
+  }
+
+  void useAddress(String a) {
+    address = a;
+    notifyListeners();
+  }
+
+  void removeAddress(String a) {
+    addresses.remove(a);
+    notifyListeners();
+  }
+
+  void setNotif(String k, bool v) {
+    notifPrefs[k] = v;
+    notifyListeners();
+  }
+
   // ----- user -----
   bool signedIn = false;
   String name = '';
@@ -76,6 +134,7 @@ class AppState extends ChangeNotifier {
     name = n;
     phone = p;
     address = a;
+    if (!addresses.contains(a)) addresses.insert(0, a);
     notifyListeners();
   }
 
@@ -208,7 +267,7 @@ class AppState extends ChangeNotifier {
     final r = ThelaRequest(thelaId, slot, items);
     requests.insert(0, r);
     notifyListeners();
-    _timers.add(Timer(const Duration(seconds: 6), () {
+    _timers.add(Timer(Duration(seconds: 6), () {
       r.accepted = true;
       notifications.insert(
           0,

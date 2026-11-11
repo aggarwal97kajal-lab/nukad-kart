@@ -32,8 +32,8 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: kCard,
+        surfaceTintColor: kCard,
         foregroundColor: kInk,
         titleSpacing: 0,
         title: TextField(
@@ -49,15 +49,15 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
       body: query.isEmpty
-          ? ListView(padding: const EdgeInsets.all(16), children: [
+          ? ListView(padding: EdgeInsets.all(16), children: [
               Text('Popular near you', style: head(15)),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Wrap(spacing: 8, runSpacing: 8, children: [
                 for (final t in ['Atta', 'Milk', 'Tomato', 'Noodles', 'Diya', 'Soap'])
                   ActionChip(
                     label: Text(t, style: body(13, weight: FontWeight.w600)),
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: kLine),
+                    backgroundColor: kCard,
+                    side: BorderSide(color: kLine),
                     onPressed: () => setState(() {
                       q = t;
                       _ctl.text = t;
@@ -65,37 +65,37 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
               ]),
             ])
-          : ListView(padding: const EdgeInsets.all(12), children: [
+          : ListView(padding: EdgeInsets.all(12), children: [
               if (products.isEmpty && stores.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.all(30),
+                  padding: EdgeInsets.all(30),
                   child: Text('No match for “$q” near you', textAlign: TextAlign.center, style: body(14, color: kMute)),
                 ),
               for (final st in stores)
                 ListTile(
-                  tileColor: Colors.white,
-                  leading: const Icon(Icons.storefront, color: kG),
+                  tileColor: kCard,
+                  leading: Icon(Icons.storefront, color: kG),
                   title: Text(st.name, style: body(14.5, weight: FontWeight.w700)),
                   subtitle: Text('${st.distanceM} m · store', style: body(12, color: kMute)),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StoreScreen(store: st))),
                 ),
               for (final p in products)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: EdgeInsets.only(bottom: 8),
                   child: InkWell(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductScreen(product: p))),
                     child: CardBox(
-                      padding: const EdgeInsets.all(10),
+                      padding: EdgeInsets.all(10),
                       child: Row(children: [
                         EmojiTile(p.emoji, size: 50),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text(p.name, style: body(14, weight: FontWeight.w700)),
                             Text('${p.size} · ${p.sub}', style: body(12, color: kMute)),
                           ]),
                         ),
-                        const Icon(Icons.chevron_right, color: kMute),
+                        Icon(Icons.chevron_right, color: kMute),
                       ]),
                     ),
                   ),

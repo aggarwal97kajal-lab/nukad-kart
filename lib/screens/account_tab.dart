@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../data/demo_data.dart';
+import '../l10n.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
+import 'account_pages.dart';
 import 'login_screen.dart';
 
 class AccountTab extends StatelessWidget {
@@ -10,135 +11,178 @@ class AccountTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final initials = s.name.isEmpty
+    final initials = s.name.trim().isEmpty
         ? 'NK'
         : s.name.trim().split(RegExp(r'\s+')).take(2).map((w) => w.isEmpty ? '' : w[0].toUpperCase()).join();
+    final themeTag = switch (s.theme) {
+      AppTheme.light => t('LIGHT'),
+      AppTheme.dark => t('DARK'),
+      AppTheme.system => t('PHONE'),
+    };
+    final langTag = switch (s.lang) { 'hi' => 'हिन्दी', 'hg' => 'HINGLISH', _ => 'ENGLISH' };
+    void open(Widget w) => Navigator.push(context, MaterialPageRoute(builder: (_) => w));
+
     return ListView(padding: EdgeInsets.zero, children: [
       Container(
-        decoration: const BoxDecoration(color: kGD, borderRadius: BorderRadius.vertical(bottom: Radius.circular(24))),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [kGD, Color(0xFF1E7A2E)]),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
+        ),
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-            child: Row(children: [
-              CircleAvatar(
-                  radius: 28,
-                  backgroundColor: kLime,
-                  child: Text(initials, style: head(19, color: kGD))),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(s.name.isEmpty ? 'Guest' : s.name, style: head(18, color: Colors.white)),
-                  Text('+91 ${s.phone} · ${s.email}',
-                      maxLines: 1, overflow: TextOverflow.ellipsis, style: body(12, color: const Color(0xFFD7EED0))),
-                ]),
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 24),
+            child: Column(children: [
+              Container(
+                width: 100,
+                height: 100,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: kLime,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0x59FFFFFF), width: 4),
+                ),
+                child: Text(initials, style: head(36, color: kGD)),
+              ),
+              const SizedBox(height: 10),
+              Text(s.name.isEmpty ? 'Guest' : s.name, style: head(23, color: Colors.white)),
+              const SizedBox(height: 4),
+              Text('+91 ${s.phone} · ${s.email}',
+                  textAlign: TextAlign.center,
+                  style: body(13, color: const Color(0xFFD7EED0), weight: FontWeight.w500)),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => open(const EditProfileScreen()),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: const Color(0x29FFFFFF), borderRadius: BorderRadius.circular(16)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.edit_outlined, size: 14, color: Colors.white),
+                    const SizedBox(width: 6),
+                    Text(t('Edit profile'), style: body(12.5, color: Colors.white, weight: FontWeight.w700)),
+                  ]),
+                ),
               ),
             ]),
           ),
         ),
       ),
       Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          CardBox(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Text('Not-taken orders', style: body(14, weight: FontWeight.w700)),
-                const Spacer(),
-                Text('${s.strikes} of 3', style: body(13, color: s.strikes == 0 ? kG : kRed, weight: FontWeight.w700)),
-              ]),
-              const SizedBox(height: 8),
-              Row(children: [
-                for (var i = 0; i < 3; i++)
-                  Expanded(
-                    child: Container(
-                      height: 8,
-                      margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
-                      decoration: BoxDecoration(
-                          color: i < s.strikes ? kRed : kLine, borderRadius: BorderRadius.circular(4)),
-                    ),
-                  ),
-              ]),
-              const SizedBox(height: 8),
-              Text('3 strikes in 90 days blocks ordering. Cancelling before the store accepts is not a strike.',
-                  style: body(11.5, color: kMute)),
-            ]),
-          ),
-          const SizedBox(height: 14),
-          Text('Notifications', style: head(16)),
-          const SizedBox(height: 8),
-          if (s.notifications.isEmpty)
-            Text('Nothing yet.', style: body(13, color: kMute))
-          else
-            CardBox(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              child: Column(children: [
-                for (final n in s.notifications.take(8))
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const CircleAvatar(
-                        backgroundColor: kGBg, child: Icon(Icons.notifications_none, color: kG)),
-                    title: Text(n.title, style: body(13.5, weight: FontWeight.w700)),
-                    subtitle: Text(n.body, style: body(12, color: kMute)),
-                  ),
-              ]),
+        padding: const EdgeInsets.fromLTRB(14, 18, 14, 26),
+        child: Column(children: [
+          _Section(children: [
+            _Row(
+              icon: s.theme == AppTheme.dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+              title: t('Appearance'),
+              tag: themeTag,
+              onTap: () => showAppearanceSheet(context),
             ),
-          const SizedBox(height: 14),
-          Text('My ratings', style: head(16)),
-          const SizedBox(height: 8),
-          if (s.ratings.isEmpty)
-            Text('You haven’t rated any store or seller yet.', style: body(13, color: kMute))
-          else
-            CardBox(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Column(children: [
-                for (final e in s.ratings.entries)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(children: [
-                      Expanded(
-                          child: Text(_vendorName(e.key), style: body(13.5, weight: FontWeight.w600))),
-                      StarRow(value: e.value, size: 16),
-                    ]),
-                  ),
-              ]),
-            ),
-          const SizedBox(height: 14),
-          CardBox(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            child: Column(children: [
-              _tile(Icons.location_on_outlined, 'Address', s.address),
-              _tile(Icons.description_outlined, 'Terms & Privacy Policy', 'Payments are between you and the store'),
-              _tile(Icons.support_agent, 'Grievance officer', '[Name] · [email] · [phone]'),
-              _tile(Icons.info_outline, 'About this build', 'Demo data · no real orders, payments or sign-in'),
-            ]),
-          ),
-          const SizedBox(height: 16),
-          PrimaryButton('Sign out', outline: true, color: kRed, onTap: () {
-            s.signOut();
-            Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
-          }),
-          const SizedBox(height: 10),
-          Center(child: Text('Nukad Kart · v0.1 demo', style: body(11.5, color: kMute))),
+            _Row(icon: Icons.translate, title: t('Language'), tag: langTag, onTap: () => showLanguageSheet(context)),
+          ]),
+          const SizedBox(height: 12),
+          _Section(title: t('Your information'), children: [
+            _Row(icon: Icons.menu_book_outlined, title: t('Address book'), onTap: () => open(const AddressBookScreen())),
+            _Row(
+                icon: Icons.storefront_outlined,
+                title: t('Bookmarked stores'),
+                onTap: () => open(const BookmarksScreen())),
+            _Row(icon: Icons.favorite_border, title: t('Your wishlist'), onTap: () => open(const WishlistScreen())),
+            _Row(icon: Icons.shopping_bag_outlined, title: t('Your orders'), onTap: () => open(const YourOrdersScreen())),
+          ]),
+          const SizedBox(height: 12),
+          _Section(title: t('Other information'), children: [
+            _Row(icon: Icons.ios_share, title: t('Share this app'), onTap: () => shareApp(context)),
+            _Row(icon: Icons.info_outline, title: t('About us'), onTap: () => open(const AboutScreen())),
+            _Row(icon: Icons.lock_outline, title: t('Account privacy'), onTap: () => open(const PrivacyScreen())),
+            _Row(
+                icon: Icons.notifications_none,
+                title: t('Notification preferences'),
+                onTap: () => open(const NotificationPrefsScreen())),
+            _Row(icon: Icons.help_outline, title: t('FAQ'), onTap: () => open(const FaqScreen())),
+          ]),
+          const SizedBox(height: 12),
+          _Section(children: [
+            _Row(icon: Icons.logout, title: t('Log out'), onTap: () => _logout(context)),
+          ]),
+          const SizedBox(height: 12),
+          Text('Nukad Kart · v0.2 demo', style: body(11.5, color: kMute)),
         ]),
       ),
     ]);
   }
 
-  String _vendorName(String id) {
-    for (final st in kStores) {
-      if (st.id == id) return st.name;
-    }
-    for (final t in kThelas) {
-      if (t.id == id) return t.name;
-    }
-    return id;
+  Future<void> _logout(BuildContext context) async {
+    final choice = await showChoiceSheet(
+      context,
+      title: t('Log out?'),
+      subtitle: t('Choose where you want to log out'),
+      options: [
+        ChoiceOption('this', t('This device only'), t('You stay logged in on other phones'), Icons.smartphone,
+            danger: true),
+        ChoiceOption('all', t('All devices'), t('Logs out everywhere, including this phone'), Icons.devices,
+            danger: true),
+      ],
+      showCancel: true,
+    );
+    if (choice == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    AppScope.read(context).signOut();
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+    messenger.showSnackBar(SnackBar(
+      content: Text(choice == 'all' ? 'Logged out from all devices' : 'Logged out from this device'),
+      behavior: SnackBarBehavior.floating,
+    ));
   }
+}
 
-  Widget _tile(IconData icon, String title, String sub) => ListTile(
-        leading: Icon(icon, color: kG),
-        title: Text(title, style: body(14, weight: FontWeight.w600)),
-        subtitle: Text(sub, style: body(12, color: kMute)),
-      );
+class _Section extends StatelessWidget {
+  final String? title;
+  final List<Widget> children;
+  const _Section({this.title, required this.children});
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      rows.add(children[i]);
+      if (i < children.length - 1) rows.add(Divider(height: 1, color: kLine, indent: 16, endIndent: 16));
+    }
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (title != null)
+          Padding(padding: const EdgeInsets.fromLTRB(16, 16, 16, 4), child: Text(title!, style: head(17))),
+        ...rows,
+      ]),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? tag;
+  final VoidCallback onTap;
+  const _Row({required this.icon, required this.title, this.tag, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        child: Row(children: [
+          Icon(icon, color: kG, size: 22),
+          const SizedBox(width: 14),
+          Expanded(child: Text(title, style: body(15.5, weight: FontWeight.w500))),
+          if (tag != null) ...[
+            Text(tag!, style: body(12, color: kMute, weight: FontWeight.w700).copyWith(letterSpacing: 0.5)),
+            Icon(Icons.keyboard_arrow_down, color: kMute, size: 18),
+          ] else
+            Icon(Icons.chevron_right, color: kMute, size: 20),
+        ]),
+      ),
+    );
+  }
 }

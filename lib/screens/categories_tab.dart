@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../widgets/ui.dart';
 import 'subcategory_screen.dart';
@@ -12,29 +13,29 @@ class CategoriesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(children: [
       Container(
-        color: Colors.white,
+        color: kCard,
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Row(children: [Text('All categories', style: head(21))]),
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(children: [Text(t('All categories'), style: head(21))]),
           ),
         ),
       ),
-      const Divider(height: 1, color: kLine),
+      Divider(height: 1, color: kLine),
       Expanded(
-        child: ListView(padding: const EdgeInsets.fromLTRB(14, 14, 14, 24), children: [
+        child: ListView(padding: EdgeInsets.fromLTRB(14, 14, 14, 24), children: [
           for (var i = 0; i < kCategories.length; i++) ...[
             Row(children: [
-              Text(kCategories[i].emoji, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
+              Text(kCategories[i].emoji, style: TextStyle(fontSize: 18)),
+              SizedBox(width: 8),
               Text(kCategories[i].name, style: head(16.5)),
             ]),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             GridView.count(
               crossAxisCount: 4,
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics: NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 8,
               childAspectRatio: 0.72,
@@ -45,7 +46,7 @@ class CategoriesTab extends StatelessWidget {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => SubcategoryScreen(sub: sub))),
                     child: Column(children: [
                       AspectRatio(aspectRatio: 1, child: EmojiTileFill(sub.emoji, bg: _tileBg[i])),
-                      const SizedBox(height: 5),
+                      SizedBox(height: 5),
                       Text(sub.name,
                           textAlign: TextAlign.center,
                           maxLines: 2,
@@ -55,7 +56,7 @@ class CategoriesTab extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
           ],
         ]),
       ),

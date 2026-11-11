@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import '../widgets/ui.dart';
 import '../widgets/cart_widgets.dart';
 import 'home_tab.dart';
@@ -19,18 +20,18 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      body: IndexedStack(index: index, children: const [
+      body: IndexedStack(index: index, children: [
         HomeTab(),
         CategoriesTab(),
         OrdersTab(),
         AccountTab(),
       ]),
       bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
-        if (index < 2) const CartBar(),
+        if (index < 2) CartBar(),
         NavigationBarTheme(
           data: NavigationBarThemeData(
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.white,
+            backgroundColor: kCard,
+            surfaceTintColor: kCard,
             indicatorColor: kGBg,
             labelTextStyle: WidgetStateProperty.resolveWith((states) => body(11.5,
                 color: states.contains(WidgetState.selected) ? kG : kMute,
@@ -40,11 +41,11 @@ class _HomeShellState extends State<HomeShell> {
             selectedIndex: index,
             height: 66,
             onDestinationSelected: (i) => setState(() => index = i),
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: kG), label: 'Home'),
-              NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view, color: kG), label: 'Categories'),
-              NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long, color: kG), label: 'Orders'),
-              NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person, color: kG), label: 'Account'),
+            destinations: [
+              NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: kG), label: t('Home')),
+              NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view, color: kG), label: t('Categories')),
+              NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long, color: kG), label: t('Orders')),
+              NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person, color: kG), label: t('Account')),
             ],
           ),
         ),

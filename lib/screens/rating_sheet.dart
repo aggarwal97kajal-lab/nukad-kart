@@ -10,8 +10,8 @@ Future<void> showRatingSheet(BuildContext context,
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    backgroundColor: kCard,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (ctx) => _RatingBody(vendorId: vendorId, vendorName: vendorName, editing: editing),
   );
 }
@@ -37,22 +37,22 @@ class _RatingBodyState extends State<_RatingBody> {
 
   @override
   Widget build(BuildContext context) {
-    const options = ['Fresh items', 'Fast delivery', 'Correct items', 'Polite', 'Fair price'];
+    final options = ['Fresh items', 'Fast delivery', 'Correct items', 'Polite', 'Fair price'];
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 14, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 44, height: 5, decoration: BoxDecoration(color: kLine, borderRadius: BorderRadius.circular(3))),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Text(widget.editing ? 'Change your rating' : 'Rate ${widget.vendorName}',
             textAlign: TextAlign.center, style: head(20)),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(widget.editing ? widget.vendorName : 'We ask only once. You can change it later from the store page.',
             textAlign: TextAlign.center, style: body(12.5, color: kMute)),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         StarRow(value: stars, size: 42, onChanged: (v) => setState(() => stars = v)),
-        const SizedBox(height: 6),
-        Text(ratingWord(stars), style: body(13.5, color: kGD, weight: FontWeight.w700)),
-        const SizedBox(height: 12),
+        SizedBox(height: 6),
+        Text(ratingWord(stars), style: body(13.5, color: kGText, weight: FontWeight.w700)),
+        SizedBox(height: 12),
         Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
           for (final o in options)
             FilterChip(
@@ -61,13 +61,13 @@ class _RatingBodyState extends State<_RatingBody> {
               showCheckmark: false,
               labelStyle: body(12.5, color: tags.contains(o) ? kGD : kInk, weight: FontWeight.w700),
               selectedColor: kGBg,
-              backgroundColor: Colors.white,
+              backgroundColor: kCard,
               side: BorderSide(color: tags.contains(o) ? kG : kLine),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               onSelected: (v) => setState(() => v ? tags.add(o) : tags.remove(o)),
             ),
         ]),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         PrimaryButton(widget.editing ? 'Update rating' : 'Submit rating',
             onTap: stars == 0
                 ? null

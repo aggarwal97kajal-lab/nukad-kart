@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2500))
+    c = AnimationController(vsync: this, duration: Duration(milliseconds: 2500))
       ..addStatusListener((s) {
         if (s == AnimationStatus.completed) _go();
       })
@@ -33,9 +33,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (_left || !mounted) return;
     _left = true;
     final state = AppScope.read(context);
-    final next = (state.signedIn && state.phone.isNotEmpty) ? const HomeShell() : const LoginScreen();
+    final next = (state.signedIn && state.phone.isNotEmpty) ? HomeShell() : LoginScreen();
     Navigator.of(context).pushReplacement(PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 350),
+      transitionDuration: Duration(milliseconds: 350),
       pageBuilder: (_, __, ___) => next,
       transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
     ));
@@ -50,9 +50,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E6326),
+      backgroundColor: Color(0xFF0E6326),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(0, -0.22),
             radius: 1.1,
@@ -129,13 +129,13 @@ class _Scene extends StatelessWidget {
     final wing = flapping ? math.sin(t * 52) * 0.6 : 0.0;
     final hop = math.sin(seg(t, 1.32, 1.53) * math.pi) * -9;
 
-    const double sceneLeft = 75, sceneTop = 232;
+    final double sceneLeft = 75, sceneTop = 232;
 
     final scene = Opacity(
       opacity: 1 - sceneOut,
       child: Transform.scale(
         scale: 1.18 * (1 + 0.25 * sceneOut),
-        alignment: const Alignment(0, 0.1),
+        alignment: Alignment(0, 0.1),
         child: SizedBox(
           width: 240,
           height: 190,
@@ -150,7 +150,7 @@ class _Scene extends StatelessWidget {
               offset: Offset(cx, 0),
               child: Transform.rotate(
                 angle: rot * math.pi / 180,
-                alignment: const Alignment(0.2, 0.9),
+                alignment: Alignment(0.2, 0.9),
                 child: SizedBox(
                   width: 240,
                   height: 190,
@@ -159,7 +159,7 @@ class _Scene extends StatelessWidget {
                     for (final it in items)
                       _item(it[0] as String, it[1] as double, it[2] as double),
                     CustomPaint(
-                      size: const Size(240, 190),
+                      size: Size(240, 190),
                       painter: _CartPainter(wheelAngle: wheelAngle, speed: speed, dust: dust),
                     ),
                     // sparrow on the handle
@@ -172,7 +172,7 @@ class _Scene extends StatelessWidget {
                           offset: Offset(bx, by + hop),
                           child: Transform.scale(
                             scale: 0.6 + 0.4 * fly,
-                            child: CustomPaint(size: const Size(60, 44), painter: _SparrowPainter(wing)),
+                            child: CustomPaint(size: Size(60, 44), painter: _SparrowPainter(wing)),
                           ),
                         ),
                       ),
@@ -189,7 +189,7 @@ class _Scene extends StatelessWidget {
                 opacity: t < 1.06 ? 0.0 : 1.0,
                 child: Transform.translate(
                   offset: Offset(0, -200 * (1 - pinDrop)),
-                  child: const Icon(Icons.location_on, size: 44, color: kLime, shadows: [
+                  child: Icon(Icons.location_on, size: 44, color: kLime, shadows: [
                     Shadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 3))
                   ]),
                 ),
@@ -201,7 +201,7 @@ class _Scene extends StatelessWidget {
     );
 
     return Stack(clipBehavior: Clip.hardEdge, children: [
-      const Positioned.fill(child: CustomPaint(painter: _GridPainter())),
+      Positioned.fill(child: CustomPaint(painter: _GridPainter())),
       // glow
       Positioned(
         left: 195 - 280,
@@ -213,7 +213,7 @@ class _Scene extends StatelessWidget {
             child: Container(
               width: 560,
               height: 560,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [Color(0x60A0E65A), Color(0x1A7CC242), Color(0x00000000)], stops: [0, 0.4, 0.68]),
               ),
@@ -229,7 +229,7 @@ class _Scene extends StatelessWidget {
   }
 
   Widget _ripple(double p) {
-    if (p <= 0 || p >= 1) return const SizedBox.shrink();
+    if (p <= 0 || p >= 1) return SizedBox.shrink();
     final op = p < 0.15 ? p / 0.15 * 0.9 : 0.9 * (1 - (p - 0.15) / 0.85);
     final size = 300 * (0.2 + 1.4 * Curves.easeOut.transform(p));
     return Positioned(
@@ -241,7 +241,7 @@ class _Scene extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFBDE89A).withAlpha((op * 204).round()), width: 2),
+            border: Border.all(color: Color(0xFFBDE89A).withAlpha((op * 204).round()), width: 2),
           ),
         ),
       ),
@@ -250,7 +250,7 @@ class _Scene extends StatelessWidget {
 
   Widget _item(String emoji, double start, double x) {
     final p = seg(t, start, start + 0.23);
-    if (p <= 0) return const SizedBox.shrink();
+    if (p <= 0) return SizedBox.shrink();
     final y = -330 * (1 - Curves.bounceOut.transform(p));
     return Positioned(
       left: x,
@@ -259,7 +259,7 @@ class _Scene extends StatelessWidget {
         offset: Offset(0, y),
         child: Transform.rotate(
           angle: (1 - p) * -0.25,
-          child: Text(emoji, style: const TextStyle(fontSize: 36)),
+          child: Text(emoji, style: TextStyle(fontSize: 36)),
         ),
       ),
     );
@@ -277,7 +277,7 @@ class _Scene extends StatelessWidget {
           angle: (t - 1.62).clamp(0.0, 10.0).toDouble() * 0.3,
           child: Transform.scale(
             scale: 0.85 + 0.15 * halo,
-            child: const CustomPaint(size: Size(330, 330), painter: _DashedCircle()),
+            child: CustomPaint(size: Size(330, 330), painter: _DashedCircle()),
           ),
         ),
       ),
@@ -291,20 +291,20 @@ class _Scene extends StatelessWidget {
         opacity: km,
         child: Center(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
                 color: kGD,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0x80BDE89A))),
+                border: Border.all(color: Color(0x80BDE89A))),
             child: Text('500 M',
-                style: body(11, color: const Color(0xFFBDE89A), weight: FontWeight.w700)
+                style: body(11, color: Color(0xFFBDE89A), weight: FontWeight.w700)
                     .copyWith(letterSpacing: 1.5)),
           ),
         ),
       ),
     ));
     // map pins around the logo
-    const pins = [
+    final pins = [
       ['🏪', 40.0, 274.0, 1.67],
       ['🥬', 350.0, 274.0, 1.72],
       ['🍎', 40.0, 392.0, 1.78],
@@ -338,7 +338,7 @@ class _Scene extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(58),
-              boxShadow: const [BoxShadow(color: Color(0x59000000), blurRadius: 60, offset: Offset(0, 30))],
+              boxShadow: [BoxShadow(color: Color(0x59000000), blurRadius: 60, offset: Offset(0, 30))],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(58),
@@ -353,7 +353,7 @@ class _Scene extends StatelessWidget {
                       child: Container(
                         width: 90,
                         height: 340,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(colors: [
                             Color(0x00FFFFFF),
                             Color(0xD9FFFFFF),
@@ -378,15 +378,15 @@ class _Scene extends StatelessWidget {
         opacity: tag,
         child: Text.rich(
           TextSpan(children: [
-            TextSpan(text: 'Kirana se sabzi tak, ', style: body(16, color: const Color(0xFFEAF6E3), weight: FontWeight.w600)),
-            TextSpan(text: 'sab 500 m ke andar', style: body(16, color: const Color(0xFFBDE89A), weight: FontWeight.w700)),
+            TextSpan(text: 'Kirana se sabzi tak, ', style: body(16, color: Color(0xFFEAF6E3), weight: FontWeight.w600)),
+            TextSpan(text: 'sab 500 m ke andar', style: body(16, color: Color(0xFFBDE89A), weight: FontWeight.w700)),
           ]),
           textAlign: TextAlign.center,
         ),
       ),
     ));
     // chips
-    const chips = [
+    final chips = [
       ['Kirana', 1.76],
       ['Sabzi & Phal', 1.81],
       ['Thele wale', 1.87],
@@ -404,15 +404,15 @@ class _Scene extends StatelessWidget {
               child: Transform.translate(
                 offset: Offset(0, 10 * (1 - p)),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 13, vertical: 7),
                   decoration: BoxDecoration(
-                    color: const Color(0x1AFFFFFF),
+                    color: Color(0x1AFFFFFF),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0x59BDE89A)),
+                    border: Border.all(color: Color(0x59BDE89A)),
                   ),
                   child: Text(ch[0] as String,
-                      style: body(12.5, color: const Color(0xFFEAF6E3), weight: FontWeight.w600)),
+                      style: body(12.5, color: Color(0xFFEAF6E3), weight: FontWeight.w600)),
                 ),
               ),
             );
@@ -428,14 +428,14 @@ class _Scene extends StatelessWidget {
         child: Container(
           width: 140,
           height: 5,
-          decoration: BoxDecoration(color: const Color(0x26FFFFFF), borderRadius: BorderRadius.circular(3)),
+          decoration: BoxDecoration(color: Color(0x26FFFFFF), borderRadius: BorderRadius.circular(3)),
           alignment: Alignment.centerLeft,
           child: Container(
             width: 140 * barFill,
             height: 5,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(3),
-              gradient: const LinearGradient(colors: [kLime, Color(0xFFD4F5A8)]),
+              gradient: LinearGradient(colors: [kLime, Color(0xFFD4F5A8)]),
             ),
           ),
         ),
@@ -454,12 +454,12 @@ class _MapPin extends StatelessWidget {
       width: 38,
       height: 44,
       child: Stack(alignment: Alignment.topCenter, children: [
-        const Icon(Icons.location_on, size: 46, color: Colors.white, shadows: [
+        Icon(Icons.location_on, size: 46, color: Colors.white, shadows: [
           Shadow(color: Color(0x59000000), blurRadius: 10, offset: Offset(0, 4))
         ]),
         Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(emoji, style: const TextStyle(fontSize: 15)),
+          padding: EdgeInsets.only(top: 8),
+          child: Text(emoji, style: TextStyle(fontSize: 15)),
         ),
       ]),
     );
@@ -480,15 +480,15 @@ class _CircleReveal extends CustomClipper<Path> {
 }
 
 class _DashedCircle extends CustomPainter {
-  const _DashedCircle();
+  _DashedCircle();
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0x73BDE89A)
+      ..color = Color(0x73BDE89A)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     final r = size.width / 2;
-    const dashes = 60;
+    final dashes = 60;
     for (var i = 0; i < dashes; i++) {
       final a0 = i * 2 * math.pi / dashes;
       canvas.drawArc(Rect.fromCircle(center: Offset(r, r), radius: r), a0, math.pi / dashes, false, paint);
@@ -500,14 +500,14 @@ class _DashedCircle extends CustomPainter {
 }
 
 class _GridPainter extends CustomPainter {
-  const _GridPainter();
+  _GridPainter();
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = const Color(0x0EFFFFFF)
+      ..color = Color(0x0EFFFFFF)
       ..strokeWidth = 1.5;
     // simple perspective street grid in the lower half
-    const horizon = 300.0;
+    final horizon = 300.0;
     for (var i = 0; i < 14; i++) {
       final y = horizon + math.pow(i / 13, 1.6) * (size.height - horizon);
       canvas.drawLine(Offset(0, y.toDouble()), Offset(size.width, y.toDouble()), p);
@@ -530,13 +530,13 @@ class _SkylinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bld = Paint()
-      ..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF0F5A24), Color(0xFF073317)])
+      ..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF0F5A24), Color(0xFF073317)])
           .createShader(Offset.zero & size);
-    final awning = Paint()..color = const Color(0xFF1E7A2E);
-    final scallop = Paint()..color = const Color(0xD9E9F5DE);
+    final awning = Paint()..color = Color(0xFF1E7A2E);
+    final scallop = Paint()..color = Color(0xD9E9F5DE);
     Paint win(double at) {
       final on = seg(t, at, at + 0.12);
-      return Paint()..color = Color.lerp(const Color(0xFF0A3D18), const Color(0xFFFFD86B), on)!;
+      return Paint()..color = Color.lerp(Color(0xFF0A3D18), Color(0xFFFFD86B), on)!;
     }
 
     void scallops(double x0, double y, int n, double w) {
@@ -544,48 +544,48 @@ class _SkylinePainter extends CustomPainter {
         final x = x0 + i * 24;
         canvas.drawRRect(
             RRect.fromRectAndCorners(Rect.fromLTWH(x, y, w, 12),
-                bottomLeft: const Radius.circular(6), bottomRight: const Radius.circular(6)),
+                bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
             scallop);
       }
     }
 
     // building 1
-    canvas.drawRect(const Rect.fromLTWH(0, 70, 88, 120), bld);
+    canvas.drawRect(Rect.fromLTWH(0, 70, 88, 120), bld);
     canvas.drawPath(Path()..moveTo(-4, 70)..lineTo(92, 70)..lineTo(84, 88)..lineTo(4, 88)..close(), awning);
     scallops(4, 88, 4, 12);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(12, 112, 26, 22), const Radius.circular(3)), win(0.25));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(50, 112, 26, 22), const Radius.circular(3)), win(0.39));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(12, 112, 26, 22), Radius.circular(3)), win(0.25));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(50, 112, 26, 22), Radius.circular(3)), win(0.39));
     // building 2
-    canvas.drawRect(const Rect.fromLTWH(96, 40, 70, 150), bld);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(106, 58, 20, 20), const Radius.circular(3)), win(0.32));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(136, 58, 20, 20), const Radius.circular(3)), win(0.53));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(106, 96, 20, 20), const Radius.circular(3)), win(0.46));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(136, 96, 20, 20), const Radius.circular(3)), win(9));
+    canvas.drawRect(Rect.fromLTWH(96, 40, 70, 150), bld);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(106, 58, 20, 20), Radius.circular(3)), win(0.32));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(136, 58, 20, 20), Radius.circular(3)), win(0.53));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(106, 96, 20, 20), Radius.circular(3)), win(0.46));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(136, 96, 20, 20), Radius.circular(3)), win(9));
     canvas.drawPath(Path()..moveTo(92, 132)..lineTo(170, 132)..lineTo(164, 146)..lineTo(98, 146)..close(), Paint()..color = kLime);
     scallops(98, 146, 3, 12);
     // lamp
     final lampOn = seg(t, 0.1, 0.3);
-    canvas.drawCircle(const Offset(184.5, 68), 22, Paint()..color = Color.fromRGBO(255, 216, 107, 0.18 * lampOn));
-    canvas.drawRect(const Rect.fromLTWH(182, 70, 5, 120), Paint()..color = const Color(0xFF0A3D18));
-    canvas.drawRect(const Rect.fromLTWH(179, 64, 11, 8), Paint()..color = Color.lerp(const Color(0xFF0A3D18), const Color(0xFFFFD86B), 0.35 + 0.65 * lampOn)!);
+    canvas.drawCircle(Offset(184.5, 68), 22, Paint()..color = Color.fromRGBO(255, 216, 107, 0.18 * lampOn));
+    canvas.drawRect(Rect.fromLTWH(182, 70, 5, 120), Paint()..color = Color(0xFF0A3D18));
+    canvas.drawRect(Rect.fromLTWH(179, 64, 11, 8), Paint()..color = Color.lerp(Color(0xFF0A3D18), Color(0xFFFFD86B), 0.35 + 0.65 * lampOn)!);
     // building 3
-    canvas.drawRect(const Rect.fromLTWH(200, 80, 92, 110), bld);
+    canvas.drawRect(Rect.fromLTWH(200, 80, 92, 110), bld);
     canvas.drawPath(Path()..moveTo(196, 80)..lineTo(296, 80)..lineTo(288, 98)..lineTo(204, 98)..close(), awning);
     scallops(204, 98, 4, 12);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(212, 122, 30, 26), const Radius.circular(3)), win(0.60));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(252, 122, 30, 26), const Radius.circular(3)), win(0.32));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(212, 122, 30, 26), Radius.circular(3)), win(0.60));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(252, 122, 30, 26), Radius.circular(3)), win(0.32));
     // building 4
-    canvas.drawRect(const Rect.fromLTWH(300, 56, 90, 134), bld);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(312, 72, 22, 20), const Radius.circular(3)), win(0.53));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(348, 72, 22, 20), const Radius.circular(3)), win(0.25));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(312, 108, 22, 20), const Radius.circular(3)), win(0.39));
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(348, 108, 22, 20), const Radius.circular(3)), win(0.60));
+    canvas.drawRect(Rect.fromLTWH(300, 56, 90, 134), bld);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(312, 72, 22, 20), Radius.circular(3)), win(0.53));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(348, 72, 22, 20), Radius.circular(3)), win(0.25));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(312, 108, 22, 20), Radius.circular(3)), win(0.39));
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(348, 108, 22, 20), Radius.circular(3)), win(0.60));
     // tree
-    canvas.drawCircle(const Offset(300, 150), 20, Paint()..color = const Color(0xFF2E7D32));
-    canvas.drawCircle(const Offset(286, 160), 15, Paint()..color = const Color(0xFF388E3C));
-    canvas.drawRect(const Rect.fromLTWH(297, 160, 5, 30), Paint()..color = const Color(0xFF0A3D18));
+    canvas.drawCircle(Offset(300, 150), 20, Paint()..color = Color(0xFF2E7D32));
+    canvas.drawCircle(Offset(286, 160), 15, Paint()..color = Color(0xFF388E3C));
+    canvas.drawRect(Rect.fromLTWH(297, 160, 5, 30), Paint()..color = Color(0xFF0A3D18));
     // road
-    canvas.drawRect(const Rect.fromLTWH(0, 176, 390, 14), Paint()..color = const Color(0xFF04240F));
+    canvas.drawRect(Rect.fromLTWH(0, 176, 390, 14), Paint()..color = Color(0xFF04240F));
   }
 
   @override
@@ -606,9 +606,9 @@ class _CartPainter extends CustomPainter {
         ..color = Color.fromRGBO(155, 224, 90, speed)
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round;
-      canvas.drawLine(const Offset(-90, 70), const Offset(-20, 70), sp);
-      canvas.drawLine(const Offset(-120, 95), const Offset(-30, 95), sp);
-      canvas.drawLine(const Offset(-80, 120), const Offset(-15, 120), sp);
+      canvas.drawLine(Offset(-90, 70), Offset(-20, 70), sp);
+      canvas.drawLine(Offset(-120, 95), Offset(-30, 95), sp);
+      canvas.drawLine(Offset(-80, 120), Offset(-15, 120), sp);
     }
     // basket fill + mesh
     final basket = Path()
@@ -617,15 +617,15 @@ class _CartPainter extends CustomPainter {
       ..lineTo(206, 122)
       ..lineTo(66, 122)
       ..close();
-    canvas.drawPath(basket, Paint()..color = const Color(0xFFEAF6E3));
+    canvas.drawPath(basket, Paint()..color = Color(0xFFEAF6E3));
     final mesh = Paint()
-      ..color = const Color(0xFFB8DFA0)
+      ..color = Color(0xFFB8DFA0)
       ..strokeWidth = 5;
-    canvas.drawLine(const Offset(54, 76), const Offset(220, 76), mesh);
-    canvas.drawLine(const Offset(60, 99), const Offset(212, 99), mesh);
-    canvas.drawLine(const Offset(100, 52), const Offset(94, 122), mesh);
-    canvas.drawLine(const Offset(146, 52), const Offset(148, 122), mesh);
-    canvas.drawLine(const Offset(190, 52), const Offset(178, 122), mesh);
+    canvas.drawLine(Offset(54, 76), Offset(220, 76), mesh);
+    canvas.drawLine(Offset(60, 99), Offset(212, 99), mesh);
+    canvas.drawLine(Offset(100, 52), Offset(94, 122), mesh);
+    canvas.drawLine(Offset(146, 52), Offset(148, 122), mesh);
+    canvas.drawLine(Offset(190, 52), Offset(178, 122), mesh);
     final frame = Paint()
       ..color = kGD
       ..style = PaintingStyle.stroke
@@ -648,10 +648,10 @@ class _CartPainter extends CustomPainter {
       canvas.drawCircle(Offset.zero, 19, Paint()..color = kGD);
       canvas.drawCircle(Offset.zero, 8, Paint()..color = Colors.white);
       final sp = Paint()
-        ..color = const Color(0xFF4CAF50)
+        ..color = Color(0xFF4CAF50)
         ..strokeWidth = 3;
-      canvas.drawLine(const Offset(0, -15), const Offset(0, 15), sp);
-      canvas.drawLine(const Offset(-15, 0), const Offset(15, 0), sp);
+      canvas.drawLine(Offset(0, -15), Offset(0, 15), sp);
+      canvas.drawLine(Offset(-15, 0), Offset(15, 0), sp);
       canvas.drawCircle(Offset.zero, 4, Paint()..color = kGD);
       canvas.restore();
     }
@@ -659,7 +659,7 @@ class _CartPainter extends CustomPainter {
     if (dust > 0 && dust < 1) {
       final d = Paint()..color = Color.fromRGBO(215, 238, 208, 0.9 * (1 - dust));
       final s = 0.2 + 1.6 * dust;
-      for (final c in [const Offset(60, 178), const Offset(48, 172), const Offset(70, 170), const Offset(220, 178), const Offset(232, 172)]) {
+      for (final c in [Offset(60, 178), Offset(48, 172), Offset(70, 170), Offset(220, 178), Offset(232, 172)]) {
         canvas.drawCircle(c.translate(0, -6 * dust), 5 * s, d);
       }
     }
@@ -675,26 +675,26 @@ class _SparrowPainter extends CustomPainter {
   _SparrowPainter(this.wing);
   @override
   void paint(Canvas canvas, Size size) {
-    final brown = Paint()..color = const Color(0xFF8D5A32);
-    final dark = Paint()..color = const Color(0xFF6D4426);
+    final brown = Paint()..color = Color(0xFF8D5A32);
+    final dark = Paint()..color = Color(0xFF6D4426);
     canvas.drawPath(Path()..moveTo(14, 24)..lineTo(0, 18)..lineTo(2, 31)..lineTo(16, 30)..close(), dark);
-    canvas.drawOval(Rect.fromCenter(center: const Offset(30, 26), width: 36, height: 24), brown);
-    canvas.drawOval(Rect.fromCenter(center: const Offset(31, 31), width: 26, height: 13), Paint()..color = const Color(0xFFEAD7B7));
+    canvas.drawOval(Rect.fromCenter(center: Offset(30, 26), width: 36, height: 24), brown);
+    canvas.drawOval(Rect.fromCenter(center: Offset(31, 31), width: 26, height: 13), Paint()..color = Color(0xFFEAD7B7));
     canvas.save();
     canvas.translate(36, 22);
     canvas.rotate(wing);
-    canvas.drawOval(Rect.fromCenter(center: const Offset(-11, 0), width: 26, height: 15), dark);
+    canvas.drawOval(Rect.fromCenter(center: Offset(-11, 0), width: 26, height: 15), dark);
     canvas.restore();
-    canvas.drawCircle(const Offset(44, 15), 9.5, brown);
-    canvas.drawPath(Path()..moveTo(36, 11)..quadraticBezierTo(42, 3, 51, 9)..lineTo(45, 12)..close(), Paint()..color = const Color(0xFF5D3A1A));
-    canvas.drawOval(Rect.fromCenter(center: const Offset(46, 19), width: 10, height: 7.6), Paint()..color = Colors.white);
-    canvas.drawCircle(const Offset(47.5, 13.5), 1.8, Paint()..color = const Color(0xFF111111));
-    canvas.drawPath(Path()..moveTo(52, 14)..lineTo(59, 16.5)..lineTo(52, 19)..close(), Paint()..color = const Color(0xFF3E2A1A));
+    canvas.drawCircle(Offset(44, 15), 9.5, brown);
+    canvas.drawPath(Path()..moveTo(36, 11)..quadraticBezierTo(42, 3, 51, 9)..lineTo(45, 12)..close(), Paint()..color = Color(0xFF5D3A1A));
+    canvas.drawOval(Rect.fromCenter(center: Offset(46, 19), width: 10, height: 7.6), Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(47.5, 13.5), 1.8, Paint()..color = Color(0xFF111111));
+    canvas.drawPath(Path()..moveTo(52, 14)..lineTo(59, 16.5)..lineTo(52, 19)..close(), Paint()..color = Color(0xFF3E2A1A));
     final leg = Paint()
-      ..color = const Color(0xFF5D3A1A)
+      ..color = Color(0xFF5D3A1A)
       ..strokeWidth = 2;
-    canvas.drawLine(const Offset(28, 37), const Offset(28, 43), leg);
-    canvas.drawLine(const Offset(34, 37), const Offset(34, 43), leg);
+    canvas.drawLine(Offset(28, 37), Offset(28, 43), leg);
+    canvas.drawLine(Offset(34, 37), Offset(34, 43), leg);
   }
 
   @override
