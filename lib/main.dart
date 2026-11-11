@@ -143,8 +143,17 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
       builder: (context, child) {
         final mq = MediaQuery.of(context);
         final b = mq.viewPadding.bottom;
-        if (b == 0) return child!;
-        return ColoredBox(
+        // Colour behind the phone's buttons follows the app's Light / Dark setting.
+        final navStyle = SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: gDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarColor: kCard,
+          systemNavigationBarDividerColor: kLine,
+          systemNavigationBarIconBrightness: gDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarContrastEnforced: false,
+        );
+        if (b == 0) return AnnotatedRegion<SystemUiOverlayStyle>(value: navStyle, child: child!);
+        return AnnotatedRegion<SystemUiOverlayStyle>(value: navStyle, child: ColoredBox(
           color: kCard,
           child: Padding(
             padding: EdgeInsets.only(bottom: b),
@@ -155,7 +164,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
               child: child!,
             ),
           ),
-        );
+        ));
       },
       home: const SplashScreen(),
     );

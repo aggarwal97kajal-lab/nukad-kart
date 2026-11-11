@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Nukad Kart launch yellow (Golden Corner brand #F8CB46). -->
+    <!-- Launch screen: Golden Corner brand yellow. -->
     <color name="nk_launch">#F8CB46</color>
+    <!-- Behind the phone's buttons after launch (light). -->
+    <color name="nk_normal">#FFFFFF</color>
 </resources>

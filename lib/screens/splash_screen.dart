@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
 import 'login_screen.dart';
@@ -22,6 +23,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    // Full screen: hide the phone's buttons and status bar while the splash plays.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     c = AnimationController(vsync: this, duration: Duration(milliseconds: 3000))
       ..addStatusListener((s) {
         if (s == AnimationStatus.completed) _go();
@@ -32,6 +35,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void _go() {
     if (_left || !mounted) return;
     _left = true;
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     final state = AppScope.read(context);
     final next = (state.signedIn || state.guest) ? HomeShell() : LoginScreen();
     Navigator.of(context).pushReplacement(PageRouteBuilder(
@@ -43,6 +47,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
+    if (!_left) SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     c.dispose();
     super.dispose();
   }
@@ -65,8 +70,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             stops: [0, 0.38, 0.7, 1],
           ),
         ),
-        child: FittedBox(
+        child: SizedBox.expand(
+          child: FittedBox(
           fit: BoxFit.cover,
+          clipBehavior: Clip.hardEdge,
           child: SizedBox(
             width: 390,
             height: 844,
@@ -75,6 +82,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               builder: (context, _) => _Scene(t: c.value * 2.5),
             ),
           ),
+        ),
         ),
       ),
       ),

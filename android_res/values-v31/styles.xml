@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 12+: full-screen yellow system splash with an empty icon (no logo). -->
+    <!-- Launch: plain brand yellow, no logo. -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
         <item name="android:windowSplashScreenBackground">@color/nk_launch</item>
@@ -9,7 +9,10 @@
         <item name="android:statusBarColor">@color/nk_launch</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+    <!-- After launch: light or dark behind the phone's buttons, never yellow. -->
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">@color/nk_launch</item>
+        <item name="android:windowBackground">@color/nk_normal</item>
+        <item name="android:navigationBarColor">@color/nk_normal</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>
