@@ -213,7 +213,7 @@ class _HomeTabState extends State<HomeTab> {
       Text(t('Shops within 500 m'), style: head(17)),
       SizedBox(height: 10),
       // Open shops first, closed ones last.
-      for (final st in [...kStores.where((x) => x.isOpen), ...kStores.where((x) => !x.isOpen)]) ...
+      for (final st in [...kStores.where((x) => x.isOpen), ...kStores.where((x) => !x.isOpen)]) ...[
         _StoreCard(store: st),
         SizedBox(height: 10),
       ],
