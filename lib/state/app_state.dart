@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/widgets.dart';
 import '../data/demo_data.dart';
@@ -32,6 +33,11 @@ class Order {
   final bool door;
   final DateTime placedAt;
   int fee = 0;
+
+  /// 4-digit delivery code, made when the store packs the order.
+  /// The delivery person must enter it in the store app to mark the order delivered.
+  String? otp;
+  int wrongOtpTries = 0;
   OrderStatus status = OrderStatus.placed;
   final Map<OrderStatus, DateTime> times = {};
   Order(this.id, this.storeId, this.lines, this.door, this.placedAt) {
@@ -458,8 +464,13 @@ class AppState extends ChangeNotifier {
           notifications.insert(
               0, AppNotification('Order accepted', '${storeById(o.storeId).name} accepted #${o.id}'));
         }
-        if (s == OrderStatus.delivered) {
-          notifications.insert(0, AppNotification('Delivered', 'Order #${o.id} was delivered'));
+        if (s == OrderStatus.packed) {
+          o.otp = (1000 + math.Random().nextInt(9000)).toString();
+          notifications.insert(
+              0,
+              AppNotification('Delivery code for #${o.id}: ${o.otp}',
+                  'Give this code to the delivery person only after you get your items.'));
+          onOtp?.call(o);
         }
         notifyListeners();
       }));
@@ -467,8 +478,26 @@ class AppState extends ChangeNotifier {
 
     step(4, OrderStatus.accepted);
     step(9, OrderStatus.packed);
-    step(14, OrderStatus.outForDelivery);
-    step(20, OrderStatus.delivered);
+    step(14, OrderStatus.outForDelivery); // out for delivery, or ready for pickup
+    // Delivered only when the delivery person enters the right code (verifyOtp).
+  }
+
+  /// Shows the code to the customer as a pop-up message too.
+  void Function(Order o)? onOtp;
+
+  /// Store app side (simulated in this demo): the delivery person types the customer's code.
+  bool verifyOtp(Order o, String code) {
+    if (o.otp == null || !o.isOpen) return false;
+    if (code.trim() != o.otp) {
+      o.wrongOtpTries++;
+      notifyListeners();
+      return false;
+    }
+    o.status = OrderStatus.delivered;
+    o.times[OrderStatus.delivered] = DateTime.now();
+    notifications.insert(0, AppNotification('Delivered', 'Order #${o.id} was delivered'));
+    notifyListeners();
+    return true;
   }
 
   /// Customer can cancel only while the order is Placed or Accepted.

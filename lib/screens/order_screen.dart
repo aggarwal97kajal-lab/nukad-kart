@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
@@ -54,7 +55,7 @@ class _OrderScreenState extends State<OrderScreen> {
           LiveDeliveryMap(
             key: ValueKey('map-${o.id}'),
             startedAt: o.times[OrderStatus.outForDelivery]!,
-            eta: Duration(seconds: 6), // demo: the store marks it delivered 6 s later
+            eta: Duration(seconds: 6), // demo: the rider reaches your door in 6 s
             riderName: 'Raju',
             storeName: st.name,
             payable: o.payable,
@@ -62,6 +63,10 @@ class _OrderScreenState extends State<OrderScreen> {
           )
         else
           _hero(o),
+        if (o.otp != null && o.isOpen) ...[
+          SizedBox(height: 12),
+          _otpCard(context, s, o),
+        ],
         SizedBox(height: 12),
         CardBox(
           padding: EdgeInsets.fromLTRB(16, 14, 16, 4),
@@ -70,7 +75,8 @@ class _OrderScreenState extends State<OrderScreen> {
             _step(t('Accepted by store'), o, OrderStatus.accepted),
             _step(t('Packed'), o, OrderStatus.packed),
             _step(o.door ? 'Out for delivery' : 'Ready for pickup', o, OrderStatus.outForDelivery),
-            _step(t('Delivered'), o, OrderStatus.delivered),
+            _step(t('Delivered'), o, OrderStatus.delivered,
+                hint: o.isOpen && o.otp != null ? 'When the code is entered' : null),
           ]),
         ),
         SizedBox(height: 12),
@@ -205,7 +211,7 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-  Widget _step(String label, Order o, OrderStatus st) {
+  Widget _step(String label, Order o, OrderStatus st, {String? hint}) {
     final at = o.times[st];
     final done = at != null;
     final order = [
@@ -217,7 +223,7 @@ class _OrderScreenState extends State<OrderScreen> {
     ];
     final cur = order.indexOf(o.status);
     final isNow = order.indexOf(st) == cur + 1 && o.isOpen;
-    final time = at != null ? TimeOfDay.fromDateTime(at).format(context) : (isNow ? 'Next' : '');
+    final time = at != null ? TimeOfDay.fromDateTime(at).format(context) : (hint ?? (isNow ? 'Next' : ''));
     return Padding(
       padding: EdgeInsets.only(bottom: 10),
       child: Row(children: [
@@ -265,5 +271,107 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
     );
     if (ok == true) s.cancelOrder(o);
+  }
+
+  /// The customer's delivery code (OTP), shown once the store packs the order.
+  Widget _otpCard(BuildContext context, AppState s, Order o) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+          color: kSurf, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBrand, width: 1.5)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.lock_outline, color: kGText, size: 20),
+          SizedBox(width: 8),
+          Expanded(child: Text(o.door ? 'Delivery code' : 'Pickup code', style: head(16))),
+          Pill('ONLY FOR YOU', color: kAmb, bg: kAmbBg),
+        ]),
+        SizedBox(height: 12),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          for (final ch in o.otp!.split(''))
+            Container(
+              width: 54,
+              height: 62,
+              margin: EdgeInsets.symmetric(horizontal: 5),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+              child: Text(ch, style: head(30)),
+            ),
+        ]),
+        SizedBox(height: 12),
+        Text(
+          o.door
+              ? 'Tell this code to the delivery person only after you get your items. The order is marked delivered only when they enter it.'
+              : 'Tell this code at the shop counter when you collect your items.',
+          style: body(12.5, color: kMute),
+        ),
+        SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => _deliveryPersonSheet(context, s, o),
+            icon: Icon(Icons.delivery_dining, color: kG, size: 18),
+            label: Text('Demo: act as the delivery person', style: body(13, color: kG, weight: FontWeight.w700)),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  /// Demo stand-in for the store app: the delivery person types the code.
+  Future<void> _deliveryPersonSheet(BuildContext context, AppState s, Order o) async {
+    final c = TextEditingController();
+    String? error;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kCard,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('STORE APP · DELIVERY', style: body(11.5, color: kMute, weight: FontWeight.w800)),
+            SizedBox(height: 4),
+            Text('Enter the customer’s code', style: head(20)),
+            SizedBox(height: 4),
+            Text('Order #${o.id} · ${rupees(o.payable)} to collect', style: body(13, color: kMute)),
+            SizedBox(height: 16),
+            TextField(
+              controller: c,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              textAlign: TextAlign.center,
+              style: head(28).copyWith(letterSpacing: 18),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              onChanged: (_) => setSheet(() => error = null),
+              decoration: InputDecoration(
+                counterText: '',
+                hintText: '••••',
+                errorText: error,
+                filled: true,
+                fillColor: kSurf,
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kLine)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kG, width: 2)),
+              ),
+            ),
+            SizedBox(height: 14),
+            PrimaryButton('Verify & mark delivered', onTap: () {
+              if (c.text.length != 4) {
+                setSheet(() => error = 'Enter all 4 digits');
+                return;
+              }
+              if (s.verifyOtp(o, c.text)) {
+                Navigator.pop(ctx);
+                showToast(context, 'Code matched. Order delivered.');
+              } else {
+                setSheet(() => error = 'Wrong code. Ask the customer to check the code in their app.');
+              }
+            }),
+          ]),
+        ),
+      ),
+    );
   }
 }

@@ -54,6 +54,15 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
             style: TextStyle(color: gDark ? Color(0xFF21331B) : Colors.white, fontWeight: FontWeight.w600)),
       ));
     };
+    s.onOtp = (o) {
+      messengerKey.currentState?.showSnackBar(SnackBar(
+        duration: Duration(seconds: 8),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: gDark ? Color(0xFFF3F0E2) : Color(0xFF21331B),
+        content: Text('🔐 Order packed. Your delivery code is ${o.otp}',
+            style: TextStyle(color: gDark ? Color(0xFF21331B) : Colors.white, fontWeight: FontWeight.w700)),
+      ));
+    };
     s.onBackInStock = (storeId, productId) {
       final p = productById(productId);
       final st = storeById(storeId);

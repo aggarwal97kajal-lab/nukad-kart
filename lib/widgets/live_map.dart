@@ -76,7 +76,7 @@ class _LiveDeliveryMapState extends State<LiveDeliveryMap> with SingleTickerProv
                 return Row(children: [
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(secsLeft <= 0 ? 'Arriving now' : 'Arriving in ~${(secsLeft / 60).ceil()} min',
+                      Text(secsLeft <= 0 ? 'At your door · share your code' : 'Arriving in ~${(secsLeft / 60).ceil()} min',
                           style: head(19)),
                       Text('Out for delivery · $metres m away', style: body(12.5, color: kMute)),
                     ]),

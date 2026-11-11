@@ -496,6 +496,7 @@ class FaqScreen extends StatelessWidget {
   static const faqs = [
     ['How do I pay?', 'You pay the store at delivery, by cash or the store’s UPI QR. There is no online payment in the app.'],
     ['Why only shops within 500 m?', 'Nukad Kart is for your own nukkad. Nearby shops deliver faster and you can also walk over to pick up.'],
+    ['What is the delivery code?', 'When the store packs your order you get a 4-digit code on the order screen and as a notification. Tell it to the delivery person only after you get your items. The order is marked delivered only when they enter the right code.'],
     ['Can I cancel my order?', 'Yes, but only while the order is Placed (waiting for the store) or Accepted. Once the store marks it Packed, it can’t be cancelled from the app — call the store if you need a change. Cancelling after the store has accepted counts as 1 of the 3 “not taken” orders. You pay only at delivery, so there is nothing to refund.'],
     ['Why is there a ₹20 delivery fee?', 'Orders below ₹199 for home delivery have a ₹20 fee, paid to the store with your order. From ₹199 delivery is free. Pickup is always free.'],
     ['How do I delete my account?', 'Account → Account privacy → Request to delete account. Pick a reason and send the request. Order and complaint records are kept as the law requires.'],

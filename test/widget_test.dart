@@ -87,4 +87,18 @@ void main() {
     expect(ThelaTracker.statusFor(t, now), ThelaStatus.movingAway);
     expect(ThelaTracker.statusFor(t, now.add(ThelaTracker.outsideGrace)), ThelaStatus.notAvailable);
   });
+
+  test('delivered only with the right delivery code', () {
+    final s = AppState();
+    s.add('s1', 'p6');
+    final o = s.placeOrder(door: true);
+    o.status = OrderStatus.outForDelivery;
+    o.otp = '4821';
+    expect(s.verifyOtp(o, '1111'), isFalse);
+    expect(o.status, OrderStatus.outForDelivery);
+    expect(o.wrongOtpTries, 1);
+    expect(s.verifyOtp(o, '4821'), isTrue);
+    expect(o.status, OrderStatus.delivered);
+    s.dispose();
+  });
 }
