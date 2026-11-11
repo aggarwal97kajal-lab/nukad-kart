@@ -110,14 +110,22 @@ class Store {
   final bool pickup;
   final String openTill;
   final String phone;
+  final String opensAt;
+  final String address;
+  /// Shop photo. Vendors must upload a real photo of their shop to sign up.
+  String get photo => 'assets/images/stores/$id.jpg';
+  String get hours => '$opensAt – $openTill';
   const Store(this.id, this.name, this.distanceM, this.rating, this.ratingCount, this.door,
-      this.pickup, this.openTill, this.phone);
+      this.pickup, this.openTill, this.phone, {this.opensAt = '8 am', this.address = ''});
 }
 
 const List<Store> kStores = [
-  Store('s1', 'Sharma General Store', 180, 4.6, 212, true, true, '10 pm', '+91 98765 11001'),
-  Store('s2', 'Gupta Kirana & Dairy', 320, 4.4, 98, true, false, '9:30 pm', '+91 98765 11002'),
-  Store('s3', 'Balaji Provision', 470, 4.2, 54, false, true, '9 pm', '+91 98765 11003'),
+  Store('s1', 'Sharma General Store', 180, 4.6, 212, true, true, '10 pm', '+91 98765 11001',
+      opensAt: '8 am', address: 'Shop 4, Block C Market, Sector 21, Rohini, New Delhi 110086'),
+  Store('s2', 'Gupta Kirana & Dairy', 320, 4.4, 98, true, false, '9:30 pm', '+91 98765 11002',
+      opensAt: '6 am', address: 'B-118, near Durga Mandir, Sector 21, Rohini, New Delhi 110086'),
+  Store('s3', 'Balaji Provision', 470, 4.2, 54, false, true, '9 pm', '+91 98765 11003',
+      opensAt: '9 am', address: 'Shop 11, Pocket 3 Market, Sector 22, Rohini, New Delhi 110086'),
 ];
 
 Store storeById(String id) => kStores.firstWhere((s) => s.id == id);

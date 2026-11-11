@@ -8,6 +8,7 @@ import 'address_screen.dart';
 import 'orders_tab.dart';
 import 'product_screen.dart';
 import 'store_screen.dart';
+import 'login_screen.dart';
 
 // ---------------- bottom-sheet chooser ----------------
 class ChoiceOption {
@@ -133,11 +134,11 @@ class _Page extends StatelessWidget {
 }
 
 Widget _empty(String emoji, String title, String sub) => Padding(
-      padding: const EdgeInsets.only(top: 60),
-      child: Column(children: [
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
         Text(emoji, style: const TextStyle(fontSize: 56)),
         const SizedBox(height: 10),
-        Text(title, style: head(18)),
+        Text(title, textAlign: TextAlign.center, style: head(18)),
         const SizedBox(height: 4),
         Text(sub, textAlign: TextAlign.center, style: body(13, color: kMute)),
       ]),
@@ -236,10 +237,11 @@ class AddressBookScreen extends StatelessWidget {
             child: CardBox(
               border: a == s.current ? kG : null,
               child: Row(children: [
-                Icon(a == s.current ? Icons.home : Icons.location_on_outlined, color: kG),
+                Icon(labelIcon(a.label), color: kG),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(a.label.toUpperCase(), style: body(11.5, color: kG, weight: FontWeight.w800)),
                     Text(a.short, style: body(14, weight: FontWeight.w600)),
                     Text('${a.city}, ${a.state} ${a.pin}', style: body(12, color: kMute)),
                     if (a.name.isNotEmpty) Text('${a.name} · +91 ${a.phone}', style: body(12, color: kMute)),
@@ -258,7 +260,9 @@ class AddressBookScreen extends StatelessWidget {
             ),
           ),
         const SizedBox(height: 6),
-        Text('Only shops within 500 m of the selected address are shown.', style: body(12, color: kMute)),
+        if (s.addresses.isNotEmpty)
+          Text('Only shops within 500 m of the selected address are shown.',
+              textAlign: TextAlign.center, style: body(12, color: kMute)),
       ],
     );
   }
@@ -436,8 +440,16 @@ class PrivacyScreen extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(Icons.delete_outline, color: kRed),
-            title: Text('Delete my account', style: body(14, color: kRed, weight: FontWeight.w600)),
-            onTap: () => showToast(context, 'Demo build: account deletion is not connected yet.'),
+            title: Text('Request to delete account', style: body(14, color: kRed, weight: FontWeight.w600)),
+            subtitle: Text('Pick a reason, then send the request', style: body(12, color: kMute)),
+            trailing: Icon(Icons.chevron_right, color: kMute),
+            onTap: () {
+              if (!s.signedIn) {
+                showToast(context, 'Log in first — guests have no account to delete.');
+                return;
+              }
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const DeleteReasonsScreen()));
+            },
           ),
         ]),
       ),
@@ -473,11 +485,14 @@ class FaqScreen extends StatelessWidget {
   static const faqs = [
     ['How do I pay?', 'You pay the store at delivery, by cash or the store’s UPI QR. There is no online payment in the app.'],
     ['Why only shops within 500 m?', 'Nukad Kart is for your own nukkad. Nearby shops deliver faster and you can also walk over to pick up.'],
+    ['Can I cancel my order?', 'Yes, but only while the order is Placed (waiting for the store) or Accepted. Once the store marks it Packed, it can’t be cancelled from the app — call the store if you need a change. Cancelling after the store has accepted counts as 1 of the 3 “not taken” orders. You pay only at delivery, so there is nothing to refund.'],
+    ['Why is there a ₹20 delivery fee?', 'Orders below ₹199 for home delivery have a ₹20 fee, paid to the store with your order. From ₹199 delivery is free. Pickup is always free.'],
+    ['How do I delete my account?', 'Account → Account privacy → Request to delete account. Pick a reason and send the request. Order and complaint records are kept as the law requires.'],
     ['What if the store doesn’t accept?', 'If the store doesn’t accept within 5 minutes, the order is cancelled automatically. It is not counted against you.'],
     ['Can I order from two shops together?', 'No. One cart holds items from one shop. Adding from another shop asks you to start a new cart.'],
     ['How do I order from a thela?', 'Open Moving sellers, then call or WhatsApp the seller and pay in person. You can also request them for tomorrow.'],
     ['Who gives refunds?', 'The store. Nukad Kart passes your complaint to the store and records it, and can suspend stores at fault.'],
-    ['Why was my account blocked?', '3 orders placed and not taken in 90 days block ordering. You can appeal to the grievance officer.'],
+    ['Why was my account blocked?', '3 orders not taken (or cancelled after the store accepted) in 90 days block ordering. You can appeal to the grievance officer.'],
   ];
   @override
   Widget build(BuildContext context) {
@@ -503,8 +518,28 @@ class FaqScreen extends StatelessWidget {
   }
 }
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  late final AppState _s;
+
+  @override
+  void initState() {
+    super.initState();
+    _s = AppScope.read(context);
+  }
+
+  @override
+  void dispose() {
+    // Seen = read. The red count on the bell fades out when you go back.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _s.markAllRead());
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
@@ -514,6 +549,7 @@ class NotificationsScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: CardBox(
+            border: n.read ? null : kG,
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               CircleAvatar(backgroundColor: kGBg, child: Icon(Icons.notifications_none, color: kG)),
               const SizedBox(width: 12),
@@ -530,5 +566,127 @@ class NotificationsScreen extends StatelessWidget {
           ),
         ),
     ]);
+  }
+}
+
+
+// ---------------- Request to delete account ----------------
+class DeleteReasonsScreen extends StatelessWidget {
+  const DeleteReasonsScreen({super.key});
+  static const reasons = [
+    'I don’t want to use Nukad Kart anymore',
+    'I’m using a different account',
+    'I’m worried about my privacy',
+    'Too many notifications',
+    'The app isn’t working properly',
+    'No shops near me',
+    'Other',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return _Page(title: 'Delete account', children: [
+      Text('Request to delete account', style: head(24)),
+      const SizedBox(height: 4),
+      Text('Why would you like to delete your account?', style: body(13.5, color: kMute)),
+      const SizedBox(height: 14),
+      CardBox(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Column(children: [
+          for (var i = 0; i < reasons.length; i++) ...[
+            if (i > 0) Divider(height: 1, color: kLine, indent: 14, endIndent: 14),
+            ListTile(
+              title: Text(reasons[i], style: body(15)),
+              trailing: Icon(Icons.chevron_right, color: kInk),
+              onTap: () => Navigator.push(
+                  context, MaterialPageRoute(builder: (_) => DeleteFeedbackScreen(reason: reasons[i]))),
+            ),
+          ],
+        ]),
+      ),
+    ]);
+  }
+}
+
+class DeleteFeedbackScreen extends StatefulWidget {
+  final String reason;
+  const DeleteFeedbackScreen({super.key, required this.reason});
+  @override
+  State<DeleteFeedbackScreen> createState() => _DeleteFeedbackScreenState();
+}
+
+class _DeleteFeedbackScreenState extends State<DeleteFeedbackScreen> {
+  final _c = TextEditingController();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppScope.of(context);
+    final open = s.orders.where((o) => o.isOpen).length;
+    return _Page(title: 'Delete account', children: [
+      Text(widget.reason, style: head(24)),
+      const SizedBox(height: 6),
+      Text('We hope to see you back. Tell us what we could do better.', style: body(13.5, color: kMute)),
+      const SizedBox(height: 16),
+      TextField(
+        controller: _c,
+        maxLines: 6,
+        style: body(14),
+        decoration: InputDecoration(
+          labelText: 'Please share your feedback (optional)',
+          alignLabelWithHint: true,
+          filled: true,
+          fillColor: kCard,
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kLine)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kG, width: 2)),
+        ),
+      ),
+      const SizedBox(height: 16),
+      PrimaryButton('Send delete request', color: kRed, onTap: open > 0 ? null : () => _send(context, s)),
+      if (open > 0) ...[
+        const SizedBox(height: 8),
+        Text('You have $open open order${open > 1 ? 's' : ''}. Wait until it is delivered or cancelled.',
+            style: body(12.5, color: kRed, weight: FontWeight.w600)),
+      ],
+      const SizedBox(height: 14),
+      Text.rich(TextSpan(children: [
+        TextSpan(text: 'Note*: ', style: body(12.5, color: kRed, weight: FontWeight.w700)),
+        TextSpan(
+            text: 'Your profile, addresses, wishlist and saved stores are removed from this phone and you are logged out. '
+                'Order and complaint records are kept as the law requires.',
+            style: body(12.5, color: kMute)),
+      ])),
+    ]);
+  }
+
+  Future<void> _send(BuildContext context, AppState s) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kCard,
+        surfaceTintColor: kCard,
+        title: Text('Delete your account?', style: head(18)),
+        content: Text('This can’t be undone. You’ll need to sign up again to order.', style: body(14)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(t('Cancel'))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Delete', style: body(14, color: kRed, weight: FontWeight.w700))),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    s.requestDeleteAccount(widget.reason, _c.text.trim());
+    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+    messenger.showSnackBar(const SnackBar(
+      behavior: SnackBarBehavior.floating,
+      content: Text('Delete request sent. Your data was removed from this phone.'),
+    ));
   }
 }

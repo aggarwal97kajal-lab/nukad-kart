@@ -64,6 +64,7 @@ const Set<String> kServiceablePins = {'110085', '110086', '110089'};
 
 class Address {
   final String flat, floor, area, city, state, country, pin, name, phone;
+  final String label; // Home, Work, Hotel or the customer's own name
   final double px, py; // pin position on the demo map, 0..1
   const Address({
     this.flat = '',
@@ -75,6 +76,7 @@ class Address {
     required this.pin,
     this.name = '',
     this.phone = '',
+    this.label = 'Home',
     this.px = 0.5,
     this.py = 0.5,
   });
@@ -84,7 +86,7 @@ class Address {
 
   Map<String, dynamic> toJson() => {
         'flat': flat, 'floor': floor, 'area': area, 'city': city, 'state': state,
-        'country': country, 'pin': pin, 'name': name, 'phone': phone, 'px': px, 'py': py,
+        'country': country, 'pin': pin, 'name': name, 'phone': phone, 'label': label, 'px': px, 'py': py,
       };
 
   factory Address.fromJson(Map<String, dynamic> j) => Address(
@@ -97,6 +99,7 @@ class Address {
         pin: '${j['pin'] ?? ''}',
         name: '${j['name'] ?? ''}',
         phone: '${j['phone'] ?? ''}',
+        label: '${j['label'] ?? 'Home'}',
         px: (j['px'] as num?)?.toDouble() ?? 0.5,
         py: (j['py'] as num?)?.toDouble() ?? 0.5,
       );
@@ -109,6 +112,7 @@ class AppNotification {
   final String title;
   final String body;
   final DateTime at;
+  bool read = false;
   AppNotification(this.title, this.body) : at = DateTime.now();
 }
 
@@ -274,9 +278,29 @@ class AppState extends ChangeNotifier {
     name = '';
     addresses.clear();
     currentIdx = -1;
+    strikes = 0;
     cart.clear();
     cartStoreId = null;
     notifyListeners();
+  }
+
+  /// Request to delete account. Demo: wipes this account's data from this phone.
+  /// (Real app: sent to the server; order and complaint records are kept as the law requires.)
+  String? lastDeleteReason;
+  void requestDeleteAccount(String reason, String feedback) {
+    lastDeleteReason = reason;
+    _profiles.remove(email);
+    wishlist.clear();
+    bookmarks.clear();
+    ratings.clear();
+    ratingPromptShown.clear();
+    notifications.clear();
+    orders.clear();
+    requests.clear();
+    notifyMe.clear();
+    acceptedTerms = false;
+    signedIn = false; // so signOut() below does not save the profile again
+    signOut();
   }
 
   Map<String, dynamic> _profileJson() => {
@@ -284,6 +308,7 @@ class AppState extends ChangeNotifier {
         'phone': phone,
         'addresses': addresses.map((a) => a.toJson()).toList(),
         'currentIdx': currentIdx,
+        'strikes': strikes,
       };
 
   void _readProfile(Map<String, dynamic> p) {
@@ -293,6 +318,7 @@ class AppState extends ChangeNotifier {
       ..clear()
       ..addAll(((p['addresses'] as List?) ?? []).map((e) => Address.fromJson(Map<String, dynamic>.from(e as Map))));
     currentIdx = (p['currentIdx'] as num?)?.toInt() ?? (addresses.isEmpty ? -1 : 0);
+    strikes = (p['strikes'] as num?)?.toInt() ?? 0;
   }
 
   void _storeProfile() {
@@ -445,8 +471,15 @@ class AppState extends ChangeNotifier {
     step(20, OrderStatus.delivered);
   }
 
+  /// Customer can cancel only while the order is Placed or Accepted.
+  bool canCancel(Order o) => o.status == OrderStatus.placed || o.status == OrderStatus.accepted;
+
+  /// Cancelling after the store accepted counts as 1 of the 3 "not taken" strikes.
+  bool cancelCountsAsStrike(Order o) => o.status == OrderStatus.accepted;
+
   void cancelOrder(Order o) {
-    if (o.status != OrderStatus.placed) return;
+    if (!canCancel(o)) return;
+    if (cancelCountsAsStrike(o)) strikes++;
     o.status = OrderStatus.cancelled;
     o.times[OrderStatus.cancelled] = DateTime.now();
     notifyListeners();
@@ -469,6 +502,15 @@ class AppState extends ChangeNotifier {
   // ----- thela requests for tomorrow -----
   final List<ThelaRequest> requests = [];
   final List<AppNotification> notifications = [];
+  int get unreadCount => notifications.where((n) => !n.read).length;
+
+  void markAllRead() {
+    if (unreadCount == 0) return;
+    for (final n in notifications) {
+      n.read = true;
+    }
+    notifyListeners();
+  }
 
   void sendRequest(String thelaId, String slot, List<String> items) {
     final r = ThelaRequest(thelaId, slot, items);

@@ -9,6 +9,7 @@ import 'thela_screen.dart';
 import 'subcategory_screen.dart';
 import 'account_pages.dart';
 import 'address_screen.dart';
+import '../widgets/typing_hint.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -61,11 +62,32 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => NotificationsScreen())),
-                  icon: Badge(
-                    isLabelVisible: s.notifications.isNotEmpty,
-                    label: Text('${s.notifications.length}'),
-                    child: Icon(Icons.notifications_none, color: Colors.white),
-                  ),
+                  icon: Stack(clipBehavior: Clip.none, children: [
+                    Icon(Icons.notifications_none, color: Colors.white),
+                    Positioned(
+                      top: -5,
+                      right: -6,
+                      // H03: the count shrinks and fades out once notifications are read.
+                      child: AnimatedScale(
+                        scale: s.unreadCount > 0 ? 1.0 : 0.3,
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeOutBack,
+                        child: AnimatedOpacity(
+                          opacity: s.unreadCount > 0 ? 1.0 : 0.0,
+                          duration: Duration(milliseconds: 300),
+                          child: Container(
+                            constraints: BoxConstraints(minWidth: 18),
+                            height: 18,
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(color: Color(0xFFD64545), borderRadius: BorderRadius.circular(9)),
+                            child: Text('${s.unreadCount > 0 ? s.unreadCount : ''}',
+                                style: body(10.5, color: Colors.white, weight: FontWeight.w800)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ]),
                 ),
               ]),
               SizedBox(height: 12),
@@ -76,10 +98,24 @@ class _HomeTabState extends State<HomeTab> {
                   padding: EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
                   child: Row(children: [
-                    Icon(Icons.search, color: kInk),
+                    Icon(Icons.search, color: Color(0xFF14201A)),
                     SizedBox(width: 10),
-                    Expanded(child: Text(t('Search atta, doodh, tamatar…'), style: body(14.5, color: kMute))),
-                    Icon(Icons.mic_none, color: kG),
+                    Expanded(
+                      child: TypingHint(
+                        words: ['doodh', 'aashirvaad atta', 'tamatar', 'cheeni', 'diya & agarbatti', 'maggi'],
+                        textColor: Color(0xFF6B756F),
+                        wordColor: Color(0xFF14201A),
+                      ),
+                    ),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => Navigator.push(
+                          context, MaterialPageRoute(builder: (_) => SearchScreen(startVoice: true))),
+                      child: Padding(
+                        padding: EdgeInsets.all(6),
+                        child: Icon(Icons.mic_none, color: Color(0xFF1E7A2E)),
+                      ),
+                    ),
                   ]),
                 ),
               ),
@@ -249,11 +285,13 @@ class _StoreCard extends StatelessWidget {
       child: CardBox(
         padding: EdgeInsets.all(12),
         child: Row(children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(color: kGBg, borderRadius: BorderRadius.circular(14)),
-            child: Icon(Icons.storefront, color: kG, size: 28),
+          // The photo grows into the store page header (Hero).
+          Hero(
+            tag: 'store-photo-${store.id}',
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.asset(store.photo, width: 64, height: 64, fit: BoxFit.cover),
+            ),
           ),
           SizedBox(width: 12),
           Expanded(

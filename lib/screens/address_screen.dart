@@ -19,6 +19,14 @@ const Map<String, String> kCityState = {
 };
 final List<String> kStatesList = kCityState.values.toSet().toList()..sort();
 const List<String> kCountries = ['India'];
+const List<String> kAddressLabels = ['Home', 'Work', 'Hotel', 'Other'];
+
+IconData labelIcon(String label) => switch (label) {
+      'Home' => Icons.home_outlined,
+      'Work' => Icons.work_outline,
+      'Hotel' => Icons.hotel_outlined,
+      _ => Icons.location_on_outlined,
+    };
 
 /// Structured delivery address with a map pin (G04). Returns true when saved.
 class AddressFormScreen extends StatefulWidget {
@@ -30,7 +38,8 @@ class AddressFormScreen extends StatefulWidget {
 }
 
 class _AddressFormScreenState extends State<AddressFormScreen> {
-  late final TextEditingController flat, floor, area, pin, name, phone;
+  late final TextEditingController flat, floor, area, pin, name, phone, other;
+  String label = 'Home';
   String city = 'New Delhi';
   String state = 'Delhi';
   String country = 'India';
@@ -47,6 +56,9 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     pin = TextEditingController(text: e?.pin ?? '');
     name = TextEditingController(text: e?.name ?? s.name);
     phone = TextEditingController(text: e?.phone ?? s.phone);
+    final custom = e != null && !kAddressLabels.contains(e.label);
+    label = e == null ? 'Home' : (custom ? 'Other' : e.label);
+    other = TextEditingController(text: custom ? e.label : '');
     if (e != null) {
       city = kCityState.containsKey(e.city) ? e.city : city;
       state = kStatesList.contains(e.state) ? e.state : state;
@@ -56,7 +68,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
 
   @override
   void dispose() {
-    for (final c in [flat, floor, area, pin, name, phone]) {
+    for (final c in [flat, floor, area, pin, name, phone, other]) {
       c.dispose();
     }
     super.dispose();
@@ -67,7 +79,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       area.text.trim().length >= 3 &&
       pin.text.length == 6 &&
       name.text.trim().length >= 2 &&
-      phone.text.length == 10;
+      phone.text.length == 10 &&
+      (label != 'Other' || other.text.trim().length >= 2);
 
   @override
   Widget build(BuildContext context) {
@@ -110,8 +123,27 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           SizedBox(width: 10),
           Expanded(child: _field('Pin code', pin, hint: '110086', digits: 6)),
         ]),
+        _label('Save address as', true),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final l in kAddressLabels)
+            ChoiceChip(
+              avatar: Icon(labelIcon(l), size: 17, color: label == l ? kGD : kMute),
+              label: Text(l),
+              selected: label == l,
+              showCheckmark: false,
+              labelStyle: body(13.5, color: label == l ? kGD : kInk, weight: FontWeight.w700),
+              selectedColor: kGBg,
+              backgroundColor: kCard,
+              side: BorderSide(color: label == l ? kG : Color(0xFFCFD8D1), width: label == l ? 2 : 1),
+              shape: StadiumBorder(),
+              onSelected: (_) => setState(() => label = l),
+            ),
+        ]),
+        if (label == 'Other') ...[
+          _field('Name this address', other, hint: 'e.g. Mummy ka ghar, PG, Dukaan'),
+        ],
         Row(children: [
-          Expanded(child: _field('Name', name, hint: 'Your name')),
+          Expanded(child: _field('Receiver name', name, hint: 'Your name')),
           SizedBox(width: 10),
           Expanded(child: _field('Mobile', phone, hint: '10 digits', digits: 10)),
         ]),
@@ -151,6 +183,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       pin: pin.text,
       name: name.text.trim(),
       phone: phone.text,
+      label: label == 'Other' ? other.text.trim() : label,
       px: pinPos.dx,
       py: pinPos.dy,
     );
@@ -295,13 +328,15 @@ class _MiniMapPainter extends CustomPainter {
 /// Sheet listing saved addresses, plus "Add new address".
 Future<void> showAddressPicker(BuildContext context) async {
   final s = AppScope.read(context);
-  final add = await showModalBottomSheet<bool>(
+  // Returns true for "add new", an Address to edit, or null.
+  final res = await showModalBottomSheet<Object>(
     context: context,
     backgroundColor: kCard,
     isScrollControlled: true,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (ctx) => SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
+        child: Padding(
         padding: EdgeInsets.fromLTRB(16, 14, 16, 12),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Center(
@@ -316,23 +351,59 @@ Future<void> showAddressPicker(BuildContext context) async {
               child: Text('Browsing near ${kGuestLocation.short} (${kGuestLocation.pin}).', style: body(13, color: kMute)),
             ),
           for (final a in s.addresses)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(a == s.current ? Icons.radio_button_checked : Icons.radio_button_off, color: kG),
-              title: Text(a.short, style: body(14, weight: FontWeight.w600)),
-              subtitle: Text('${a.city} ${a.pin}', style: body(12, color: kMute)),
-              onTap: () {
-                s.useAddress(a);
-                Navigator.pop(ctx);
-              },
+            Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  s.useAddress(a);
+                  Navigator.pop(ctx);
+                },
+                child: Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: a == s.current ? kGBg : kCard,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: a == s.current ? kG : kLine, width: a == s.current ? 2 : 1),
+                  ),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Icon(labelIcon(a.label), color: kG),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(a.label.toUpperCase(), style: body(11.5, color: kG, weight: FontWeight.w800)),
+                        Text(a.short, style: body(14, weight: FontWeight.w600)),
+                        Text('${a.city} ${a.pin}', style: body(12, color: kMute)),
+                      ]),
+                    ),
+                    SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(ctx, a),
+                      icon: Icon(Icons.edit_outlined, size: 16),
+                      label: Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: kInk,
+                        side: BorderSide(color: kLine, width: 1.5),
+                        minimumSize: Size(0, 34),
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
             ),
           SizedBox(height: 8),
           PrimaryButton('+ Add new address', outline: true, onTap: () => Navigator.pop(ctx, true)),
         ]),
       ),
+      ),
     ),
   );
-  if (add == true && context.mounted) {
+  if (!context.mounted) return;
+  if (res == true) {
     await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => AddressFormScreen()));
+  } else if (res is Address) {
+    await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => AddressFormScreen(editing: res)));
   }
 }

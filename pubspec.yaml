@@ -1,7 +1,7 @@
 name: nukad_kart
 description: "Nukad Kart - Apne Nukkad Ki Har Dukaan! Customer app (demo data build)."
 publish_to: 'none'
-version: 0.3.0+4
+version: 0.4.0+5
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.3.2
+  speech_to_text: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -28,6 +29,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/stores/
   fonts:
     - family: Poppins
       fonts:

@@ -30,6 +30,9 @@ jobs:
       - name: Green launch screen (no logo)
         run: cp -r android_res/. android/app/src/main/res/
 
+      - name: Microphone permission for voice search
+        run: python3 tool/patch_manifest.py
+
       - name: Set app name
         run: sed -i 's/android:label="[^"]*"/android:label="Nukad Kart"/' android/app/src/main/AndroidManifest.xml
 
@@ -52,8 +55,8 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.3.${{ github.run_number }}
-          name: Nukad Kart demo v0.3.${{ github.run_number }}
+          tag_name: v0.4.${{ github.run_number }}
+          name: Nukad Kart demo v0.4.${{ github.run_number }}
           body: |
             Customer app, demo data build. No real sign-in, orders or payments.
             Install: download NukadKart.apk on your Android phone and allow "Install unknown apps".

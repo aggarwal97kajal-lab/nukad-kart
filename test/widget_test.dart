@@ -39,4 +39,25 @@ void main() {
     s.saveAddress(const Address(area: 'Uttam Nagar', pin: '110059'));
     expect(s.serviceable, isFalse);
   });
+
+  test('cancel allowed only while placed or accepted; after accept it is a strike', () {
+    final s = AppState();
+    s.add('s1', 'p6');
+    final o = s.placeOrder(door: true);
+    expect(s.canCancel(o), isTrue);
+    o.status = OrderStatus.accepted;
+    s.cancelOrder(o);
+    expect(o.status, OrderStatus.cancelled);
+    expect(s.strikes, 1);
+    s.add('s1', 'p6');
+    final o2 = s.placeOrder(door: true);
+    o2.status = OrderStatus.packed;
+    expect(s.canCancel(o2), isFalse);
+    s.dispose();
+  });
+
+  test('address label and Hindi search words', () {
+    final a = Address.fromJson(const Address(area: 'Sector 7', pin: '110085', label: 'Mummy ka ghar').toJson());
+    expect(a.label, 'Mummy ka ghar');
+  });
 }

@@ -106,8 +106,26 @@ class _OrderScreenState extends State<OrderScreen> {
           ]),
         ),
         SizedBox(height: 14),
-        if (o.status == OrderStatus.placed)
-          PrimaryButton(t('Cancel order'), outline: true, color: kRed, onTap: () => s.cancelOrder(o)),
+        if (s.canCancel(o)) ...[
+          PrimaryButton(t('Cancel order'), outline: true, color: kRed, onTap: () => _confirmCancel(context, s, o)),
+          SizedBox(height: 6),
+          Text('You can cancel until the store starts packing.',
+              textAlign: TextAlign.center, style: body(12, color: kMute)),
+        ] else if (o.status == OrderStatus.packed || o.status == OrderStatus.outForDelivery) ...[
+          Container(
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: kLine, borderRadius: BorderRadius.circular(14)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.lock_outline, size: 18, color: kMute),
+              SizedBox(width: 8),
+              Text('Can’t cancel now', style: head(15, color: kMute)),
+            ]),
+          ),
+          SizedBox(height: 8),
+          NoteBox('The store has packed your order, so it can’t be cancelled. '
+              'Need a change? Call the store: ${st.phone}.'),
+        ],
         if (o.status == OrderStatus.delivered) ...[
           if (s.ratings.containsKey(st.id))
             CardBox(
@@ -221,5 +239,31 @@ class _OrderScreenState extends State<OrderScreen> {
         Text(time, style: body(12, color: kMute)),
       ]),
     );
+  }
+
+  Future<void> _confirmCancel(BuildContext context, AppState s, Order o) async {
+    final strike = s.cancelCountsAsStrike(o);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kCard,
+        surfaceTintColor: kCard,
+        title: Text('Cancel this order?', style: head(18)),
+        content: Text(
+          strike
+              ? 'The store has already accepted it. Cancelling now counts as 1 of 3 “not taken” orders '
+                  '(you have ${s.strikes} of 3). At 3, ordering is blocked.'
+              : 'The store hasn’t accepted it yet, so this won’t count against you.',
+          style: body(14),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Keep order')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Cancel order', style: body(14, color: kRed, weight: FontWeight.w700))),
+        ],
+      ),
+    );
+    if (ok == true) s.cancelOrder(o);
   }
 }
