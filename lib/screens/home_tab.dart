@@ -162,25 +162,25 @@ class _HomeTabState extends State<HomeTab> {
       Text(t('Call or WhatsApp them, then pay in person. Only sellers within 500 m are shown.'),
           style: body(12.5, color: kMute)),
       SizedBox(height: 12),
-      for (final t in kThelas) ...[
+      for (final th in kThelas) ...[
         InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ThelaScreen(thela: t))),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ThelaScreen(thela: th))),
           child: CardBox(
             padding: EdgeInsets.all(12),
             child: Row(children: [
-              EmojiTile(t.items.first.emoji, size: 54, bg: kGBg),
+              EmojiTile(th.items.first.emoji, size: 54, bg: kGBg),
               SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(t.name, style: head(15)),
+                  Text(th.name, style: head(15)),
                   SizedBox(height: 2),
-                  Text('${t.sells} · ${t.distanceM} m · ★ ${t.rating}', style: body(12, color: kMute)),
+                  Text('${th.sells} · ${th.distanceM} m · ★ ${th.rating}', style: body(12, color: kMute)),
                   SizedBox(height: 5),
                   Wrap(spacing: 5, children: [
                     Pill('● Live', color: kGText, bg: kPillBg),
-                    if (t.door) Pill(t('Comes to door')),
-                    if (t.pickup) Pill(t('Pickup at thela'), color: kBlu, bg: kBluBg),
+                    if (th.door) Pill(t('Comes to door')),
+                    if (th.pickup) Pill(t('Pickup at thela'), color: kBlu, bg: kBluBg),
                   ]),
                 ]),
               ),

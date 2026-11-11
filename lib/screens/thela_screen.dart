@@ -162,12 +162,12 @@ class _RequestScreenState extends State<RequestScreen> {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final t = widget.thela;
+    final th = widget.thela;
     return Scaffold(
       backgroundColor: kBg,
-      appBar: simpleAppBar(t('Request for tomorrow'), subtitle: '${t.name} · ★ ${t.rating}'),
+      appBar: simpleAppBar(t('Request for tomorrow'), subtitle: '${th.name} · ★ ${th.rating}'),
       body: ListView(padding: EdgeInsets.all(16), children: [
-        Text('Ask ${t.name.split(' ').first} to come to your area tomorrow. You’ll be notified when they reply.',
+        Text('Ask ${th.name.split(' ').first} to come to your area tomorrow. You’ll be notified when they reply.',
             style: body(13.5, color: kMute)),
         SizedBox(height: 16),
         Text('When?', style: head(15)),
@@ -181,7 +181,7 @@ class _RequestScreenState extends State<RequestScreen> {
         Text('What do you need? (optional)', style: head(15)),
         SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final it in t.items)
+          for (final it in th.items)
             FilterChip(
               avatar: Text(it.emoji),
               label: Text(it.hindi),
@@ -206,9 +206,9 @@ class _RequestScreenState extends State<RequestScreen> {
         Text('The seller sees your area and items. Your name and number are shown only after they accept.',
             style: body(11.5, color: kMute)),
         SizedBox(height: 18),
-        PrimaryButton('Send request to ${t.name.split(' ').first}', onTap: () {
-          s.sendRequest(t.id, slot, items.toList());
-          showToast(context, 'Request sent. You’ll get a notification when ${t.name.split(' ').first} replies.');
+        PrimaryButton('Send request to ${th.name.split(' ').first}', onTap: () {
+          s.sendRequest(th.id, slot, items.toList());
+          showToast(context, 'Request sent. You’ll get a notification when ${th.name.split(' ').first} replies.');
           Navigator.pop(context);
         }),
       ]),
