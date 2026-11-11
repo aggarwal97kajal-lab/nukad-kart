@@ -7,12 +7,13 @@ if "nkKeyProps" not in s:
     if "\nandroid {" not in s:
         sys.exit("android block not found")
     top = '''
-val nkKeyProps = java.util.Properties().apply {
-    rootProject.file("key.properties").inputStream().use { stream -> this.load(stream) }
+val nkKeyProps = Properties().apply {
+    FileInputStream(rootProject.file("key.properties")).use { stream -> load(stream) }
 }
 
 android {'''
     s = s.replace("\nandroid {", top, 1)
+    s = "import java.io.FileInputStream\nimport java.util.Properties\n\n" + s
     block = '''    signingConfigs {
         create("release") {
             keyAlias = nkKeyProps.getProperty("keyAlias")
