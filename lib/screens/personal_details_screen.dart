@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../l10n.dart';
 import '../services/otp_service.dart';
+import '../services/api.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
 import '../widgets/ola_map_picker.dart';
@@ -150,10 +151,11 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     });
   }
 
-  void _save(AppState s) {
-    s.saveProfile(name.text.trim(), phone.text);
-    s.markPhoneVerified();
-    s.saveAddress(Address(
+  bool _saving = false;
+
+  Future<void> _save(AppState s) async {
+    if (_saving) return;
+    final addr = Address(
       flat: flat.text.trim(),
       floor: floor.text.trim(),
       area: area.text.trim(),
@@ -167,7 +169,42 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       py: pinPos.dy,
       lat: lat,
       lng: lng,
-    ));
+    );
+    setState(() => _saving = true);
+    // Save on the server too. If it cannot be reached, the details stay on this phone for now.
+    if (s.apiToken.isNotEmpty) {
+      try {
+        final access = otpService.lastAccessToken;
+        if (access != null && access.isNotEmpty) {
+          try {
+            await api.verifyPhone(s.apiToken, access, phone.text);
+          } on ApiException catch (e) {
+            if (!e.unavailable) rethrow; // phone check not switched on yet: still save the rest
+          }
+        }
+        await api.saveProfile(s.apiToken, name.text.trim(), addr);
+      } on ApiException catch (e) {
+        if (!e.unavailable) {
+          if (!mounted) return;
+          setState(() => _saving = false);
+          showToast(context, e.code == 'phone_not_verified' || e.code == 'phone_mismatch'
+              ? 'This number could not be confirmed. Send a new code and try again.'
+              : 'Could not save your details (${e.code}). Try again.');
+          if (e.code == 'phone_not_verified' || e.code == 'phone_mismatch') {
+            setState(() {
+              _verifiedFor = null;
+              _reqId = null;
+              code.clear();
+            });
+          }
+          return;
+        }
+      }
+    }
+    if (!mounted) return;
+    s.saveProfile(name.text.trim(), phone.text);
+    s.markPhoneVerified();
+    s.saveAddress(addr);
     Navigator.pop(context, true);
   }
 
@@ -323,7 +360,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
           padding: EdgeInsets.fromLTRB(16, 10, 16, 12),
           decoration: BoxDecoration(color: kCard, border: Border(top: BorderSide(color: kLine))),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            PrimaryButton('Save & proceed', onTap: _valid ? () => _save(s) : null),
+            PrimaryButton(_saving ? 'Saving…' : 'Save & proceed', onTap: _valid && !_saving ? () => _save(s) : null),
             if (!_valid) ...[
               SizedBox(height: 6),
               Text(_verified ? 'Fill every field to continue' : 'Verify your mobile number and fill every field',

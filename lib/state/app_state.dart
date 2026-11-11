@@ -245,6 +245,24 @@ class AppState extends ChangeNotifier {
   final Map<String, Map<String, dynamic>> _profiles = {};
 
   bool phoneVerified = false;
+
+  /// Session token from the Nukad Kart server ('' when signed in offline).
+  String apiToken = '';
+
+  /// Fills name, number and addresses from the server (e.g. after reinstalling the app).
+  void applyServerProfile(Map<String, dynamic> data) {
+    final u = Map<String, dynamic>.from((data['user'] as Map?) ?? {});
+    if ('${u['name'] ?? ''}'.trim().isNotEmpty) name = '${u['name']}';
+    if ('${u['phone'] ?? ''}'.length == 10) phone = '${u['phone']}';
+    if (u['phoneVerified'] == true) phoneVerified = true;
+    final list = ((data['addresses'] as List?) ?? []).map((e) => Address.fromJson(Map<String, dynamic>.from(e as Map)));
+    if (addresses.isEmpty && list.isNotEmpty) {
+      addresses.addAll(list);
+      currentIdx = 0;
+    }
+    notifyListeners();
+  }
+
   bool get profileComplete =>
       name.trim().length >= 2 && phone.length == 10 && phoneVerified && addresses.isNotEmpty;
 
@@ -277,6 +295,7 @@ class AppState extends ChangeNotifier {
   void cancelSignIn() {
     signedIn = false;
     email = '';
+    apiToken = '';
     guest = true;
     notifyListeners();
   }
@@ -292,6 +311,7 @@ class AppState extends ChangeNotifier {
     signedIn = false;
     guest = false;
     email = '';
+    apiToken = '';
     phone = '';
     name = '';
     addresses.clear();
@@ -361,6 +381,7 @@ class AppState extends ChangeNotifier {
       guest = j['guest'] == true;
       signedIn = j['signedIn'] == true;
       email = '${j['email'] ?? ''}';
+      apiToken = '${j['apiToken'] ?? ''}';
       acceptedTerms = j['acceptedTerms'] == true;
       final prof = Map<String, dynamic>.from((j['profiles'] as Map?) ?? {});
       prof.forEach((k, v) => _profiles[k] = Map<String, dynamic>.from(v as Map));
@@ -386,6 +407,7 @@ class AppState extends ChangeNotifier {
           'guest': guest,
           'signedIn': signedIn,
           'email': email,
+          'apiToken': apiToken,
           'acceptedTerms': acceptedTerms,
           'profiles': _profiles,
           'session': _profileJson(),

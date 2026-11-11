@@ -5,6 +5,8 @@ import '../widgets/ui.dart';
 import 'personal_details_screen.dart';
 import 'home_shell.dart';
 import 'account_pages.dart';
+import '../services/api.dart';
+import '../services/google_auth.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -90,9 +92,6 @@ class LoginScreen extends StatelessWidget {
                 onTap: () => _skip(context),
                 child: Text('${t('Explore without login')} →', style: body(14, color: kG, weight: FontWeight.w700)),
               ),
-              SizedBox(height: 12),
-              Text('Demo build: sign-in is simulated, no real Google account is used.',
-                  textAlign: TextAlign.center, style: body(11.5, color: kMute)),
               Spacer(),
               Text('By continuing you agree to the Terms and Privacy Policy.',
                   textAlign: TextAlign.center, style: body(11.5, color: kMute)),
@@ -124,36 +123,41 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-/// Demo Google account chooser, then the one-time details screen for new accounts.
+/// Real Google sign-in, then the server login, then the one-time details screen for new accounts.
 /// Returns true when the user is signed in with a complete profile.
 Future<bool> googleSignInFlow(BuildContext context) async {
   final s = AppScope.read(context);
-  final email = await showModalBottomSheet<String>(
-    context: context,
-    backgroundColor: kCard,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-    builder: (ctx) => SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Choose an account', style: head(19)),
-          SizedBox(height: 2),
-          Text('to continue to Nukad Kart (demo accounts)', style: body(12.5, color: kMute)),
-          SizedBox(height: 8),
-          for (final e in ['priya.demo@gmail.com', 'rahul.demo@gmail.com'])
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                  backgroundColor: kLime, child: Text(e[0].toUpperCase(), style: head(16, color: kGD))),
-              title: Text(e, style: body(14.5, weight: FontWeight.w600)),
-              onTap: () => Navigator.pop(ctx, e),
-            ),
-        ]),
-      ),
-    ),
-  );
-  if (email == null || !context.mounted) return false;
-  final known = s.signIn(email);
+  GoogleUser? g;
+  try {
+    g = await googleAuth.signIn();
+  } on GoogleAuthException catch (e) {
+    if (context.mounted) showToast(context, e.message);
+    return false;
+  }
+  if (g == null || !context.mounted) return false;
+
+  // Server login. If the server cannot be reached, carry on with what is saved on this phone.
+  Map<String, dynamic>? server;
+  try {
+    server = await api.googleLogin(g.idToken);
+  } on ApiException catch (e) {
+    if (!e.unavailable) {
+      await googleAuth.signOut();
+      if (context.mounted) showToast(context, 'Sign-in was not accepted (${e.code}). Try again.');
+      return false;
+    }
+  }
+  if (!context.mounted) return false;
+
+  var known = s.signIn(g.email);
+  if (server != null) {
+    s.apiToken = '${server['token'] ?? ''}';
+    if (s.name.isEmpty && g.name.isNotEmpty) s.name = g.name;
+    s.applyServerProfile(server);
+    known = s.profileComplete;
+  } else if (s.name.isEmpty && g.name.isNotEmpty) {
+    s.name = g.name;
+  }
   if (known) {
     showToast(context, 'Welcome back${s.name.isEmpty ? '' : ', ${s.name.split(' ').first}'}');
     return true;
@@ -162,6 +166,7 @@ Future<bool> googleSignInFlow(BuildContext context) async {
       context, MaterialPageRoute(builder: (_) => PersonalDetailsScreen()));
   if (ok == true && s.profileComplete) return true;
   s.cancelSignIn();
+  await googleAuth.signOut();
   return false;
 }
 

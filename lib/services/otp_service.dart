@@ -23,6 +23,9 @@ abstract class OtpService {
 
   /// Demo only: the code that was "sent", so the screen can show it.
   String? debugCode(String requestId) => null;
+
+  /// Token from the last successful verify; the server confirms it with MSG91.
+  String? get lastAccessToken => null;
 }
 
 class OtpException implements Exception {
@@ -38,7 +41,8 @@ class Msg91OtpService extends OtpService {
   static const tokenAuth = '589166T1ZMl90d86af4a701P1';
   bool _ready = false;
 
-  /// The verified token from the last successful verify — send this to the server later.
+  /// The verified token from the last successful verify — sent to our server, which checks it with MSG91.
+  @override
   String? lastAccessToken;
 
   @override

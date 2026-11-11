@@ -1,3 +1,4 @@
+import '../services/google_auth.dart';
 import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../state/app_state.dart';
@@ -135,6 +136,7 @@ class AccountTab extends StatelessWidget {
     if (choice == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     AppScope.read(context).signOut();
+    googleAuth.signOut();
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
     messenger.showSnackBar(SnackBar(
       content: Text(choice == 'all' ? 'Logged out from all devices' : 'Logged out from this device'),

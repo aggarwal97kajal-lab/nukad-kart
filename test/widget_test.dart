@@ -37,6 +37,27 @@ void main() {
     expect(s.serviceable, isTrue);
   });
 
+  test('profile from the server fills a fresh install', () {
+    final s = AppState();
+    s.signIn('b@gmail.com');
+    s.apiToken = 'tok';
+    s.applyServerProfile({
+      'token': 'tok',
+      'user': {'name': 'Rahul', 'phone': '9876500000', 'phoneVerified': true},
+      'addresses': [
+        {'id': 'x', 'label': 'Home', 'flat': 'B-4', 'floor': null, 'area': 'Sector 21, Rohini',
+         'city': 'New Delhi', 'state': 'Delhi', 'country': 'India', 'pin': '110086', 'lat': 28.718, 'lng': 77.096}
+      ],
+      'profileComplete': true,
+    });
+    expect(s.profileComplete, isTrue);
+    expect(s.current.flat, 'B-4');
+    expect(s.current.floor, '');
+    expect(s.current.lat, 28.718);
+    s.signOut();
+    expect(s.apiToken, '');
+  });
+
   test('unknown pin code is not serviceable', () {
     final s = AppState();
     s.saveAddress(const Address(area: 'Uttam Nagar', pin: '110059'));
