@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
-import 'address_screen.dart';
+import 'personal_details_screen.dart';
 import 'home_shell.dart';
 import 'account_pages.dart';
 
@@ -159,7 +159,7 @@ Future<bool> googleSignInFlow(BuildContext context) async {
     return true;
   }
   final ok = await Navigator.push<bool>(
-      context, MaterialPageRoute(builder: (_) => AddressFormScreen(onboarding: true)));
+      context, MaterialPageRoute(builder: (_) => PersonalDetailsScreen()));
   if (ok == true && s.profileComplete) return true;
   s.cancelSignIn();
   return false;

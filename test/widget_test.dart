@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nukad_kart/data/demo_data.dart';
 import 'package:nukad_kart/state/app_state.dart';
 import 'package:nukad_kart/state/thela_tracker.dart';
+import 'package:nukad_kart/services/otp_service.dart';
 
 void main() {
   test('4 main categories and 25 subcategories', () {
@@ -27,6 +28,7 @@ void main() {
     final s = AppState();
     expect(s.signIn('a@gmail.com'), isFalse);
     s.saveProfile('Priya Sharma', '9876543210');
+    s.markPhoneVerified();
     s.saveAddress(const Address(flat: 'Flat 12', area: 'Sector 21, Rohini', pin: '110086'));
     s.signOut();
     expect(s.name, '');
@@ -100,5 +102,12 @@ void main() {
     expect(s.verifyOtp(o, '4821'), isTrue);
     expect(o.status, OrderStatus.delivered);
     s.dispose();
+  });
+
+  test('demo OTP: only the sent code verifies', () async {
+    final o = DemoOtpService();
+    final id = await o.send('9876543210');
+    expect(await o.verify(id, '000000'), o.debugCode(id) == '000000');
+    expect(await o.verify(id, o.debugCode(id)!), isTrue);
   });
 }

@@ -239,7 +239,14 @@ class AppState extends ChangeNotifier {
   /// (Demo: kept on this phone. The real app keeps them on the server.)
   final Map<String, Map<String, dynamic>> _profiles = {};
 
-  bool get profileComplete => name.trim().length >= 2 && phone.length == 10 && addresses.isNotEmpty;
+  bool phoneVerified = false;
+  bool get profileComplete =>
+      name.trim().length >= 2 && phone.length == 10 && phoneVerified && addresses.isNotEmpty;
+
+  void markPhoneVerified() {
+    phoneVerified = true;
+    notifyListeners();
+  }
 
   void continueAsGuest() {
     guest = true;
@@ -285,6 +292,7 @@ class AppState extends ChangeNotifier {
     addresses.clear();
     currentIdx = -1;
     strikes = 0;
+    phoneVerified = false;
     cart.clear();
     cartStoreId = null;
     notifyListeners();
@@ -315,6 +323,7 @@ class AppState extends ChangeNotifier {
         'addresses': addresses.map((a) => a.toJson()).toList(),
         'currentIdx': currentIdx,
         'strikes': strikes,
+        'phoneVerified': phoneVerified,
       };
 
   void _readProfile(Map<String, dynamic> p) {
@@ -325,6 +334,7 @@ class AppState extends ChangeNotifier {
       ..addAll(((p['addresses'] as List?) ?? []).map((e) => Address.fromJson(Map<String, dynamic>.from(e as Map))));
     currentIdx = (p['currentIdx'] as num?)?.toInt() ?? (addresses.isEmpty ? -1 : 0);
     strikes = (p['strikes'] as num?)?.toInt() ?? 0;
+    phoneVerified = p['phoneVerified'] == true;
   }
 
   void _storeProfile() {
