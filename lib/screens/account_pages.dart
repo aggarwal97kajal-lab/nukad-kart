@@ -14,7 +14,6 @@ import '../services/api.dart';
 import '../services/otp_service.dart';
 import '../services/google_auth.dart';
 import '../config/business.dart';
-import '../data/photo_credits.dart';
 
 // ---------------- bottom-sheet chooser ----------------
 class ChoiceOption {
@@ -1028,28 +1027,3 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
-
-// ---------------- Photo credits ----------------
-class PhotoCreditsScreen extends StatelessWidget {
-  const PhotoCreditsScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return _Page(title: 'Photo credits', children: [
-      Text('Category photos are from Wikimedia Commons, cropped to squares and resized. '
-          'Photos under CC BY-SA are shared under the same licence.', style: body(12.5, color: kMute)),
-      const SizedBox(height: 10),
-      for (final c in kPhotoCredits)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: CardBox(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(c[0], style: body(13.5, weight: FontWeight.w700)),
-              const SizedBox(height: 2),
-              Text('“${c[1]}” by ${c[2]} · ${c[3]}', style: body(12, color: kMute)),
-              if (c[4].isNotEmpty) SelectableText(c[4], style: body(11, color: kG)),
-            ]),
-          ),
-        ),
-    ]);
-  }
-}

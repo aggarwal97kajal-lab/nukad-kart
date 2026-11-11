@@ -6,7 +6,7 @@ class SubCategory {
   const SubCategory(this.name, this.emoji);
 
   /// Photo for the category tile (falls back to the emoji if missing).
-  String? get photo => _subPhotoKeys[name] == null ? null : 'assets/images/categories/${_subPhotoKeys[name]}.jpg';
+  String? get photo => _subPhotoKeys[name] == null ? null : 'assets/images/categories/${_subPhotoKeys[name]}.webp';
 }
 
 const Map<String, String> _subPhotoKeys = {
