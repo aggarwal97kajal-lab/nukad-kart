@@ -76,12 +76,15 @@ class ProductScreen extends StatelessWidget {
       SizedBox(width: 10),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(st.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: body(14, weight: FontWeight.w700)),
+          SizedBox(height: 2),
           Row(children: [
-            Flexible(child: Text(st.name, overflow: TextOverflow.ellipsis, style: body(14, weight: FontWeight.w700))),
+            Flexible(
+              child: Text('${st.distanceM} m · ${out ? t('Out of stock') : '$stock left'} · ${rupees(l.price)}',
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: body(11.5, color: out ? kRed : kMute)),
+            ),
             if (best) ...[SizedBox(width: 6), Pill('Lowest', color: kGText, bg: kPillBg)],
           ]),
-          Text('${st.distanceM} m · ${out ? t('Out of stock') : '$stock left'} · ${rupees(l.price)}',
-              style: body(11.5, color: out ? kRed : kMute)),
         ]),
       ),
     ]);
@@ -90,6 +93,7 @@ class ProductScreen extends StatelessWidget {
       decoration: BoxDecoration(border: last ? null : Border(bottom: BorderSide(color: kLine))),
       child: Row(children: [
         Expanded(child: out ? Opacity(opacity: 0.45, child: info) : info),
+        SizedBox(width: 12),
         out
             ? NotifyButton(
                 on: s.isNotifyOn(l.storeId, product.id),

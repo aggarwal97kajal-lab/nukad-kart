@@ -164,7 +164,7 @@ class QtyStepper extends StatelessWidget {
     if (qty == 0) {
       return SizedBox(
         height: 34,
-        width: 78,
+        width: 88,
         child: OutlinedButton(
           style: OutlinedButton.styleFrom(
             padding: EdgeInsets.zero,
@@ -294,15 +294,19 @@ class NotifyButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 34,
-        width: 96,
+        width: 88,
         alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
           color: on ? kGBg : Colors.transparent,
           borderRadius: BorderRadius.circular(9),
           border: on ? null : Border.all(color: kG, width: 1.5),
         ),
-        child: Text(on ? '✓ ${t('Notify on')}' : '🔔 ${t('Notify')}',
-            style: body(12.5, color: on ? kGText : kG, weight: FontWeight.w700)),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(on ? '✓ ${t('Notify on')}' : '🔔 ${t('Notify')}',
+              maxLines: 1, style: body(12.5, color: on ? kGText : kG, weight: FontWeight.w700)),
+        ),
       ),
     );
   }
