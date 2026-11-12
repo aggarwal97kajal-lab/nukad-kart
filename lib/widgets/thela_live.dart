@@ -125,7 +125,7 @@ class _MapPainter extends CustomPainter {
     final img = MapMarkers.thela;
     var labelAt = pos - Offset(0, 36);
     if (img != null) {
-      final r = MapMarkers.draw(canvas, img, pos.translate(0, -6), 70, within: size);
+      final r = MapMarkers.draw(canvas, img, pos.translate(0, -10), 120, within: size);
       labelAt = r.top > 26 ? Offset(r.center.dx, r.top - 12) : Offset(r.center.dx, r.bottom + 12);
     } else {
       canvas.drawCircle(pos, 17, Paint()..color = kBrand);

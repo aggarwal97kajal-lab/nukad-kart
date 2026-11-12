@@ -6,6 +6,7 @@
 //   POST /v1/me/phone           { accessToken, phone }       (auth) phone verified by MSG91
 //   PUT  /v1/me                 { name, address? }           (auth)
 //   POST /v1/me/delete          { reason, feedback }         (auth) removes profile; next Google login starts fresh
+//   POST /v1/me/push-token     { token }                    (auth) this phone's Firebase token
 //   POST /v1/me/logout                                        (auth) log out this phone
 //   GET  /v1/me/sessions                                      (auth) phones where this account is logged in
 //   POST /v1/me/sessions/logout { id }                       (auth) log out one phone
@@ -335,6 +336,16 @@ async function route(req, env) {
         "UPDATE users SET google_sub = 'deleted:' || id, email = '', name = NULL, phone = NULL, phone_verified = 0, deleted_at = ?, updated_at = ? WHERE id = ?",
       ).bind(t, t, uid),
     ]);
+    return json({ ok: true });
+  }
+
+  if (path === '/v1/me/push-token' && m === 'POST') {
+    // Customer phone's Firebase token: for "thela is coming", order updates and chat.
+    const { uid } = await session(req, env);
+    const token = String((await body(req)).token || '').trim();
+    if (token.length < 20 || token.length > 4096) throw new HttpError(400, 'bad_token');
+    await env.DB.prepare('INSERT OR REPLACE INTO push_tokens (token, user_id, app, updated_at) VALUES (?, ?, ?, ?)')
+      .bind(token, uid, 'customer', now()).run();
     return json({ ok: true });
   }
 

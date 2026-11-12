@@ -21,6 +21,8 @@ dependencies:
   open_filex: ^4.7.0
   path_provider: ^2.1.5
   flutter_local_notifications: ^19.5.0
+  firebase_core: ^4.0.0
+  firebase_messaging: ^16.0.0
   timezone: ^0.10.1
   device_info_plus: ^11.3.0
   pdf: ^3.11.3

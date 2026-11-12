@@ -10,6 +10,7 @@ import 'data/demo_data.dart';
 import 'widgets/cart_widgets.dart';
 import 'state/thela_tracker.dart';
 import 'services/api.dart';
+import 'services/push.dart';
 import 'services/google_auth.dart';
 import 'screens/login_screen.dart';
 
@@ -145,6 +146,14 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
+    if (s.signedIn && s.apiToken.isNotEmpty) {
+      setupPush(s.apiToken, (title, body, data) {
+        if (title.isNotEmpty) s.addNotification(title, body);
+        for (final l in List.of(pushListeners)) {
+          l(data);
+        }
+      });
+    }
     final phoneDark = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
     gDark = s.theme == AppTheme.dark || (s.theme == AppTheme.system && phoneDark);
     gLang = s.lang;

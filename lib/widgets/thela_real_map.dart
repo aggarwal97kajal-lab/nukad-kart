@@ -95,9 +95,9 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
     final st = ThelaTracker.instance.of(widget.thelaId).status;
     final col = st == ThelaStatus.wasHere ? '#8A4B00' : '#3B6D11';
     if (_thela == null) {
-      _halo = await c.addCircle(CircleOptions(geometry: at, circleRadius: 26, circleColor: col, circleOpacity: 0.22));
+      _halo = await c.addCircle(CircleOptions(geometry: at, circleRadius: 34, circleColor: col, circleOpacity: 0.22));
       _thela = await c.addSymbol(_icon
-          ? SymbolOptions(geometry: at, iconImage: 'nk-thela', iconSize: 0.22, iconAnchor: 'bottom')
+          ? SymbolOptions(geometry: at, iconImage: 'nk-thela', iconSize: 0.45, iconAnchor: 'bottom')
           : SymbolOptions(geometry: at, textField: '🛒', textSize: 22));
       // Fit home and thela on screen, but never closer than street level (they can be 1 m apart).
       const pad = 0.0012; // ~130 m
