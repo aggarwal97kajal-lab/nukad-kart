@@ -14,6 +14,7 @@
 import { HttpError, json, body, now, verifySession, verifyMsg91, haversineM, THELA_STALE_S } from './index.js';
 import { sendPush, sendPushDetail, pushReady } from './push.js';
 import { productRoute } from './products.js';
+import { staffMe } from './orders.js';
 
 export const PLANS = {
   daily: { name: 'Daily', price: 99, days: 1 },
@@ -310,6 +311,7 @@ export async function partnerRoute(req, env, path, m) {
 
   if (path === '/v1/partner/me' && m === 'GET') {
     const { u, s, docs } = await ctx(req, env);
+    if (u.app === 'staff') return json(await staffMe(env, u));
     const pays = s
       ? (await env.DB.prepare('SELECT * FROM pass_payments WHERE store_id = ? ORDER BY created_at DESC LIMIT 10').bind(s.id).all()).results
       : [];

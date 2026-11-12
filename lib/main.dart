@@ -48,6 +48,7 @@ class _Root extends StatefulWidget {
 
 class _RootState extends State<_Root> with WidgetsBindingObserver {
   String _applied = '';
+  bool _ordersSynced = false;
 
   @override
   void initState() {
@@ -108,7 +109,10 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState st) {
-    if (st == AppLifecycleState.resumed) _checkSession();
+    if (st == AppLifecycleState.resumed) {
+      _checkSession();
+      AppScope.read(context).syncOrders();
+    }
   }
 
   /// If this phone was logged out from another phone (Logged-in devices), sign out here too.
@@ -147,8 +151,13 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     if (s.signedIn && s.apiToken.isNotEmpty) {
+      if (!_ordersSynced) {
+        _ordersSynced = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) => s.syncOrders());
+      }
       setupPush(s.apiToken, (title, body, data) {
         if (title.isNotEmpty) s.addNotification(title, body);
+        if (data['type'] == 'order') s.syncOrders();
         for (final l in List.of(pushListeners)) {
           l(data);
         }

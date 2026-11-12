@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import '../data/demo_data.dart';
 import '../services/bill.dart';
 import '../l10n.dart';
+import '../services/api.dart';
 
 enum OrderStatus { placed, accepted, packed, outForDelivery, delivered, rejected, autoCancelled, cancelled }
 
@@ -51,6 +52,13 @@ class Order {
   /// Business buyer (optional): printed under "Bill to" so they can claim input tax credit.
   String buyerGstin = '', buyerBusiness = '';
 
+  /// A real order on the server (not an old demo order kept on this phone).
+  bool remote = false;
+  double? lat, lng, riderLat, riderLng;
+  String storeName = '';
+  /// Items the shop didn't have (removed from the bill).
+  List<String> unavailable = [];
+
   Order(this.id, this.storeId, this.lines, this.door, this.placedAt) {
     times[OrderStatus.placed] = placedAt;
   }
@@ -68,6 +76,7 @@ class Order {
         'to': [toName, toPhone, toAddress, toState],
         'b2b': [buyerGstin, buyerBusiness],
         'lines': lines.map((l) => [l.productId, l.qty, l.price]).toList(),
+        'remote': remote,
       };
 
   static Order fromJson(Map<String, dynamic> j) {
@@ -88,6 +97,7 @@ class Order {
       if (st.isNotEmpty) o.times[st.first] = DateTime.parse('$v');
     });
     o.billNo = '${j['billNo'] ?? ''}';
+    o.remote = j['remote'] == true;
     final to = (j['to'] as List?) ?? const [];
     final b2b = (j['b2b'] as List?) ?? const [];
     if (b2b.length == 2) {
@@ -741,6 +751,124 @@ class AppState extends ChangeNotifier {
     return o;
   }
 
+  // ----- real orders (server) -----
+  Timer? _orderPoll;
+
+  /// Sends the cart to the shop. The shop has 5 minutes to accept.
+  Future<Order> placeOrderOnline({required bool door, String gstin = '', String business = ''}) async {
+    if (!canPlaceAnotherOrder) throw StateError('Only $maxLiveOrders live orders at a time');
+    final a = current;
+    final r = await api.placeOrder(apiToken, {
+      'storeId': cartStoreId,
+      'door': door,
+      'items': [for (final e in cart.entries) {'id': e.key, 'qty': e.value}],
+      'address': a.full,
+      'state': a.state,
+      'lat': a.lat,
+      'lng': a.lng,
+      'name': name.isNotEmpty ? name : a.name,
+      'phone': phone.isNotEmpty ? phone : a.phone,
+      if (gstin.isNotEmpty) 'gstin': gstin,
+      if (gstin.isNotEmpty) 'business': business,
+    });
+    if (gstin.isNotEmpty) {
+      savedGstin = gstin;
+      savedBusiness = business;
+    }
+    final o = _fromServer(Map<String, dynamic>.from(r['order'] as Map));
+    cart.clear();
+    cartStoreId = null;
+    notifyListeners();
+    _pollOrders();
+    return o;
+  }
+
+  static OrderStatus _status(String s) => switch (s) {
+        'placed' => OrderStatus.placed,
+        'accepted' => OrderStatus.accepted,
+        'out' => OrderStatus.outForDelivery,
+        'delivered' => OrderStatus.delivered,
+        'rejected' => OrderStatus.rejected,
+        'missed' => OrderStatus.autoCancelled,
+        _ => OrderStatus.cancelled,
+      };
+
+  /// Adds or updates an order from the server; returns it. Tells the customer about changes.
+  Order _fromServer(Map<String, dynamic> j) {
+    DateTime? at(Object? v) => v == null ? null : DateTime.fromMillisecondsSinceEpoch((v as num).toInt() * 1000);
+    final id = '${j['id']}';
+    final raw = ((j['lines'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    // Keep line products known (for the bill), even after the shop stops selling them.
+    rememberProducts([
+      for (final l in raw)
+        if (productById('${l['pid']}').name == 'Item')
+          Product('${l['pid']}', '${l['name']}', '${l['size']}', '🛍️', '', (l['price'] as num).toInt()),
+    ]);
+    final lines = [for (final l in raw) if (l['na'] != true) OrderLine('${l['pid']}', (l['qty'] as num).toInt(), (l['price'] as num).toInt())];
+    var o = orders.where((x) => x.id == id).firstOrNull;
+    final before = o?.status;
+    if (o == null) {
+      o = Order(id, '${j['storeId']}', lines, j['door'] == true, at(j['createdAt'])!);
+      o.remote = true;
+      orders.insert(0, o);
+    } else {
+      o.lines
+        ..clear()
+        ..addAll(lines);
+    }
+    o.status = _status('${j['status']}');
+    o.fee = (j['fee'] as num?)?.toInt() ?? 0;
+    o.otp = j['otp'] as String?;
+    o.billNo = '${j['billNo'] ?? ''}';
+    o.storeName = '${j['storeName'] ?? ''}';
+    o.toName = '${j['toName'] ?? ''}';
+    o.toPhone = '${j['toPhone'] ?? ''}';
+    o.toAddress = '${j['address'] ?? ''}';
+    o.toState = '${j['state'] ?? ''}';
+    o.buyerGstin = '${j['buyerGstin'] ?? ''}';
+    o.buyerBusiness = '${j['buyerBusiness'] ?? ''}';
+    o.lat = (j['lat'] as num?)?.toDouble();
+    o.lng = (j['lng'] as num?)?.toDouble();
+    final rider = j['rider'] as Map?;
+    o.riderLat = (rider?['lat'] as num?)?.toDouble();
+    o.riderLng = (rider?['lng'] as num?)?.toDouble();
+    o.unavailable = [for (final l in raw) if (l['na'] == true) '${l['name']}'];
+    for (final (k, v) in [
+      (OrderStatus.accepted, j['acceptedAt']),
+      (OrderStatus.outForDelivery, j['outAt']),
+      (OrderStatus.delivered, j['deliveredAt']),
+      (o.status, o.isOpen ? null : j['closedAt']),
+    ]) {
+      final d = at(v);
+      if (d != null) o.times[k] = d;
+    }
+    if (before == OrderStatus.accepted && o.status == OrderStatus.outForDelivery) onOtp?.call(o);
+    return o;
+  }
+
+  /// Fresh order statuses from the server; keeps asking every 10 s while an order is open.
+  Future<void> syncOrders() async {
+    if (!signedIn || apiToken.isEmpty) return;
+    try {
+      final r = await api.myOrders(apiToken);
+      for (final j in ((r['orders'] as List?) ?? [])) {
+        _fromServer(Map<String, dynamic>.from(j as Map));
+      }
+      notifyListeners();
+    } catch (_) {}
+    _pollOrders();
+  }
+
+  void _pollOrders() {
+    final open = orders.any((o) => o.remote && o.isOpen);
+    if (open && _orderPoll == null) {
+      _orderPoll = Timer.periodic(const Duration(seconds: 10), (_) => syncOrders());
+    } else if (!open) {
+      _orderPoll?.cancel();
+      _orderPoll = null;
+    }
+  }
+
   /// Puts an old order's items back in the cart (replaces the cart). Returns how many items could be added.
   int reorder(Order o) {
     cart.clear();
@@ -813,6 +941,12 @@ class AppState extends ChangeNotifier {
 
   void cancelOrder(Order o) {
     if (!canCancel(o)) return;
+    if (o.remote) {
+      api.cancelOrderOnline(apiToken, o.id).then((r) {
+        _fromServer(Map<String, dynamic>.from(r['order'] as Map));
+        notifyListeners();
+      }).catchError((_) => syncOrders());
+    }
     if (cancelCountsAsStrike(o)) strikes++;
     o.status = OrderStatus.cancelled;
     o.times[OrderStatus.cancelled] = DateTime.now();
@@ -884,6 +1018,7 @@ class AppState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _orderPoll?.cancel();
     for (final t in _timers) {
       t.cancel();
     }

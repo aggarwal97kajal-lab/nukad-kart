@@ -38,7 +38,7 @@ export async function sendPush(env, userId, msg) {
 }
 
 /** Same as sendPush, but says what happened (for the admin "Send test" button). */
-export async function sendPushDetail(env, userId, { title, body, data = {}, channel = 'updates' }) {
+export async function sendPushDetail(env, userId, { title, body, data = {}, channel = 'updates', dataOnly = false }) {
   const out = { phones: 0, sent: 0, errors: [] };
   if (!env.FCM_SERVICE_ACCOUNT) return { ...out, errors: ['FCM_SERVICE_ACCOUNT secret is not set'] };
   if (!userId) return out;
@@ -52,7 +52,11 @@ export async function sendPushDetail(env, userId, { title, body, data = {}, chan
       const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
         method: 'POST',
         headers: { authorization: `Bearer ${at}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ message: {
+        // dataOnly: the app draws the notification itself (shop order alarm that keeps ringing).
+        body: JSON.stringify({ message: dataOnly ? {
+          token, data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
+          android: { priority: 'high', ttl: '300s' },
+        } : {
           token, notification: { title, body },
           data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
           android: { priority: 'high', notification: { channel_id: channel } },

@@ -3,6 +3,7 @@ import '../services/gstin.dart';
 import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
+import '../services/api.dart';
 import '../widgets/ui.dart';
 import 'order_screen.dart';
 import 'store_screen.dart';
@@ -256,7 +257,13 @@ class _CartScreenState extends State<CartScreen> {
         return;
       }
     }
-    final o = s.placeOrder(door: door ?? true, gstin: gstin, business: business);
+    final Order o;
+    try {
+      o = await s.placeOrderOnline(door: door ?? true, gstin: gstin, business: business);
+    } on ApiException catch (e) {
+      if (context.mounted) showToast(context, e.message);
+      return;
+    }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => OrderScreen(orderId: o.id)));
   }

@@ -17,6 +17,7 @@
 import { isAdmin, partnerRoute, offlineReason, staleThelas } from './partner.js';
 import { productOut } from './products.js';
 import { callRoute, tellExpiredCalls } from './calls.js';
+import { orderRoute, tellMissedOrders } from './orders.js';
 
 export const RADIUS_MAX_M = 500;
 const SESSION_DAYS = 30;
@@ -230,6 +231,8 @@ async function route(req, env) {
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const m = req.method;
 
+  const orders = await orderRoute(req, env, path, m);
+  if (orders) return orders;
   const calls = await callRoute(req, env, path, m);
   if (calls) return calls;
   const partner = await partnerRoute(req, env, path, m);
@@ -446,5 +449,6 @@ export default {
   async scheduled(_ev, env, ectx) {
     ectx.waitUntil(staleThelas(env).catch((e) => console.error(e)));
     ectx.waitUntil(tellExpiredCalls(env).catch((e) => console.error(e)));
+    ectx.waitUntil(tellMissedOrders(env).catch((e) => console.error(e)));
   },
 };

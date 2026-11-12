@@ -6,6 +6,7 @@ import '../data/demo_data.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
 import '../widgets/live_map.dart';
+import '../widgets/rider_map.dart';
 import 'rating_sheet.dart';
 import '../widgets/bill_card.dart';
 import 'report_screen.dart';
@@ -52,7 +53,9 @@ class _OrderScreenState extends State<OrderScreen> {
       backgroundColor: kBg,
       appBar: simpleAppBar('Order #${o.id}', subtitle: st.name),
       body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
-        if (o.status == OrderStatus.outForDelivery && o.door && o.times[OrderStatus.outForDelivery] != null)
+        if (o.remote && o.status == OrderStatus.outForDelivery && o.door)
+          RiderMap(homeLat: o.lat ?? s.current.lat, homeLng: o.lng ?? s.current.lng, riderLat: o.riderLat, riderLng: o.riderLng, storeName: st.name)
+        else if (!o.remote && o.status == OrderStatus.outForDelivery && o.door && o.times[OrderStatus.outForDelivery] != null)
           LiveDeliveryMap(
             key: ValueKey('map-${o.id}'),
             startedAt: o.times[OrderStatus.outForDelivery]!,
@@ -64,6 +67,11 @@ class _OrderScreenState extends State<OrderScreen> {
           )
         else
           _hero(o),
+        if (o.unavailable.isNotEmpty) ...[
+          SizedBox(height: 12),
+          NoteBox('${st.name} didn’t have ${o.unavailable.join(', ')}. Removed from your order — new total ${rupees(o.payable)}.',
+              icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
+        ],
         if (o.otp != null && o.isOpen) ...[
           SizedBox(height: 12),
           _otpCard(context, s, o),
@@ -353,8 +361,8 @@ class _OrderScreenState extends State<OrderScreen> {
               : 'Tell this code at the shop counter when you collect your items.',
           style: body(12.5, color: kMute),
         ),
-        SizedBox(height: 10),
-        Align(
+        if (!o.remote) SizedBox(height: 10),
+        if (!o.remote) Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
             onPressed: () => _deliveryPersonSheet(context, s, o),
