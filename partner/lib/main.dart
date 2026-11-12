@@ -6,6 +6,7 @@ import 'ui.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
 import 'screens/home.dart';
+import 'screens/agreement.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -105,6 +106,7 @@ class _GateState extends State<Gate> {
       );
     }
     if (session.store == null) return const RegisterScreen();
+    if (session.store!['agreementSigned'] != true) return const AgreementScreen();
     return const HomeScreen();
   }
 }

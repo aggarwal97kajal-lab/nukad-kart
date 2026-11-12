@@ -34,6 +34,9 @@ jobs:
       - name: Permissions, UPI apps, app id com.nukadkart.partner
         run: python3 tool/configure_android.py > /dev/null
 
+      - name: Keep map library classes in release build
+        run: cp ../android_extra/proguard-rules.pro android/app/proguard-rules.pro
+
       - name: Sign with the same Nukad Kart key (SHA-1 93:52:A2:10…)
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

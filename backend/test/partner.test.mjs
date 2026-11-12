@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTime, openAt, extendPass, offlineReason, istDate, MISSED_LIMIT } from '../src/partner.js';
+import { parseTime, openAt, extendPass, offlineReason, istDate, MISSED_LIMIT, distanceM } from '../src/partner.js';
 
 // 12 Nov 2026, 15:00 IST = 09:30 UTC
 const at = (h, m = 0) => Math.floor(Date.UTC(2026, 10, 12, h, m) / 1000) - 5.5 * 3600;
@@ -25,7 +25,7 @@ test('pass extends from its end, or from now', () => {
 
 test('when a partner shop is hidden', () => {
   const t = at(15);
-  const shop = { status: 'active', pass_until: t + 86400, live: 1, opens_at: '8 am', closes_at: '10 pm', missed_date: null, missed_count: 0 };
+  const shop = { agreement_version: '1.0', status: 'active', pass_until: t + 86400, live: 1, opens_at: '8 am', closes_at: '10 pm', missed_date: null, missed_count: 0 };
   assert.equal(offlineReason(shop, t), null);
   assert.equal(offlineReason({ ...shop, pass_until: t - 1 }, t), 'no_pass');
   assert.equal(offlineReason({ ...shop, live: 0 }, t), 'switched_off');
@@ -33,9 +33,19 @@ test('when a partner shop is hidden', () => {
   assert.equal(offlineReason({ ...shop, missed_date: istDate(t), missed_count: MISSED_LIMIT }, t), 'missed_orders');
   assert.equal(offlineReason({ ...shop, missed_date: '2026-11-11', missed_count: MISSED_LIMIT }, t), null); // new day
   assert.equal(offlineReason({ ...shop, status: 'blocked' }, t), 'blocked');
+  assert.equal(offlineReason({ ...shop, agreement_version: null }, t), 'no_agreement');
+  assert.equal(MISSED_LIMIT, 5);
+  assert.equal(offlineReason({ ...shop, missed_date: istDate(t), missed_count: 4 }, t), null);
 });
 
 test('admin email is matched by hash', async () => {
   const { sha256Hex } = await import('../src/partner.js');
   assert.equal((await sha256Hex('a@b.c')).length, 64);
+});
+
+test('shop pin vs photo GPS distance', () => {
+  assert.ok(distanceM(28.5921, 77.046, 28.5921, 77.046) < 1);
+  const d = distanceM(28.5921, 77.046, 28.5925, 77.046); // ~44 m north
+  assert.ok(d > 40 && d < 50, String(d));
+  assert.ok(distanceM(28.5921, 77.046, 28.593, 77.046) > 50);
 });

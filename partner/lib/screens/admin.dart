@@ -13,6 +13,7 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
   final upiId = TextEditingController();
   final upiName = TextEditingController();
+  final party = {for (final k in ['legalName', 'address', 'city', 'pan', 'email']) k: TextEditingController()};
   List<Map<String, dynamic>> pays = [];
   bool all = false, _loading = true, _saving = false;
 
@@ -26,6 +27,9 @@ class _AdminScreenState extends State<AdminScreen> {
   void dispose() {
     upiId.dispose();
     upiName.dispose();
+    for (final c in party.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -34,6 +38,8 @@ class _AdminScreenState extends State<AdminScreen> {
       final s = await api.call('GET', '/v1/admin/settings');
       upiId.text = '${s['upiId'] ?? ''}';
       upiName.text = '${s['upiName'] ?? 'Nukad Kart'}';
+      final pm = Map<String, dynamic>.from((s['party'] as Map?) ?? {});
+      party.forEach((k, c) => c.text = '${pm[k] ?? ''}');
       await _loadPays();
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
@@ -52,6 +58,17 @@ class _AdminScreenState extends State<AdminScreen> {
     try {
       await api.call('PUT', '/v1/admin/settings', {'upiId': upiId.text.trim(), 'upiName': upiName.text.trim()});
       if (mounted) toast(context, 'UPI ID saved. New pass payments go here.');
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    if (mounted) setState(() => _saving = false);
+  }
+
+  Future<void> _saveParty() async {
+    setState(() => _saving = true);
+    try {
+      await api.call('PUT', '/v1/admin/settings', {'party': party.map((k, c) => MapEntry(k, c.text.trim()))});
+      if (mounted) toast(context, 'Agreement details saved');
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -105,6 +122,22 @@ class _AdminScreenState extends State<AdminScreen> {
                 TextField(controller: upiName, decoration: field('Name shown in the UPI app', label: 'Name')),
                 const SizedBox(height: 8),
                 Btn(_saving ? 'Saving…' : 'Save UPI ID', onTap: _saving ? null : _saveUpi),
+                const SizedBox(height: 22),
+                Text('Agreement details (Nukad Kart side)', style: tx(15, weight: FontWeight.w800)),
+                Text('Shown as the first party in every vendor agreement. Kept on the server, not in the app code.',
+                    style: tx(12, color: kMute)),
+                const SizedBox(height: 8),
+                TextField(controller: party['legalName'], decoration: field('Proprietor’s full legal name', label: 'Legal name')),
+                const SizedBox(height: 8),
+                TextField(controller: party['address'], maxLines: 2, decoration: field('Complete business address', label: 'Address')),
+                const SizedBox(height: 8),
+                TextField(controller: party['city'], decoration: field('e.g. New Delhi, Delhi', label: 'Court city (jurisdiction)')),
+                const SizedBox(height: 8),
+                TextField(controller: party['pan'], textCapitalization: TextCapitalization.characters, decoration: field('ABCDE1234F', label: 'PAN')),
+                const SizedBox(height: 8),
+                TextField(controller: party['email'], keyboardType: TextInputType.emailAddress, decoration: field('Official email', label: 'Email')),
+                const SizedBox(height: 8),
+                Btn(_saving ? 'Saving…' : 'Save agreement details', outline: true, onTap: _saving ? null : _saveParty),
                 const SizedBox(height: 22),
                 Row(children: [
                   Expanded(child: Text(all ? 'All recent payments' : 'Payments to check', style: tx(15, weight: FontWeight.w800))),

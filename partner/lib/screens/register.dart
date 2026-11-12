@@ -8,9 +8,13 @@ import 'package:url_launcher/url_launcher.dart';
 import '../api.dart';
 import '../session.dart';
 import '../ui.dart';
+import '../widgets/map_picker.dart';
 
 /// FSSAI's official registration portal (FoSCoS).
 const fssaiPortal = 'https://foscos.fssai.gov.in/';
+
+/// The shop pin must be within this many metres of where the shop photo was taken.
+const maxPinDistance = 50.0;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -30,9 +34,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String gstType = 'none';
   bool door = true, pickup = true;
   File? photo;
-  double? lat, lng, photoLat, photoLng;
+  double? lat, lng, photoLat, photoLng, photoAccuracy;
   int? photoAt;
-  bool _locating = false, _saving = false;
+  bool _locating = false, _saving = false, _photoGps = false;
+
+  double? get pinDistance =>
+      lat == null || photoLat == null ? null : Geolocator.distanceBetween(lat!, lng!, photoLat!, photoLng!);
 
   @override
   void dispose() {
@@ -70,27 +77,90 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (mounted) setState(() => _locating = false);
   }
 
-  /// Camera only (no gallery): the photo is stamped with the time and place it was taken.
-  Future<void> _takePhoto() async {
-    final x = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 1280, imageQuality: 70);
+  /// Shop: camera only, stamped with GPS where it was taken. Thela: camera or gallery, no GPS.
+  Future<void> _takePhoto([ImageSource source = ImageSource.camera]) async {
+    final x = await ImagePicker().pickImage(source: source, maxWidth: 1280, imageQuality: 70);
     if (x == null) return;
     photoAt = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    setState(() => photo = File(x.path));
+    setState(() {
+      photo = File(x.path);
+      photoLat = photoLng = photoAccuracy = null;
+    });
+    if (kind != 'shop') return;
+    setState(() => _photoGps = true);
     try {
       final p = await _position();
       if (p != null) {
         photoLat = p.latitude;
         photoLng = p.longitude;
-        lat ??= p.latitude;
-        lng ??= p.longitude;
-        if (mounted) setState(() {});
+        photoAccuracy = p.accuracy;
+        if (lat == null) {
+          lat = p.latitude;
+          lng = p.longitude;
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) toast(context, 'Could not read GPS. Stand outside the shop and take the photo again.');
+    }
+    if (mounted) setState(() => _photoGps = false);
+  }
+
+  void _photoMenu() {
+    if (kind == 'shop') {
+      _takePhoto();
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: const Text('Take photo'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _takePhoto(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: const Text('Choose from gallery'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _takePhoto(ImageSource.gallery);
+            },
+          ),
+        ]),
+      ),
+    );
+  }
+
+  String? get _locationError {
+    if (kind != 'shop' || photo == null) return null;
+    if (photoLat == null) return _photoGps ? null : 'The photo has no GPS. Turn on location and take the photo again at the shop.';
+    if ((photoAccuracy ?? 0) > maxPinDistance) {
+      return 'GPS is weak here (±${photoAccuracy!.round()} m). Step outside the shop and take the photo again.';
+    }
+    final d = pinDistance;
+    if (d != null && d > maxPinDistance) {
+      final far = d >= 1000 ? '${(d / 1000).toStringAsFixed(1)} km' : '${d.round()} m';
+      return 'This address is $far from where the shop photo was taken (allowed: ${maxPinDistance.round()} m). Move the pin to your shop or take the photo at the shop.';
+    }
+    return null;
   }
 
   Future<void> _save() async {
     if (photo == null) {
-      toast(context, 'Take a photo of the shop front.');
+      toast(context, kind == 'shop' ? 'Take a photo of the shop front.' : 'Add a photo of your thela.');
+      return;
+    }
+    final locErr = _locationError;
+    if (locErr != null) {
+      toast(context, locErr);
+      return;
+    }
+    if (kind == 'shop' && address.text.trim().length < 8) {
+      toast(context, 'Enter the shop address.');
       return;
     }
     if (lat == null) {
@@ -123,8 +193,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'gstType': gstType,
         'gstin': gstin.text.trim().toUpperCase(),
         'photo': base64Encode(bytes),
-        'photoLat': photoLat,
-        'photoLng': photoLng,
+        'photoLat': kind == 'shop' ? photoLat : null,
+        'photoLng': kind == 'shop' ? photoLng : null,
         'photoAt': photoAt,
       });
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
@@ -164,10 +234,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: bar('Register', actions: [TextButton(onPressed: session.signOut, child: Text('Log out', style: tx(13, weight: FontWeight.w700)))]),
       body: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 30), children: [
         _label('I am a'),
-        _seg([('shop', 'Shop / kirana'), ('thela', 'Thela (moving)')], kind, (v) => setState(() => kind = v)),
-        _label(kind == 'shop' ? 'Shop front photo (camera only)' : 'Photo of your thela (camera only)'),
+        _seg([('shop', 'Shop / kirana'), ('thela', 'Thela (moving)')], kind, (v) => setState(() {
+              if (v != kind) photo = photoLat = photoLng = photoAccuracy = null;
+              kind = v;
+            })),
+        _label(kind == 'shop' ? 'Shop front photo (camera, at the shop)' : 'Photo of your thela'),
         GestureDetector(
-          onTap: _takePhoto,
+          onTap: _photoMenu,
           child: Container(
             height: 200,
             clipBehavior: Clip.antiAlias,
@@ -177,11 +250,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Icon(Icons.photo_camera_outlined, color: kAct, size: 40),
                     const SizedBox(height: 6),
-                    Text('Take photo', style: tx(14, color: kAct, weight: FontWeight.w800)),
+                    Text(kind == 'shop' ? 'Take photo' : 'Add photo', style: tx(14, color: kAct, weight: FontWeight.w800)),
                   ])
                 : Stack(fit: StackFit.expand, children: [
                     Image.file(photo!, fit: BoxFit.cover),
-                    Positioned(
+                    if (kind == 'shop') Positioned(
                       left: 0,
                       right: 0,
                       bottom: 0,
@@ -189,7 +262,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: Colors.black54,
                         padding: const EdgeInsets.all(8),
                         child: Text(
-                            '📍 ${photoLat?.toStringAsFixed(5) ?? '…'}, ${photoLng?.toStringAsFixed(5) ?? '…'} · tap to retake',
+                            _photoGps
+                                ? '📍 Reading GPS…'
+                                : '📍 ${photoLat?.toStringAsFixed(5) ?? 'no GPS'}, ${photoLng?.toStringAsFixed(5) ?? ''}${photoAccuracy != null ? ' · ±${photoAccuracy!.round()} m' : ''} · tap to retake',
                             style: tx(11.5, color: Colors.white)),
                       ),
                     ),
@@ -211,21 +286,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
             decoration: field('10-digit mobile number')),
-        _label(kind == 'shop' ? 'Shop location' : 'Usual area'),
-        Box(
-          child: Row(children: [
-            const Icon(Icons.my_location, color: kAct),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                  lat == null ? 'Stand at the shop and tap “Use this spot”.' : 'Set: ${lat!.toStringAsFixed(5)}, ${lng!.toStringAsFixed(5)}',
-                  style: tx(13.5, weight: FontWeight.w600)),
+        if (kind == 'shop') ...[
+          _label('Shop address (search, then put the pin on your shop)'),
+          if (photoLat == null)
+            Box(color: kSurf, child: Text('Take the shop photo first. The map opens where the photo was taken.', style: tx(13)))
+          else
+            OlaMapPicker(
+              lat: photoLat!,
+              lng: photoLng!,
+              onChanged: (la, ln, place) => setState(() {
+                lat = la;
+                lng = ln;
+                if (place != null && place.formatted.isNotEmpty) address.text = place.formatted;
+              }),
             ),
-            TextButton(onPressed: _locating ? null : _locate, child: Text(_locating ? 'Finding…' : 'Use this spot')),
-          ]),
-        ),
-        const SizedBox(height: 8),
-        TextField(controller: address, maxLines: 2, decoration: field('Address (shop no., market, sector, pin)')),
+          const SizedBox(height: 8),
+          TextField(
+              controller: address,
+              maxLines: 2,
+              onChanged: (_) => setState(() {}),
+              decoration: field('Shop no., market, sector, pin', label: 'Address (filled from the map, you can edit)')),
+          if (_locationError != null) ...[
+            const SizedBox(height: 8),
+            Box(
+              color: kRedBg,
+              border: const Color(0xFFF7C1C1),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Icon(Icons.error_outline, color: kRed, size: 20),
+                const SizedBox(width: 8),
+                Expanded(child: Text(_locationError!, style: tx(12.5, color: kRed, weight: FontWeight.w600))),
+              ]),
+            ),
+          ] else if (pinDistance != null) ...[
+            const SizedBox(height: 6),
+            Text('✓ Pin is ${pinDistance!.round()} m from the photo spot', style: tx(12, color: kAct, weight: FontWeight.w700)),
+          ],
+        ] else ...[
+          _label('Usual area'),
+          Box(
+            child: Row(children: [
+              const Icon(Icons.my_location, color: kAct),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                    lat == null ? 'Stand where you usually sell and tap “Use this spot”.' : 'Set: ${lat!.toStringAsFixed(5)}, ${lng!.toStringAsFixed(5)}',
+                    style: tx(13.5, weight: FontWeight.w600)),
+              ),
+              TextButton(onPressed: _locating ? null : _locate, child: Text(_locating ? 'Finding…' : 'Use this spot')),
+            ]),
+          ),
+          const SizedBox(height: 8),
+          TextField(controller: address, maxLines: 2, decoration: field('Area / market where you sell')),
+        ],
         if (kind == 'shop') ...[
           _label('Timings (the shop goes off the app after closing time)'),
           Row(children: [
@@ -277,7 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               decoration: field('GSTIN, e.g. 07ABCDE1234F1Z5')),
         ],
         const SizedBox(height: 22),
-        Btn(_saving ? 'Saving…' : 'Save and continue', onTap: _saving ? null : _save),
+        Btn(_saving ? 'Saving…' : 'Save and continue', onTap: _saving || _locationError != null ? null : _save),
       ]),
     );
   }

@@ -25,6 +25,14 @@ class ApiError implements Exception {
         'payments_paused' => 'Too many failed payments today. Try again tomorrow.',
         'not_admin' => 'Only admins can do this.',
         'bad_upi_id' => 'UPI ID is not valid (example: name@okaxis).',
+        'photo_location_required' => 'Take the shop photo at the shop with location (GPS) on.',
+        'address_far' => 'The map pin is more than 50 m from where the shop photo was taken. Move the pin to your shop.',
+        'agreement_needed' => 'Sign the partner agreement first.',
+        'agreement_changed' => 'The agreement was updated. Open it again and sign the new version.',
+        'agree_required' => 'Tick “I have read and agree” first.',
+        'signer_name_required' => 'Type your full name.',
+        'signature_required' => 'Sign in the box with your finger.',
+        'register_first' => 'Register your shop first.',
         _ => 'Something went wrong ($code). Try again.',
       };
   @override

@@ -106,6 +106,23 @@ class _PassScreenState extends State<PassScreen> {
     if (mounted) setState(() => _paying = false);
   }
 
+  /// Admin-only test: starts the pass without paying (marked DEMO on the server).
+  Future<void> _demoPay() async {
+    setState(() => _paying = true);
+    try {
+      final r = await api.call('POST', '/v1/partner/payments', {'plan': selected, 'key': newPaymentKey(), 'demo': true});
+      await session.refresh();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (_) => PayResultScreen(status: 'PAID', payment: Map<String, dynamic>.from(r['payment'] as Map))));
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    if (mounted) setState(() => _paying = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,6 +169,20 @@ class _PassScreenState extends State<PassScreen> {
                       style: tx(11.5, color: kMute)),
                   const SizedBox(height: 16),
                   Btn(_paying ? 'Opening UPI app…' : 'Pay ₹${_plan['price']} with UPI', onTap: _paying ? null : _pay),
+                  if (session.admin) ...[
+                    const SizedBox(height: 14),
+                    Box(
+                      color: kAmbBg,
+                      border: const Color(0xFFFAC775),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        pill('ADMIN ONLY', color: kAmb, bg: const Color(0xFFFAC775)),
+                        const SizedBox(height: 6),
+                        Text('Start this pass without paying, to test the app. It is marked DEMO in payments.', style: tx(12.5)),
+                        const SizedBox(height: 8),
+                        Btn('Demo pay ₹${_plan['price']}', outline: true, color: kAmb, onTap: _paying ? null : _demoPay),
+                      ]),
+                    ),
+                  ],
                 ]),
     );
   }

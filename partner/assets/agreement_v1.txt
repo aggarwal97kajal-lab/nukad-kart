@@ -1,0 +1,329 @@
+1. PURPOSE AND NATURE OF AGREEMENT
+
+1.1 Nukad Kart operates a technology-based hyperlocal marketplace connecting customers with independently operated local stores and vendors.
+
+1.2 Nukad Kart provides a digital platform through which Vendors may display products, receive customer orders, and communicate with customers.
+
+1.3 Nukad Kart does not purchase, own, stock, warehouse, or independently sell the Vendor's listed products.
+
+1.4 The Vendor operates as an independent seller and is responsible for its products, pricing, stock, customer orders, invoicing, and fulfilment.
+
+1.5 This Agreement does not create an employment relationship, agency, franchise, joint venture, or legal partnership between the Parties.
+
+2. VENDOR ELIGIBILITY AND REGISTRATION
+
+2.1 The Vendor must provide accurate and complete business registration details.
+
+2.2 The Vendor shall hold GST registration where it is required by law (for example, when its turnover crosses the applicable threshold) and shall provide its GSTIN in the app. A Vendor that is not required to register may join without a GSTIN.
+
+2.3 The Vendor must possess all licences and registrations legally required for its business activities, including applicable FSSAI registration or licence for food products.
+
+2.4 Nukad Kart may verify submitted business documents and reject incomplete, fraudulent, or non-compliant applications.
+
+2.5 The Vendor shall promptly update any changes to its business information, licences, bank details, or contact information.
+
+3. PRODUCT LISTING AND CATALOGUE MANAGEMENT
+
+3.1 Nukad Kart does not maintain a platform-owned master product catalogue.
+
+3.2 Vendors are responsible for creating and managing their own product listings.
+
+3.3 Vendors may:
+
+- Retrieve eligible product information and images from Open Food Facts (OFF), subject to applicable licence conditions.
+- Capture original product photographs.
+- Scan product barcodes to obtain available product information.
+- Manually enter product names, prices, descriptions, and stock details.
+
+3.4 The Vendor shall verify all product information before publishing any listing.
+
+3.5 The Vendor shall ensure that product images and descriptions are accurate and do not infringe intellectual property rights.
+
+3.6 Open Food Facts information may be incomplete or inaccurate. The Vendor remains responsible for verifying product information, while Nukad Kart shall comply with any applicable obligations arising from its own use of third-party data.
+
+3.7 The Vendor grants Nukad Kart a non-exclusive, royalty-free licence to host, display, and technically process authorised listing content for operating and promoting the marketplace during the listing's availability, subject to applicable third-party licences.
+
+3.8 The Vendor must not list counterfeit, expired, prohibited, unsafe, or otherwise unlawful products.
+
+4. PRODUCT PRICING AND INVENTORY
+
+4.1 The Vendor independently determines product selling prices, subject to applicable laws, including MRP restrictions.
+
+4.2 The Vendor shall maintain accurate stock availability and product information.
+
+4.3 The Vendor must not knowingly accept orders for unavailable products.
+
+4.4 Applicable product taxes, packaging declarations, and other statutory requirements shall be the Vendor's responsibility as seller.
+
+4.5 Any applicable discount must be accurately reflected in the customer-facing order value.
+
+5. ORDER PLACEMENT AND ACCEPTANCE
+
+5.1 Customers may discover Vendors and place orders through Nukad Kart.
+
+5.2 The Vendor shall review and accept or reject orders according to the applicable order-management process.
+
+5.3 Upon accepting an order, the Vendor shall make reasonable efforts to fulfil it within the communicated timeframe.
+
+5.4 The Vendor shall promptly inform customers about stock shortages, delays, substitutions, or cancellations.
+
+5.5 Product substitutions require customer consent where applicable.
+
+5.6 Nukad Kart does not guarantee any minimum number of orders, customers, sales, or revenue.
+
+5.7 If the Vendor does not respond to 5 (five) orders in one day, the store is taken offline for the rest of that day. The Vendor may go live again from the Partner App. The store is also hidden outside its declared opening hours.
+
+6. DIRECT PAYMENT POLICY
+
+6.1 Customers shall pay the Vendor directly through the payment methods made available by the Vendor.
+
+6.2 Nukad Kart shall not collect or hold customer product-sale payments on behalf of the Vendor.
+
+6.3 Nukad Kart shall not operate an order-payment settlement system between customers and Vendors under this business model.
+
+6.4 The Vendor shall be responsible for receiving, reconciling, and recording customer payments.
+
+6.5 Nukad Kart shall not charge a commission on product sales.
+
+6.6 Nukad Kart shall not charge customers a platform fee on orders.
+
+6.7 The Vendor shall remain responsible for applicable payment-related compliance, taxes, refunds, and payment disputes.
+
+7. DELIVERY AND FULFILMENT POLICY
+
+7.1 Orders of ₹199 or Above
+
+The Vendor agrees to provide free delivery to customers for eligible orders having a final product subtotal of ₹199 or above.
+
+7.2 Orders Below ₹199
+
+For orders having a final product subtotal below ₹199, the Vendor may collect the applicable delivery charge directly from the customer.
+
+7.3 Ownership of Delivery Charges
+
+The Vendor shall retain 100% of all applicable delivery charges collected from customers.
+
+7.4 Nukad Kart shall not deduct any commission or platform fee from delivery charges.
+
+7.5 The Vendor shall arrange and manage order delivery through its own delivery person, at its own responsibility and expense, subject to applicable laws.
+
+7.6 Delivery charges, if applicable, must be disclosed to the customer before order confirmation.
+
+7.7 The free-delivery threshold shall be calculated using the final product subtotal after product discounts and excluding delivery charges.
+
+7.8 The Vendor shall be responsible for delivery delays, missing items, incorrect deliveries, and damage attributable to its fulfilment operations, subject to applicable consumer rights.
+
+8. VENDOR SUBSCRIPTION PASSES
+
+Nukad Kart operates on a subscription-based revenue model. Current passes:
+
+- Free Trial: ₹0, 7 days (once per Vendor, starts on registration)
+- Daily Pass: ₹99, 1 day
+- Weekly Pass: ₹199, 7 days
+- Monthly Pass: ₹499, 30 days
+- Yearly Pass: ₹5,999, 365 days
+
+8.1 New Vendors receive a seven-day free trial, starting on the date of registration. The trial is given once per Vendor.
+
+8.1A A new pass purchased while a pass is active starts when the current pass ends. While no pass or trial is active, the Vendor's store is hidden from customers.
+
+8.2 After expiry of the trial period, the Vendor must purchase a valid subscription pass to continue using subscription-restricted marketplace services.
+
+8.3 Subscription access shall remain active for the purchased validity period, unless suspended or terminated in accordance with this Agreement.
+
+8.4 Subscription payments shall be made to Nukad Kart through its authorised subscription payment facility.
+
+8.5 Any applicable taxes shall be disclosed during subscription checkout.
+
+8.6 Subscription renewal shall not be automatic unless the Vendor separately authorises an automatic renewal arrangement.
+
+8.7 Cancellation, refunds, and early termination shall be governed by the disclosed Subscription Cancellation and Refund Policy, subject to applicable law.
+
+8.8 Nukad Kart may revise subscription prices prospectively after giving appropriate notice. Price changes shall not retrospectively alter an already purchased pass.
+
+9. INVOICING AND TAX COMPLIANCE
+
+9.1 The Vendor shall be the seller of record for products supplied to customers.
+
+9.2 The Vendor shall issue legally compliant invoices or bills for customer purchases.
+
+9.3 The Vendor shall be responsible for applicable GST on product sales and corresponding statutory returns.
+
+9.4 Nukad Kart shall issue a payment receipt for Vendor subscription payments, and a tax invoice where Nukad Kart is registered under GST.
+
+9.5 The Parties shall comply with applicable GST, income-tax, withholding, reporting, and e-commerce-related statutory obligations.
+
+9.6 The direct-payment arrangement shall not, by itself, be interpreted as an exemption from any otherwise applicable statutory obligation.
+
+10. RETURNS, REFUNDS, AND CANCELLATIONS
+
+10.1 The Vendor shall handle product-related returns, replacements, and refunds in accordance with applicable law and the customer-facing return policy.
+
+10.2 The Vendor shall be responsible for resolving issues involving incorrect, damaged, expired, defective, or missing products attributable to the Vendor.
+
+10.3 Refunds of customer product payments shall ordinarily be made directly by the Vendor to the customer.
+
+10.4 Nukad Kart may provide customer support, complaint escalation, and dispute-facilitation tools.
+
+10.5 Nothing in this Agreement shall restrict customers' statutory consumer protection rights.
+
+11. PRODUCT QUALITY AND SAFETY
+
+11.1 The Vendor shall supply genuine, lawful, properly labelled, and safe products.
+
+11.2 The Vendor shall ensure appropriate storage, hygiene, packaging, and handling.
+
+11.3 Expired, adulterated, counterfeit, recalled, or prohibited products must not be offered for sale.
+
+11.4 The Vendor shall comply with applicable food safety, legal metrology, consumer protection, and product-specific regulations.
+
+11.5 Nukad Kart may remove listings that appear unlawful, unsafe, misleading, or contrary to platform policies.
+
+12. CUSTOMER INFORMATION AND DATA PRIVACY
+
+12.1 Customer personal information made available to the Vendor shall be used only for authorised purposes such as order processing, customer communication, delivery, and legally required recordkeeping.
+
+12.2 The Vendor shall not sell, unlawfully disclose, or misuse customer personal information.
+
+12.3 The Vendor shall implement reasonable security measures to protect customer information.
+
+12.4 Each Party shall comply with applicable Indian data protection laws and its respective legal obligations.
+
+12.5 The Vendor shall cooperate with Nukad Kart in addressing relevant privacy complaints and security incidents.
+
+13. VENDOR CONDUCT
+
+The Vendor shall not:
+
+- Publish misleading product information.
+- Sell counterfeit, expired, prohibited, or unsafe goods.
+- Manipulate orders, ratings, or customer reviews.
+- Misrepresent its identity or business credentials.
+- Misuse customer information.
+- Engage in fraudulent or unlawful activities.
+- Impersonate Nukad Kart or claim authority to bind Nukad Kart without written authorisation.
+
+14. PLATFORM RIGHTS AND RESPONSIBILITIES
+
+14.1 Nukad Kart shall provide access to its marketplace technology subject to availability, maintenance, and applicable subscription terms.
+
+14.2 Nukad Kart may update app functionality, security controls, and operational policies.
+
+14.3 Nukad Kart may review listings and investigate complaints.
+
+14.4 Nukad Kart may restrict or remove unlawful or non-compliant content, subject to applicable law and platform procedures.
+
+14.5 Nukad Kart does not guarantee uninterrupted availability, a fixed customer reach, or a minimum volume of sales.
+
+14.6 Nukad Kart shall comply with statutory obligations applicable to its role as a marketplace platform.
+
+15. CUSTOMER COMPLAINTS AND DISPUTES
+
+15.1 Vendors shall respond reasonably and promptly to customer complaints.
+
+15.2 Nukad Kart may provide a grievance submission and escalation mechanism.
+
+15.3 Vendors shall cooperate with complaint investigations and provide relevant order information.
+
+15.4 Product-related liability shall be determined according to the Vendor's role, the facts of the dispute, and applicable law.
+
+15.5 Nukad Kart's statutory grievance obligations, where applicable, shall remain unaffected.
+
+16. ACCOUNT SUSPENSION AND TERMINATION
+
+16.1 Nukad Kart may suspend or terminate Vendor access for material violations of this Agreement, fraud, unlawful listings, safety concerns, or other legitimate grounds.
+
+16.2 Immediate restrictions may be imposed where reasonably necessary to address serious fraud, safety, or legal risks.
+
+16.3 Where appropriate, the Vendor shall be provided with the reason for restriction and an opportunity to respond or appeal.
+
+16.4 Subscription expiry may result in restricted access to subscription-dependent services.
+
+16.6 A strike or penalty for a customer complaint is applied only after the complaint is supported by proof and the Vendor has had an opportunity to respond.
+
+16.5 Termination shall not extinguish outstanding customer obligations, lawful refund claims, or accrued payment obligations.
+
+17. INTELLECTUAL PROPERTY
+
+17.1 Nukad Kart's name, logo, app design, software, and proprietary materials belong to their respective lawful owners.
+
+17.2 Vendors shall not use Nukad Kart trademarks or branding beyond authorised platform-related purposes.
+
+17.3 Vendors must have appropriate rights or permissions for product images, descriptions, and other uploaded materials.
+
+17.4 Third-party content, including Open Food Facts content, remains subject to its applicable licence terms and attribution requirements.
+
+18. LIABILITY AND INDEMNIFICATION
+
+18.1 The Vendor shall be responsible for losses and claims arising from its unlawful conduct, product defects, inaccurate listings, or breach of its contractual obligations, to the extent permitted by law.
+
+18.2 The Vendor agrees to indemnify Nukad Kart against reasonable, legally recoverable third-party claims arising from the Vendor's breach, negligence, or unlawful conduct, subject to applicable law.
+
+18.3 Nukad Kart shall remain responsible for its own wrongful acts, contractual obligations, and liabilities that cannot lawfully be excluded.
+
+18.4 Neither Party may exclude or limit liability where such exclusion or limitation is prohibited by applicable law.
+
+19. CONFIDENTIALITY
+
+19.1 Each Party shall protect non-public business and operational information received from the other Party.
+
+19.2 Confidential information shall not be disclosed except as authorised, legally required, or reasonably necessary to perform this Agreement.
+
+19.3 This obligation shall survive termination for the period required by applicable law or the nature of the information.
+
+20. FORCE MAJEURE
+
+Neither Party shall be liable for a delay caused by events beyond its reasonable control, to the extent permitted by law, provided reasonable mitigation efforts are undertaken.
+
+21. AMENDMENTS AND POLICY UPDATES
+
+21.1 Nukad Kart may propose updates to this Agreement and associated policies.
+
+21.2 Material changes affecting Vendor rights, fees, or obligations shall be communicated with appropriate advance notice.
+
+21.3 Changes requiring renewed consent shall become binding only through a legally valid acceptance process.
+
+21.4 Previously accrued obligations shall not be retrospectively altered without a lawful basis.
+
+22. TERM AND TERMINATION BY NOTICE
+
+22.1 This Agreement shall commence upon valid acceptance and continue until terminated.
+
+22.2 Either Party may terminate the commercial relationship by giving 15 days' written notice, subject to outstanding obligations and applicable law.
+
+22.3 Termination shall not automatically entitle either Party to retain payments or deny refunds contrary to applicable law or the disclosed subscription policy.
+
+23. GOVERNING LAW AND JURISDICTION
+
+23.1 This Agreement shall be governed by the laws of India.
+
+23.2 The Parties shall first attempt to resolve contractual disputes through good-faith discussion.
+
+23.3 Subject to mandatory statutory forums and applicable law, the courts at {{city}} shall have jurisdiction, provided such courts otherwise have lawful jurisdiction.
+
+23.4 Consumer statutory rights and legally mandated remedies shall remain unaffected.
+
+24. ELECTRONIC AGREEMENT AND ACCEPTANCE
+
+24.1 The Parties acknowledge that this Agreement may be presented and accepted electronically through Nukad Kart Partner App.
+
+24.2 The Vendor confirms that the person accepting this Agreement is legally authorised to act on behalf of the registered business.
+
+24.3 Nukad Kart may maintain an electronic acceptance record including the Agreement version, Vendor account ID, acceptance timestamp, and relevant technical verification records, subject to applicable privacy law.
+
+24.4 Electronic acceptance shall be implemented in compliance with applicable Indian electronic contracting, authentication, and evidentiary requirements.
+
+24.5 Any applicable stamping or other execution formalities shall be completed where legally required.
+
+25. DECLARATION AND CONSENT
+
+By accepting this Agreement, the Vendor declares that:
+
+- The information provided during registration is true and accurate.
+- The Vendor possesses all applicable business registrations and licences.
+- The Vendor understands Nukad Kart operates as a marketplace technology platform.
+- The Vendor is responsible for its own product listings, prices, customer payments, invoices, and delivery obligations.
+- The Vendor accepts the ₹199 free-delivery threshold.
+- The Vendor understands that Nukad Kart does not charge product-sale commission or customer platform fees.
+- The Vendor understands the subscription pass pricing and validity terms.
+- The Vendor agrees to comply with applicable Indian laws and Nukad Kart's disclosed policies.

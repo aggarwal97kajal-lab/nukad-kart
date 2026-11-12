@@ -4,6 +4,7 @@ import '../session.dart';
 import '../ui.dart';
 import 'pass.dart';
 import 'admin.dart';
+import 'agreement.dart';
 
 String dateText(int secs) {
   final d = DateTime.fromMillisecondsSinceEpoch(secs * 1000);
@@ -47,7 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
       'no_pass' => ('Pass ended · hidden', 'Customers can’t see you. Buy a pass to go live.', kRed, kRedBg),
       'blocked' => ('Account blocked', 'Contact Nukad Kart support.', kRed, kRedBg),
       'closed_now' => ('Closed now', 'Outside your timings (${s['opensAt']} – ${s['closesAt']}). You show again at opening time.', kAmb, kAmbBg),
-      'missed_orders' => ('Offline for today', '3 orders were missed today. Switch on to go live again.', kAmb, kAmbBg),
+      'missed_orders' => ('Offline for today', '5 orders were missed today. Switch on to go live again.', kAmb, kAmbBg),
+      'no_agreement' => ('Agreement not signed', 'Sign the partner agreement to go live.', kRed, kRedBg),
       _ => ('You are offline', 'Switch on to show your shop to customers.', kInk, kSurf),
     };
   }
@@ -73,8 +75,14 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'out') session.signOut();
+                if (v == 'agreement') {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const AgreementScreen(viewOnly: true)));
+                }
               },
-              itemBuilder: (_) => [PopupMenuItem(value: 'out', child: Text('Log out (${session.email})'))],
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'agreement', child: Text('Partner agreement')),
+                PopupMenuItem(value: 'out', child: Text('Log out')),
+              ],
             ),
           ]),
           body: RefreshIndicator(
@@ -105,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(passActive ? 'Pass active · $daysLeft day${daysLeft == 1 ? '' : 's'} left' : 'No active pass',
+                      Text(passActive ? '${s['trial'] == true ? 'Free trial' : 'Pass active'} · $daysLeft day${daysLeft == 1 ? '' : 's'} left' : 'No active pass',
                           style: tx(15, weight: FontWeight.w800)),
                       Text(passActive ? 'Ends ${dateText(passUntil)}' : 'Your shop shows to customers only with a pass.',
                           style: tx(12.5, color: kMute)),
@@ -123,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Today', style: tx(15, weight: FontWeight.w800)),
                   const SizedBox(height: 6),
-                  Text('Missed orders: ${s['missedToday'] ?? 0} of 3', style: tx(13)),
+                  Text('Missed orders: ${s['missedToday'] ?? 0} of 5', style: tx(13)),
                   Text('Orders arrive here soon. A new order rings until you accept it (5 minutes).', style: tx(12, color: kMute)),
                 ]),
               ),
