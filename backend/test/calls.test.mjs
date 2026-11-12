@@ -68,3 +68,21 @@ test('grouping by 100 m', () => {
   const g = groupCalls([{ id: 'a', lat: 28.7, lng: 77.1, created_at: T }, { id: 'b', lat: 28.7008, lng: 77.1, created_at: T }, { id: 'c', lat: 28.702, lng: 77.1, created_at: T }]);
   assert.deepEqual(g.map((x) => x.ids), [['a', 'b'], ['c']]);
 });
+
+test('chat: customer writes, thela replies, numbers refused, block closes it', async () => {
+  const { call } = await setup();
+  let r = await call('POST', '/v1/me/chats/th1', { text: 'Bhaiya matar hai?', address: 'Gali 4' }, 'c1');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  r = await call('POST', '/v1/me/chats/th1', { text: 'call 9876543210' }, 'c1');
+  assert.equal(r.json.error, 'no_numbers');
+  r = await call('GET', '/v1/partner/chats', null, 'owner');
+  assert.equal(r.json.chats[0].unread, true);
+  const id = r.json.chats[0].id;
+  r = await call('POST', `/v1/partner/chats/${id}`, { text: 'Haan hai' }, 'owner');
+  assert.deepEqual(r.json.messages.map((x) => x.from), ['customer', 'thela']);
+  await call('POST', `/v1/partner/chats/${id}/report`, { reason: 'rude' }, 'owner');
+  r = await call('POST', '/v1/me/chats/th1', { text: 'hello' }, 'c1');
+  assert.equal(r.json.error, 'chat_closed');
+  r = await call('POST', '/v1/thelas/th1/watch', null, null);
+  assert.equal(r.json.ok, true);
+});

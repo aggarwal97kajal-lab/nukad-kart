@@ -149,6 +149,11 @@ export async function productRoute(req, env, path, m, ctx) {
   const { s } = await ctx(req, env);
   if (!s) throw new HttpError(400, 'register_first');
 
+  if (path === '/v1/partner/products/bulk' && m === 'POST') {
+    if (s.kind === 'thela') throw new HttpError(400, 'shops_only');
+    return json(await bulkUpsert(env, s, (await body(req)).rows));
+  }
+
   if (path === '/v1/partner/products/confirm-prices' && m === 'POST') {
     // "Same prices as yesterday": nothing changes except the date the thela confirmed today's prices.
     const today = new Date((now() + 5.5 * 3600) * 1000).toISOString().slice(0, 10);
@@ -278,4 +283,48 @@ export async function productRoute(req, env, path, m, ctx) {
     }
   }
   throw new HttpError(404, 'not_found');
+}
+
+/**
+ * Excel upload: add or update many products at once. A row matches an existing product by barcode,
+ * else by name + size (loose: name + unit). Bad rows are skipped and reported with their row number.
+ */
+export async function bulkUpsert(env, s, rows) {
+  if (!Array.isArray(rows) || !rows.length) throw new HttpError(400, 'no_rows');
+  if (rows.length > 2000) throw new HttpError(400, 'too_many_rows');
+  const { results: existing } = await env.DB.prepare('SELECT id, barcode, name, size, unit, kind FROM products WHERE store_id = ?').bind(s.id).all();
+  const byCode = new Map(existing.filter((p) => p.barcode).map((p) => [p.barcode, p.id]));
+  const key = (name, size, unit, kind) => `${kind}|${String(name).trim().toLowerCase()}|${kind === 'loose' ? unit : String(size || '').trim().toLowerCase()}`;
+  const byName = new Map(existing.map((p) => [key(p.name, p.size, p.unit, p.kind), p.id]));
+  const t = now();
+  const stmts = [], errors = [];
+  let added = 0, updated = 0;
+  rows.forEach((r, i) => {
+    const row = Number(r?.row) || i + 2; // Excel row number (row 1 = headings)
+    let v;
+    try {
+      v = cleanProduct(r || {}, s);
+    } catch (e) {
+      errors.push({ row, error: e.code || 'bad_row' });
+      return;
+    }
+    if (v.produce_key) v.produce_key = null;
+    const k = key(v.name, v.size, v.unit, v.kind);
+    let id = (v.barcode && byCode.get(v.barcode)) || byName.get(k);
+    const cols = { ...v, updated_at: t };
+    const keys = Object.keys(cols);
+    if (id) {
+      updated++;
+      stmts.push(env.DB.prepare(`UPDATE products SET ${keys.map((c) => `${c} = ?`).join(', ')} WHERE id = ? AND store_id = ?`).bind(...keys.map((c) => cols[c]), id, s.id));
+    } else {
+      added++;
+      id = `pr_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+      if (v.barcode) byCode.set(v.barcode, id);
+      byName.set(k, id);
+      stmts.push(env.DB.prepare(`INSERT INTO products (id, store_id, ${keys.join(', ')}, created_at) VALUES (?, ?, ${keys.map(() => '?').join(', ')}, ?)`)
+        .bind(id, s.id, ...keys.map((c) => cols[c]), t));
+    }
+  });
+  for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50));
+  return { added, updated, errors: errors.slice(0, 200), errorCount: errors.length };
 }

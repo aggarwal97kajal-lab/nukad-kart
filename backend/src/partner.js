@@ -13,7 +13,7 @@
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
 import { HttpError, json, body, now, verifySession, verifyMsg91, haversineM, THELA_STALE_S } from './index.js';
 import { sendPush, sendPushDetail, pushReady } from './push.js';
-import { productRoute } from './products.js';
+import { productRoute, bulkUpsert } from './products.js';
 import { staffMe } from './orders.js';
 
 export const PLANS = {
@@ -646,13 +646,14 @@ export async function partnerRoute(req, env, path, m) {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
     const t = now();
     // The phone sends on ~75 m of movement, plus a heartbeat every few minutes while standing.
-    if (s.live_at && t - s.live_at < 10) return json({ ok: true });
+    const fast = (s.watched_until || 0) > t; // a customer has this thela's page open
+    if (s.live_at && t - s.live_at < (fast ? 3 : 10)) return json({ ok: true, live: true, fast });
     const moved = s.live_lat == null || haversineM(s.live_lat, s.live_lng, lat, lng) >= 50; // cell/wifi fixes wobble ~30–50 m
     const heading = Number.isFinite(Number(b.heading)) && b.heading !== null ? Math.round(Number(b.heading)) % 360 : null;
     await env.DB.prepare(`UPDATE stores SET live_lat = ?, live_lng = ?, live_at = ?, moved_at = CASE WHEN ? THEN ? ELSE moved_at END,
         heading = COALESCE(?, heading), stale_pushed = 0 WHERE id = ?`)
       .bind(lat, lng, t, moved ? 1 : 0, t, moved ? heading : null, s.id).run();
-    return json({ ok: true, live: true });
+    return json({ ok: true, live: true, fast });
   }
 
   if (path === '/v1/partner/agreement' && m === 'GET') {
@@ -755,6 +756,15 @@ export async function partnerRoute(req, env, path, m) {
     }
     if (stmts.length) await env.DB.batch(stmts);
     return json({ ...(await upiSettings(env)), party: await partySettings(env) });
+  }
+
+  // Admin: upload products for a shop (Excel rows, same format as the shop's own upload).
+  const adBulk = path.match(/^\/v1\/admin\/stores\/([\w-]+)\/products\/bulk$/);
+  if (adBulk && m === 'POST') {
+    await admin(req, env);
+    const st = await env.DB.prepare("SELECT * FROM stores WHERE id = ? AND kind != 'thela'").bind(adBulk[1]).first();
+    if (!st) throw new HttpError(404, 'not_found');
+    return json(await bulkUpsert(env, st, (await body(req)).rows));
   }
 
   if (path === '/v1/admin/partners' && m === 'GET') {

@@ -16,7 +16,7 @@ async function setup() {
     ins('sessions', { id: 's' + u, user_id: u, created_at: T, last_seen: T });
   }
   ins('stores', { id: 'sh1', name: 'Sharma General Store', kind: 'shop', owner_id: 'owner', lat: 28.7, lng: 77.1, opens_at: '', closes_at: '', status: 'active', live: 1,
-    pass_until: T + 86400, active: 1, demo: 0, agreement_version: 1, created_at: T, door_delivery: 1, pickup: 1 });
+    pass_until: T + 86400, active: 1, demo: 0, agreement_version: 1, created_at: T, door_delivery: 1, pickup: 1, fssai: '12345678901234' });
   ins('products', { id: 'atta', store_id: 'sh1', kind: 'packed', name: 'Atta', brand: 'Aashirvaad', size: '5 kg', category: 'Atta, rice & dal', mrp: 280, price: 265, gst: 5, in_stock: 1, created_at: T, updated_at: T });
   ins('products', { id: 'maggi', store_id: 'sh1', kind: 'packed', name: 'Maggi', size: '70 g', category: 'Instant Food', mrp: 15, price: 15, gst: 5, in_stock: 1, created_at: T, updated_at: T });
   ins('products', { id: 'dal', store_id: 'sh1', kind: 'loose', name: 'Toor Dal', category: 'Atta, rice & dal', unit: 'kg', options: '[500,1000]', price: 160, gst: 5, in_stock: 1, created_at: T, updated_at: T });
@@ -98,4 +98,19 @@ test('staff: owner adds, check before OTP, delivery-only rights, removal', async
   r = await call('DELETE', `/v1/partner/staff/${staffId}`, null, 'owner');
   r = await call('GET', '/v1/partner/me', null, 'su', 'ssu');
   assert.equal(r.status, 401);
+});
+
+test('Excel upload: add, update by barcode / name, bad rows reported', async () => {
+  const { call } = await setup();
+  const rows = [
+    { row: 2, name: 'Atta', size: '5 kg', category: 'Atta, rice & dal', mrp: 280, price: 255 },
+    { row: 3, name: 'Parle-G', size: '250 g', category: 'Bakery & biscuits', mrp: 30, price: 28, barcode: '8901719110047' },
+    { row: 4, name: 'Bad', size: '1', category: 'Nope', mrp: 1, price: 1 },
+    { row: 5, kind: 'loose', name: 'Sugar', category: 'Atta, rice & dal', unit: 'kg', options: [500, 1000], price: 46 },
+  ];
+  let r = await call('POST', '/v1/partner/products/bulk', { rows }, 'owner');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.deepEqual([r.json.added, r.json.updated, r.json.errors[0].row], [2, 1, 4]); // Atta 5 kg already existed
+  r = await call('POST', '/v1/partner/products/bulk', { rows: [{ ...rows[1], price: 29 }] }, 'owner');
+  assert.deepEqual([r.json.added, r.json.updated], [0, 1]);
 });
