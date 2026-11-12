@@ -142,8 +142,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                          tr('Nukad team is verifying your shop. This usually takes less than a day. Pull down to check. ')
-                          '${session.trialAvailable ? 'Your 7-day free trial starts when you are approved.' : 'Free trial was already used on this number or phone.'}',
+                          tr('Nukad team is verifying your shop. This usually takes less than a day. Pull down to check. ') +
+                              (session.trialAvailable
+                                  ? t('Your 7-day free trial starts when you are approved.')
+                                  : t('Free trial was already used on this number or phone.')),
                           style: tx(12.5, weight: FontWeight.w600)),
                     ),
                   ]),

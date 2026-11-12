@@ -421,4 +421,6 @@ const Map<String, String> hi = {
   '📍 Reading GPS…': '📍 GPS पढ़ रहे हैं…',
   '📍 {0}, {1}{2} · tap to retake': '📍 {0}, {1}{2} · फिर लेने के लिए दबाएँ',
   '🔒 Pay with any UPI app on this phone. A new pass starts when the current one ends.': '🔒 इस फ़ोन के किसी भी UPI ऐप से पेमेंट करें। नया पास, चालू पास ख़त्म होने पर शुरू होगा।',
+  'Your 7-day free trial starts when you are approved.': 'मंज़ूरी मिलते ही आपका 7 दिन का फ़्री ट्रायल शुरू होगा।',
+  'Free trial was already used on this number or phone.': 'इस नंबर या फ़ोन पर फ़्री ट्रायल पहले ही इस्तेमाल हो चुका है।',
 };

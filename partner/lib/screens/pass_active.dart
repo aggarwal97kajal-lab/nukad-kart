@@ -78,16 +78,16 @@ class _PassActiveScreenState extends State<PassActiveScreen> with SingleTickerPr
       body: AnimatedBuilder(
         animation: _c,
         builder: (context, _) {
-          final t = _c.value * 6.0; // seconds
+          final sec = _c.value * 6.0; // seconds
           return Stack(children: [
-            Positioned.fill(child: CustomPaint(painter: _BackPainter(t, badgeY))),
+            Positioned.fill(child: CustomPaint(painter: _BackPainter(sec, badgeY))),
             // headline
             Positioned(
               left: 0,
               right: 0,
-              top: badgeY + 110 + (1 - _out(_seg(t, 1.3, 1.7))) * 30,
+              top: badgeY + 110 + (1 - _out(_seg(sec, 1.3, 1.7))) * 30,
               child: Opacity(
-                opacity: _seg(t, 1.3, 1.7),
+                opacity: _seg(sec, 1.3, 1.7),
                 child: Column(children: [
                   Text(t('Pass active!'), style: tx(34, color: Colors.white, weight: FontWeight.w800)),
                   Text(t('Your shop can go LIVE now'), style: tx(15, color: const Color(0xFFE1ECD7))),
@@ -95,39 +95,39 @@ class _PassActiveScreenState extends State<PassActiveScreen> with SingleTickerPr
               ),
             ),
             // the pass ticket
-            if (t > 1.55)
+            if (sec > 1.55)
               Positioned(
                 left: 28,
                 right: 28,
-                top: badgeY + 210 + (1 - _back(_seg(t, 1.55, 2.15), 1.4)) * size.height * 0.4,
+                top: badgeY + 210 + (1 - _back(_seg(sec, 1.55, 2.15), 1.4)) * size.height * 0.4,
                 child: Transform.rotate(
-                  angle: (1 - _seg(t, 1.55, 2.3)) * -7 * math.pi / 180,
+                  angle: (1 - _seg(sec, 1.55, 2.3)) * -7 * math.pi / 180,
                   child: _Ticket(
                     plan: t('${p['planName'] ?? 'Pass'}'),
-                    days: (days * _out(_seg(t, 2.0, 2.9))).round(),
+                    days: (days * _out(_seg(sec, 2.0, 2.9))).round(),
                     price: '₹${p['amount']}',
                     till: until > 0 ? tr('Valid till {0}', [_till(until)]) : '',
                     id: tr('Payment ID {0}', [p['id']]),
-                    shine: _seg(t, 2.25, 2.9),
+                    shine: _seg(sec, 2.25, 2.9),
                   ),
                 ),
               ),
-            Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _ConfettiPainter(_confetti, t, Offset(size.width / 2, badgeY))))),
+            Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _ConfettiPainter(_confetti, sec, Offset(size.width / 2, badgeY))))),
             // buttons
             Positioned(
               left: 28,
               right: 28,
-              bottom: 24 + MediaQuery.paddingOf(context).bottom - (1 - _out(_seg(t, 2.7, 3.1))) * 40,
+              bottom: 24 + MediaQuery.paddingOf(context).bottom - (1 - _out(_seg(sec, 2.7, 3.1))) * 40,
               child: Opacity(
-                opacity: _seg(t, 2.7, 3.1),
+                opacity: _seg(sec, 2.7, 3.1),
                 child: Column(children: [
                   Transform.scale(
-                    scale: t > 3.1 ? 1 + 0.035 * math.sin((t - 3.1) * 6) : 1,
+                    scale: sec > 3.1 ? 1 + 0.035 * math.sin((sec - 3.1) * 6) : 1,
                     child: SizedBox(
                       width: double.infinity,
                       height: 58,
                       child: FilledButton(
-                        onPressed: _busy || t < 2.7 ? null : _goLive,
+                        onPressed: _busy || sec < 2.7 ? null : _goLive,
                         style: FilledButton.styleFrom(
                           backgroundColor: kBrand,
                           disabledBackgroundColor: kBrand,
@@ -138,7 +138,7 @@ class _PassActiveScreenState extends State<PassActiveScreen> with SingleTickerPr
                     ),
                   ),
                   TextButton(
-                    onPressed: t < 2.7 ? null : () => Navigator.pop(context),
+                    onPressed: sec < 2.7 ? null : () => Navigator.pop(context),
                     child: Text(t('Done'), style: tx(15, color: const Color(0xFFE1ECD7), weight: FontWeight.w700)),
                   ),
                 ]),
