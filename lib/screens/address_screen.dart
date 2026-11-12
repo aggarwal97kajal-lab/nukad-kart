@@ -338,7 +338,7 @@ class _MiniMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E261B) : Color(0xFFF4EFDC));
+    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E1E1E) : Color(0xFFF4EFDC));
     final road = Paint()
       ..color = dark ? Color(0xFF2C3D33) : Colors.white
       ..strokeWidth = 10;

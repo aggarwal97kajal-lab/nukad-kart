@@ -785,20 +785,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       groups.putIfAbsent(_dayLabel(n.at), () => []).add(n);
     }
     return _Page(title: t('Notifications'), children: [
-      CardBox(
-        padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-        child: Row(children: [
-          Icon(Icons.shopping_cart_outlined, color: kGText, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Cart reminders', style: body(14, weight: FontWeight.w700)),
-              Text('One reminder, about 30 min after you leave items in the cart', style: body(11.5, color: kMute)),
-            ]),
-          ),
-          Switch(value: s.cartReminders, activeColor: kG, onChanged: s.setCartReminders),
-        ]),
-      ),
       if (list.isEmpty) _empty('🔔', 'No notifications yet', 'Order updates and thela replies show up here.'),
       for (final g in groups.entries) ...[
         Padding(

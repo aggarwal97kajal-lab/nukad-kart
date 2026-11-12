@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
-import '../services/bill_pdf.dart';
+import '../widgets/bill_card.dart';
 import '../widgets/ui.dart';
 import '../widgets/cart_widgets.dart';
 import 'cart_screen.dart';
@@ -157,13 +157,7 @@ class OrderHistoryCard extends StatelessWidget {
                 if (delivered)
                   IconButton(
                     tooltip: 'Download bill',
-                    onPressed: () async {
-                      try {
-                        await downloadBill(o);
-                      } catch (_) {
-                        if (context.mounted) showToast(context, 'Could not open the bill. Try again.');
-                      }
-                    },
+                    onPressed: () => saveBillWithToast(context, o),
                     icon: Column(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.download_rounded, color: kGText, size: 22),
                       Text('Bill', style: body(10.5, color: kGText, weight: FontWeight.w800)),

@@ -14,21 +14,21 @@ const kLime = Color(0xFFF8CB46); // accent on dark panels
 Color get kG => _p(0xFF315426, 0xFFF8CB46); // action: buttons, links
 Color get kOnG => _p(0xFFFFFFFF, 0xFF21331B); // text/icons on kG
 Color get kGText => _p(0xFF315426, 0xFFF8CB46);
-Color get kGBg => _p(0xFFFFF8DE, 0xFF283224); // surface
-Color get kSurf => _p(0xFFFFF8DE, 0xFF283224);
-Color get kPillBg => _p(0xFFEAF0DF, 0xFF3A3415);
-Color get kBg => _p(0xFFFBF8EF, 0xFF141A12);
-Color get kCard => _p(0xFFFFFFFF, 0xFF1E261B);
-Color get kInk => _p(0xFF21331B, 0xFFF3F0E2);
-Color get kMute => _p(0xFF5E6A55, 0xFFA9B39F);
-Color get kLine => _p(0xFFEDE5C8, 0xFF2E3A2A);
+Color get kGBg => _p(0xFFFFF8DE, 0xFF262626); // surface
+Color get kSurf => _p(0xFFFFF8DE, 0xFF262626);
+Color get kPillBg => _p(0xFFEAF0DF, 0xFF3A3318);
+Color get kBg => _p(0xFFFBF8EF, 0xFF121212);
+Color get kCard => _p(0xFFFFFFFF, 0xFF1E1E1E);
+Color get kInk => _p(0xFF21331B, 0xFFF2F2F2);
+Color get kMute => _p(0xFF5E6A55, 0xFFABABAB);
+Color get kLine => _p(0xFFEDE5C8, 0xFF333333);
 Color get kAmb => _p(0xFF8A4B00, 0xFFF5B25A);
 Color get kAmbBg => _p(0xFFFFF1DC, 0xFF3A2A12);
 Color get kRed => _p(0xFFB42318, 0xFFFF7A6E);
 Color get kRedBg => _p(0xFFFDECEA, 0xFF3A1A17);
 Color get kBlu => _p(0xFF1F4E79, 0xFF8DB8E8);
 Color get kBluBg => _p(0xFFE6EEF7, 0xFF16263D);
-Color get kCream => _p(0xFFFFF8DE, 0xFF283224);
+Color get kCream => _p(0xFFFFF8DE, 0xFF262626);
 
 const kHead = 'NotoSans';
 const kFallback = ['NotoSansDevanagari'];
@@ -251,15 +251,23 @@ PreferredSizeWidget simpleAppBar(String title, {String? subtitle, List<Widget>? 
   );
 }
 
-void showToast(BuildContext context, String text) {
+/// Toast colours that always contrast: dark toast in light mode, light toast in dark mode.
+Color get kToastBg => gDark ? const Color(0xFFF2F2F2) : const Color(0xFF1B1B1B);
+Color get kToastText => gDark ? const Color(0xFF121212) : Colors.white;
+Color get kToastAction => gDark ? const Color(0xFF315426) : const Color(0xFFF8CB46);
+
+void showToast(BuildContext context, String text, {String? action, VoidCallback? onAction, Duration? duration}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
-      content: Text(text,
-          style: body(13.5, color: gDark ? Color(0xFF14201A) : Colors.white, weight: FontWeight.w600)),
-      backgroundColor: gDark ? Color(0xFFEEF3EF) : Color(0xFF14201A),
+      content: Text(text, style: body(13.5, color: kToastText, weight: FontWeight.w600)),
+      backgroundColor: kToastBg,
       behavior: SnackBarBehavior.floating,
+      duration: duration ?? (action == null ? const Duration(seconds: 4) : const Duration(seconds: 8)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      action: action == null
+          ? null
+          : SnackBarAction(label: action, textColor: kToastAction, onPressed: onAction ?? () {}),
     ));
 }
 

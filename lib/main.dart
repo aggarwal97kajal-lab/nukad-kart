@@ -23,8 +23,8 @@ Future<void> main() async {
   final state = AppState();
   await state.load();
   await MapMarkers.load();
-  state.scheduleCartReminder = (title, body, at) => CartReminder.schedule(title, body, at);
-  state.cancelCartReminder = () => CartReminder.cancel();
+  state.scheduleCartReminders = (plan) => CartReminder.scheduleAll(plan);
+  state.cancelCartReminders = () => CartReminder.cancelAll();
   state.logSentCartReminder();
   runApp(NukadKartApp(state: state));
 }
@@ -59,18 +59,18 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
       s.addNotification('${th.name} is back near you', 'Within 500 m of ${s.address} now. Call or WhatsApp to buy.');
       messengerKey.currentState?.showSnackBar(SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: gDark ? Color(0xFFF3F0E2) : Color(0xFF21331B),
+        backgroundColor: kToastBg,
         content: Text('🛒 ${th.name} is back within 500 m',
-            style: TextStyle(color: gDark ? Color(0xFF21331B) : Colors.white, fontWeight: FontWeight.w600)),
+            style: TextStyle(color: kToastText, fontWeight: FontWeight.w600)),
       ));
     };
     s.onOtp = (o) {
       messengerKey.currentState?.showSnackBar(SnackBar(
         duration: Duration(seconds: 8),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: gDark ? Color(0xFFF3F0E2) : Color(0xFF21331B),
+        backgroundColor: kToastBg,
         content: Text('🔐 Order packed. Your delivery code is ${o.otp}',
-            style: TextStyle(color: gDark ? Color(0xFF21331B) : Colors.white, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: kToastText, fontWeight: FontWeight.w700)),
       ));
     };
     s.onBackInStock = (storeId, productId) {
@@ -79,12 +79,12 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
       messengerKey.currentState?.showSnackBar(SnackBar(
         duration: Duration(seconds: 8),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: gDark ? Color(0xFFEEF3EF) : Color(0xFF14201A),
+        backgroundColor: kToastBg,
         content: Text('🔔 ${p.name} ${p.size} is back at ${st.name}',
-            style: TextStyle(color: gDark ? Color(0xFF14201A) : Colors.white, fontWeight: FontWeight.w600)),
+            style: TextStyle(color: kToastText, fontWeight: FontWeight.w600)),
         action: SnackBarAction(
           label: 'Add to cart',
-          textColor: kLime,
+          textColor: kToastAction,
           onPressed: () {
             final ctx = navKey.currentContext;
             if (ctx != null) tryAddToCart(ctx, storeId, productId);
@@ -170,7 +170,27 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
         useMaterial3: true,
         brightness: brightness,
         colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF315426), brightness: brightness, primary: kG, surface: kCard),
+            seedColor: const Color(0xFF315426), brightness: brightness, primary: kG, surface: kCard).copyWith(
+          // Neutral surfaces in dark mode (no green tint on sheets, dialogs and menus).
+          surfaceTint: Colors.transparent,
+          surfaceContainerLowest: kBg,
+          surfaceContainerLow: kCard,
+          surfaceContainer: kCard,
+          surfaceContainerHigh: kSurf,
+          surfaceContainerHighest: kSurf,
+          onSurface: kInk,
+          onSurfaceVariant: kMute,
+          outline: kLine,
+          outlineVariant: kLine,
+          inverseSurface: kToastBg,
+          onInverseSurface: kToastText,
+        ),
+        snackBarTheme: SnackBarThemeData(
+          backgroundColor: kToastBg,
+          contentTextStyle: TextStyle(fontFamily: 'NotoSans', color: kToastText, fontWeight: FontWeight.w600),
+          actionTextColor: kToastAction,
+          behavior: SnackBarBehavior.floating,
+        ),
         scaffoldBackgroundColor: kBg,
         canvasColor: kCard,
         dividerColor: kLine,

@@ -107,22 +107,28 @@ void main() {
         contains('Composition'));
   });
 
-  test('cart reminder: once a day, only while the shop will be open', () {
+  test('cart reminder: at most 2 a day, only while the shop is open', () {
     final s = AppState();
     final pid = kListings.firstWhere((l) => l.storeId == 's1' && l.stock > 0).productId;
     s.add('s1', pid); // Sharma: 8 am – 10 pm
-    s.lastCartReminderAt = null; // ignore the one planned from the real clock
+    s.cartReminderTimes.clear(); // ignore the plan made from the real clock
     final noon = DateTime(2026, 11, 12, 12);
     final plan = s.cartReminderPlan(noon);
-    expect(plan, isNotNull);
-    expect(plan!.$3, noon.add(const Duration(minutes: 30)));
-    expect(plan.$1, contains('Sharma General Store'));
-    expect(s.cartReminderPlan(DateTime(2026, 11, 12, 21, 45)), isNull); // shop closed by 10:15 pm
-    s.lastCartReminderAt = DateTime(2026, 11, 12, 10);
-    expect(s.cartReminderPlan(noon), isNull); // already reminded today
-    expect(s.cartReminderPlan(DateTime(2026, 11, 13, 12)), isNotNull); // next day is fine
-    s.cartReminders = false;
-    expect(s.cartReminderPlan(DateTime(2026, 11, 13, 12)), isNull);
+    expect(plan.first.$3, noon.add(const Duration(minutes: 30)));
+    expect(plan.first.$1, contains('Sharma General Store'));
+    int on(DateTime d) => plan.where((p) => p.$3.day == d.day).length;
+    expect(on(noon), 2); // 12:30 and 4 pm
+    expect(on(DateTime(2026, 11, 13)), 2); // 11 am and 6:30 pm
+    expect(plan.length, 6);
+    // 9:45 pm: +30 min and +4 h are after closing; next days still get 2 each.
+    final late = s.cartReminderPlan(DateTime(2026, 11, 12, 21, 45));
+    expect(late.where((p) => p.$3.day == 12), isEmpty);
+    // Two already sent today: nothing more today.
+    s.cartReminderTimes.addAll([DateTime(2026, 11, 12, 9), DateTime(2026, 11, 12, 11)]);
+    expect(s.cartReminderPlan(noon).where((p) => p.$3.day == 12), isEmpty);
+    // Empty cart: no reminders.
+    s.remove(pid);
+    expect(s.cartReminderPlan(noon), isEmpty);
   });
 
   test('unknown pin code is not serviceable', () {

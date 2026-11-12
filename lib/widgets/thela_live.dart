@@ -43,7 +43,7 @@ class ThelaLiveMap extends StatelessWidget {
         if (t.status == ThelaStatus.notAvailable) {
           return Container(
             height: 280,
-            color: gDark ? Color(0xFF1E261B) : Color(0xFFECE8DA),
+            color: gDark ? Color(0xFF1E1E1E) : Color(0xFFECE8DA),
             padding: EdgeInsets.symmetric(horizontal: 36),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               CircleAvatar(radius: 30, backgroundColor: kCard, child: Icon(Icons.location_off_outlined, color: kMute, size: 28)),
@@ -82,9 +82,9 @@ class _MapPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
-    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E261B) : Color(0xFFF4EFDC));
+    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E1E1E) : Color(0xFFF4EFDC));
     final road = Paint()
-      ..color = dark ? Color(0xFF2E3A2A) : Colors.white
+      ..color = dark ? Color(0xFF2E2E2E) : Colors.white
       ..strokeWidth = 11;
     for (var y = 24.0; y < h; y += 64) {
       canvas.drawLine(Offset(0, y), Offset(w, y), road);

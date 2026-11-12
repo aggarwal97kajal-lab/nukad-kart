@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:file_saver/file_saver.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -26,10 +30,30 @@ Bill billFor(Order o) {
 
 String _fileName(Order o) => 'Nukad-Kart-Bill-${o.id}.pdf';
 
-/// Opens Android's "Save as PDF" / print screen.
-Future<void> downloadBill(Order o) async {
+/// Saves the bill PDF in the phone's Downloads folder. Returns (path of a copy the app can open, saved to Downloads?).
+Future<(String, bool)> downloadBill(Order o) async {
   final bytes = await billPdf(billFor(o));
-  await Printing.layoutPdf(onLayout: (_) async => bytes, name: _fileName(o).replaceAll('.pdf', ''));
+  final dir = await getApplicationDocumentsDirectory();
+  final f = File('${dir.path}/${_fileName(o)}');
+  await f.writeAsBytes(bytes, flush: true);
+  var inDownloads = true;
+  try {
+    await FileSaver.instance.saveToDownloads(
+      name: _fileName(o).replaceAll('.pdf', ''),
+      bytes: bytes,
+      fileExtension: 'pdf',
+      mimeType: MimeType.pdf,
+    );
+  } catch (_) {
+    inDownloads = false; // still saved inside the app; Open works
+  }
+  return (f.path, inDownloads);
+}
+
+/// Opens a saved bill in the phone's PDF viewer.
+Future<bool> openBillFile(String path) async {
+  final r = await OpenFilex.open(path, type: 'application/pdf');
+  return r.type == ResultType.done;
 }
 
 /// Opens the share sheet (WhatsApp, Gmail, Drive…).

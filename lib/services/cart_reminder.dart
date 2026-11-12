@@ -2,11 +2,11 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Phone notification for a cart left behind. Scheduled on the phone itself, so it works offline.
+/// Phone notifications for a cart left behind (at most 2 a day). Scheduled on the phone itself, so it works offline.
 class CartReminder {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false, _asked = false;
-  static const _id = 7001;
+  static const _firstId = 7001, _maxCount = 10;
 
   static Future<void> _init() async {
     if (_ready) return;
@@ -15,7 +15,15 @@ class CartReminder {
     _ready = true;
   }
 
-  static Future<void> schedule(String title, String body, DateTime at) async {
+  /// Replaces any planned reminders with [plan] (title, body, time).
+  static Future<void> scheduleAll(List<(String, String, DateTime)> plan) async {
+    await cancelAll();
+    for (var i = 0; i < plan.length && i < _maxCount; i++) {
+      await _schedule(_firstId + i, plan[i].$1, plan[i].$2, plan[i].$3);
+    }
+  }
+
+  static Future<void> _schedule(int id, String title, String body, DateTime at) async {
     try {
       await _init();
       if (!_asked) {
@@ -25,7 +33,7 @@ class CartReminder {
             ?.requestNotificationsPermission();
       }
       await _plugin.zonedSchedule(
-        _id,
+        id,
         title,
         body,
         tz.TZDateTime.from(at.toUtc(), tz.UTC),
@@ -33,7 +41,7 @@ class CartReminder {
           android: AndroidNotificationDetails(
             'cart_reminders',
             'Cart reminders',
-            channelDescription: 'One reminder when items are left in your cart',
+            channelDescription: 'Reminders when items are left in your cart (at most 2 a day)',
             importance: Importance.defaultImportance,
             styleInformation: BigTextStyleInformation(body),
           ),
@@ -45,10 +53,12 @@ class CartReminder {
     }
   }
 
-  static Future<void> cancel() async {
+  static Future<void> cancelAll() async {
     try {
       await _init();
-      await _plugin.cancel(_id);
+      for (var i = 0; i < _maxCount; i++) {
+        await _plugin.cancel(_firstId + i);
+      }
     } catch (_) {}
   }
 }

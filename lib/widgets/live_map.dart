@@ -126,8 +126,8 @@ class _RoutePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
-    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E261B) : Color(0xFFF4EFDC));
-    final block = Paint()..color = dark ? Color(0xFF283224) : Color(0xFFE9E1C2);
+    canvas.drawRect(Offset.zero & size, Paint()..color = dark ? Color(0xFF1E1E1E) : Color(0xFFF4EFDC));
+    final block = Paint()..color = dark ? Color(0xFF2A2A2A) : Color(0xFFE9E1C2);
     final road = Paint()
       ..color = dark ? Color(0xFF34473B) : Colors.white
       ..strokeWidth = 14;

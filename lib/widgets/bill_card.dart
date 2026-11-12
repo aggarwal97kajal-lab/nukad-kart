@@ -5,6 +5,25 @@ import '../state/app_state.dart';
 import 'ui.dart';
 
 /// "Your bill is ready" with Download PDF and Share, shown on a delivered order.
+/// Saves the bill to Downloads and shows a toast with an Open button.
+Future<void> saveBillWithToast(BuildContext context, Order o) async {
+  try {
+    final (path, inDownloads) = await downloadBill(o);
+    if (!context.mounted) return;
+    showToast(
+      context,
+      inDownloads ? 'Bill saved to Downloads' : 'Bill saved',
+      action: 'Open',
+      onAction: () async {
+        final ok = await openBillFile(path);
+        if (!ok && context.mounted) showToast(context, 'No PDF viewer found. Open it from the Downloads folder.');
+      },
+    );
+  } catch (_) {
+    if (context.mounted) showToast(context, 'Could not save the bill. Try again.');
+  }
+}
+
 class BillCard extends StatefulWidget {
   final Order order;
   const BillCard({super.key, required this.order});
@@ -15,16 +34,21 @@ class BillCard extends StatefulWidget {
 class _BillCardState extends State<BillCard> {
   bool _busy = false;
 
-  Future<void> _run(Future<void> Function(Order) job) async {
+  Future<void> _run(Future<void> Function() job) async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      await job(widget.order);
+      await job();
     } catch (_) {
       if (mounted) showToast(context, 'Could not open the bill. Try again.');
     }
     if (mounted) setState(() => _busy = false);
   }
+
+  Widget _label(String t) => FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(t, maxLines: 1, softWrap: false, style: const TextStyle(fontFamily: 'NotoSans', fontSize: 14, fontWeight: FontWeight.w700)),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +79,9 @@ class _BillCardState extends State<BillCard> {
         Row(children: [
           Expanded(
             child: FilledButton.icon(
-              onPressed: _busy ? null : () => _run(downloadBill),
+              onPressed: _busy ? null : () => _run(() => saveBillWithToast(context, widget.order)),
               icon: const Icon(Icons.download_rounded, size: 19),
-              label: const Text('Download PDF'),
+              label: _label('Download PDF'),
               style: FilledButton.styleFrom(
                   backgroundColor: kG,
                   foregroundColor: kOnG,
@@ -68,9 +92,9 @@ class _BillCardState extends State<BillCard> {
           const SizedBox(width: 10),
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: _busy ? null : () => _run(shareBill),
+              onPressed: _busy ? null : () => _run(() => shareBill(widget.order)),
               icon: const Icon(Icons.share_outlined, size: 19),
-              label: const Text('Share'),
+              label: _label('Share'),
               style: OutlinedButton.styleFrom(
                   foregroundColor: kG,
                   side: BorderSide(color: kG, width: 1.5),

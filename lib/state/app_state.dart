@@ -479,9 +479,8 @@ class AppState extends ChangeNotifier {
         cartStoreId = '${c['store']}';
         items.forEach((k, v) => cart[k] = (v as num).toInt());
       }
-      cartReminders = j['cartReminders'] != false;
-      lastCartReminderAt = DateTime.tryParse('${j['cartReminderAt'] ?? ''}');
-      _cartReminderLogged = '${j['cartReminderLogged'] ?? ''}';
+      cartReminderTimes.addAll(((j['cartReminderTimes'] as List?) ?? []).map((e) => DateTime.tryParse('$e')).whereType<DateTime>());
+      _cartRemindersLogged.addAll(((j['cartRemindersLogged'] as List?) ?? []).map((e) => '$e'));
       _cartSig = _sig;
       if (signedIn && !profileComplete) {
         signedIn = false;
@@ -509,9 +508,8 @@ class AppState extends ChangeNotifier {
           'profiles': _profiles,
           'session': _profileJson(),
           'cart': {'store': cartStoreId, 'items': cart},
-          'cartReminders': cartReminders,
-          'cartReminderAt': lastCartReminderAt?.toIso8601String(),
-          'cartReminderLogged': _cartReminderLogged,
+          'cartReminderTimes': cartReminderTimes.map((t) => t.toIso8601String()).toList(),
+          'cartRemindersLogged': _cartRemindersLogged.toList(),
         }));
   }
 
@@ -522,69 +520,84 @@ class AppState extends ChangeNotifier {
     _save();
   }
 
-  // ----- cart reminder: once, ~30 min after items are left in the cart -----
-  bool cartReminders = true;
-  DateTime? lastCartReminderAt;
-  String _cartReminderLogged = '';
+  // ----- cart reminder: always on, at most 2 a day while items wait in the cart -----
+  /// Planned (future) and already sent (past) reminder times for the current cart.
+  final List<DateTime> cartReminderTimes = [];
+  final Set<String> _cartRemindersLogged = {};
   String _cartSig = '';
 
-  /// Set by main(): schedules / cancels the phone notification.
-  void Function(String title, String body, DateTime at)? scheduleCartReminder;
-  void Function()? cancelCartReminder;
+  /// Set by main(): schedules / cancels the phone notifications.
+  void Function(List<(String, String, DateTime)> plan)? scheduleCartReminders;
+  void Function()? cancelCartReminders;
 
   String get _sig => cartStoreId == null || cart.isEmpty
       ? ''
       : '$cartStoreId:${(cart.keys.toList()..sort()).map((k) => '$k*${cart[k]}').join(',')}';
 
-  /// What to send and when, or null when no reminder should go out.
-  /// No reminder: switched off, empty cart, already reminded today, or the shop will be closed by then.
-  (String, String, DateTime)? cartReminderPlan(DateTime now) {
-    if (!cartReminders || cartStoreId == null || cart.isEmpty) return null;
-    final last = lastCartReminderAt;
-    if (last != null && last.isBefore(now) && last.year == now.year && last.month == now.month && last.day == now.day) {
-      return null;
-    }
-    final at = now.add(const Duration(minutes: 30));
+  static bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Reminders for the cart as it is now: about 30 min after leaving it, again ~4 h later,
+  /// then 11 am and 6:30 pm for the next 2 days. Never more than 2 on one day (counting ones
+  /// already sent today), and only at times the shop is open. Empty cart: none.
+  List<(String, String, DateTime)> cartReminderPlan(DateTime now) {
+    if (cartStoreId == null || cart.isEmpty) return const [];
     final st = storeById(cartStoreId!);
-    if (!st.isOpenAt(at)) return null;
     final names = cart.keys.map((id) => productById(id).name).toList();
-    final more = names.length > 2 ? ' and ${names.length - 2} more' : '';
-    return (
-      'Your cart at ${st.name} is waiting 🛒',
-      '${names.take(2).join(', ')}$more · ₹$cartTotal. The shop is open till ${st.openTill}.',
-      at
-    );
+    final items = '${names.take(2).join(', ')}${names.length > 2 ? ' and ${names.length - 2} more' : ''}';
+    final candidates = <DateTime>[now.add(const Duration(minutes: 30)), now.add(const Duration(hours: 4))];
+    for (var d = 1; d <= 2; d++) {
+      final day = DateTime(now.year, now.month, now.day + d);
+      candidates
+        ..add(day.add(const Duration(hours: 11)))
+        ..add(day.add(const Duration(hours: 18, minutes: 30)));
+    }
+    String key(DateTime t) => '${t.year}-${t.month}-${t.day}';
+    final perDay = <String, int>{
+      key(now): cartReminderTimes.where((t) => t.isBefore(now) && _sameDay(t, now)).length,
+    };
+    final out = <(String, String, DateTime)>[];
+    for (final at in candidates) {
+      if (!st.isOpenAt(at)) continue;
+      final k = key(at);
+      if ((perDay[k] ?? 0) >= 2) continue;
+      perDay[k] = (perDay[k] ?? 0) + 1;
+      out.add((
+        out.isEmpty ? 'Your cart at ${st.name} is waiting 🛒' : 'Still want these from ${st.name}? 🛒',
+        '$items · ₹$cartTotal. The shop is open till ${st.openTill}.',
+        at,
+      ));
+    }
+    return out;
   }
 
   void _cartWatch() {
     final sig = _sig;
     if (sig == _cartSig) return;
     _cartSig = sig;
-    final plan = cartReminderPlan(DateTime.now());
-    if (plan == null) {
-      // Keep today's "already reminded" mark if it went out; otherwise forget the pending one.
-      if (lastCartReminderAt != null && lastCartReminderAt!.isAfter(DateTime.now())) lastCartReminderAt = null;
-      cancelCartReminder?.call();
-      return;
-    }
-    lastCartReminderAt = plan.$3;
-    scheduleCartReminder?.call(plan.$1, plan.$2, plan.$3);
+    final now = DateTime.now();
+    // Keep only today's sent ones (they count towards today's 2).
+    cartReminderTimes.removeWhere((t) => !(t.isBefore(now) && _sameDay(t, now)));
+    cancelCartReminders?.call();
+    final plan = cartReminderPlan(now);
+    if (plan.isEmpty) return;
+    cartReminderTimes.addAll(plan.map((p) => p.$3));
+    scheduleCartReminders?.call(plan);
   }
 
-  void setCartReminders(bool on) {
-    cartReminders = on;
-    _cartSig = '#'; // re-plan
-    notifyListeners();
-  }
-
-  /// After the app opens: put a reminder that already went out into the notification list.
+  /// After the app opens: put reminders that already went out into the notification list.
   void logSentCartReminder() {
-    final at = lastCartReminderAt;
-    if (at == null || at.isAfter(DateTime.now()) || cart.isEmpty || _cartReminderLogged == at.toIso8601String()) return;
-    _cartReminderLogged = at.toIso8601String();
-    final st = cartStoreId == null ? null : storeById(cartStoreId!);
-    notifications.insert(0, AppNotification('Your cart is waiting', '${st?.name ?? 'Your shop'} · $cartCount item(s) · ₹$cartTotal', at: at));
-    notifyListeners();
+    if (cart.isEmpty || cartStoreId == null) return;
+    final now = DateTime.now();
+    final st = storeById(cartStoreId!);
+    var added = false;
+    for (final at in cartReminderTimes.where((t) => t.isBefore(now))) {
+      final k = at.toIso8601String();
+      if (_cartRemindersLogged.contains(k)) continue;
+      _cartRemindersLogged.add(k);
+      notifications.insert(0, AppNotification('Your cart is waiting', '${st.name} · $cartCount item(s) · ₹$cartTotal', at: at));
+      added = true;
+    }
+    if (added) notifyListeners();
   }
 
   // ----- cart: one store at a time -----
