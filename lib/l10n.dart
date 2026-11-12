@@ -103,7 +103,6 @@ const Map<String, Map<String, String>> _tr = {
   'Search area, street or landmark': {'hi': 'इलाका, गली या पास की जगह खोजें', 'hg': 'Area, gali ya landmark search karein'},
   'Today': {'hi': 'आज', 'hg': 'Aaj'},
   'Yesterday': {'hi': 'कल', 'hg': 'Kal'},
-  'Your orders': {'hi': 'आपके ऑर्डर', 'hg': 'Aapke orders'},
   'Reorder': {'hi': 'फिर से मंगाएं', 'hg': 'Phir se mangayein'},
   'Rate order': {'hi': 'रेटिंग दें', 'hg': 'Rating dein'},
   'Logged-in devices': {'hi': 'लॉग-इन डिवाइस', 'hg': 'Logged-in devices'},
