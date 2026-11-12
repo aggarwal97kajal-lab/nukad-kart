@@ -46,16 +46,69 @@ class _AdminScreenState extends State<AdminScreen> {
       final pm = Map<String, dynamic>.from((s['party'] as Map?) ?? {});
       party.forEach((k, c) => c.text = '${pm[k] ?? ''}');
       await _loadPays();
+      _loadHealth();
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _loadPays() async {
-    final r = await api.call('GET', '/v1/admin/payments${all ? '?status=ALL' : ''}');
-    pays = ((r['payments'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  bool morePays = false, _loadingMore = false;
+  Map<String, dynamic>? health;
+
+  /// 20 at a time; "Load more" asks for the older ones.
+  Future<void> _loadPays({bool more = false}) async {
+    final q = <String>[if (all) 'status=ALL', if (more && pays.isNotEmpty) 'before=${pays.last['createdAt']}'];
+    final r = await api.call('GET', '/v1/admin/payments${q.isEmpty ? '' : '?${q.join('&')}'}');
+    final page = ((r['payments'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    pays = more ? [...pays, ...page] : page;
+    morePays = r['more'] == true;
     if (mounted) setState(() {});
+  }
+
+  Future<void> _loadHealth() async {
+    try {
+      health = await api.call('GET', '/v1/admin/health');
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
+  Widget _healthCard() {
+    final h = health;
+    if (h == null) return const SizedBox.shrink();
+    String mb(num b) => b >= 1024 * 1024 * 1024 ? '${(b / 1073741824).toStringAsFixed(2)} GB' : '${(b / 1048576).toStringAsFixed(1)} MB';
+    final used = ((h['dbBytes'] as num?) ?? 0) / ((h['dbLimitBytes'] as num?) ?? 1);
+    Widget line(String k, String v, {bool ok = true}) => Padding(
+          padding: const EdgeInsets.only(bottom: 3),
+          child: Row(children: [
+            Icon(ok ? Icons.check_circle : Icons.error_outline, size: 15, color: ok ? kAct : kAmb),
+            const SizedBox(width: 6),
+            Expanded(child: Text(k, style: tx(12.5, color: kMute))),
+            Text(v, style: tx(12.5, weight: FontWeight.w700)),
+          ]),
+        );
+    return Box(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Server health', style: tx(14.5, weight: FontWeight.w800)),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: LinearProgressIndicator(value: used.clamp(0.0, 1.0).toDouble(), minHeight: 8, color: used > 0.8 ? kRed : kAct, backgroundColor: kSurf),
+        ),
+        const SizedBox(height: 4),
+        Text('Database ${mb((h['dbBytes'] as num?) ?? 0)} of 5 GB · ${h['dbServedBy']}', style: tx(11.5, color: kMute)),
+        const SizedBox(height: 8),
+        line('Users', '${h['users']}'),
+        line('Partners (approved)', '${h['partners']} (${h['activePartners']})'),
+        line('Phones used in last 24 h', '${h['activeToday']}'),
+        line('Documents', '${h['docs']} · ${mb((h['docBytes'] as num?) ?? 0)}'),
+        line('Photos & documents in R2', h['filesInR2'] == true ? 'On' : 'Off', ok: h['filesInR2'] == true),
+        line('Push notifications', h['pushReady'] == true ? 'On · ${h['pushPhones']} phones' : 'Off', ok: h['pushReady'] == true),
+        const SizedBox(height: 4),
+        Text('Daily request and database limits: Cloudflare dashboard → Workers & Pages → nukad-kart-api → Metrics.',
+            style: tx(11, color: kMute)),
+      ]),
+    );
   }
 
   Future<void> _saveUpi() async {
@@ -161,6 +214,8 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
                 const SizedBox(height: 10),
                 Btn('Partners to verify', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen()))),
+                const SizedBox(height: 10),
+                _healthCard(),
                 const SizedBox(height: 18),
                 Text('Pass payments go to', style: tx(15, weight: FontWeight.w800)),
                 const SizedBox(height: 8),
@@ -233,6 +288,21 @@ class _AdminScreenState extends State<AdminScreen> {
                         ],
                       ]),
                     ),
+                  ),
+                if (morePays)
+                  TextButton(
+                    onPressed: _loadingMore
+                        ? null
+                        : () async {
+                            setState(() => _loadingMore = true);
+                            try {
+                              await _loadPays(more: true);
+                            } on ApiError catch (e) {
+                              if (context.mounted) toast(context, e.message);
+                            }
+                            if (mounted) setState(() => _loadingMore = false);
+                          },
+                    child: Text(_loadingMore ? 'Loading…' : 'Load more'),
                   ),
               ]),
             ),

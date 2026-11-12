@@ -16,7 +16,7 @@ class PartnersScreen extends StatefulWidget {
 
 class _PartnersScreenState extends State<PartnersScreen> {
   List<Map<String, dynamic>> list = [];
-  bool all = false, _loading = true;
+  bool all = false, _loading = true, more = false, _loadingMore = false;
 
   @override
   void initState() {
@@ -24,10 +24,13 @@ class _PartnersScreenState extends State<PartnersScreen> {
     _load();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool next = false}) async {
     try {
-      final r = await api.call('GET', '/v1/admin/partners${all ? '?status=ALL' : ''}');
-      list = ((r['partners'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final q = <String>[if (all) 'status=ALL', if (next && list.isNotEmpty) 'before=${list.last['createdAt']}'];
+      final r = await api.call('GET', '/v1/admin/partners${q.isEmpty ? '' : '?${q.join('&')}'}');
+      final page = ((r['partners'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      list = next ? [...list, ...page] : page;
+      more = r['more'] == true;
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -74,6 +77,17 @@ class _PartnersScreenState extends State<PartnersScreen> {
                         ]),
                       ),
                     ),
+                  ),
+                if (more)
+                  TextButton(
+                    onPressed: _loadingMore
+                        ? null
+                        : () async {
+                            setState(() => _loadingMore = true);
+                            await _load(next: true);
+                            if (mounted) setState(() => _loadingMore = false);
+                          },
+                    child: Text(_loadingMore ? 'Loading…' : 'Load more'),
                   ),
               ]),
             ),

@@ -1,9 +1,11 @@
 import 'dart:math' as math;
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
+import 'push.dart';
 
 /// Login state + the partner's shop, read from the server.
 class Session extends ChangeNotifier {
@@ -34,6 +36,14 @@ class Session extends ChangeNotifier {
     _p = await SharedPreferences.getInstance();
     api.token = _p!.getString('token') ?? '';
     email = _p!.getString('email') ?? '';
+    // Last known shop details: the app opens instantly and refreshes in the background.
+    final cached = _p!.getString('me_cache');
+    if (api.token.isNotEmpty && cached != null) {
+      try {
+        _apply(Map<String, dynamic>.from(jsonDecode(cached) as Map));
+        hasCache = true;
+      } catch (_) {}
+    }
     if ((_p!.getString('installId') ?? '').isEmpty) {
       final r = math.Random.secure();
       await _p!.setString('installId', List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join());
@@ -80,8 +90,21 @@ class Session extends ChangeNotifier {
     return true;
   }
 
+  bool hasCache = false;
+  bool _pushStarted = false;
+
   Future<void> refresh() async {
     final r = await api.call('GET', '/v1/partner/me');
+    _apply(r);
+    _p?.setString('me_cache', jsonEncode(r));
+    notifyListeners();
+    if (!_pushStarted) {
+      _pushStarted = true;
+      setupPush(() => refresh().catchError((_) {}));
+    }
+  }
+
+  void _apply(Map<String, dynamic> r) {
     admin = r['admin'] == true;
     final u = Map<String, dynamic>.from((r['user'] as Map?) ?? {});
     phone = '${u['phone'] ?? ''}';
@@ -89,7 +112,6 @@ class Session extends ChangeNotifier {
     trialAvailable = u['trialAvailable'] != false;
     store = r['store'] == null ? null : Map<String, dynamic>.from(r['store'] as Map);
     payments = ((r['payments'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-    notifyListeners();
   }
 
   void setStore(Map<String, dynamic>? s) {
@@ -112,6 +134,9 @@ class Session extends ChangeNotifier {
     payments = [];
     phone = '';
     phoneVerified = false;
+    hasCache = false;
+    _pushStarted = false;
+    await _p?.remove('me_cache');
     await _p?.remove('token');
     await _p?.remove('email');
     notifyListeners();

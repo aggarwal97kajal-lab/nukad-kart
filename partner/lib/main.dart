@@ -69,13 +69,15 @@ class _GateState extends State<Gate> {
       setState(() => _loading = false);
       return;
     }
+    // Saved details from last time: show the app at once, update in the background.
+    if (session.hasCache && _loading) setState(() => _loading = false);
     try {
       await session.refresh();
       _error = null;
     } on ApiError catch (e) {
       if (e.code == 'not_signed_in') {
         await session.signOut();
-      } else {
+      } else if (!session.hasCache) {
         _error = e.message;
       }
     }
