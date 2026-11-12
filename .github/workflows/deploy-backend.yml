@@ -25,7 +25,7 @@ jobs:
           node-version: 22
 
       - name: Unit tests
-        run: node --test test/unit.test.mjs
+        run: node --test test/*.test.mjs
 
       - name: Check secrets are present
         run: |

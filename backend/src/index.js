@@ -12,6 +12,8 @@
 //   POST /v1/me/sessions/logout-others                        (auth) log out every other phone
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m)
 
+import { partnerRoute, offlineReason } from './partner.js';
+
 export const RADIUS_MAX_M = 500;
 const SESSION_DAYS = 30;
 const GOOGLE_ISSUERS = ['accounts.google.com', 'https://accounts.google.com'];
@@ -32,22 +34,22 @@ export function b64urlDecode(str) {
   return Uint8Array.from(bin, (c) => c.charCodeAt(0));
 }
 
-class HttpError extends Error {
+export class HttpError extends Error {
   constructor(status, code, message) { super(message || code); this.status = status; this.code = code; }
 }
 
-function json(data, status = 200) {
+export function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
   });
 }
 
-async function body(req) {
+export async function body(req) {
   try { return await req.json(); } catch { throw new HttpError(400, 'bad_json'); }
 }
 
-const now = () => Math.floor(Date.now() / 1000);
+export const now = () => Math.floor(Date.now() / 1000);
 
 // ---------- distance ----------
 export function haversineM(lat1, lng1, lat2, lng2) {
@@ -144,7 +146,7 @@ async function profile(db, uid) {
 
 const SEEN_EVERY = 600; // update last_seen at most every 10 minutes (saves database writes)
 
-async function session(req, env) {
+export async function session(req, env) {
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
   const s = await verifySession(token, env.SESSION_SECRET);
   if (!s || !s.sid) throw new HttpError(401, 'not_signed_in');
@@ -182,6 +184,9 @@ async function route(req, env) {
   const url = new URL(req.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const m = req.method;
+
+  const partner = await partnerRoute(req, env, path, m);
+  if (partner) return partner;
 
   if (m === 'GET' && (path === '/' || path === '/health')) {
     const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM stores WHERE active = 1').first();
@@ -318,11 +323,21 @@ async function route(req, env) {
     const radius = Math.min(Number(url.searchParams.get('radius')) || RADIUS_MAX_M, RADIUS_MAX_M);
     const bb = boundingBox(lat, lng, radius);
     const { results } = await env.DB.prepare(
-      `SELECT id, name, kind, lat, lng, address, phone, photo_key, opens_at, closes_at, door_delivery
+      `SELECT id, name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup, demo, status, live,
+              pass_until, missed_date, missed_count, photo_at, gst_type, fssai
        FROM stores WHERE active = 1 AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?`,
     ).bind(bb.minLat, bb.maxLat, bb.minLng, bb.maxLng).all();
+    // Partner shops show only with an active pass, switched on, within their timings
+    // (after closing time they drop off the map) and not paused for missed orders.
+    const t = now();
     const stores = results
-      .map((s) => ({ ...s, distanceM: Math.round(haversineM(lat, lng, s.lat, s.lng)) }))
+      .filter((s) => s.demo || offlineReason(s, t) == null)
+      .map((s) => ({
+        id: s.id, name: s.name, kind: s.kind, lat: s.lat, lng: s.lng, address: s.address, phone: s.phone,
+        opensAt: s.opens_at, closesAt: s.closes_at, door: !!s.door_delivery, pickup: !!s.pickup,
+        gstType: s.gst_type || 'none', fssai: s.fssai || '', photo: s.photo_at ? `/v1/stores/${s.id}/photo` : null,
+        distanceM: Math.round(haversineM(lat, lng, s.lat, s.lng)),
+      }))
       .filter((s) => s.distanceM <= radius)
       .sort((a, b) => a.distanceM - b.distanceM);
     return json({ radius, count: stores.length, stores });
