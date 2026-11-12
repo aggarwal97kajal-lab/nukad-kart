@@ -5,6 +5,9 @@ import '../ui.dart';
 import 'pass.dart';
 import 'admin.dart';
 import 'agreement.dart';
+import 'delete.dart';
+import 'docs.dart';
+import 'register.dart';
 
 String dateText(int secs) {
   final d = DateTime.fromMillisecondsSinceEpoch(secs * 1000);
@@ -41,6 +44,18 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
+  Future<void> _resubmit() async {
+    setState(() => _busy = true);
+    try {
+      final r = await api.call('POST', '/v1/partner/submit');
+      session.setStore(Map<String, dynamic>.from(r['store'] as Map));
+      if (mounted) toast(context, 'Sent. Nukad team will check again.');
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
   (String, String, Color, Color) _status(Map<String, dynamic> s) {
     final reason = s['offlineReason'];
     return switch (reason) {
@@ -50,6 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
       'closed_now' => ('Closed now', 'Outside your timings (${s['opensAt']} – ${s['closesAt']}). You show again at opening time.', kAmb, kAmbBg),
       'missed_orders' => ('Offline for today', '5 orders were missed today. Switch on to go live again.', kAmb, kAmbBg),
       'no_agreement' => ('Agreement not signed', 'Sign the partner agreement to go live.', kRed, kRedBg),
+      'not_verified' => ('Waiting for verification', 'Nukad team is verifying your details and documents. Your shop can go live after approval.', kAmb, kAmbBg),
+      'rejected' => ('Changes needed', 'Nukad team asked for changes. Fix them below and send again.', kRed, kRedBg),
       _ => ('You are offline', 'Switch on to show your shop to customers.', kInk, kSurf),
     };
   }
@@ -75,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'out') session.signOut();
+                if (v == 'delete') Navigator.push(context, MaterialPageRoute(builder: (_) => const DeleteAccountScreen()));
                 if (v == 'agreement') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AgreementScreen(viewOnly: true)));
                 }
@@ -82,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
               itemBuilder: (_) => const [
                 PopupMenuItem(value: 'agreement', child: Text('Partner agreement')),
                 PopupMenuItem(value: 'out', child: Text('Log out')),
+                PopupMenuItem(value: 'delete', child: Text('Delete account', style: TextStyle(color: kRed))),
               ],
             ),
           ]),
@@ -102,10 +121,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   Switch(
                     value: s['live'] == true,
                     activeThumbColor: kBrand,
-                    onChanged: _busy || (!passActive && s['live'] != true) ? null : _setLive,
+                    onChanged: _busy || (s['live'] != true && (!passActive || s['status'] != 'active')) ? null : _setLive,
                   ),
                 ]),
               ),
+              if (s['status'] == 'review') ...[
+                const SizedBox(height: 12),
+                Box(
+                  color: kSurf,
+                  child: Row(children: [
+                    const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: kAmb)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                          'Nukad team is verifying your shop. This usually takes less than a day. Pull down to check. '
+                          '${session.trialAvailable ? 'Your 7-day free trial starts when you are approved.' : 'Free trial was already used on this number or phone.'}',
+                          style: tx(12.5, weight: FontWeight.w600)),
+                    ),
+                  ]),
+                ),
+              ],
+              if (s['status'] == 'rejected') ...[
+                const SizedBox(height: 12),
+                Box(
+                  color: kRedBg,
+                  border: const Color(0xFFF7C1C1),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('What to fix', style: tx(14, color: kRed, weight: FontWeight.w800)),
+                    const SizedBox(height: 4),
+                    Text('${s['reviewNote'] ?? ''}', style: tx(13.5)),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      Expanded(
+                          child: OutlinedButton(
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                              child: const Text('Edit details'))),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: OutlinedButton(
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DocsScreen(pushed: true))),
+                              child: const Text('Documents'))),
+                    ]),
+                    const SizedBox(height: 8),
+                    Btn(_busy ? 'Sending…' : 'Send for verification again', onTap: _busy ? null : _resubmit),
+                  ]),
+                ),
+              ],
               const SizedBox(height: 12),
               Box(
                 child: Row(children: [

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTime, openAt, extendPass, offlineReason, istDate, MISSED_LIMIT, distanceM } from '../src/partner.js';
+import { parseTime, openAt, extendPass, offlineReason, istDate, MISSED_LIMIT, distanceM, requiredDocs } from '../src/partner.js';
 
 // 12 Nov 2026, 15:00 IST = 09:30 UTC
 const at = (h, m = 0) => Math.floor(Date.UTC(2026, 10, 12, h, m) / 1000) - 5.5 * 3600;
@@ -35,6 +35,9 @@ test('when a partner shop is hidden', () => {
   assert.equal(offlineReason({ ...shop, status: 'blocked' }, t), 'blocked');
   assert.equal(offlineReason({ ...shop, agreement_version: null }, t), 'no_agreement');
   assert.equal(MISSED_LIMIT, 5);
+  assert.equal(offlineReason({ ...shop, status: 'review' }, t), 'not_verified');
+  assert.equal(offlineReason({ ...shop, status: 'pending' }, t), 'not_verified');
+  assert.equal(offlineReason({ ...shop, status: 'rejected' }, t), 'rejected');
   assert.equal(offlineReason({ ...shop, missed_date: istDate(t), missed_count: 4 }, t), null);
 });
 
@@ -48,4 +51,9 @@ test('shop pin vs photo GPS distance', () => {
   const d = distanceM(28.5921, 77.046, 28.5925, 77.046); // ~44 m north
   assert.ok(d > 40 && d < 50, String(d));
   assert.ok(distanceM(28.5921, 77.046, 28.593, 77.046) > 50);
+});
+
+test('documents a shop must upload', () => {
+  assert.deepEqual(requiredDocs({ gst_type: 'none', fssai: '' }), ['pan', 'aadhaar']);
+  assert.deepEqual(requiredDocs({ gst_type: 'regular', fssai: '12345678901234' }), ['pan', 'aadhaar', 'gst', 'fssai']);
 });

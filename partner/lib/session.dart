@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
@@ -11,7 +12,21 @@ class Session extends ChangeNotifier {
   bool admin = false;
   Map<String, dynamic>? store; // null = not registered yet
   List<Map<String, dynamic>> payments = [];
+  String phone = '';
+  bool phoneVerified = false, trialAvailable = true;
   bool _googleReady = false;
+  String? _hw;
+
+  /// Android ID: the same after reinstalling the app on this phone (used for the one-trial-per-phone rule).
+  Future<String> deviceId() async {
+    if (_hw != null) return _hw!;
+    try {
+      _hw = await const MethodChannel('nukadpartner/device').invokeMethod<String>('id') ?? '';
+    } catch (_) {
+      _hw = '';
+    }
+    return _hw!;
+  }
 
   bool get signedIn => api.token.isNotEmpty;
 
@@ -43,10 +58,20 @@ class Session extends ChangeNotifier {
     }
     final idToken = account.authentication.idToken;
     if (idToken == null) throw const ApiError(0, 'google_no_token');
-    final r = await api.call('POST', '/v1/auth/google', {
+    final Map<String, dynamic> r;
+    try {
+      r = await api.call('POST', '/v1/auth/google', {
+      'app': 'partner',
       'idToken': idToken,
       'device': {'name': 'Partner app', 'platform': 'Android', 'id': 'partner-${_p!.getString('installId')}'},
-    });
+      });
+    } on ApiError {
+      // Let the person pick another Google account next time.
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (_) {}
+      rethrow;
+    }
     api.token = '${r['token']}';
     email = account.email;
     await _p!.setString('token', api.token);
@@ -58,6 +83,10 @@ class Session extends ChangeNotifier {
   Future<void> refresh() async {
     final r = await api.call('GET', '/v1/partner/me');
     admin = r['admin'] == true;
+    final u = Map<String, dynamic>.from((r['user'] as Map?) ?? {});
+    phone = '${u['phone'] ?? ''}';
+    phoneVerified = u['phoneVerified'] == true;
+    trialAvailable = u['trialAvailable'] != false;
     store = r['store'] == null ? null : Map<String, dynamic>.from(r['store'] as Map);
     payments = ((r['payments'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
     notifyListeners();
@@ -81,6 +110,8 @@ class Session extends ChangeNotifier {
     store = null;
     admin = false;
     payments = [];
+    phone = '';
+    phoneVerified = false;
     await _p?.remove('token');
     await _p?.remove('email');
     notifyListeners();

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 const apiBase = 'https://nukad-kart-api.aggarwal97kajal.workers.dev';
@@ -33,6 +34,23 @@ class ApiError implements Exception {
         'signer_name_required' => 'Type your full name.',
         'signature_required' => 'Sign in the box with your finger.',
         'register_first' => 'Register your shop first.',
+        'email_used_by_customer' => 'This Google account is already used in the Nukad Kart customer app. Use a different Google account for your shop.',
+        'phone_first' => 'Verify your mobile number first.',
+        'bad_phone' => 'Enter a valid 10-digit mobile number.',
+        'phone_in_use' => 'This number is already linked to another partner account.',
+        'phone_not_verified' || 'phone_mismatch' => 'This number could not be confirmed. Send a new code and try again.',
+        'bad_pan' => 'PAN is not valid (example: ABCDE1234F).',
+        'bad_aadhaar' => 'Enter the last 4 digits of Aadhaar.',
+        'gstin_pan_mismatch' => 'GSTIN does not match your PAN.',
+        'shop_no_required' => 'Enter the shop number.',
+        'pin_area_missing' => 'The map could not find the area or PIN here. Move the pin a little and try again.',
+        'doc_too_big' => 'File is bigger than 2 MB. Take a smaller photo or compress the PDF.',
+        'doc_must_be_jpg_or_pdf' => 'Only JPG photos or PDF files can be uploaded.',
+        'docs_missing' => 'Upload all required documents first.',
+        'docs_locked' => 'Documents can’t be changed while Nukad team is checking them.',
+        'not_verified' => 'Nukad team is still verifying your shop.',
+        'already_approved' => 'Your shop is already approved. Contact support to change details.',
+        'reason_required' => 'Write a reason.',
         _ => 'Something went wrong ($code). Try again.',
       };
   @override
@@ -62,6 +80,19 @@ class Api {
     } catch (_) {}
     if (res.statusCode >= 400) throw ApiError(res.statusCode, '${data['error'] ?? 'error'}');
     return data;
+  }
+}
+
+extension ApiBytes on Api {
+  /// Raw file (admin document view).
+  Future<(Uint8List, String)> bytes(String path) async {
+    try {
+      final res = await http.get(Uri.parse('$apiBase$path'), headers: {'authorization': 'Bearer $token'}).timeout(const Duration(seconds: 40));
+      if (res.statusCode >= 400) throw ApiError(res.statusCode, 'error');
+      return (res.bodyBytes, res.headers['content-type'] ?? '');
+    } on TimeoutException {
+      throw const ApiError(0, 'timeout');
+    }
   }
 }
 

@@ -46,6 +46,10 @@ class MainActivity : FlutterActivity() {{
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {{
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "nukadpartner/device").setMethodCallHandler {{ call, result ->
+            if (call.method == "id") result.success(android.provider.Settings.Secure.getString(contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: "")
+            else result.notImplemented()
+        }}
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "nukadpartner/upi").setMethodCallHandler {{ call, result ->
             when (call.method) {{
                 "apps" -> {{

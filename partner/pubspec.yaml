@@ -16,6 +16,13 @@ dependencies:
   geolocator: ^14.0.0
   url_launcher: ^6.3.1
   maplibre_gl: ^0.26.2
+  sendotp_flutter_sdk: ^0.0.2
+  file_picker: ^10.3.0
+  pdf: ^3.11.3
+  printing: ^5.14.2
+  file_saver: ^0.7.0
+  open_filex: ^4.7.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -43,3 +50,6 @@ flutter:
           weight: 700
         - asset: assets/NotoSans-ExtraBold.ttf
           weight: 800
+
+dependency_overrides:
+  image: 4.5.4

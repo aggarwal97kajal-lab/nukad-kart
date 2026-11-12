@@ -10,7 +10,7 @@
 //   GET  /v1/admin/payments?status=CHECKING|ALL  (admin)
 //   POST /v1/admin/payments/:id/confirm          (admin)      money is in: pass starts
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
-import { HttpError, json, body, now, session } from './index.js';
+import { HttpError, json, body, now, session, verifyMsg91 } from './index.js';
 
 export const PLANS = {
   daily: { name: 'Daily', price: 99, days: 1 },
@@ -22,6 +22,8 @@ export const MISSED_LIMIT = 5; // missed orders in a day before the shop goes of
 const IST = 5.5 * 3600;
 export const TRIAL_DAYS = 7;
 export const AGREEMENT_VERSION = '1.0';
+export const DOC_TYPES = ['pan', 'aadhaar', 'gst', 'fssai'];
+export const MAX_DOC_BYTES = 2 * 1024 * 1024;
 export const MAX_PHOTO_DISTANCE_M = 50; // shop pin must be within this of where the shop photo was taken
 
 /** Metres between two points. */
@@ -69,7 +71,10 @@ export function extendPass(passUntil, days, t = now()) {
 /** Why a shop is not visible to customers right now, or null when it is. */
 export function offlineReason(s, t = now()) {
   if (s.status === 'blocked') return 'blocked';
+  if (s.status === 'deleted') return 'deleted';
   if (!s.agreement_version) return 'no_agreement';
+  if (s.status === 'rejected') return 'rejected';
+  if (s.status === 'pending' || s.status === 'review') return 'not_verified';
   if (!(s.pass_until > t)) return 'no_pass';
   if (!s.live) return 'switched_off';
   if (s.missed_date === istDate(t) && s.missed_count >= MISSED_LIMIT) return 'missed_orders';
@@ -80,7 +85,7 @@ export function offlineReason(s, t = now()) {
 // ---------- helpers ----------
 async function me(req, env) {
   const { uid } = await session(req, env);
-  const user = await env.DB.prepare('SELECT id, email, name, phone FROM users WHERE id = ?').bind(uid).first();
+  const user = await env.DB.prepare('SELECT id, email, name, phone, partner_phone, partner_device_hash FROM users WHERE id = ?').bind(uid).first();
   return user;
 }
 
@@ -89,7 +94,7 @@ export async function sha256Hex(text) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-async function isAdmin(env, email) {
+export async function isAdmin(env, email) {
   const list = String(env.ADMIN_EMAIL_HASHES || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
   if (!list.length || !email) return false;
   return list.includes(await sha256Hex(String(email).trim().toLowerCase()));
@@ -120,6 +125,40 @@ async function myStore(env, uid) {
   return env.DB.prepare('SELECT * FROM stores WHERE owner_id = ? ORDER BY created_at DESC LIMIT 1').bind(uid).first();
 }
 
+/** Documents this shop must upload: PAN and Aadhaar always; GST / FSSAI when it has them. */
+export function requiredDocs(s) {
+  return ['pan', 'aadhaar', ...(s.gst_type && s.gst_type !== 'none' ? ['gst'] : []), ...(s.fssai ? ['fssai'] : [])];
+}
+
+async function docList(env, s) {
+  const { results } = await env.DB.prepare('SELECT id, type, mime, name, size, created_at FROM partner_docs WHERE store_id = ? AND done = 1 ORDER BY created_at').bind(s.id).all();
+  return results.map((d) => ({ id: d.id, type: d.type, mime: d.mime, name: d.name, size: d.size, uploadedAt: d.created_at }));
+}
+
+async function storeOut(env, s) {
+  if (!s) return null;
+  const docs = await docList(env, s);
+  const have = new Set(docs.map((d) => d.type));
+  const required = requiredDocs(s);
+  return { ...publicStore(s), requiredDocs: required, docsComplete: required.every((t) => have.has(t)) };
+}
+
+async function trialAvailable(env, phone, devHash) {
+  const ph = await sha256Hex('phone:' + phone);
+  const row = await env.DB.prepare('SELECT id FROM trial_claims WHERE phone_hash = ? OR (? IS NOT NULL AND device_hash = ?) LIMIT 1')
+    .bind(ph, devHash, devHash).first();
+  return !row;
+}
+
+async function submitForReview(env, s) {
+  const out = await storeOut(env, s);
+  if (!out.docsComplete) throw new HttpError(400, 'docs_missing');
+  if (s.agreement_version !== AGREEMENT_VERSION) throw new HttpError(403, 'agreement_needed');
+  if (s.status === 'pending' || s.status === 'rejected') {
+    await env.DB.prepare("UPDATE stores SET status = 'review', review_note = NULL WHERE id = ?").bind(s.id).run();
+  }
+}
+
 function publicStore(s, t = now()) {
   if (!s) return null;
   const reason = offlineReason(s, t);
@@ -131,13 +170,15 @@ function publicStore(s, t = now()) {
     passUntil: s.pass_until || 0, passActive: s.pass_until > t,
     trial: !!s.trial_until && s.trial_until >= (s.pass_until || 0) && s.pass_until > t,
     agreementVersion: s.agreement_version || '', agreementSigned: s.agreement_version === AGREEMENT_VERSION,
-    missedToday: s.missed_date === istDate(t) ? s.missed_count : 0, hasPhoto: !!s.photo_at,
+    pan: s.pan || '', aadhaarLast4: s.aadhaar_last4 || '', reviewNote: s.review_note || '', reviewedAt: s.reviewed_at || 0,
+    addr: { shop: s.addr_shop || '', landmark: s.addr_landmark || '', area: s.addr_area || '', city: s.addr_city || '', state: s.addr_state || '', pin: s.addr_pin || '' },
+    missedToday: s.missed_date === istDate(t) ? s.missed_count : 0, hasPhoto: !!s.photo_at, createdAt: s.created_at,
   };
 }
 
 function vendorDetails(s, u) {
   return { storeName: s.name, kind: s.kind, address: s.address || '', phone: s.phone || '', email: u.email || '',
-    gstType: s.gst_type || 'none', gstin: s.gstin || '', fssai: s.fssai || '' };
+    gstType: s.gst_type || 'none', gstin: s.gstin || '', fssai: s.fssai || '', pan: s.pan || '', aadhaarLast4: s.aadhaar_last4 || '' };
 }
 
 function payPublic(p) {
@@ -177,12 +218,35 @@ export async function partnerRoute(req, env, path, m) {
     const pays = s
       ? (await env.DB.prepare('SELECT * FROM pass_payments WHERE store_id = ? ORDER BY created_at DESC LIMIT 10').bind(s.id).all()).results
       : [];
-    return json({ user: { email: u.email, name: u.name }, admin: await isAdmin(env, u.email), store: publicStore(s),
+    return json({ user: { email: u.email, name: u.name, phone: u.partner_phone || '', phoneVerified: !!u.partner_phone,
+      trialAvailable: u.partner_phone ? await trialAvailable(env, u.partner_phone, u.partner_device_hash) : true }, admin: await isAdmin(env, u.email), store: await storeOut(env, s),
       payments: pays.map(payPublic) });
+  }
+
+  if (path === '/v1/partner/phone' && m === 'POST') {
+    // Step 1: verified mobile number (MSG91 SMS code) + this phone's hardware id, for the one-trial rule.
+    const u = await me(req, env);
+    if (!env.MSG91_AUTHKEY) throw new HttpError(503, 'phone_check_not_configured');
+    const b = await body(req);
+    const claimed = String(b.phone || '').replace(/\D/g, '').slice(-10);
+    if (!/^[6-9]\d{9}$/.test(claimed)) throw new HttpError(400, 'bad_phone');
+    const verified = await verifyMsg91(b.accessToken, env.MSG91_AUTHKEY);
+    if (verified && verified !== claimed) throw new HttpError(401, 'phone_mismatch');
+    const other = await env.DB.prepare("SELECT id FROM users WHERE partner_phone = ? AND id != ? AND deleted_at IS NULL").bind(claimed, u.id).first();
+    if (other) throw new HttpError(409, 'phone_in_use');
+    const hw = String(b.deviceId || '').trim();
+    const devHash = hw ? await sha256Hex('dev:' + hw) : null;
+    const stmts = [env.DB.prepare('UPDATE users SET partner_phone = ?, partner_device_hash = COALESCE(?, partner_device_hash), updated_at = ? WHERE id = ?')
+      .bind(claimed, devHash, now(), u.id)];
+    const s = await myStore(env, u.id);
+    if (s) stmts.push(env.DB.prepare('UPDATE stores SET phone = ?, phone_verified = 1, device_hash = COALESCE(?, device_hash) WHERE id = ?').bind(claimed, devHash, s.id));
+    await env.DB.batch(stmts);
+    return json({ phone: claimed, trialAvailable: await trialAvailable(env, claimed, devHash) });
   }
 
   if (path === '/v1/partner/register' && m === 'POST') {
     const u = await me(req, env);
+    if (!u.partner_phone) throw new HttpError(400, 'phone_first');
     const b = await body(req);
     const str = (k, max = 120) => String(b[k] ?? '').trim().slice(0, max);
     const kind = b.kind === 'thela' ? 'thela' : 'shop';
@@ -191,40 +255,170 @@ export async function partnerRoute(req, env, path, m) {
     const lat = Number(b.lat), lng = Number(b.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'location_required');
     if (kind === 'shop' && (parseTime(b.opensAt) == null || parseTime(b.closesAt) == null)) throw new HttpError(400, 'timings_required');
+    const existing = await myStore(env, u.id);
+    if (existing && existing.status === 'active') throw new HttpError(409, 'already_approved');
     const photoB64 = String(b.photo || '');
-    if (!photoB64) throw new HttpError(400, 'photo_required');
+    if (!photoB64 && !existing) throw new HttpError(400, 'photo_required');
     if (photoB64.length > 1_400_000) throw new HttpError(413, 'photo_too_big');
-    const bytes = b64ToBytes(photoB64);
-    if (!(bytes[0] === 0xff && bytes[1] === 0xd8)) throw new HttpError(400, 'photo_must_be_jpeg');
+    if (photoB64) {
+      const bytes = b64ToBytes(photoB64);
+      if (!(bytes[0] === 0xff && bytes[1] === 0xd8)) throw new HttpError(400, 'photo_must_be_jpeg');
+    }
+    const pan = str('pan', 10).toUpperCase();
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) throw new HttpError(400, 'bad_pan');
+    const aadhaar4 = str('aadhaarLast4', 4);
+    if (!/^\d{4}$/.test(aadhaar4)) throw new HttpError(400, 'bad_aadhaar');
     const gstType = ['none', 'regular', 'composition'].includes(b.gstType) ? b.gstType : 'none';
     const gstin = gstType === 'none' ? '' : str('gstin', 15).toUpperCase();
     if (gstType !== 'none' && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) throw new HttpError(400, 'bad_gstin');
-    const pLat = Number(b.photoLat), pLng = Number(b.photoLng);
+    if (gstType !== 'none' && gstin.slice(2, 12) !== pan) throw new HttpError(400, 'gstin_pan_mismatch');
+    const fssai = str('fssai', 14).replace(/\D/g, '');
+    if (fssai && fssai.length !== 14) throw new HttpError(400, 'bad_fssai');
+    // Address: shop no. and landmark are typed; area, city, state and PIN come from the map pin.
+    const a = (k, max = 120) => String((b.addr || {})[k] ?? '').trim().slice(0, max);
+    const addr = { shop: a('shop', 80), landmark: a('landmark', 80), area: a('area'), city: a('city', 60), state: a('state', 60), pin: a('pin', 6) };
     if (kind === 'shop') {
+      if (addr.shop.length < 1) throw new HttpError(400, 'shop_no_required');
+      if (!addr.city || !/^\d{6}$/.test(addr.pin)) throw new HttpError(400, 'pin_area_missing');
+    }
+    const address = [addr.shop, addr.landmark, addr.area, addr.city, [addr.state, addr.pin].filter(Boolean).join(' ')].filter(Boolean).join(', ').slice(0, 300) || str('address', 200);
+    let pLat = Number(b.photoLat), pLng = Number(b.photoLng);
+    if (kind === 'shop') {
+      if (!photoB64 && existing) { pLat = existing.photo_lat; pLng = existing.photo_lng; }
       // Shop: photo taken at the shop (GPS), and the map pin must be within 50 m of it.
       if (!Number.isFinite(pLat) || !Number.isFinite(pLng)) throw new HttpError(400, 'photo_location_required');
       if (distanceM(lat, lng, pLat, pLng) > MAX_PHOTO_DISTANCE_M) throw new HttpError(400, 'address_far');
     }
-    const fssai = str('fssai', 14).replace(/\D/g, '');
-    if (fssai && fssai.length !== 14) throw new HttpError(400, 'bad_fssai');
     const t = now();
-    const existing = await myStore(env, u.id);
     const id = existing?.id || `p_${crypto.randomUUID().slice(0, 8)}`;
-    const vals = [name, kind, lat, lng, str('address', 200), str('phone', 20), str('opensAt', 10), str('closesAt', 10),
-      b.door === false ? 0 : 1, b.pickup === false ? 0 : 1, fssai, gstType, gstin,
-      kind === 'shop' ? pLat : null, kind === 'shop' ? pLng : null, Number(b.photoAt) || t];
+    const cols = {
+      name, kind, lat, lng, address, phone: u.partner_phone, phone_verified: 1, device_hash: u.partner_device_hash,
+      opens_at: str('opensAt', 10), closes_at: str('closesAt', 10), door_delivery: b.door === false ? 0 : 1, pickup: b.pickup === false ? 0 : 1,
+      fssai, gst_type: gstType, gstin, pan, aadhaar_last4: aadhaar4,
+      addr_shop: addr.shop, addr_landmark: addr.landmark, addr_area: addr.area, addr_city: addr.city, addr_state: addr.state, addr_pin: addr.pin,
+    };
+    if (photoB64) Object.assign(cols, { photo_lat: kind === 'shop' ? pLat : null, photo_lng: kind === 'shop' ? pLng : null, photo_at: Number(b.photoAt) || t });
+    const keys = Object.keys(cols);
     const stmts = [];
     if (existing) {
-      stmts.push(env.DB.prepare(`UPDATE stores SET name=?, kind=?, lat=?, lng=?, address=?, phone=?, opens_at=?, closes_at=?,
-        door_delivery=?, pickup=?, fssai=?, gst_type=?, gstin=?, photo_lat=?, photo_lng=?, photo_at=? WHERE id=?`).bind(...vals, id));
+      // A rejected shop that is fixed goes back to "pending" until it is submitted again.
+      stmts.push(env.DB.prepare(`UPDATE stores SET ${keys.map((k) => `${k} = ?`).join(', ')}, status = CASE WHEN status = 'rejected' THEN 'pending' ELSE status END WHERE id = ?`)
+        .bind(...keys.map((k) => cols[k]), id));
     } else {
-      stmts.push(env.DB.prepare(`INSERT INTO stores (name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup,
-        fssai, gst_type, gstin, photo_lat, photo_lng, photo_at, id, owner_id, status, live, pass_until, trial_until, active, demo, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'active', 0, ?, ?, 1, 0, ?)`).bind(...vals, id, u.id, t + TRIAL_DAYS * 86400, t + TRIAL_DAYS * 86400, t));
+      stmts.push(env.DB.prepare(`INSERT INTO stores (${keys.join(', ')}, id, owner_id, status, live, pass_until, active, demo, created_at)
+        VALUES (${keys.map(() => '?').join(', ')}, ?, ?, 'pending', 0, 0, 1, 0, ?)`).bind(...keys.map((k) => cols[k]), id, u.id, t));
     }
-    stmts.push(env.DB.prepare('INSERT OR REPLACE INTO store_photos (store_id, photo, updated_at) VALUES (?, ?, ?)').bind(id, photoB64, t));
+    if (photoB64) stmts.push(env.DB.prepare('INSERT OR REPLACE INTO store_photos (store_id, photo, updated_at) VALUES (?, ?, ?)').bind(id, photoB64, t));
     await env.DB.batch(stmts);
-    return json({ store: publicStore(await myStore(env, u.id)) });
+    return json({ store: await storeOut(env, await myStore(env, u.id)) });
+  }
+
+  // ---------- documents (JPG / PDF, max 2 MB, uploaded in chunks so the app can show progress) ----------
+  if (path === '/v1/partner/docs' && m === 'GET') {
+    const u = await me(req, env);
+    const s = await myStore(env, u.id);
+    if (!s) throw new HttpError(400, 'register_first');
+    return json({ docs: await docList(env, s), required: requiredDocs(s) });
+  }
+
+  if (path === '/v1/partner/docs' && m === 'POST') {
+    const u = await me(req, env);
+    const s = await myStore(env, u.id);
+    if (!s) throw new HttpError(400, 'register_first');
+    if (s.status === 'active' || s.status === 'review') throw new HttpError(409, 'docs_locked');
+    const b = await body(req);
+    const type = String(b.type || '');
+    if (!DOC_TYPES.includes(type)) throw new HttpError(400, 'bad_doc_type');
+    const mime = String(b.mime || '');
+    if (!['image/jpeg', 'application/pdf'].includes(mime)) throw new HttpError(400, 'doc_must_be_jpg_or_pdf');
+    const size = Number(b.size);
+    if (!(size > 0)) throw new HttpError(400, 'doc_empty');
+    if (size > MAX_DOC_BYTES) throw new HttpError(413, 'doc_too_big');
+    const chunks = Number(b.chunks);
+    if (!(chunks >= 1 && chunks <= 8)) throw new HttpError(400, 'bad_chunks');
+    const id = `D${crypto.randomUUID().replace(/-/g, '').slice(0, 14)}`;
+    await env.DB.prepare('INSERT INTO partner_docs (id, store_id, type, mime, name, size, chunks, done, created_at) VALUES (?,?,?,?,?,?,?,0,?)')
+      .bind(id, s.id, type, mime, String(b.name || '').slice(0, 100), size, chunks, now()).run();
+    return json({ id });
+  }
+
+  const chunk = path.match(/^\/v1\/partner\/docs\/(D\w+)\/(\d+)$/);
+  if (chunk && m === 'PUT') {
+    const u = await me(req, env);
+    const s = await myStore(env, u.id);
+    const d = s && (await env.DB.prepare('SELECT * FROM partner_docs WHERE id = ? AND store_id = ?').bind(chunk[1], s.id).first());
+    if (!d) throw new HttpError(404, 'no_doc');
+    const idx = Number(chunk[2]);
+    if (idx >= d.chunks) throw new HttpError(400, 'bad_chunks');
+    const { data } = await body(req);
+    const b64 = String(data || '');
+    if (!b64 || b64.length > 1_000_000) throw new HttpError(400, 'bad_chunk');
+    await env.DB.prepare('INSERT OR REPLACE INTO doc_chunks (doc_id, idx, data) VALUES (?, ?, ?)').bind(d.id, idx, b64).run();
+    const have = await env.DB.prepare('SELECT COUNT(*) AS n, SUM(LENGTH(data)) AS len FROM doc_chunks WHERE doc_id = ?').bind(d.id).first();
+    if (have.n < d.chunks) return json({ done: false, received: have.n });
+    // All parts in: check the file really is a JPG / PDF of the declared size, then keep only this one per type.
+    const first = b64ToBytes((await env.DB.prepare('SELECT data FROM doc_chunks WHERE doc_id = ? AND idx = 0').bind(d.id).first()).data.slice(0, 16));
+    const isJpg = first[0] === 0xff && first[1] === 0xd8;
+    const isPdf = first[0] === 0x25 && first[1] === 0x50 && first[2] === 0x44 && first[3] === 0x46;
+    if ((d.mime === 'image/jpeg' && !isJpg) || (d.mime === 'application/pdf' && !isPdf)) {
+      await env.DB.batch([env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id = ?').bind(d.id), env.DB.prepare('DELETE FROM partner_docs WHERE id = ?').bind(d.id)]);
+      throw new HttpError(400, 'doc_must_be_jpg_or_pdf');
+    }
+    const old = (await env.DB.prepare('SELECT id FROM partner_docs WHERE store_id = ? AND type = ? AND id != ?').bind(s.id, d.type, d.id).all()).results;
+    const stmts = [env.DB.prepare('UPDATE partner_docs SET done = 1 WHERE id = ?').bind(d.id)];
+    for (const o of old) {
+      stmts.push(env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id = ?').bind(o.id), env.DB.prepare('DELETE FROM partner_docs WHERE id = ?').bind(o.id));
+    }
+    await env.DB.batch(stmts);
+    return json({ done: true, docs: await docList(env, s) });
+  }
+
+  const myDoc = path.match(/^\/v1\/partner\/docs\/(D\w+)$/);
+  if (myDoc && m === 'DELETE') {
+    const u = await me(req, env);
+    const s = await myStore(env, u.id);
+    if (!s) throw new HttpError(404, 'no_doc');
+    if (s.status === 'active' || s.status === 'review') throw new HttpError(409, 'docs_locked');
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id IN (SELECT id FROM partner_docs WHERE id = ? AND store_id = ?)').bind(myDoc[1], s.id),
+      env.DB.prepare('DELETE FROM partner_docs WHERE id = ? AND store_id = ?').bind(myDoc[1], s.id),
+    ]);
+    return json({ docs: await docList(env, s) });
+  }
+
+  if (path === '/v1/partner/submit' && m === 'POST') {
+    // Send for Nukad team verification (needs all documents + the signed agreement).
+    const u = await me(req, env);
+    const s = await myStore(env, u.id);
+    if (!s) throw new HttpError(400, 'register_first');
+    await submitForReview(env, s);
+    return json({ store: await storeOut(env, await myStore(env, u.id)) });
+  }
+
+  if (path === '/v1/partner/delete' && m === 'POST') {
+    const u = await me(req, env);
+    const s = await myStore(env, u.id);
+    const b = await body(req);
+    const t = now();
+    const stmts = [env.DB.prepare('INSERT INTO deletion_requests (id, user_id, reason, feedback, created_at) VALUES (?, ?, ?, ?, ?)')
+      .bind(crypto.randomUUID(), u.id, 'partner: ' + String(b.reason || '').slice(0, 190), String(b.feedback || '').slice(0, 1000), t)];
+    if (s) {
+      // Shop, photo and documents go now. Signed agreement and pass payments stay (legal records); trial claims are hashes.
+      stmts.push(
+        env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id IN (SELECT id FROM partner_docs WHERE store_id = ?)').bind(s.id),
+        env.DB.prepare('DELETE FROM partner_docs WHERE store_id = ?').bind(s.id),
+        env.DB.prepare('DELETE FROM store_photos WHERE store_id = ?').bind(s.id),
+        env.DB.prepare(`UPDATE stores SET status = 'deleted', active = 0, live = 0, owner_id = NULL, pan = NULL, aadhaar_last4 = NULL, gstin = '',
+          fssai = '', phone = NULL, addr_shop = NULL, addr_landmark = NULL, photo_lat = NULL, photo_lng = NULL WHERE id = ?`).bind(s.id),
+      );
+    }
+    stmts.push(
+      env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL').bind(t, u.id),
+      env.DB.prepare(`UPDATE users SET google_sub = 'deleted:' || id, email = '', name = NULL, phone = NULL, phone_verified = 0,
+        partner_phone = NULL, deleted_at = ?, updated_at = ? WHERE id = ?`).bind(t, t, u.id),
+    );
+    await env.DB.batch(stmts);
+    return json({ ok: true });
   }
 
   if (path === '/v1/partner/payments' && m === 'POST') {
@@ -249,7 +443,7 @@ export async function partnerRoute(req, env, path, m) {
         VALUES (?, ?, ?, ?, ?, ?, 'CREATED', 'DEMO', 'Demo', ?, ?, ?)`).bind(id, key, s.id, u.id, b.plan, plan.price, t, t, t).run();
       await activate(env, await env.DB.prepare('SELECT * FROM pass_payments WHERE id = ?').bind(id).first(), 'demo');
       const p = await env.DB.prepare('SELECT * FROM pass_payments WHERE id = ?').bind(id).first();
-      return json({ payment: payPublic(p), store: publicStore(await myStore(env, u.id)), ...upi });
+      return json({ payment: payPublic(p), store: await storeOut(env, await myStore(env, u.id)), ...upi });
     }
     // 3 failed / cancelled in 24 h: wait a day (stops abuse of "paid" claims).
     const bad = await env.DB.prepare("SELECT COUNT(*) AS n FROM pass_payments WHERE store_id = ? AND status IN ('FAILED','CANCELLED') AND created_at > ?")
@@ -287,7 +481,7 @@ export async function partnerRoute(req, env, path, m) {
         .bind(st, ref, app, t, p.id).run();
     }
     const out = await env.DB.prepare('SELECT * FROM pass_payments WHERE id = ?').bind(p.id).first();
-    return json({ payment: payPublic(out), store: publicStore(await myStore(env, u.id)) });
+    return json({ payment: payPublic(out), store: await storeOut(env, await myStore(env, u.id)) });
   }
 
   if (path === '/v1/partner/live' && m === 'POST') {
@@ -298,13 +492,14 @@ export async function partnerRoute(req, env, path, m) {
     if (on) {
       if (s.status === 'blocked') throw new HttpError(403, 'blocked');
       if (s.agreement_version !== AGREEMENT_VERSION) throw new HttpError(403, 'agreement_needed');
+      if (s.status !== 'active') throw new HttpError(403, 'not_verified');
       if (!(s.pass_until > now())) throw new HttpError(402, 'no_pass');
       // Going live again after the "3 missed orders" pause starts a fresh count for today.
       await env.DB.prepare('UPDATE stores SET live = 1, missed_count = 0 WHERE id = ?').bind(s.id).run();
     } else {
       await env.DB.prepare('UPDATE stores SET live = 0 WHERE id = ?').bind(s.id).run();
     }
-    return json({ store: publicStore(await myStore(env, u.id)) });
+    return json({ store: await storeOut(env, await myStore(env, u.id)) });
   }
 
   if (path === '/v1/partner/agreement' && m === 'GET') {
@@ -323,7 +518,8 @@ export async function partnerRoute(req, env, path, m) {
     if (!s) throw new HttpError(400, 'register_first');
     const b = await body(req);
     if (b.version !== AGREEMENT_VERSION) throw new HttpError(409, 'agreement_changed');
-    if (b.agree !== true) throw new HttpError(400, 'agree_required');
+    if (b.agree !== true || b.authorised !== true) throw new HttpError(400, 'agree_required');
+    if (!(await storeOut(env, s)).docsComplete) throw new HttpError(400, 'docs_missing');
     const name = String(b.name || '').trim().slice(0, 80);
     if (name.length < 3) throw new HttpError(400, 'signer_name_required');
     const sig = String(b.signature || '');
@@ -340,7 +536,8 @@ export async function partnerRoute(req, env, path, m) {
         String(b.device || '').slice(0, 80), req.headers.get('cf-connecting-ip') || ''),
       env.DB.prepare('UPDATE stores SET agreement_version = ? WHERE id = ?').bind(AGREEMENT_VERSION, s.id),
     ]);
-    return json({ id, store: publicStore(await myStore(env, u.id)) });
+    await submitForReview(env, await myStore(env, u.id));
+    return json({ id, store: await storeOut(env, await myStore(env, u.id)) });
   }
 
   if (path === '/v1/admin/settings' && m === 'GET') {
@@ -366,6 +563,60 @@ export async function partnerRoute(req, env, path, m) {
     }
     if (stmts.length) await env.DB.batch(stmts);
     return json({ ...(await upiSettings(env)), party: await partySettings(env) });
+  }
+
+  if (path === '/v1/admin/partners' && m === 'GET') {
+    await admin(req, env);
+    const all = new URL(req.url).searchParams.get('status') === 'ALL';
+    const { results } = await env.DB.prepare(
+      `SELECT s.*, u.email AS owner_email FROM stores s LEFT JOIN users u ON u.id = s.owner_id
+       WHERE s.owner_id IS NOT NULL AND s.demo = 0 ${all ? "AND s.status != 'deleted'" : "AND s.status = 'review'"} ORDER BY s.created_at DESC LIMIT 100`,
+    ).all();
+    const out = [];
+    for (const r of results) out.push({ ...(await storeOut(env, r)), ownerEmail: r.owner_email, docs: await docList(env, r), hasPhoto: true });
+    return json({ partners: out });
+  }
+
+  const adDoc = path.match(/^\/v1\/admin\/docs\/(D\w+)$/);
+  if (adDoc && m === 'GET') {
+    await admin(req, env);
+    const d = await env.DB.prepare('SELECT * FROM partner_docs WHERE id = ? AND done = 1').bind(adDoc[1]).first();
+    if (!d) throw new HttpError(404, 'no_doc');
+    const { results } = await env.DB.prepare('SELECT data FROM doc_chunks WHERE doc_id = ? ORDER BY idx').bind(d.id).all();
+    const parts = results.map((r) => b64ToBytes(r.data));
+    const bytes = new Uint8Array(parts.reduce((n, x) => n + x.length, 0));
+    let o = 0;
+    for (const x of parts) { bytes.set(x, o); o += x.length; }
+    return new Response(bytes, { headers: { 'content-type': d.mime, 'cache-control': 'no-store' } });
+  }
+
+  const review = path.match(/^\/v1\/admin\/partners\/([\w-]+)\/(approve|reject)$/);
+  if (review && m === 'POST') {
+    const a = await admin(req, env);
+    const s = await env.DB.prepare('SELECT * FROM stores WHERE id = ? AND owner_id IS NOT NULL').bind(review[1]).first();
+    if (!s) throw new HttpError(404, 'no_store');
+    const t = now();
+    let trial = false;
+    if (review[2] === 'approve') {
+      const stmts = [];
+      // Free trial: once per verified number and once per phone, given when the shop is approved.
+      if (!s.trial_until && s.phone && (await trialAvailable(env, s.phone, s.device_hash))) {
+        const until = Math.max(s.pass_until || 0, t) + TRIAL_DAYS * 86400;
+        stmts.push(env.DB.prepare('UPDATE stores SET pass_until = ?, trial_until = ? WHERE id = ?').bind(until, until, s.id));
+        stmts.push(env.DB.prepare('INSERT INTO trial_claims (id, phone_hash, device_hash, store_id, created_at) VALUES (?,?,?,?,?)')
+          .bind(crypto.randomUUID(), await sha256Hex('phone:' + s.phone), s.device_hash, s.id, t));
+        trial = true;
+      }
+      stmts.push(env.DB.prepare("UPDATE stores SET status = 'active', review_note = NULL, reviewed_at = ?, reviewed_by = ? WHERE id = ?").bind(t, a.email, s.id));
+      await env.DB.batch(stmts);
+    } else {
+      const { reason } = await body(req);
+      const note = String(reason || '').trim().slice(0, 300);
+      if (note.length < 3) throw new HttpError(400, 'reason_required');
+      await env.DB.prepare("UPDATE stores SET status = 'rejected', live = 0, review_note = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?")
+        .bind(note, t, a.email, s.id).run();
+    }
+    return json({ trial, store: await storeOut(env, await env.DB.prepare('SELECT * FROM stores WHERE id = ?').bind(s.id).first()) });
   }
 
   if (path === '/v1/admin/payments' && m === 'GET') {

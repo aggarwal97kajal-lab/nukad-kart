@@ -99,3 +99,15 @@ Widget pill(String t, {Color color = kAct, Color bg = kOkBg}) => Container(
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
       child: Text(t, style: tx(11, color: color, weight: FontWeight.w800)),
     );
+
+void showToastAction(BuildContext context, String text, String action, VoidCallback onAction) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      content: Text(text, style: tx(13.5, color: Colors.white, weight: FontWeight.w600)),
+      backgroundColor: const Color(0xFF1B1B1B),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 6),
+      action: SnackBarAction(label: action, textColor: kBrand, onPressed: onAction),
+    ));
+}

@@ -7,6 +7,9 @@ import 'screens/login.dart';
 import 'screens/register.dart';
 import 'screens/home.dart';
 import 'screens/agreement.dart';
+import 'screens/docs.dart';
+import 'screens/phone.dart';
+import 'screens/admin.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -105,7 +108,12 @@ class _GateState extends State<Gate> {
         ),
       );
     }
+    // Steps: phone OTP → business details → documents → agreement → waiting for Nukad team → home.
+    // Admin without a shop: straight to the admin screen.
+    if (session.admin && session.store == null) return const AdminScreen(root: true);
+    if (!session.phoneVerified) return const PhoneScreen();
     if (session.store == null) return const RegisterScreen();
+    if (session.store!['docsComplete'] != true) return const DocsScreen();
     if (session.store!['agreementSigned'] != true) return const AgreementScreen();
     return const HomeScreen();
   }

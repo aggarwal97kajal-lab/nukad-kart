@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
+import '../session.dart';
 import '../ui.dart';
 import 'home.dart';
+import 'review.dart';
 
 /// Admin: where partners pay (UPI ID) and pass payments to check against the bank.
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+  /// Opened as the app's home (admin account without a shop).
+  final bool root;
+  const AdminScreen({super.key, this.root = false});
   @override
   State<AdminScreen> createState() => _AdminScreenState();
 }
@@ -109,12 +113,20 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar('Admin'),
+      appBar: bar('Admin', actions: [
+        if (widget.root)
+          PopupMenuButton<String>(
+            onSelected: (_) => session.signOut(),
+            itemBuilder: (_) => const [PopupMenuItem(value: 'out', child: Text('Log out'))],
+          ),
+      ]),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadPays,
               child: ListView(padding: const EdgeInsets.all(16), children: [
+                Btn('Partners to verify', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen()))),
+                const SizedBox(height: 18),
                 Text('Pass payments go to', style: tx(15, weight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 TextField(controller: upiId, decoration: field('UPI ID, e.g. 98xxxxxx@okaxis', label: 'UPI ID')),

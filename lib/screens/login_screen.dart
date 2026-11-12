@@ -155,7 +155,9 @@ Future<bool> googleSignInFlow(BuildContext context) async {
   } on ApiException catch (e) {
     if (!e.unavailable) {
       await googleAuth.signOut();
-      if (context.mounted) showToast(context, 'Sign-in was not accepted (${e.code}). Try again.');
+      if (context.mounted) {
+        showToast(context, e.code == 'email_used_by_partner' ? e.message : 'Sign-in was not accepted (${e.code}). Try again.');
+      }
       return false;
     }
   }

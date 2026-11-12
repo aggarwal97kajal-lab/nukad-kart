@@ -12,7 +12,7 @@
 //   POST /v1/me/sessions/logout-others                        (auth) log out every other phone
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m)
 
-import { partnerRoute, offlineReason } from './partner.js';
+import { isAdmin, partnerRoute, offlineReason } from './partner.js';
 
 export const RADIUS_MAX_M = 500;
 const SESSION_DAYS = 30;
@@ -196,17 +196,22 @@ async function route(req, env) {
   if (m === 'POST' && path === '/v1/auth/google') {
     const audiences = String(env.GOOGLE_CLIENT_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
     if (!audiences.length) throw new HttpError(503, 'google_not_configured');
-    const { idToken, device } = await body(req);
+    const { idToken, device, app: appRaw } = await body(req);
+    const app = appRaw === 'partner' ? 'partner' : 'customer';
     const c = await verifyGoogleIdToken(idToken, audiences);
     const t = now();
     let user = await env.DB.prepare('SELECT * FROM users WHERE google_sub = ?').bind(c.sub).first();
+    // One Google account is either a customer or a partner (admins can use both apps).
+    if (user?.app && user.app !== app && !(await isAdmin(env, c.email))) {
+      throw new HttpError(409, user.app === 'partner' ? 'email_used_by_partner' : 'email_used_by_customer');
+    }
     if (!user) {
       const id = crypto.randomUUID();
-      await env.DB.prepare('INSERT INTO users (id, google_sub, email, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
-        .bind(id, c.sub, c.email, c.name || null, t, t).run();
+      await env.DB.prepare('INSERT INTO users (id, google_sub, email, name, app, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .bind(id, c.sub, c.email, c.name || null, app, t, t).run();
       user = { id };
-    } else if (user.email !== c.email) {
-      await env.DB.prepare('UPDATE users SET email = ?, updated_at = ? WHERE id = ?').bind(c.email, t, user.id).run();
+    } else {
+      await env.DB.prepare('UPDATE users SET email = ?, app = COALESCE(app, ?), updated_at = ? WHERE id = ?').bind(c.email, app, t, user.id).run();
     }
     const sid = crypto.randomUUID();
     const d = device && typeof device === 'object' ? device : {};
