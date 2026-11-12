@@ -179,6 +179,31 @@ function cleanAddress(a) {
   return out;
 }
 
+// ---------- nearby shops: short cache ----------
+// Customers in the same ~1 km cell see the same shops, so the database is asked once per cell every
+// 30 seconds (per Cloudflare server) instead of once per customer. A shop switching LIVE shows within 30 s.
+const NEAR_CELL = 0.01; // degrees (~1.1 km)
+const NEAR_TTL_MS = 30_000;
+const nearCache = new Map();
+
+async function nearbyRows(env, lat, lng) {
+  const cLat = Math.floor(lat / NEAR_CELL), cLng = Math.floor(lng / NEAR_CELL);
+  const key = `${cLat}:${cLng}`;
+  const hit = nearCache.get(key);
+  if (hit && hit.at > Date.now() - NEAR_TTL_MS) return hit.rows;
+  // The whole cell plus 500 m around it, so every customer inside the cell is covered.
+  const pad = RADIUS_MAX_M / 111_000 + 0.001;
+  const padLng = pad / Math.max(Math.cos((lat * Math.PI) / 180), 0.2);
+  const { results } = await env.DB.prepare(
+    `SELECT id, name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup, demo, status, live,
+            pass_until, missed_date, missed_count, photo_at, gst_type, fssai, agreement_version
+     FROM stores WHERE active = 1 AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?`,
+  ).bind(cLat * NEAR_CELL - pad, (cLat + 1) * NEAR_CELL + pad, cLng * NEAR_CELL - padLng, (cLng + 1) * NEAR_CELL + padLng).all();
+  if (nearCache.size > 2000) nearCache.clear();
+  nearCache.set(key, { at: Date.now(), rows: results });
+  return results;
+}
+
 // ---------- routes ----------
 async function route(req, env) {
   const url = new URL(req.url);
@@ -328,12 +353,7 @@ async function route(req, env) {
     const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'));
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
     const radius = Math.min(Number(url.searchParams.get('radius')) || RADIUS_MAX_M, RADIUS_MAX_M);
-    const bb = boundingBox(lat, lng, radius);
-    const { results } = await env.DB.prepare(
-      `SELECT id, name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup, demo, status, live,
-              pass_until, missed_date, missed_count, photo_at, gst_type, fssai
-       FROM stores WHERE active = 1 AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?`,
-    ).bind(bb.minLat, bb.maxLat, bb.minLng, bb.maxLng).all();
+    const results = await nearbyRows(env, lat, lng);
     // Partner shops show only with an active pass, switched on, within their timings
     // (after closing time they drop off the map) and not paused for missed orders.
     const t = now();

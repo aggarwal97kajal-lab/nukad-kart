@@ -23,3 +23,11 @@ migrations_dir = "migrations"
 # Secrets (never in this file):
 #   SESSION_SECRET  - created automatically by the deploy workflow
 #   MSG91_AUTHKEY   - add yourself in Cloudflare: Workers > nukad-kart-api > Settings > Variables and Secrets
+
+# Shop photos and partner documents (R2 object storage). The deploy workflow creates the bucket;
+# if R2 is not switched on for the account yet, it removes this block and files stay in the database.
+# R2-BEGIN
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "nukad-kart-files"
+# R2-END

@@ -57,11 +57,33 @@ jobs:
           sed -i "s/__D1_ID__/$id/" wrangler.toml
           echo "D1 database: $id"
 
+      - name: File storage (R2) for photos and documents
+        run: |
+          out=$($WRANGLER r2 bucket create nukad-kart-files 2>&1) || true
+          echo "$out" | tail -3
+          if $WRANGLER r2 bucket list 2>/dev/null | grep -q 'nukad-kart-files'; then
+            echo "R2 bucket ready"
+          else
+            echo "::warning::R2 is not switched on for this Cloudflare account yet. Photos and documents stay in the database. Turn on R2 in the Cloudflare dashboard (R2 Object Storage) and deploy again."
+            sed -i '/# R2-BEGIN/,/# R2-END/d' wrangler.toml
+          fi
+
       - name: Apply database migrations
         run: $WRANGLER d1 migrations apply nukad-kart-db-apac --remote
 
       - name: Deploy worker
         run: $WRANGLER deploy
+
+      - name: Push notifications key (only if the FCM_SERVICE_ACCOUNT secret is set in GitHub)
+        env:
+          FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$FCM_SERVICE_ACCOUNT" ]; then
+            printf '%s' "$FCM_SERVICE_ACCOUNT" | jq -e '.client_email and .private_key and .project_id' > /dev/null || { echo "::error::FCM_SERVICE_ACCOUNT is not a Firebase service-account JSON"; exit 1; }
+            printf '%s' "$FCM_SERVICE_ACCOUNT" | $WRANGLER secret put FCM_SERVICE_ACCOUNT
+          else
+            echo "::warning::FCM_SERVICE_ACCOUNT secret not set: push notifications are off."
+          fi
 
       - name: Create session secret once
         run: |
