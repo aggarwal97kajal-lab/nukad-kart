@@ -6,11 +6,9 @@ workers_dev = true
 [vars]
 # Google "Web client" ID(s) from Firebase, comma separated. Filled in once Google sign-in is enabled.
 GOOGLE_CLIENT_IDS = "173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com"
-# Where partners pay for passes (UPI). Empty = pass payments switched off.
-UPI_ID = ""
-UPI_NAME = "Nukad Kart"
-# Google emails that see the Admin screens in the Partner app, comma separated.
-ADMIN_EMAILS = ""
+# Admins: SHA-256 of their lower-case Google email, comma separated (the emails stay out of this public repo).
+ADMIN_EMAIL_HASHES = "1f5ddeb49d81be5faaa661510ca92c35d8d67e96e4bb5d5464ca4dabaad3057d"
+# The UPI ID for pass payments is set by an admin in the Partner app (stored in the database).
 
 [[d1_databases]]
 binding = "DB"

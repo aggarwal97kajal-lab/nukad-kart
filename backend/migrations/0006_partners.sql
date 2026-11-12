@@ -40,3 +40,4 @@ CREATE TABLE pass_payments (
 );
 CREATE INDEX idx_pay_store ON pass_payments(store_id, created_at);
 CREATE INDEX idx_pay_status ON pass_payments(status);
+

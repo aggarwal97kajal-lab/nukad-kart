@@ -34,3 +34,8 @@ test('when a partner shop is hidden', () => {
   assert.equal(offlineReason({ ...shop, missed_date: '2026-11-11', missed_count: MISSED_LIMIT }, t), null); // new day
   assert.equal(offlineReason({ ...shop, status: 'blocked' }, t), 'blocked');
 });
+
+test('admin email is matched by hash', async () => {
+  const { sha256Hex } = await import('../src/partner.js');
+  assert.equal((await sha256Hex('a@b.c')).length, 64);
+});

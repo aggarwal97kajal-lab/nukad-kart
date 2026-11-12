@@ -6,6 +6,7 @@
 //   POST /v1/partner/payments/:key/done { upiStatus, upiRef, app }   back from the UPI app
 //   POST /v1/partner/live        { on }          (auth)       go live / offline
 //   GET  /v1/stores/:id/photo                                 shop photo (JPEG)
+//   GET/PUT /v1/admin/settings { upiId, upiName } (admin)     where partners pay
 //   GET  /v1/admin/payments?status=CHECKING|ALL  (admin)
 //   POST /v1/admin/payments/:id/confirm          (admin)      money is in: pass starts
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
@@ -71,14 +72,26 @@ async function me(req, env) {
   return user;
 }
 
-function isAdmin(env, email) {
-  return String(env.ADMIN_EMAILS || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean)
-    .includes(String(email || '').toLowerCase());
+export async function sha256Hex(text) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function isAdmin(env, email) {
+  const list = String(env.ADMIN_EMAIL_HASHES || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
+  if (!list.length || !email) return false;
+  return list.includes(await sha256Hex(String(email).trim().toLowerCase()));
+}
+
+async function upiSettings(env) {
+  const { results } = await env.DB.prepare("SELECT key, value FROM settings WHERE key IN ('upi_id','upi_name')").all();
+  const m = Object.fromEntries(results.map((r) => [r.key, r.value]));
+  return { upiId: m.upi_id || '', upiName: m.upi_name || 'Nukad Kart' };
 }
 
 async function admin(req, env) {
   const u = await me(req, env);
-  if (!isAdmin(env, u.email)) throw new HttpError(403, 'not_admin');
+  if (!(await isAdmin(env, u.email))) throw new HttpError(403, 'not_admin');
   return u;
 }
 
@@ -120,10 +133,7 @@ const b64ToBytes = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 // ---------- routes ----------
 export async function partnerRoute(req, env, path, m) {
   if (path === '/v1/partner/plans' && m === 'GET') {
-    return json({
-      plans: Object.entries(PLANS).map(([id, p]) => ({ id, ...p })),
-      upiId: env.UPI_ID || '', upiName: env.UPI_NAME || 'Nukad Kart',
-    });
+    return json({ plans: Object.entries(PLANS).map(([id, p]) => ({ id, ...p })), ...(await upiSettings(env)) });
   }
 
   const photo = path.match(/^\/v1\/stores\/([\w-]+)\/photo$/);
@@ -139,7 +149,7 @@ export async function partnerRoute(req, env, path, m) {
     const pays = s
       ? (await env.DB.prepare('SELECT * FROM pass_payments WHERE store_id = ? ORDER BY created_at DESC LIMIT 10').bind(s.id).all()).results
       : [];
-    return json({ user: { email: u.email, name: u.name }, admin: isAdmin(env, u.email), store: publicStore(s),
+    return json({ user: { email: u.email, name: u.name }, admin: await isAdmin(env, u.email), store: publicStore(s),
       payments: pays.map(payPublic) });
   }
 
@@ -187,14 +197,15 @@ export async function partnerRoute(req, env, path, m) {
     const u = await me(req, env);
     const s = await myStore(env, u.id);
     if (!s) throw new HttpError(400, 'register_first');
-    if (!env.UPI_ID) throw new HttpError(503, 'upi_not_set');
+    const upi = await upiSettings(env);
+    if (!upi.upiId) throw new HttpError(503, 'upi_not_set');
     const b = await body(req);
     const plan = PLANS[b.plan];
     if (!plan) throw new HttpError(400, 'bad_plan');
     const key = String(b.key || '').slice(0, 64);
     if (key.length < 16) throw new HttpError(400, 'bad_key');
     const same = await env.DB.prepare('SELECT * FROM pass_payments WHERE idem_key = ?').bind(key).first();
-    if (same) return json({ payment: payPublic(same), upiId: env.UPI_ID, upiName: env.UPI_NAME || 'Nukad Kart' });
+    if (same) return json({ payment: payPublic(same), ...upi });
     // 3 failed / cancelled in 24 h: wait a day (stops abuse of "paid" claims).
     const bad = await env.DB.prepare("SELECT COUNT(*) AS n FROM pass_payments WHERE store_id = ? AND status IN ('FAILED','CANCELLED') AND created_at > ?")
       .bind(s.id, now() - 86400).first();
@@ -205,7 +216,7 @@ export async function partnerRoute(req, env, path, m) {
     await env.DB.prepare(`INSERT INTO pass_payments (id, idem_key, store_id, owner_id, plan, amount, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, 'CREATED', ?, ?)`).bind(id, key, s.id, u.id, b.plan, plan.price, t, t).run();
     const p = await env.DB.prepare('SELECT * FROM pass_payments WHERE id = ?').bind(id).first();
-    return json({ payment: payPublic(p), upiId: env.UPI_ID, upiName: env.UPI_NAME || 'Nukad Kart' });
+    return json({ payment: payPublic(p), ...upi });
   }
 
   const done = path.match(/^\/v1\/partner\/payments\/([\w-]+)\/done$/);
@@ -248,6 +259,24 @@ export async function partnerRoute(req, env, path, m) {
       await env.DB.prepare('UPDATE stores SET live = 0 WHERE id = ?').bind(s.id).run();
     }
     return json({ store: publicStore(await myStore(env, u.id)) });
+  }
+
+  if (path === '/v1/admin/settings' && m === 'GET') {
+    await admin(req, env);
+    return json(await upiSettings(env));
+  }
+
+  if (path === '/v1/admin/settings' && m === 'PUT') {
+    await admin(req, env);
+    const b = await body(req);
+    const upiId = String(b.upiId || '').trim();
+    if (!/^[\w.\-]{2,256}@[a-zA-Z][\w.\-]{1,64}$/.test(upiId)) throw new HttpError(400, 'bad_upi_id');
+    const upiName = String(b.upiName || 'Nukad Kart').trim().slice(0, 60) || 'Nukad Kart';
+    await env.DB.batch([
+      env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('upi_id', ?)").bind(upiId),
+      env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('upi_name', ?)").bind(upiName),
+    ]);
+    return json(await upiSettings(env));
   }
 
   if (path === '/v1/admin/payments' && m === 'GET') {
