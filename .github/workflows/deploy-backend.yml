@@ -38,16 +38,19 @@ jobs:
           # India crossed the world. The data is copied once into a new database placed in Asia-Pacific.
           id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db-apac") | .uuid')
           if [ -z "$id" ]; then
-            old=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db") | .uuid')
             $WRANGLER d1 create nukad-kart-db-apac --location apac
             id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db-apac") | .uuid')
+          fi
+          sed -i "s/__D1_ID__/$id/" wrangler.toml
+          # Copy once: only while the new database has no migrations table yet.
+          if ! $WRANGLER d1 execute nukad-kart-db-apac --remote --command "SELECT COUNT(*) AS n FROM d1_migrations" > /dev/null 2>&1; then
+            old=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db") | .uuid')
             if [ -n "$old" ]; then
               $WRANGLER d1 export nukad-kart-db --remote --output /tmp/dump.sql
-              ls -la /tmp/dump.sql
-              grep -c 'd1_migrations' /tmp/dump.sql || { echo "::error::export has no migrations table"; exit 1; }
-              sed -i "s/__D1_ID__/$id/" wrangler.toml
-              $WRANGLER d1 execute nukad-kart-db-apac --remote --file /tmp/dump.sql
-              $WRANGLER d1 execute nukad-kart-db-apac --remote --command "SELECT COUNT(*) AS migrations FROM d1_migrations; SELECT COUNT(*) AS stores FROM stores; SELECT COUNT(*) AS users FROM users"
+              grep -q 'd1_migrations' /tmp/dump.sql || { echo "::error::export has no migrations table"; exit 1; }
+              python3 tool/split_dump.py /tmp/dump.sql /tmp/dump_split.sql
+              $WRANGLER d1 execute nukad-kart-db-apac --remote --file /tmp/dump_split.sql
+              $WRANGLER d1 execute nukad-kart-db-apac --remote --command "SELECT (SELECT COUNT(*) FROM d1_migrations) AS migrations, (SELECT COUNT(*) FROM stores) AS stores, (SELECT COUNT(*) FROM users) AS users, (SELECT SUM(LENGTH(photo)) FROM store_photos) AS photo_bytes"
             fi
           fi
           [ -n "$id" ] || { echo "could not get database id"; exit 1; }
