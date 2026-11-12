@@ -1,8 +1,8 @@
 import 'dart:typed_data';
-import 'package:excel/excel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
 import 'api.dart';
+import 'xlsx_lite.dart';
 
 /// Excel columns for products (same for a shop's own upload and an admin uploading for a shop).
 const kExcelHeads = ['Name', 'Brand', 'Size', 'Category', 'MRP', 'Price', 'GST %', 'HSN', 'Barcode', 'Stock', 'Loose (Y/N)', 'Unit', 'Sizes'];
@@ -10,53 +10,28 @@ const kExcelHeads = ['Name', 'Brand', 'Size', 'Category', 'MRP', 'Price', 'GST %
 const _example = ['Parle-G Gold', 'Parle', '250 g', 'Bakery & biscuits', 30, 28, 5, '1905', '8901719110047', '', 'N', '', ''];
 const _exampleLoose = ['Toor Dal', '', '', 'Atta, rice & dal', '', 160, 5, '0713', '', '', 'Y', 'kg', '250,500,1000'];
 
-CellValue? _cell(Object? v) => switch (v) {
-      null || '' => null,
-      int x => IntCellValue(x),
-      double x => DoubleCellValue(x),
-      num x => DoubleCellValue(x.toDouble()),
-      _ => TextCellValue('$v'),
-    };
-
-Future<void> _save(String name, Excel x) async {
-  final bytes = x.encode();
-  if (bytes == null) throw Exception('Could not make the file');
+Future<void> _save(String name, Map<String, List<List<Object?>>> sheets) async {
+  final bytes = buildXlsx(sheets);
   await FileSaver.instance.saveToDownloads(name: name, bytes: Uint8List.fromList(bytes), fileExtension: 'xlsx', mimeType: MimeType.microsoftExcel);
 }
 
 /// Blank sheet with headings, how-to notes, and one example of each kind.
 Future<void> saveTemplate(List<String> categories) async {
-  final x = Excel.createExcel();
-  final s = x['Products'];
-  x.setDefaultSheet('Products');
-  s.appendRow(kExcelHeads.map((h) => TextCellValue(h)).toList());
-  s.appendRow(_example.map(_cell).toList());
-  s.appendRow(_exampleLoose.map(_cell).toList());
-  final h = x['How to fill'];
-  for (final line in [
-    'One product per row. Keep row 1 (the headings) as it is. Delete the 2 example rows.',
-    'Packed item: Name, Size, Category, MRP and Price are needed. Price can’t be more than MRP.',
-    'Loose item (sold by weight): Loose = Y, Unit = kg / litre / piece / dozen / bunch, Price is per kg / litre / piece, Sizes = what customers can buy, e.g. 250,500,1000 (grams).',
-    'GST % and HSN are optional: if empty, the usual one for the category is used.',
-    'Stock is optional: empty = not counted.',
-    'Same barcode, or same name + size, updates the product that is already there.',
-    'Categories: ${categories.join(' · ')}',
-  ]) {
-    h.appendRow([TextCellValue(line)]);
-  }
-  x.delete('Sheet1');
-  await _save('Nukad products template', x);
-}
-
-String _text(Data? d) {
-  final v = d?.value;
-  return switch (v) {
-    null => '',
-    TextCellValue t => '$t'.trim(),
-    IntCellValue i => '${i.value}',
-    DoubleCellValue n => n.value == n.value.roundToDouble() ? '${n.value.toInt()}' : '${n.value}',
-    _ => '$v'.trim(),
-  };
+  await _save('Nukad products template', {
+    'Products': [kExcelHeads, _example, _exampleLoose],
+    'How to fill': [
+      for (final line in [
+        'One product per row. Keep row 1 (the headings) as it is. Delete the 2 example rows.',
+        'Packed item: Name, Size, Category, MRP and Price are needed. Price can’t be more than MRP.',
+        'Loose item (sold by weight): Loose = Y, Unit = kg / litre / piece / dozen / bunch, Price is per kg / litre / piece, Sizes = what customers can buy, e.g. 250,500,1000 (grams).',
+        'GST % and HSN are optional: if empty, the usual one for the category is used.',
+        'Stock is optional: empty = not counted.',
+        'Same barcode, or same name + size, updates the product that is already there.',
+        'Categories: ${categories.join(' · ')}',
+      ])
+        [line],
+    ],
+  });
 }
 
 /// Picks an .xlsx and turns its rows into the server's product format ({row, …}). Null = cancelled.
@@ -64,18 +39,16 @@ Future<List<Map<String, dynamic>>?> pickRows() async {
   final f = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['xlsx'], withData: true);
   final bytes = f?.files.single.bytes;
   if (bytes == null) return null;
-  final x = Excel.decodeBytes(bytes);
-  final sheet = x.tables['Products'] ?? x.tables.values.first;
-  final rows = sheet.rows;
+  final rows = readXlsx(bytes);
   if (rows.isEmpty) return [];
-  final heads = rows.first.map((c) => _text(c).toLowerCase()).toList();
+  final heads = rows.first.map((c) => c.toLowerCase()).toList();
   int col(String h) => heads.indexOf(h.toLowerCase());
   final out = <Map<String, dynamic>>[];
   for (var i = 1; i < rows.length; i++) {
     final r = rows[i];
     String v(String h) {
       final c = col(h);
-      return c < 0 || c >= r.length ? '' : _text(r[c]);
+      return c < 0 || c >= r.length ? '' : r[c];
     }
     if (v('Name').isEmpty) continue;
     final loose = v('Loose (Y/N)').toUpperCase().startsWith('Y');
@@ -104,19 +77,15 @@ Future<List<Map<String, dynamic>>?> pickRows() async {
 Future<int> exportProducts() async {
   final r = await api.call('GET', '/v1/partner/products?all=1');
   final list = ((r['products'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-  final x = Excel.createExcel();
-  final s = x['Products'];
-  x.setDefaultSheet('Products');
-  s.appendRow(kExcelHeads.map((h) => TextCellValue(h)).toList());
+  final rows = <List<Object?>>[kExcelHeads];
   for (final p in list) {
     final loose = p['kind'] == 'loose';
-    s.appendRow([
+    rows.add([
       p['name'], p['brand'], p['size'], p['category'], p['mrp'], p['price'], p['gst'], p['hsn'], p['barcode'], p['stock'],
       loose ? 'Y' : 'N', loose ? p['unit'] : '', loose ? (p['options'] as List).join(',') : '',
-    ].map(_cell).toList());
+    ]);
   }
-  x.delete('Sheet1');
-  await _save('Nukad products ${DateTime.now().toIso8601String().substring(0, 10)}', x);
+  await _save('Nukad products ${DateTime.now().toIso8601String().substring(0, 10)}', {'Products': rows});
   return list.length;
 }
 

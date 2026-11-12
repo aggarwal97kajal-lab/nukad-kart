@@ -21,7 +21,7 @@ dependencies:
   pdf: ^3.11.3
   printing: ^5.14.2
   file_saver: ^0.7.0
-  excel: ^4.0.6
+  archive: ^4.0.2
   open_filex: ^4.7.0
   path_provider: ^2.1.5
   firebase_core: ^4.0.0
