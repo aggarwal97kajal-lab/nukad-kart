@@ -169,7 +169,7 @@ class _CartScreenState extends State<CartScreen> {
             if (isDoor)
               Padding(
                 padding: EdgeInsets.only(top: 3),
-                child: Text('Free on orders of ₹$kFreeDeliveryMin or more · paid to the store',
+                child: Text('Free on orders of ₹$kFreeDeliveryMin or more',
                     style: body(11.5, color: kMute)),
               ),
             Divider(height: 22, color: kLine),
