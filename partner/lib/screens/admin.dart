@@ -19,7 +19,7 @@ class _AdminScreenState extends State<AdminScreen> {
   final upiName = TextEditingController();
   final party = {for (final k in ['legalName', 'address', 'city', 'pan', 'email']) k: TextEditingController()};
   List<Map<String, dynamic>> pays = [];
-  bool all = false, _loading = true, _saving = false;
+  bool all = false, _loading = true, _saving = false, testMode = false;
 
   @override
   void initState() {
@@ -42,6 +42,7 @@ class _AdminScreenState extends State<AdminScreen> {
       final s = await api.call('GET', '/v1/admin/settings');
       upiId.text = '${s['upiId'] ?? ''}';
       upiName.text = '${s['upiName'] ?? 'Nukad Kart'}';
+      testMode = s['testMode'] == true;
       final pm = Map<String, dynamic>.from((s['party'] as Map?) ?? {});
       party.forEach((k, c) => c.text = '${pm[k] ?? ''}');
       await _loadPays();
@@ -66,6 +67,19 @@ class _AdminScreenState extends State<AdminScreen> {
       if (mounted) toast(context, e.message);
     }
     if (mounted) setState(() => _saving = false);
+  }
+
+  Future<void> _setTestMode(bool on) async {
+    setState(() => testMode = on);
+    try {
+      await api.call('PUT', '/v1/admin/settings', {'testMode': on});
+      if (mounted) toast(context, on ? 'Test mode on: every partner sees Demo pay' : 'Test mode off');
+    } on ApiError catch (e) {
+      if (mounted) {
+        setState(() => testMode = !on);
+        toast(context, e.message);
+      }
+    }
   }
 
   Future<void> _saveParty() async {
@@ -125,6 +139,27 @@ class _AdminScreenState extends State<AdminScreen> {
           : RefreshIndicator(
               onRefresh: _loadPays,
               child: ListView(padding: const EdgeInsets.all(16), children: [
+                if (testMode) ...[
+                  Box(
+                    color: kRedBg,
+                    border: const Color(0xFFF7C1C1),
+                    child: Text('Test mode is ON · anyone can get a pass without paying. Turn it off before launch.',
+                        style: tx(12.5, color: kRed, weight: FontWeight.w700)),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Box(
+                  child: Row(children: [
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Test mode', style: tx(14.5, weight: FontWeight.w800)),
+                        Text('Shows "Demo pay" to all partners', style: tx(12, color: kMute)),
+                      ]),
+                    ),
+                    Switch(value: testMode, activeThumbColor: kBrand, activeTrackColor: kAct, onChanged: _setTestMode),
+                  ]),
+                ),
+                const SizedBox(height: 10),
                 Btn('Partners to verify', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen()))),
                 const SizedBox(height: 18),
                 Text('Pass payments go to', style: tx(15, weight: FontWeight.w800)),

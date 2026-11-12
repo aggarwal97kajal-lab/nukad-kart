@@ -147,9 +147,10 @@ function partyFrom(results) {
 }
 
 async function upiSettings(env) {
-  const { results } = await env.DB.prepare("SELECT key, value FROM settings WHERE key IN ('upi_id','upi_name')").all();
+  const { results } = await env.DB.prepare("SELECT key, value FROM settings WHERE key IN ('upi_id','upi_name','test_mode')").all();
   const m = Object.fromEntries(results.map((r) => [r.key, r.value]));
-  return { upiId: m.upi_id || '', upiName: m.upi_name || 'Nukad Kart' };
+  // testMode: every partner sees "Demo pay" (for testing before launch). Set by an admin.
+  return { upiId: m.upi_id || '', upiName: m.upi_name || 'Nukad Kart', testMode: m.test_mode === '1' };
 }
 
 async function admin(req, env) {
@@ -480,8 +481,8 @@ export async function partnerRoute(req, env, path, m) {
     const same = await env.DB.prepare('SELECT * FROM pass_payments WHERE idem_key = ?').bind(key).first();
     if (same) return json({ payment: payPublic(same), ...upi });
     if (b.demo === true) {
-      // Testing only: admins can start a pass without paying. Marked DEMO everywhere.
-      if (!(await isAdmin(env, u.email))) throw new HttpError(403, 'not_admin');
+      // Testing only: admins, or anyone while an admin has Test mode on. Marked DEMO everywhere.
+      if (!upi.testMode && !(await isAdmin(env, u.email))) throw new HttpError(403, 'not_admin');
       const t = now();
       const id = `DEMO-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       await env.DB.prepare(`INSERT INTO pass_payments (id, idem_key, store_id, owner_id, plan, amount, status, upi_status, app, checked_at, created_at, updated_at)
@@ -602,6 +603,7 @@ export async function partnerRoute(req, env, path, m) {
       put('upi_id', upiId);
       put('upi_name', String(b.upiName || 'Nukad Kart').trim().slice(0, 60) || 'Nukad Kart');
     }
+    if (typeof b.testMode === 'boolean') put('test_mode', b.testMode ? '1' : '0');
     if (b.party && typeof b.party === 'object') {
       for (const [k, key] of Object.entries(PARTY_KEYS)) {
         if (b.party[k] !== undefined) put(key, String(b.party[k] || '').trim().slice(0, 300));

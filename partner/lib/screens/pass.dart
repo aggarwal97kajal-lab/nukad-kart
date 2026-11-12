@@ -15,7 +15,7 @@ class _PassScreenState extends State<PassScreen> {
   List<Map<String, dynamic>> plans = [];
   String upiId = '', upiName = 'Nukad Kart';
   String selected = 'monthly';
-  bool _loading = true, _paying = false;
+  bool _loading = true;
   String? _error;
 
   @override
@@ -30,6 +30,7 @@ class _PassScreenState extends State<PassScreen> {
       plans = ((r['plans'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
       upiId = '${r['upiId'] ?? ''}';
       upiName = '${r['upiName'] ?? 'Nukad Kart'}';
+      testMode = r['testMode'] == true;
       _error = null;
     } on ApiError catch (e) {
       _error = e.message;
@@ -39,88 +40,14 @@ class _PassScreenState extends State<PassScreen> {
 
   Map<String, dynamic> get _plan => plans.firstWhere((p) => p['id'] == selected, orElse: () => plans.first);
 
-  Future<UpiApp?> _pickApp() async {
-    final apps = await installedUpiApps();
-    if (!mounted) return null;
-    return showModalBottomSheet<UpiApp?>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text('Pay ₹${_plan['price']} using', style: tx(18, weight: FontWeight.w800)),
-          ),
-          if (apps.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('No UPI app found on this phone. Install Google Pay, PhonePe, Paytm or your bank’s UPI app.',
-                  style: tx(13.5)),
-            ),
-          for (final a in apps)
-            ListTile(
-              leading: a.icon == null
-                  ? const CircleAvatar(child: Icon(Icons.account_balance_wallet_outlined))
-                  : Image.memory(a.icon!, width: 40, height: 40),
-              title: Text(a.name, style: tx(15, weight: FontWeight.w700)),
-              onTap: () => Navigator.pop(ctx, a),
-            ),
-          const SizedBox(height: 8),
-        ]),
-      ),
-    );
-  }
+  bool testMode = false;
 
-  Future<void> _pay() async {
-    if (upiId.isEmpty) {
+  void _pay() {
+    if (upiId.isEmpty && !(testMode || session.admin)) {
       toast(context, const ApiError(503, 'upi_not_set').message);
       return;
     }
-    final app = await _pickApp();
-    if (app == null || !mounted) return;
-    setState(() => _paying = true);
-    final key = newPaymentKey();
-    try {
-      final c = await api.call('POST', '/v1/partner/payments', {'plan': selected, 'key': key});
-      final pay = Map<String, dynamic>.from(c['payment'] as Map);
-      final answer = await payWithUpi(
-        upiId: '${c['upiId']}',
-        name: '${c['upiName']}',
-        amount: (pay['amount'] as num),
-        note: 'Nukad Kart ${pay['planName']} pass ${pay['id']}',
-        ref: '${pay['id']}',
-        package: app.package,
-      );
-      final d = await api.call('POST', '/v1/partner/payments/$key/done',
-          {'upiStatus': answer.status, 'upiRef': answer.ref, 'app': app.name});
-      await session.refresh();
-      if (!mounted) return;
-      final status = (d['payment'] as Map)['status'];
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => PayResultScreen(status: '$status', payment: Map<String, dynamic>.from(d['payment'] as Map))));
-    } on ApiError catch (e) {
-      if (mounted) toast(context, e.message);
-    } catch (_) {
-      if (mounted) toast(context, 'Could not open the UPI app. Try another app.');
-    }
-    if (mounted) setState(() => _paying = false);
-  }
-
-  /// Admin-only test: starts the pass without paying (marked DEMO on the server).
-  Future<void> _demoPay() async {
-    setState(() => _paying = true);
-    try {
-      final r = await api.call('POST', '/v1/partner/payments', {'plan': selected, 'key': newPaymentKey(), 'demo': true});
-      await session.refresh();
-      if (!mounted) return;
-      Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (_) => PayResultScreen(status: 'PAID', payment: Map<String, dynamic>.from(r['payment'] as Map))));
-    } on ApiError catch (e) {
-      if (mounted) toast(context, e.message);
-    }
-    if (mounted) setState(() => _paying = false);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => PayScreen(plan: _plan, upiReady: upiId.isNotEmpty, demo: testMode || session.admin)));
   }
 
   @override
@@ -168,22 +95,174 @@ class _PassScreenState extends State<PassScreen> {
                   Text('🔒 Pay with any UPI app on this phone. A new pass starts when the current one ends.',
                       style: tx(11.5, color: kMute)),
                   const SizedBox(height: 16),
-                  Btn(_paying ? 'Opening UPI app…' : 'Pay ₹${_plan['price']} with UPI', onTap: _paying ? null : _pay),
-                  if (session.admin) ...[
-                    const SizedBox(height: 14),
-                    Box(
-                      color: kAmbBg,
-                      border: const Color(0xFFFAC775),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        pill('ADMIN ONLY', color: kAmb, bg: const Color(0xFFFAC775)),
-                        const SizedBox(height: 6),
-                        Text('Start this pass without paying, to test the app. It is marked DEMO in payments.', style: tx(12.5)),
-                        const SizedBox(height: 8),
-                        Btn('Demo pay ₹${_plan['price']}', outline: true, color: kAmb, onTap: _paying ? null : _demoPay),
-                      ]),
-                    ),
-                  ],
+                  Btn('Pay ₹${_plan['price']} with UPI', onTap: _pay),
                 ]),
+    );
+  }
+}
+
+/// Nukad Kart's own payment page: the UPI apps on this phone (real names and icons from the phone).
+class PayScreen extends StatefulWidget {
+  final Map<String, dynamic> plan;
+  final bool upiReady, demo;
+  const PayScreen({super.key, required this.plan, required this.upiReady, required this.demo});
+  @override
+  State<PayScreen> createState() => _PayScreenState();
+}
+
+class _PayScreenState extends State<PayScreen> {
+  List<UpiApp>? apps;
+  String? _busy; // package being opened, or 'demo'
+
+  @override
+  void initState() {
+    super.initState();
+    installedUpiApps().then((a) {
+      if (mounted) setState(() => apps = _sorted(a));
+    });
+  }
+
+  /// Most-used UPI apps first, then the rest A–Z.
+  static List<UpiApp> _sorted(List<UpiApp> a) {
+    const first = ['com.google.android.apps.nbu.paisa.user', 'com.phonepe.app', 'net.one97.paytm', 'in.org.npci.upiapp'];
+    int rank(UpiApp x) {
+      final i = first.indexOf(x.package);
+      return i < 0 ? first.length : i;
+    }
+
+    return [...a]..sort((x, y) {
+        final r = rank(x).compareTo(rank(y));
+        return r != 0 ? r : x.name.toLowerCase().compareTo(y.name.toLowerCase());
+      });
+  }
+
+  Future<void> _payWith(UpiApp app) async {
+    setState(() => _busy = app.package);
+    final key = newPaymentKey();
+    try {
+      final c = await api.call('POST', '/v1/partner/payments', {'plan': widget.plan['id'], 'key': key});
+      final pay = Map<String, dynamic>.from(c['payment'] as Map);
+      final answer = await payWithUpi(
+        upiId: '${c['upiId']}',
+        name: '${c['upiName']}',
+        amount: (pay['amount'] as num),
+        note: 'Nukad Kart ${pay['planName']} pass ${pay['id']}',
+        ref: '${pay['id']}',
+        package: app.package,
+      );
+      final d = await api.call('POST', '/v1/partner/payments/$key/done', {'upiStatus': answer.status, 'upiRef': answer.ref, 'app': app.name});
+      if (d['store'] is Map) session.setStore(Map<String, dynamic>.from(d['store'] as Map));
+      session.refresh().catchError((_) {});
+      if (!mounted) return;
+      _done('${(d['payment'] as Map)['status']}', Map<String, dynamic>.from(d['payment'] as Map));
+      return;
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    } catch (_) {
+      if (mounted) toast(context, 'Could not open ${app.name}. Try another app.');
+    }
+    if (mounted) setState(() => _busy = null);
+  }
+
+  Future<void> _demoPay() async {
+    setState(() => _busy = 'demo');
+    try {
+      final r = await api.call('POST', '/v1/partner/payments', {'plan': widget.plan['id'], 'key': newPaymentKey(), 'demo': true});
+      if (r['store'] is Map) session.setStore(Map<String, dynamic>.from(r['store'] as Map));
+      session.refresh().catchError((_) {});
+      if (!mounted) return;
+      _done('PAID', Map<String, dynamic>.from(r['payment'] as Map));
+      return;
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    if (mounted) setState(() => _busy = null);
+  }
+
+  void _done(String status, Map<String, dynamic> payment) {
+    final nav = Navigator.of(context);
+    nav.pop(); // this page
+    nav.pushReplacement(MaterialPageRoute(builder: (_) => PayResultScreen(status: status, payment: payment)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = widget.plan;
+    final st = session.store ?? {};
+    final startsLater = st['passActive'] == true;
+    return Scaffold(
+      appBar: bar('Pay for your pass'),
+      body: ListView(padding: const EdgeInsets.all(16), children: [
+        Box(
+          child: Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${p['name']} pass', style: tx(16, weight: FontWeight.w800)),
+                Text('${p['days']} day${p['days'] == 1 ? '' : 's'} · ${startsLater ? 'starts when your current pass ends' : 'starts now'}',
+                    style: tx(12, color: kMute)),
+                const SizedBox(height: 4),
+                Text('To: Nukad Kart', style: tx(12, color: kMute)),
+              ]),
+            ),
+            Text('₹${p['price']}', style: tx(24, weight: FontWeight.w800)),
+          ]),
+        ),
+        const SizedBox(height: 14),
+        Text('Pay with an app on this phone', style: tx(14, weight: FontWeight.w800)),
+        const SizedBox(height: 8),
+        if (!widget.upiReady)
+          Box(color: kAmbBg, child: Text('UPI payments are not open yet. Try again later.', style: tx(13)))
+        else if (apps == null)
+          const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))
+        else if (apps!.isEmpty)
+          Box(
+              child: Text('No UPI app found on this phone. Install Google Pay, PhonePe, Paytm, BHIM or your bank’s UPI app.',
+                  style: tx(13.5)))
+        else
+          Container(
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+            child: Column(children: [
+              for (var i = 0; i < apps!.length; i++) ...[
+                if (i > 0) const Divider(height: 1, indent: 68),
+                ListTile(
+                  enabled: _busy == null,
+                  onTap: () => _payWith(apps![i]),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: apps![i].icon == null
+                        ? Container(width: 40, height: 40, color: kSurf, child: const Icon(Icons.account_balance_wallet_outlined, color: kAct))
+                        : Image.memory(apps![i].icon!, width: 40, height: 40, filterQuality: FilterQuality.medium),
+                  ),
+                  title: Text(apps![i].name, style: tx(15, weight: FontWeight.w700)),
+                  trailing: _busy == apps![i].package
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
+                      : const Icon(Icons.chevron_right, color: kMute),
+                ),
+              ],
+            ]),
+          ),
+        const SizedBox(height: 10),
+        Row(children: [
+          const Icon(Icons.lock_outline, size: 15, color: kMute),
+          const SizedBox(width: 6),
+          Expanded(child: Text('Tap an app: it opens with ₹${p['price']} filled in. Come back here after paying.', style: tx(11.5, color: kMute))),
+        ]),
+        if (widget.demo) ...[
+          const SizedBox(height: 16),
+          Box(
+            color: kAmbBg,
+            border: const Color(0xFFFAC775),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              pill('TEST MODE', color: kAmb, bg: const Color(0xFFFAC775)),
+              const SizedBox(height: 6),
+              Text('Start this pass without paying. It is marked DEMO and the admin can remove it.', style: tx(12.5)),
+              const SizedBox(height: 8),
+              Btn(_busy == 'demo' ? 'Starting…' : 'Demo pay ₹${p['price']}', outline: true, color: kAmb, onTap: _busy != null ? null : _demoPay),
+            ]),
+          ),
+        ],
+      ]),
     );
   }
 }

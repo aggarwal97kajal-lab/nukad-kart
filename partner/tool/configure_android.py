@@ -8,7 +8,21 @@ for perm in ["INTERNET", "CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATI
     if tag not in s:
         s = s.replace("<application", tag + "\n    <application", 1)
 s = re.sub(r'android:label="[^"]*"', 'android:label="Nukad Partner"', s, count=1)
+# UPI apps register "upi://pay" (scheme + host). Asking only for "upi" hides most of them on Android 11+,
+# so ask for both, and name the common UPI apps too.
+UPI_PACKAGES = [
+    "com.google.android.apps.nbu.paisa.user",  # Google Pay
+    "com.phonepe.app", "net.one97.paytm", "in.org.npci.upiapp",  # PhonePe, Paytm, BHIM
+    "in.amazon.mShop.android.shopping", "com.amazon.mShop.android.shopping",
+    "money.super.payments", "com.dreamplug.androidapp", "com.cheq.retail", "app.cheq.android",
+    "com.whatsapp", "com.mobikwik_new", "com.freecharge.android", "com.myairtelapp", "com.csam.icici.bank.imobile",
+    "com.sbi.upi", "com.snapwork.hdfc", "com.axis.mobile", "com.msf.kbank.mobile", "com.fampay.in", "com.naviapp",
+    "com.slice", "com.kiwi.android", "com.jio.myjio", "com.bharatpe.app",
+]
 queries = [
+    '<intent><action android:name="android.intent.action.VIEW"/><data android:scheme="upi" android:host="pay"/></intent>',
+    '<intent><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="upi" android:host="pay"/></intent>',
+] + [f'<package android:name="{p}"/>' for p in UPI_PACKAGES] + [
     '<intent><action android:name="android.intent.action.VIEW"/><data android:scheme="upi"/></intent>',
     '<intent><action android:name="android.intent.action.VIEW"/><data android:scheme="https"/></intent>',
     '<intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent>',
@@ -55,7 +69,8 @@ class MainActivity : FlutterActivity() {{
                 "apps" -> {{
                     try {{
                         val pm = packageManager
-                        val list = pm.queryIntentActivities(Intent(Intent.ACTION_VIEW, Uri.parse("upi://pay")), 0)
+                        val flags = if (android.os.Build.VERSION.SDK_INT >= 23) android.content.pm.PackageManager.MATCH_ALL else 0
+                        val list = pm.queryIntentActivities(Intent(Intent.ACTION_VIEW, Uri.parse("upi://pay?pa=test@upi&pn=Test&am=1&cu=INR")), flags)
                         val seen = HashSet<String>()
                         val out = ArrayList<Map<String, Any>>()
                         for (ri in list) {{
