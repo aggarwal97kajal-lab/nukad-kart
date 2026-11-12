@@ -16,9 +16,11 @@
 
 import { isAdmin, partnerRoute, offlineReason, staleThelas } from './partner.js';
 import { productOut } from './products.js';
+import { sendPushDetail } from './push.js';
 import { callRoute, tellExpiredCalls } from './calls.js';
 import { orderRoute, tellMissedOrders } from './orders.js';
-import { chatRoute, cleanChats } from './chat.js';
+import { chatRoute, cleanChats, ChatRoom } from './chat.js';
+export { ChatRoom };
 
 export const RADIUS_MAX_M = 500;
 const SESSION_DAYS = 30;
@@ -358,6 +360,11 @@ async function route(req, env) {
     return json({ ok: true });
   }
 
+  if (path === '/v1/me/push-test' && m === 'POST') {
+    const { uid } = await session(req, env);
+    return json(await sendPushDetail(env, uid, { title: 'Test from Nukad Kart', body: 'Notifications are working on this phone.', data: { type: 'test' } }));
+  }
+
   if (path === '/v1/me/logout' && m === 'POST') {
     const { sid } = await session(req, env);
     await env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE id = ?').bind(now(), sid).run();
@@ -415,7 +422,8 @@ async function route(req, env) {
     // (after closing time they drop off the map) and not paused for missed orders.
     const t = now();
     const stores = results
-      .filter((s) => !s.demo && offlineReason(s, t) == null)
+      // Closed for the night still shows (dimmed, "Opens 8 am", no ordering); other reasons hide the shop.
+      .filter((s) => !s.demo && [null, s.kind === 'thela' ? null : 'closed_now'].includes(offlineReason(s, t)))
       .filter((s) => s.kind !== 'thela' || (s.live_at && t - s.live_at <= THELA_STALE_S))
       .map((s) => {
         const thela = s.kind === 'thela';
@@ -427,6 +435,7 @@ async function route(req, env) {
           opensAt: s.opens_at, closesAt: s.closes_at, door: !!s.door_delivery, pickup: !!s.pickup,
           gstType: s.gst_type || 'none', fssai: s.fssai || '', photo: s.photo_at ? `/v1/stores/${s.id}/photo` : null,
           distanceM: Math.round(haversineM(lat, lng, sLat, sLng)),
+          open: offlineReason(s, t) == null,
           ...(thela ? { seenAgo: t - s.live_at, moving: !!s.moved_at && t - s.moved_at <= THELA_MOVING_S, heading: s.heading } : {}),
         };
       })

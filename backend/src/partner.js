@@ -316,9 +316,11 @@ export async function partnerRoute(req, env, path, m) {
       ? (await env.DB.prepare('SELECT * FROM pass_payments WHERE store_id = ? ORDER BY created_at DESC LIMIT 10').bind(s.id).all()).results
       : [];
     const selling = s ? (await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE store_id = ? AND in_stock = 1').bind(s.id).first()).n : 0;
+    const ch = s ? await env.DB.prepare("SELECT status, note, created_at, reviewed_at FROM store_changes WHERE store_id = ? AND status IN ('pending','rejected') AND created_at > ? ORDER BY created_at DESC LIMIT 1")
+      .bind(s.id, now() - 7 * 86400).first() : null;
     return json({ selling, user: { email: u.email, name: u.name, phone: u.partner_phone || '', phoneVerified: !!u.partner_phone,
       trialAvailable: u.partner_trial_ok !== 0 }, admin: await isAdmin(env, u.email), store: storeOutWith(s, docs),
-      payments: pays.map(payPublic) });
+      payments: pays.map(payPublic), change: ch ? { status: ch.status, note: ch.note || '', createdAt: ch.created_at } : null });
   }
 
   if (path === '/v1/partner/phone' && m === 'POST') {
@@ -337,7 +339,9 @@ export async function partnerRoute(req, env, path, m) {
     const ok = await trialAvailable(env, claimed, devHash);
     const stmts = [env.DB.prepare('UPDATE users SET partner_phone = ?, partner_device_hash = COALESCE(?, partner_device_hash), partner_trial_ok = ?, updated_at = ? WHERE id = ?')
       .bind(claimed, devHash, ok ? 1 : 0, now(), u.id)];
-    if (s) stmts.push(env.DB.prepare('UPDATE stores SET phone = ?, phone_verified = 1, device_hash = COALESCE(?, device_hash) WHERE id = ?').bind(claimed, devHash, s.id));
+    // A new number on a signed shop: the agreement shows the number, so it must be signed again before going live.
+    const changed = s && s.agreement_version && s.phone && s.phone !== claimed;
+    if (s) stmts.push(env.DB.prepare(`UPDATE stores SET phone = ?, phone_verified = 1, device_hash = COALESCE(?, device_hash)${changed ? ', agreement_version = NULL, live = 0' : ''} WHERE id = ?`).bind(claimed, devHash, s.id));
     await env.DB.batch(stmts);
     return json({ phone: claimed, trialAvailable: ok });
   }
@@ -353,7 +357,8 @@ export async function partnerRoute(req, env, path, m) {
     const lat = Number(b.lat), lng = Number(b.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'location_required');
     if (kind === 'shop' && (parseTime(b.opensAt) == null || parseTime(b.closesAt) == null)) throw new HttpError(400, 'timings_required');
-    if (existing && existing.status === 'active') throw new HttpError(409, 'already_approved');
+    const live = existing && existing.status === 'active'; // an approved shop: changes wait for the Nukad team
+    if (live && existing.kind !== kind) throw new HttpError(409, 'kind_locked');
     const photoB64 = String(b.photo || '');
     if (!photoB64 && !existing) throw new HttpError(400, 'photo_required');
     if (photoB64.length > 1_400_000) throw new HttpError(413, 'photo_too_big');
@@ -389,6 +394,25 @@ export async function partnerRoute(req, env, path, m) {
     }
     const t = now();
     const id = existing?.id || `p_${crypto.randomUUID().slice(0, 8)}`;
+    if (live) {
+      // Timings and delivery options change at once; name, address, map pin, photo, PAN/GST/FSSAI wait for approval.
+      const quick = { opens_at: kind === 'shop' ? str('opensAt', 10) : '', closes_at: kind === 'shop' ? str('closesAt', 10) : '',
+        door_delivery: b.door === false ? 0 : 1, pickup: b.pickup === false ? 0 : 1 };
+      const change = { name, lat, lng, address, fssai, gst_type: gstType, gstin, pan, aadhaar_last4: aadhaar4,
+        addr_shop: addr.shop, addr_landmark: addr.landmark, addr_area: addr.area, addr_city: addr.city, addr_state: addr.state, addr_pin: addr.pin,
+        ...(photoB64 ? { photo_lat: kind === 'shop' ? pLat : null, photo_lng: kind === 'shop' ? pLng : null, photo_at: Number(b.photoAt) || t } : {}) };
+      const differs = Object.entries(change).some(([k, v]) => String(existing[k] ?? '') !== String(v ?? '')) || !!photoB64;
+      const stmts = [env.DB.prepare(`UPDATE stores SET ${Object.keys(quick).map((k) => `${k} = ?`).join(', ')} WHERE id = ?`).bind(...Object.values(quick), id)];
+      if (differs) {
+        const cid = `c_${crypto.randomUUID().slice(0, 12)}`;
+        if (photoB64 && env.FILES) await env.FILES.put(`changes/${cid}.jpg`, b64ToBytes(photoB64), { httpMetadata: { contentType: 'image/jpeg' } });
+        if (photoB64 && !env.FILES) change._photo = photoB64;
+        stmts.push(env.DB.prepare("UPDATE store_changes SET status = 'replaced' WHERE store_id = ? AND status = 'pending'").bind(id));
+        stmts.push(env.DB.prepare('INSERT INTO store_changes (id, store_id, data, has_photo, created_at) VALUES (?, ?, ?, ?, ?)')
+          .bind(cid, id, JSON.stringify(change), photoB64 ? 1 : 0, t));
+      }
+      return json({ store: await writeAndRead(env, u.id, stmts), changeSent: differs });
+    }
     const cols = {
       name, kind, lat, lng, address, phone: u.partner_phone, phone_verified: 1, device_hash: u.partner_device_hash,
       opens_at: kind === 'shop' ? str('opensAt', 10) : '', closes_at: kind === 'shop' ? str('closesAt', 10) : '', door_delivery: b.door === false ? 0 : 1, pickup: b.pickup === false ? 0 : 1,
@@ -756,6 +780,72 @@ export async function partnerRoute(req, env, path, m) {
     }
     if (stmts.length) await env.DB.batch(stmts);
     return json({ ...(await upiSettings(env)), party: await partySettings(env) });
+  }
+
+  // Admin: changes asked by live shops (name, address, photo, PAN/GST/FSSAI).
+  if (path === '/v1/admin/changes' && m === 'GET') {
+    await admin(req, env);
+    const { results } = await env.DB.prepare(`SELECT c.*, s.name AS cur_name, s.address AS cur_address, s.kind, s.lat AS cur_lat, s.lng AS cur_lng
+      FROM store_changes c JOIN stores s ON s.id = c.store_id WHERE c.status = 'pending' ORDER BY c.created_at LIMIT 50`).all();
+    return json({ changes: results.map((c) => {
+      const d = JSON.parse(c.data);
+      delete d._photo;
+      return { id: c.id, storeId: c.store_id, kind: c.kind, createdAt: c.created_at, hasPhoto: !!c.has_photo,
+        current: { name: c.cur_name, address: c.cur_address, lat: c.cur_lat, lng: c.cur_lng }, next: d };
+    }) });
+  }
+  const chPhoto = path.match(/^\/v1\/admin\/changes\/(c_[\w-]+)\/photo$/);
+  if (chPhoto && m === 'GET') {
+    await admin(req, env);
+    const o = env.FILES && (await env.FILES.get(`changes/${chPhoto[1]}.jpg`));
+    if (o) return new Response(o.body, { headers: { 'content-type': 'image/jpeg' } });
+    const c = await env.DB.prepare('SELECT data FROM store_changes WHERE id = ?').bind(chPhoto[1]).first();
+    const b64 = c && JSON.parse(c.data)._photo;
+    if (!b64) throw new HttpError(404, 'no_photo');
+    return new Response(b64ToBytes(b64), { headers: { 'content-type': 'image/jpeg' } });
+  }
+  const chDo = path.match(/^\/v1\/admin\/changes\/(c_[\w-]+)\/(approve|reject)$/);
+  if (chDo && m === 'POST') {
+    const a = await admin(req, env);
+    const c = await env.DB.prepare("SELECT * FROM store_changes WHERE id = ? AND status = 'pending'").bind(chDo[1]).first();
+    if (!c) throw new HttpError(404, 'not_found');
+    const s = await env.DB.prepare('SELECT * FROM stores WHERE id = ?').bind(c.store_id).first();
+    const t = now();
+    if (chDo[2] === 'reject') {
+      const note = String((await body(req)).reason || '').slice(0, 300);
+      await env.DB.prepare("UPDATE store_changes SET status = 'rejected', note = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?").bind(note, t, a.id, c.id).run();
+      if (s?.owner_id) await sendPush(env, s.owner_id, { title: 'Your changes were not approved', body: note || 'Open Nukad Partner to see why.', data: { type: 'change' } });
+      return json({ ok: true });
+    }
+    const d = JSON.parse(c.data);
+    const photo = d._photo;
+    delete d._photo;
+    // The agreement names the shop, its address and number: after a change it must be signed again before going live.
+    const stmts = [
+      env.DB.prepare(`UPDATE stores SET ${Object.keys(d).map((k) => `${k} = ?`).join(', ')}, agreement_version = NULL, live = 0 WHERE id = ?`).bind(...Object.values(d), c.store_id),
+      env.DB.prepare("UPDATE store_changes SET status = 'approved', reviewed_at = ?, reviewed_by = ? WHERE id = ?").bind(t, a.id, c.id),
+    ];
+    if (c.has_photo) {
+      if (env.FILES) {
+        const o = await env.FILES.get(`changes/${c.id}.jpg`);
+        if (o) await env.FILES.put(photoKey(c.store_id), await o.arrayBuffer(), { httpMetadata: { contentType: 'image/jpeg' } });
+      }
+      stmts.push(env.DB.prepare('INSERT OR REPLACE INTO store_photos (store_id, photo, updated_at) VALUES (?, ?, ?)').bind(c.store_id, env.FILES ? R2_MARK : photo, t));
+    }
+    await env.DB.batch(stmts);
+    if (s?.owner_id) await sendPush(env, s.owner_id, { title: 'Changes approved', body: 'Sign the updated agreement to go live again.', data: { type: 'change' } });
+    return json({ ok: true });
+  }
+  const agv = path.match(/^\/v1\/admin\/partners\/([\w-]+)\/agreements$/);
+  if (agv && m === 'GET') {
+    await admin(req, env);
+    const { results } = await env.DB.prepare('SELECT id, version, signer_name, snapshot, signed_date, accepted_at FROM agreements WHERE store_id = ? ORDER BY accepted_at DESC LIMIT 20')
+      .bind(agv[1]).all();
+    return json({ agreements: results.map((r, i) => {
+      let snap = {};
+      try { snap = JSON.parse(r.snapshot || '{}'); } catch {}
+      return { id: r.id, version: r.version, signerName: r.signer_name, signedDate: r.signed_date, acceptedAt: r.accepted_at, current: i === 0, snapshot: snap };
+    }) });
   }
 
   // Admin: upload products for a shop (Excel rows, same format as the shop's own upload).

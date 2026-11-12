@@ -22,6 +22,49 @@ export function hasNumber(text) {
   return words.length >= 7;
 }
 
+/**
+ * Live chat: one Durable Object per chat holds the open phone connections (WebSocket) and passes
+ * every new message on at once. Messages are still saved in D1 (the source of truth).
+ */
+export class ChatRoom {
+  constructor(state) {
+    this.state = state;
+  }
+
+  async fetch(req) {
+    if (new URL(req.url).pathname === '/broadcast') {
+      const msg = await req.text();
+      for (const ws of this.state.getWebSockets()) {
+        try {
+          ws.send(msg);
+        } catch {}
+      }
+      return new Response('ok');
+    }
+    if (req.headers.get('upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
+    const pair = new WebSocketPair();
+    this.state.acceptWebSocket(pair[1]); // hibernates while idle: no cost between messages
+    return new Response(null, { status: 101, webSocket: pair[0] });
+  }
+
+  webSocketMessage(ws, msg) {
+    if (msg === 'ping') ws.send('pong');
+  }
+
+  webSocketClose(ws, code) {
+    try {
+      ws.close(code, 'bye');
+    } catch {}
+  }
+}
+
+async function broadcast(env, chatId, payload) {
+  if (!env.CHAT) return;
+  try {
+    await env.CHAT.get(env.CHAT.idFromName(chatId)).fetch('https://chat/broadcast', { method: 'POST', body: JSON.stringify(payload) });
+  } catch {}
+}
+
 const msgOut = (m) => ({ id: m.id, from: m.sender === 'c' ? 'customer' : 'thela', text: m.text, at: m.created_at });
 
 async function messages(env, chatId) {
@@ -46,26 +89,44 @@ function clean(text) {
 }
 
 export async function chatRoute(req, env, path, m) {
+  // GET /v1/chat/socket?chat=<id>&token=<session>  → WebSocket to that chat's room (only its two people).
+  if (path === '/v1/chat/socket' && m === 'GET') {
+    const url = new URL(req.url);
+    const chatId = url.searchParams.get('chat') || '';
+    const authed = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get('token') || ''}` } });
+    const chat = await env.DB.prepare('SELECT c.*, s.owner_id FROM chats c JOIN stores s ON s.id = c.thela_id WHERE c.id = ?').bind(chatId).first();
+    if (!chat) throw new HttpError(404, 'not_found');
+    const { uid } = await session(authed, env);
+    if (uid !== chat.customer_id && uid !== chat.owner_id) throw new HttpError(403, 'not_yours');
+    if (!env.CHAT) throw new HttpError(503, 'live_chat_off');
+    return env.CHAT.get(env.CHAT.idFromName(chatId)).fetch(req);
+  }
+
   const watch = path.match(/^\/v1\/thelas\/([\w-]+)\/watch$/);
   if (watch && m === 'POST') {
     await env.DB.prepare("UPDATE stores SET watched_until = ? WHERE id = ? AND kind = 'thela'").bind(now() + 30, watch[1]).run();
     return json({ ok: true });
   }
 
-  const mc = path.match(/^\/v1\/me\/chats\/([\w-]+)(?:\/(block|report))?$/);
+  const mc = path.match(/^\/v1\/me\/chats\/([\w-]+)(?:\/(block|unblock|report))?$/);
   if (mc) {
     const { uid } = await session(req, env);
     const thelaId = mc[1];
     const chat = await env.DB.prepare('SELECT * FROM chats WHERE thela_id = ? AND customer_id = ?').bind(thelaId, uid).first();
     if (m === 'GET' && !mc[2]) {
-      if (!chat) return json({ messages: [], blocked: null });
+      if (!chat) return json({ chatId: null, messages: [], blocked: null });
       await env.DB.prepare('UPDATE chats SET customer_read_at = ? WHERE id = ?').bind(now(), chat.id).run();
-      return json({ messages: await messages(env, chat.id), blocked: chat.blocked_by });
+      return json({ chatId: chat.id, messages: await messages(env, chat.id), blocked: chat.blocked_by });
     }
     if (m !== 'POST') throw new HttpError(405, 'method');
     const s = await env.DB.prepare("SELECT id, name, owner_id FROM stores WHERE id = ? AND kind = 'thela'").bind(thelaId).first();
     if (!s) throw new HttpError(404, 'not_found');
     const b = await body(req);
+    if (mc[2] === 'unblock') {
+      // Only the side that blocked can open it again.
+      if (chat) await env.DB.prepare("UPDATE chats SET blocked_by = NULL WHERE id = ? AND blocked_by = 'customer'").bind(chat.id).run();
+      return json({ ok: true });
+    }
     if (mc[2] === 'block') {
       if (chat) await env.DB.prepare("UPDATE chats SET blocked_by = 'customer' WHERE id = ?").bind(chat.id).run();
       return json({ ok: true });
@@ -92,11 +153,12 @@ export async function chatRoute(req, env, path, m) {
       env.DB.prepare("INSERT INTO chat_messages (id, chat_id, sender, text, created_at) VALUES (?, ?, 'c', ?, ?)").bind(crypto.randomUUID(), id, text, t),
       env.DB.prepare('UPDATE chats SET last_at = ?, customer_read_at = ? WHERE id = ?').bind(t, t, id),
     ]);
+    await broadcast(env, id, { type: 'message', from: 'customer', text, at: t });
     if (s.owner_id) {
       const addr = b.address || chat?.address || '';
       await sendPush(env, s.owner_id, { title: `Message${addr ? ` · ${addr}` : ''}`, body: text, data: { type: 'chat', chatId: id }, channel: 'calls' });
     }
-    return json({ messages: await messages(env, id), blocked: null });
+    return json({ chatId: id, messages: await messages(env, id), blocked: null });
   }
 
   if (path === '/v1/partner/chats' && m === 'GET') {
@@ -107,7 +169,7 @@ export async function chatRoute(req, env, path, m) {
     return json({ chats: results.map((c) => ({ id: c.id, address: c.address, lastText: c.last_text || '', lastAt: c.last_at, unread: c.last_at > c.thela_read_at, blocked: c.blocked_by })) });
   }
 
-  const pc = path.match(/^\/v1\/partner\/chats\/([\w-]+)(?:\/(block|report))?$/);
+  const pc = path.match(/^\/v1\/partner\/chats\/([\w-]+)(?:\/(block|unblock|report))?$/);
   if (pc) {
     const { u, s } = await ctx(req, env);
     if (!s || s.kind !== 'thela') throw new HttpError(400, 'thela_only');
@@ -119,6 +181,10 @@ export async function chatRoute(req, env, path, m) {
     }
     if (m !== 'POST') throw new HttpError(405, 'method');
     const b = await body(req);
+    if (pc[2] === 'unblock') {
+      await env.DB.prepare("UPDATE chats SET blocked_by = NULL WHERE id = ? AND blocked_by = 'thela'").bind(chat.id).run();
+      return json({ ok: true });
+    }
     if (pc[2] === 'block' || pc[2] === 'report') {
       if (pc[2] === 'report') await report(env, chat, u.id, chat.customer_id, b.reason);
       await env.DB.prepare("UPDATE chats SET blocked_by = 'thela' WHERE id = ?").bind(chat.id).run();
@@ -131,6 +197,7 @@ export async function chatRoute(req, env, path, m) {
       env.DB.prepare("INSERT INTO chat_messages (id, chat_id, sender, text, created_at) VALUES (?, ?, 't', ?, ?)").bind(crypto.randomUUID(), chat.id, text, t),
       env.DB.prepare('UPDATE chats SET last_at = ?, thela_read_at = ? WHERE id = ?').bind(t, t, chat.id),
     ]);
+    await broadcast(env, chat.id, { type: 'message', from: 'thela', text, at: t });
     await sendPush(env, chat.customer_id, { title: s.name, body: text, data: { type: 'chat', thelaId: s.id } });
     return json({ messages: await messages(env, chat.id), blocked: null });
   }

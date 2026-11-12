@@ -38,7 +38,7 @@ export const CATEGORIES = {
   'Home & Pooja': ['3307', 5, false],
 };
 export const GST_RATES = [0, 5, 18, 40];
-export const UNITS = { kg: [100, 250, 500, 1000, 2000, 5000], litre: [250, 500, 1000, 2000, 5000], piece: [1, 2, 3, 6, 12], dozen: [1, 2], bunch: [1, 2, 3] };
+export const UNITS = { kg: [25, 50, 100, 200, 250, 500, 1000, 2000, 5000], litre: [250, 500, 1000, 2000, 5000], piece: [1, 2, 3, 6, 12], dozen: [1, 2], bunch: [1, 2, 3] };
 const PAGE = 50;
 
 /** Checks a product from the app; returns clean values or throws. */

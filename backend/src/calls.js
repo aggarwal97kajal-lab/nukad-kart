@@ -22,6 +22,26 @@ function callOut(c, thela) {
     createdAt: c.created_at, answeredAt: c.answered_at, waitLeft: c.status === 'waiting' ? Math.max(0, c.created_at + CALL_WAIT_S - t) : 0 };
 }
 
+/**
+ * The thela's "customers calling you" alert, sent data-only so the Partner app shows ONE notification
+ * it can update or remove (count 0 = remove, e.g. the customer cancelled).
+ */
+async function tellThela(env, s) {
+  if (!s.owner_id) return;
+  const t = now();
+  const { results } = await env.DB.prepare("SELECT * FROM calls WHERE thela_id = ? AND status = 'waiting' AND created_at >= ? ORDER BY created_at")
+    .bind(s.id, t - CALL_WAIT_S).all();
+  const groups = groupCalls(results, s.live_lat == null ? null : { lat: s.live_lat, lng: s.live_lng });
+  const n = results.length, g = groups[0];
+  await sendPush(env, s.owner_id, {
+    title: '', body: '', dataOnly: true,
+    data: n ? { type: 'calls', count: n,
+      title: n > 1 ? `${n} people are calling you` : 'A customer is calling you',
+      body: `${g.address}${g.distanceM == null ? '' : ` · ${g.distanceM} m`}${groups.length > 1 ? ` (+${groups.length - 1} more streets)` : ''}. Answer within 3 minutes.` }
+      : { type: 'calls', count: 0 },
+  });
+}
+
 /** Calls nobody answered in 3 minutes become "expired". Returns the ones that just expired. */
 async function expire(env, where, bind) {
   const t = now();
@@ -76,29 +96,33 @@ export async function callRoute(req, env, path, m) {
     const { results } = await env.DB.prepare("SELECT * FROM calls WHERE thela_id = ? AND status = 'waiting' AND created_at >= ?")
       .bind(s.id, t - CALL_WAIT_S).all();
     const g = groupCalls(results, { lat: s.live_lat, lng: s.live_lng }).find((x) => x.ids.includes(c.id));
-    if (s.owner_id) {
-      await sendPush(env, s.owner_id, {
-        title: g && g.count > 1 ? `${g.count} people are calling you` : 'A customer is calling you',
-        body: `${g?.address || address} · ${g?.distanceM ?? ''} m. Answer within 3 minutes.`,
-        data: { type: 'call' }, channel: 'calls',
-      });
-    }
+    await tellThela(env, s);
     return json({ call: callOut(c, s) });
   }
 
   if (path === '/v1/me/calls/current' && m === 'GET') {
     const { uid } = await session(req, env);
     await expire(env, 'customer_id = ?', [uid]);
-    const c = await env.DB.prepare('SELECT c.*, s.name AS thela_name FROM calls c JOIN stores s ON s.id = c.thela_id WHERE c.customer_id = ? AND c.created_at > ? ORDER BY c.created_at DESC LIMIT 1')
-      .bind(uid, now() - 3600).first();
-    return json({ call: c ? callOut(c, { name: c.thela_name }) : null });
+    const t = now();
+    const [cr, sr, ur] = await env.DB.batch([
+      env.DB.prepare('SELECT c.*, s.name AS thela_name FROM calls c JOIN stores s ON s.id = c.thela_id WHERE c.customer_id = ? AND c.created_at > ? ORDER BY c.created_at DESC LIMIT 1').bind(uid, t - 3600),
+      env.DB.prepare("SELECT COUNT(*) AS n FROM calls WHERE customer_id = ? AND status = 'no_show' AND created_at > ?").bind(uid, t - STRIKE_DAYS * 86400),
+      env.DB.prepare('SELECT calls_blocked_until FROM users WHERE id = ?').bind(uid),
+    ]);
+    const c = cr.results[0];
+    return json({ call: c ? callOut(c, { name: c.thela_name }) : null, strikes: sr.results[0].n, strikesMax: STRIKES,
+      blockedUntil: (ur.results[0]?.calls_blocked_until || 0) > t ? ur.results[0].calls_blocked_until : 0 });
   }
 
   const cancel = path.match(/^\/v1\/me\/calls\/([\w-]+)\/cancel$/);
   if (cancel && m === 'POST') {
     const { uid } = await session(req, env);
-    await env.DB.prepare("UPDATE calls SET status = 'cancelled', answered_at = ? WHERE id = ? AND customer_id = ? AND status IN ('waiting', 'coming')")
-      .bind(now(), cancel[1], uid).run();
+    const c = await env.DB.prepare("UPDATE calls SET status = 'cancelled', answered_at = ? WHERE id = ? AND customer_id = ? AND status IN ('waiting', 'coming') RETURNING thela_id")
+      .bind(now(), cancel[1], uid).first();
+    if (c) {
+      const s = await env.DB.prepare('SELECT id, owner_id, live_lat, live_lng FROM stores WHERE id = ?').bind(c.thela_id).first();
+      if (s) await tellThela(env, s); // the thela's alert updates / disappears at once
+    }
     return json({ ok: true });
   }
 
@@ -127,6 +151,7 @@ export async function callRoute(req, env, path, m) {
     const q = ids.map(() => '?').join(',');
     const { results } = await env.DB.prepare(`UPDATE calls SET status = ?, answered_at = ?, told = 1 WHERE thela_id = ? AND status = 'waiting'
       AND created_at >= ? AND id IN (${q}) RETURNING *`).bind(coming ? 'coming' : 'declined', t, s.id, t - CALL_WAIT_S, ...ids).all();
+    await tellThela(env, s);
     for (const c of results) {
       await sendPush(env, c.customer_id, coming
         ? { title: `${first(s.name)} is coming`, body: `${s.name} is on the way to ${c.address}. Pay the seller directly.`, data: { type: 'call', status: 'coming' } }
@@ -166,9 +191,15 @@ export async function noShow(env, s, ids) {
   for (const { customer_id } of results) {
     const r = await env.DB.prepare("SELECT COUNT(*) AS n FROM calls WHERE customer_id = ? AND status = 'no_show' AND created_at > ?")
       .bind(customer_id, t - STRIKE_DAYS * 86400).first();
-    if (r.n >= STRIKES) {
+    const blocked = r.n >= STRIKES;
+    if (blocked) {
       await env.DB.prepare('UPDATE users SET calls_blocked_until = ? WHERE id = ?').bind(t + BLOCK_DAYS * 86400, customer_id).run();
     }
+    await sendPush(env, customer_id, {
+      title: `${first(s.name)} came but couldn’t find you`,
+      body: blocked ? `This happened ${r.n} times. Calling thelas is paused for ${BLOCK_DAYS} days.` : `This is ${r.n} of ${STRIKES}. At ${STRIKES}, calling thelas is paused for ${BLOCK_DAYS} days.`,
+      data: { type: 'call', status: 'no_show' },
+    });
   }
   return { ok: true, reported: results.length };
 }

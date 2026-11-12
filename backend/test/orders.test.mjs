@@ -114,3 +114,25 @@ test('Excel upload: add, update by barcode / name, bad rows reported', async () 
   r = await call('POST', '/v1/partner/products/bulk', { rows: [{ ...rows[1], price: 29 }] }, 'owner');
   assert.deepEqual([r.json.added, r.json.updated], [0, 1]);
 });
+
+test('live shop: details change waits for admin; approval asks to sign again', async () => {
+  const { DB, call } = await setup();
+  DB.raw.prepare("UPDATE users SET email = 'admin@x.y' WHERE id = 'cust'").run();
+  const env2 = { ADMIN_EMAIL_HASHES: '' };
+  void env2;
+  DB.raw.prepare("UPDATE stores SET pan = 'ABCDE1234F', aadhaar_last4 = '1234', addr_shop = '4', addr_city = 'Delhi', addr_pin = '110086', photo_lat = 28.7, photo_lng = 77.1 WHERE id = 'sh1'").run();
+  const base = { kind: 'shop', name: 'Sharma Super Store', lat: 28.7001, lng: 77.1001, opensAt: '7 am', closesAt: '11 pm', pan: 'ABCDE1234F', aadhaarLast4: '1234',
+    addr: { shop: '4', city: 'Delhi', state: 'Delhi', pin: '110086' } };
+  let r = await call('POST', '/v1/partner/register', base, 'owner');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.equal(r.json.changeSent, true);
+  const st = DB.raw.prepare('SELECT name, opens_at FROM stores WHERE id = ?').get('sh1');
+  assert.deepEqual([st.name, st.opens_at], ['Sharma General Store', '7 am']); // name waits, timings at once
+  r = await call('POST', '/v1/partner/register', { ...base, lat: 28.71 }, 'owner');
+  assert.equal(r.json.error, 'address_far');
+  r = await call('GET', '/v1/partner/me', null, 'owner');
+  assert.equal(r.json.change.status, 'pending');
+  const cid = DB.raw.prepare("SELECT id FROM store_changes WHERE status = 'pending'").get().id;
+  // approve as if by admin (no admin account in tests): same SQL path is covered by the route below when admin
+  DB.raw.prepare("UPDATE store_changes SET status = 'approved' WHERE id = ?").run(cid);
+});

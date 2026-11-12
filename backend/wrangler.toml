@@ -35,3 +35,12 @@ migrations_dir = "migrations"
 binding = "FILES"
 bucket_name = "nukad-kart-files"
 # R2-END
+
+# Live chat: one Durable Object per chat passes new messages to both phones at once (SQLite class: works on the free plan).
+[[durable_objects.bindings]]
+name = "CHAT"
+class_name = "ChatRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChatRoom"]
