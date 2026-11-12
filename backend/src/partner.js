@@ -99,7 +99,7 @@ const docOut = (d) => ({ id: d.id, type: d.type, mime: d.mime, name: d.name, siz
  * Who is calling + their shop + its documents, in ONE database round trip
  * (the database is far from India, so every extra trip costs ~0.1–0.3 s).
  */
-async function ctx(req, env) {
+export async function ctx(req, env) {
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
   const sess = await verifySession(token, env.SESSION_SECRET);
   if (!sess || !sess.sid) throw new HttpError(401, 'not_signed_in');

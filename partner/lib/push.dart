@@ -31,8 +31,10 @@ Future<void> setupPush(VoidCallback onUpdate) async {
       // Android shows nothing for a push while the app is open, so show it ourselves.
       FirebaseMessaging.onMessage.listen((m) {
         _showLocal(m);
+        pushTick.value++;
         onUpdate();
       });
+      FirebaseMessaging.onMessageOpenedApp.listen((_) => pushTick.value++);
       FirebaseMessaging.onMessageOpenedApp.listen((_) => onUpdate());
       FirebaseMessaging.instance.onTokenRefresh.listen(_send);
       _ready = true;
@@ -54,6 +56,12 @@ Future<void> _send(String token) async {
 final _local = FlutterLocalNotificationsPlugin();
 const _channel = AndroidNotificationChannel('updates', 'Updates',
     description: 'Approval, location and order updates', importance: Importance.high);
+// Thela: customers calling you to their street. Normal sound + vibration (not the shop's order siren).
+const _calls = AndroidNotificationChannel('calls', 'Customers calling you',
+    description: 'A customer asks your thela to come to their street', importance: Importance.high);
+
+/// Goes up on every push that arrives while the app is open, so screens can reload.
+final pushTick = ValueNotifier<int>(0);
 
 Future<void> _initLocal() async {
   try {
@@ -61,6 +69,9 @@ Future<void> _initLocal() async {
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
+    await _local
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_calls);
   } catch (_) {}
 }
 
@@ -73,8 +84,10 @@ void _showLocal(RemoteMessage m) {
       n.title,
       n.body,
       NotificationDetails(
-        android: AndroidNotificationDetails(_channel.id, _channel.name,
-            channelDescription: _channel.description, importance: Importance.high, priority: Priority.high),
+        android: m.notification?.android?.channelId == 'calls'
+            ? AndroidNotificationDetails(_calls.id, _calls.name, channelDescription: _calls.description, importance: Importance.high, priority: Priority.high)
+            : AndroidNotificationDetails(_channel.id, _channel.name,
+                channelDescription: _channel.description, importance: Importance.high, priority: Priority.high),
       ),
     );
   } catch (_) {}

@@ -16,6 +16,10 @@ class ApiException implements Exception {
         'phone_not_verified' || 'phone_mismatch' => 'This number could not be confirmed. Send a new code and try again.',
         'not_signed_in' || 'unknown_user' => 'Your session ended. Log in again.',
         'offline' || 'timeout' => 'No internet connection. Try again.',
+        'already_calling' => 'You are already calling a thela. Wait for its answer or cancel it.',
+        'calls_blocked' => 'Calling is paused for a few days: thelas came and found nobody 3 times.',
+        'thela_not_live' => 'This thela is not live right now.',
+        'too_far' => 'This thela is more than 500 m from your address.',
         _ => 'Something went wrong ($code). Try again.',
       };
 
@@ -95,6 +99,12 @@ class Api {
       _call('GET', '/v1/stores/nearby?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}');
 
   Future<void> pushToken(String token, String fcm) => _call('POST', '/v1/me/push-token', token: token, body: {'token': fcm});
+
+  // ----- Call to my street -----
+  Future<Map<String, dynamic>> callThela(String token, String thelaId, double lat, double lng, String address) =>
+      _call('POST', '/v1/thelas/$thelaId/call', token: token, body: {'lat': lat, 'lng': lng, 'address': address});
+  Future<Map<String, dynamic>> currentCall(String token) => _call('GET', '/v1/me/calls/current', token: token);
+  Future<void> cancelCall(String token, String id) => _call('POST', '/v1/me/calls/$id/cancel', token: token);
 
   /// What a shop / thela sells right now (in stock only).
   Future<Map<String, dynamic>> storeProducts(String storeId) => _call('GET', '/v1/stores/$storeId/products');

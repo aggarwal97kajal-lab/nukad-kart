@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'shell.dart';
 import 'live_setup.dart';
+import 'calls_card.dart';
 import '../thela_location.dart';
 import '../api.dart';
 import '../session.dart';
@@ -160,6 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
               if (s['kind'] == 'thela' && s['live'] == true) ...[
                 const SizedBox(height: 8),
                 _LocationStatus(),
+                const CallsCard(),
               ],
               if (s['kind'] == 'thela' && session.selling > 0 && s['pricesConfirmed'] != s['today']) ...[
                 const SizedBox(height: 12),

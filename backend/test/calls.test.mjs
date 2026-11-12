@@ -1,0 +1,70 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { makeDb } from './d1shim.mjs';
+import worker, { signSession, now } from '../src/index.js';
+import { groupCalls } from '../src/calls.js';
+
+const SECRET = 's';
+const T = now();
+
+async function setup() {
+  const DB = makeDb();
+  const env = { DB, SESSION_SECRET: SECRET };
+  const ins = (table, row) => DB.raw.prepare(`INSERT INTO ${table} (${Object.keys(row)}) VALUES (${Object.keys(row).map(() => '?')})`).run(...Object.values(row));
+  for (const u of ['owner', 'c1', 'c2', 'c3']) {
+    ins('users', { id: u, google_sub: 'g' + u, email: u + '@x.y', name: u, created_at: T, updated_at: T });
+    ins('sessions', { id: 's' + u, user_id: u, created_at: T, last_seen: T });
+  }
+  ins('stores', { id: 'th1', name: 'Ramu Sabzi', kind: 'thela', owner_id: 'owner', lat: 0, lng: 0, opens_at: '', closes_at: '', status: 'active', live: 1,
+    pass_until: T + 86400, active: 1, demo: 0, agreement_version: 1, created_at: T, live_lat: 28.7, live_lng: 77.1, live_at: T, moved_at: T });
+  const tok = async (u) => ({ authorization: `Bearer ${await signSession(u, SECRET, 30, 's' + u)}` });
+  const call = async (method, path, body, who) => {
+    const r = await worker.fetch(new Request(`https://x${path}`, { method, headers: { 'content-type': 'application/json', ...(who ? await tok(who) : {}) },
+      body: body ? JSON.stringify(body) : undefined }), env);
+    return { status: r.status, json: await r.json() };
+  };
+  return { DB, call };
+}
+
+test('calls on one street are grouped; coming / can’t come; one call at a time', async () => {
+  const { call } = await setup();
+  let r = await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4, Shiv Mandir' }, 'c1');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  r = await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4' }, 'c1');
+  assert.equal(r.json.error, 'already_calling');
+  await call('POST', '/v1/thelas/th1/call', { lat: 28.7012, lng: 77.1003, address: 'Gali 4, H 12' }, 'c2');
+  await call('POST', '/v1/thelas/th1/call', { lat: 28.7040, lng: 77.1, address: 'Gali 9' }, 'c3');
+  r = await call('POST', '/v1/thelas/th1/call', { lat: 28.75, lng: 77.1, address: 'Far away' }, 'owner');
+  assert.equal(r.json.error, 'too_far');
+  r = await call('GET', '/v1/partner/calls', null, 'owner');
+  assert.deepEqual(r.json.groups.map((g) => g.count), [2, 1]);
+  const g = r.json.groups[0];
+  r = await call('POST', '/v1/partner/calls/answer', { ids: g.ids, coming: true }, 'owner');
+  assert.equal(r.json.answered, 2);
+  r = await call('GET', '/v1/me/calls/current', null, 'c2');
+  assert.equal(r.json.call.status, 'coming');
+  r = await call('POST', '/v1/partner/calls/answer', { ids: r.json.call ? [] : [], coming: false }, 'owner');
+  r = await call('GET', '/v1/partner/calls', null, 'owner');
+  assert.equal(r.json.coming[0].count, 2);
+});
+
+test('no answer in 3 minutes → expired; 3 no-shows block calling', async () => {
+  const { DB, call } = await setup();
+  await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4' }, 'c1');
+  DB.raw.prepare('UPDATE calls SET created_at = ?').run(T - 200);
+  let r = await call('GET', '/v1/me/calls/current', null, 'c1');
+  assert.equal(r.json.call.status, 'expired');
+  for (let i = 0; i < 3; i++) {
+    r = await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4' }, 'c1');
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    await call('POST', '/v1/partner/calls/answer', { ids: [r.json.call.id], coming: true }, 'owner');
+    await call('POST', '/v1/partner/calls/no-show', { ids: [r.json.call.id] }, 'owner');
+  }
+  r = await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4' }, 'c1');
+  assert.equal(r.json.error, 'calls_blocked');
+});
+
+test('grouping by 100 m', () => {
+  const g = groupCalls([{ id: 'a', lat: 28.7, lng: 77.1, created_at: T }, { id: 'b', lat: 28.7008, lng: 77.1, created_at: T }, { id: 'c', lat: 28.702, lng: 77.1, created_at: T }]);
+  assert.deepEqual(g.map((x) => x.ids), [['a', 'b'], ['c']]);
+});

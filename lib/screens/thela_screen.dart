@@ -5,6 +5,7 @@ import '../widgets/ui.dart';
 import '../state/thela_tracker.dart';
 import '../widgets/thela_live.dart';
 import '../widgets/thela_real_map.dart';
+import '../widgets/call_thela.dart';
 import '../services/live_data.dart';
 import '../state/app_state.dart';
 
@@ -112,7 +113,9 @@ class _ThelaView extends StatelessWidget {
                   if (th.door) Pill(t('Comes to your door')),
                   if (th.pickup) Pill(t('Pickup at thela'), color: kBlu, bg: kBluBg),
                 ]),
-                SizedBox(height: 14),
+                SizedBox(height: 12),
+                CallThelaCard(thela: th, live: lv.status == ThelaStatus.standing || lv.status == ThelaStatus.moving),
+                SizedBox(height: 16),
                 Text(t('Today’s prices'), style: head(16)),
                 SizedBox(height: 8),
                 if (th.items.isEmpty)
@@ -142,8 +145,8 @@ class _ThelaView extends StatelessWidget {
                   ),
                 SizedBox(height: 12),
                 NoteBox(
-                  'No cart for thelas. Buy at the thela and pay the seller directly — not through Nukad Kart. '
-                  'Soon: call this thela to your street or chat with it, without sharing phone numbers.',
+                  'No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukad Kart. '
+                  'Phone numbers are never shared.',
                   color: kBlu,
                   bg: kBluBg,
                 ),

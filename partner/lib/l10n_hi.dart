@@ -626,4 +626,12 @@ const Map<String, String> hi = {
   'Sending your location…': 'आपकी लोकेशन भेजी जा रही है…',
   'Location sent {0} s ago · customers see you': 'लोकेशन {0} सेकंड पहले गई · ग्राहक आपको देख रहे हैं',
   'Location sent {0} min ago': 'लोकेशन {0} मिनट पहले गई',
+  '{0} people': '{0} लोग',
+  '1 customer': '1 ग्राहक',
+  '{0} calling you': '{0} आपको बुला रहे हैं',
+  'Coming': 'आ रहा हूँ',
+  'Can’t come': 'नहीं आ सकता',
+  'Going to {0} · {1}': '{0} जा रहे हैं · {1}',
+  'Reached, sold': 'पहुँच गया, बेच दिया',
+  'Nobody there': 'वहाँ कोई नहीं था',
 };
