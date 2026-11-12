@@ -38,7 +38,7 @@ export const CATEGORIES = {
   'Home & Pooja': ['3307', 5, false],
 };
 export const GST_RATES = [0, 5, 18, 40];
-export const UNITS = { kg: [100, 250, 500, 1000, 2000, 5000], litre: [250, 500, 1000, 2000, 5000], piece: [1, 2, 3, 6, 12] };
+export const UNITS = { kg: [100, 250, 500, 1000, 2000, 5000], litre: [250, 500, 1000, 2000, 5000], piece: [1, 2, 3, 6, 12], dozen: [1, 2], bunch: [1, 2, 3] };
 const PAGE = 50;
 
 /** Checks a product from the app; returns clean values or throws. */
@@ -74,13 +74,17 @@ export function cleanProduct(b, store) {
   let stock = b.stock === null || b.stock === undefined || b.stock === '' ? null : Math.floor(Number(b.stock));
   if (stock !== null && !(stock >= 0 && stock <= 100000)) throw new HttpError(400, 'bad_stock');
   const inStock = stock === null ? b.inStock !== false : stock > 0;
+  // Thela produce from the app's photo list (aloo, pyaz…): the key picks the photo, also in the customer app.
+  const produceKey = String(b.produceKey || '').trim();
+  if (produceKey && !/^[a-z0-9_]{2,40}$/.test(produceKey)) throw new HttpError(400, 'bad_produce');
+  if (produceKey && !['Vegetables', 'Fruits'].includes(category)) throw new HttpError(400, 'bad_category');
   return { kind, name, brand: str('brand', 60), size, unit, options: options ? JSON.stringify(options) : null, barcode, category,
-    mrp, price, gst, hsn, stock, in_stock: inStock ? 1 : 0 };
+    mrp, price, gst, hsn, stock, in_stock: inStock ? 1 : 0, produce_key: produceKey || null };
 }
 
 export function productOut(p) {
   return { id: p.id, kind: p.kind, name: p.name, brand: p.brand || '', size: p.size || '', unit: p.unit, options: p.options ? JSON.parse(p.options) : [],
-    barcode: p.barcode || '', category: p.category, mrp: p.mrp, price: p.price, gst: p.gst, hsn: p.hsn || '', stock: p.stock,
+    barcode: p.barcode || '', produceKey: p.produce_key || '', category: p.category, mrp: p.mrp, price: p.price, gst: p.gst, hsn: p.hsn || '', stock: p.stock,
     inStock: !!p.in_stock, photo: p.photo ? `/v1/products/${p.id}/photo?v=${p.updated_at}` : null, photoCredit: p.photo_credit || '',
     updatedAt: p.updated_at };
 }
@@ -145,6 +149,13 @@ export async function productRoute(req, env, path, m, ctx) {
   const { s } = await ctx(req, env);
   if (!s) throw new HttpError(400, 'register_first');
 
+  if (path === '/v1/partner/products/confirm-prices' && m === 'POST') {
+    // "Same prices as yesterday": nothing changes except the date the thela confirmed today's prices.
+    const today = new Date((now() + 5.5 * 3600) * 1000).toISOString().slice(0, 10);
+    await env.DB.prepare('UPDATE stores SET prices_confirmed = ? WHERE id = ?').bind(today, s.id).run();
+    return json({ pricesConfirmed: today });
+  }
+
   const bc = path.match(/^\/v1\/partner\/barcode\/(\d{6,14})$/);
   if (bc && m === 'GET') {
     const code = bc[1];
@@ -170,17 +181,18 @@ export async function productRoute(req, env, path, m, ctx) {
     const cat = String(u.searchParams.get('cat') || '');
     const out = u.searchParams.get('filter') === 'out';
     const before = String(u.searchParams.get('before') || '');
+    const all = u.searchParams.get('all') === '1'; // thela picker: every item at once (a thela has at most a few hundred)
     const where = ['store_id = ?'], args = [s.id];
     if (q) { where.push("(lower(name) LIKE ? OR lower(brand) LIKE ? OR barcode = ?)"); args.push(`%${q}%`, `%${q}%`, q); }
     if (cat) { where.push('category = ?'); args.push(cat); }
     if (out) where.push('in_stock = 0');
     if (before) { where.push('lower(name) > ?'); args.push(before.toLowerCase()); }
     const [list, counts] = await env.DB.batch([
-      env.DB.prepare(`SELECT * FROM products WHERE ${where.join(' AND ')} ORDER BY lower(name) LIMIT ${PAGE + 1}`).bind(...args),
+      env.DB.prepare(`SELECT * FROM products WHERE ${where.join(' AND ')} ORDER BY lower(name) LIMIT ${all ? 1000 : PAGE + 1}`).bind(...args),
       env.DB.prepare(`SELECT category, COUNT(*) AS n, SUM(CASE WHEN in_stock = 0 THEN 1 ELSE 0 END) AS outN FROM products WHERE store_id = ? GROUP BY category`).bind(s.id),
     ]);
     const rows = list.results;
-    const more = rows.length > PAGE;
+    const more = !all && rows.length > PAGE;
     if (more) rows.pop();
     const total = counts.results.reduce((n, r) => n + r.n, 0);
     const outOfStock = counts.results.reduce((n, r) => n + (r.outN || 0), 0);
@@ -200,6 +212,10 @@ export async function productRoute(req, env, path, m, ctx) {
     if (v.barcode) {
       const same = await env.DB.prepare('SELECT id FROM products WHERE store_id = ? AND barcode = ? AND id != ?').bind(s.id, v.barcode, id).first();
       if (same) throw new HttpError(409, 'barcode_exists');
+    }
+    if (v.produce_key) {
+      const same = await env.DB.prepare('SELECT id FROM products WHERE store_id = ? AND produce_key = ? AND id != ?').bind(s.id, v.produce_key, id).first();
+      if (same) id = same.id; // picking the same item again updates it
     }
     const isNew = !id;
     if (isNew) id = `pr_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'shell.dart';
 import '../api.dart';
 import '../session.dart';
 import '../ui.dart';
@@ -79,6 +80,15 @@ class _HomeScreenState extends State<HomeScreen> {
     };
   }
 
+  Future<void> _confirmPrices() async {
+    try {
+      final r = await api.call('POST', '/v1/partner/products/confirm-prices');
+      session.setStore({...?session.store, 'pricesConfirmed': r['pricesConfirmed']});
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -138,6 +148,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ]),
               ),
+              if (s['kind'] == 'thela' && session.selling > 0 && s['pricesConfirmed'] != s['today']) ...[
+                const SizedBox(height: 12),
+                Box(
+                  color: kSurf,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(t('Same prices as yesterday?'), style: tx(15, weight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    Text(tr('You are selling {0} items. Customers see these prices.', [session.selling]), style: tx(12.5, color: kMute)),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      Expanded(child: Btn(t('Yes, same'), onTap: _confirmPrices)),
+                      const SizedBox(width: 10),
+                      Expanded(child: Btn(t('Change'), outline: true, onTap: () => shellTab.value = 1)),
+                    ]),
+                  ]),
+                ),
+              ],
               if (s['status'] == 'review') ...[
                 const SizedBox(height: 12),
                 Box(

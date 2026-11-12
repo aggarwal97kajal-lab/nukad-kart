@@ -51,17 +51,30 @@ const kUnitSizes = {
   'kg': [100, 250, 500, 1000, 2000, 5000],
   'litre': [250, 500, 1000, 2000, 5000],
   'piece': [1, 2, 3, 6, 12],
+  'dozen': [1, 2],
+  'bunch': [1, 2, 3],
+};
+
+/// Sizes a thela's customers can buy by default, per unit.
+const kThelaSizes = {
+  'kg': [250, 500, 1000],
+  'piece': [1, 2, 6],
+  'dozen': [1, 2],
+  'bunch': [1, 2],
+  'litre': [500, 1000],
 };
 
 String sizeLabel(String unit, int n) => switch (unit) {
       'kg' => n >= 1000 ? '${n ~/ 1000} kg' : '$n g',
       'litre' => n >= 1000 ? '${n ~/ 1000} L' : '$n ml',
+      'dozen' => n == 1 ? '1 dozen' : '$n dozen',
+      'bunch' => n == 1 ? '1 bunch' : '$n bunches',
       _ => n == 1 ? '1 pc' : '$n pcs',
     };
 
 /// Price of one size for a loose item (price is per kg / litre / piece).
 num sizePrice(String unit, num perUnit, int n) {
-  final v = unit == 'piece' ? perUnit * n : perUnit * n / 1000;
+  final v = unit == 'kg' || unit == 'litre' ? perUnit * n / 1000 : perUnit * n;
   return (v * 100).round() / 100;
 }
 

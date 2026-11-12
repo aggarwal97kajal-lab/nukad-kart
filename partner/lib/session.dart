@@ -16,6 +16,7 @@ class Session extends ChangeNotifier {
   List<Map<String, dynamic>> payments = [];
   String phone = '';
   bool phoneVerified = false, trialAvailable = true;
+  int selling = 0; // products switched on (thela: items selling today)
   bool _googleReady = false;
   String? _hw;
 
@@ -106,6 +107,7 @@ class Session extends ChangeNotifier {
 
   void _apply(Map<String, dynamic> r) {
     admin = r['admin'] == true;
+    selling = (r['selling'] as num?)?.toInt() ?? 0;
     final u = Map<String, dynamic>.from((r['user'] as Map?) ?? {});
     phone = '${u['phone'] ?? ''}';
     phoneVerified = u['phoneVerified'] == true;

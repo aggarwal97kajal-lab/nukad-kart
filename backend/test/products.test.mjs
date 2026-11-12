@@ -33,3 +33,11 @@ test('Open Food Facts category guess', () => {
   assert.equal(guessCategory(['en:instant-noodles']), 'Instant Food');
   assert.equal(guessCategory([]), '');
 });
+
+test('thela produce from the photo list', () => {
+  const v = cleanProduct({ kind: 'loose', name: 'Tamatar (Tomato)', category: 'Vegetables', unit: 'kg', options: [250, 500, 1000], price: 40, produceKey: 'tamatar' }, { kind: 'thela' });
+  assert.equal(v.produce_key, 'tamatar');
+  const b = cleanProduct({ kind: 'loose', name: 'Dhaniya', category: 'Vegetables', unit: 'bunch', options: [1, 2], price: 10, produceKey: 'dhaniya' }, { kind: 'thela' });
+  assert.equal(b.unit, 'bunch');
+  assert.throws(() => cleanProduct({ kind: 'loose', name: 'Aloo', category: 'Hair', unit: 'kg', options: [1000], price: 30, produceKey: 'aloo' }, { kind: 'thela' }), /bad_category/);
+});

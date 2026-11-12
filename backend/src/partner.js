@@ -222,6 +222,7 @@ function publicStore(s, t = now()) {
     passUntil: s.pass_until || 0, passActive: s.pass_until > t,
     trial: !!s.trial_until && s.trial_until >= (s.pass_until || 0) && s.pass_until > t,
     agreementVersion: s.agreement_version || '', agreementSigned: s.agreement_version === AGREEMENT_VERSION,
+    pricesConfirmed: s.prices_confirmed || '', today: istDate(t),
     pan: s.pan || '', aadhaarLast4: s.aadhaar_last4 || '', reviewNote: s.review_note || '', reviewedAt: s.reviewed_at || 0,
     addr: { shop: s.addr_shop || '', landmark: s.addr_landmark || '', area: s.addr_area || '', city: s.addr_city || '', state: s.addr_state || '', pin: s.addr_pin || '' },
     missedToday: s.missed_date === istDate(t) ? s.missed_count : 0, hasPhoto: !!s.photo_at, createdAt: s.created_at,
@@ -311,7 +312,8 @@ export async function partnerRoute(req, env, path, m) {
     const pays = s
       ? (await env.DB.prepare('SELECT * FROM pass_payments WHERE store_id = ? ORDER BY created_at DESC LIMIT 10').bind(s.id).all()).results
       : [];
-    return json({ user: { email: u.email, name: u.name, phone: u.partner_phone || '', phoneVerified: !!u.partner_phone,
+    const selling = s ? (await env.DB.prepare('SELECT COUNT(*) AS n FROM products WHERE store_id = ? AND in_stock = 1').bind(s.id).first()).n : 0;
+    return json({ selling, user: { email: u.email, name: u.name, phone: u.partner_phone || '', phoneVerified: !!u.partner_phone,
       trialAvailable: u.partner_trial_ok !== 0 }, admin: await isAdmin(env, u.email), store: storeOutWith(s, docs),
       payments: pays.map(payPublic) });
   }

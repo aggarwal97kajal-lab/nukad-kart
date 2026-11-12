@@ -47,6 +47,7 @@ flutter:
     - assets/logo.png
     - assets/agreement_v1.txt
     - assets/categories/
+    - assets/produce/
   fonts:
     - family: NotoSans
       fonts:
