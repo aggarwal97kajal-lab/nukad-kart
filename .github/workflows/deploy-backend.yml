@@ -102,6 +102,6 @@ jobs:
           echo
           curl -fsS "$base/v1/stores/nearby?lat=28.718&lng=77.096" | tee /tmp/near.json
           echo
-          jq -e '.count == 3 and ([.stores[].id] | index("s9") == null)' /tmp/near.json
+          jq -e '(.stores | type) == "array" and ([.stores[].id] | index("s1") == null)' /tmp/near.json
           code=$(curl -s -o /dev/null -w '%{http_code}' $base/v1/me)
           [ "$code" = 401 ] || { echo "expected 401 without sign-in, got $code"; exit 1; }

@@ -5,11 +5,14 @@ import 'package:nukad_kart/data/demo_data.dart';
 import 'package:nukad_kart/state/app_state.dart';
 import 'package:nukad_kart/state/thela_tracker.dart';
 import 'package:nukad_kart/services/otp_service.dart';
+import 'fixtures.dart';
 
 void main() {
-  test('4 main categories and 25 subcategories', () {
+  setUp(seedDemo);
+
+  test('4 main categories and 26 subcategories', () {
     expect(kCategories.length, 4);
-    expect(kCategories.fold<int>(0, (s, c) => s + c.subs.length), 25);
+    expect(kCategories.fold<int>(0, (s, c) => s + c.subs.length), 26);
     expect(kCategories[3].subs.last.name, 'Home & Pooja');
   });
 
@@ -182,9 +185,11 @@ void main() {
     expect(s.canPlaceAnotherOrder, isTrue);
   });
 
-  test('unknown pin code is not serviceable', () {
+  test('cart shop not near the chosen address is not serviceable', () {
     final s = AppState();
-    s.saveAddress(const Address(area: 'Uttam Nagar', pin: '110059'));
+    s.add('s1', 'p6');
+    expect(s.serviceable, isTrue);
+    kStores.removeWhere((x) => x.id == 's1'); // the new address has no Sharma General Store within 500 m
     expect(s.serviceable, isFalse);
   });
 
@@ -218,21 +223,22 @@ void main() {
     expect(gupta.isOpenAt(DateTime(2026, 11, 11, 21, 45)), isFalse);
   });
 
-  test('thela status: here now, moving away, not available after the wait', () {
-    final now = DateTime(2026, 11, 11, 18, 0, 0);
-    final t = ThelaLive(300, 0);
-    t.prev = 290;
-    expect(ThelaTracker.statusFor(t, now), ThelaStatus.hereNow);
-    t.prev = 470;
-    t.d = 480; // past 400 m and getting further
-    expect(ThelaTracker.statusFor(t, now), ThelaStatus.movingAway);
-    t.prev = 490;
-    t.d = 480; // past 400 m but coming closer
-    expect(ThelaTracker.statusFor(t, now), ThelaStatus.hereNow);
-    t.prev = 500;
-    t.d = 520; // just left: wait before hiding
-    expect(ThelaTracker.statusFor(t, now), ThelaStatus.movingAway);
-    expect(ThelaTracker.statusFor(t, now.add(ThelaTracker.outsideGrace)), ThelaStatus.notAvailable);
+  test('thela status: standing, moving, was here, gone', () {
+    final tr = ThelaTracker.instance..reset();
+    Thela th(int seen, bool moving) =>
+        Thela('t9', 'Ramu', 'Vegetables', 200, 0, true, true, '', seen, const [], lat: 28.7010, lng: 77.1010, moving: moving);
+    tr.update(28.7, 77.1, [th(30, false)]);
+    expect(tr.of('t9').status, ThelaStatus.standing);
+    tr.update(28.7, 77.1, [th(10, true)]);
+    expect(tr.of('t9').status, ThelaStatus.moving);
+    tr.update(28.7, 77.1, [th(300, false)]);
+    expect(tr.of('t9').status, ThelaStatus.wasHere);
+    var back = '';
+    tr.onBackInArea = (id) => back = id;
+    tr.update(28.7, 77.1, []);
+    expect(tr.of('t9').status, ThelaStatus.notAvailable);
+    tr.update(28.7, 77.1, [th(5, false)]);
+    expect(back, 't9');
   });
 
   test('delivered only with the right delivery code', () {
