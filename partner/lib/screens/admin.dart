@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../api.dart';
 import '../session.dart';
 import '../ui.dart';
 import 'home.dart';
 import 'review.dart';
+import 'signature.dart';
 
 /// Admin: where partners pay (UPI ID) and pass payments to check against the bank.
 class AdminScreen extends StatefulWidget {
@@ -45,6 +47,8 @@ class _AdminScreenState extends State<AdminScreen> {
       testMode = s['testMode'] == true;
       final pm = Map<String, dynamic>.from((s['party'] as Map?) ?? {});
       party.forEach((k, c) => c.text = '${pm[k] ?? ''}');
+      sigB64 = '${pm['signature'] ?? ''}';
+      sigName = '${pm['signName'] ?? ''}';
       await _loadPays();
       _loadHealth();
     } on ApiError catch (e) {
@@ -54,6 +58,7 @@ class _AdminScreenState extends State<AdminScreen> {
   }
 
   bool morePays = false, _loadingMore = false;
+  String sigB64 = '', sigName = '';
   Map<String, dynamic>? health;
 
   /// 20 at a time; "Load more" asks for the older ones.
@@ -89,23 +94,23 @@ class _AdminScreenState extends State<AdminScreen> {
         );
     return Box(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Server health', style: tx(14.5, weight: FontWeight.w800)),
+        Text(tr('Server health'), style: tx(14.5, weight: FontWeight.w800)),
         const SizedBox(height: 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(value: used.clamp(0.0, 1.0).toDouble(), minHeight: 8, color: used > 0.8 ? kRed : kAct, backgroundColor: kSurf),
         ),
         const SizedBox(height: 4),
-        Text('Database ${mb((h['dbBytes'] as num?) ?? 0)} of 5 GB · ${h['dbServedBy']}', style: tx(11.5, color: kMute)),
+        Text(tr('Database {0} of 5 GB · {1}', [mb((h['dbBytes'] as num?) ?? 0), h['dbServedBy']]), style: tx(11.5, color: kMute)),
         const SizedBox(height: 8),
-        line('Users', '${h['users']}'),
-        line('Partners (approved)', '${h['partners']} (${h['activePartners']})'),
-        line('Phones used in last 24 h', '${h['activeToday']}'),
-        line('Documents', '${h['docs']} · ${mb((h['docBytes'] as num?) ?? 0)}'),
-        line('Photos & documents in R2', h['filesInR2'] == true ? 'On' : 'Off', ok: h['filesInR2'] == true),
-        line('Push notifications', h['pushReady'] == true ? 'On · ${h['pushPhones']} phones' : 'Off', ok: h['pushReady'] == true),
+        line(tr('Users'), '${h['users']}'),
+        line(tr('Partners (approved)'), '${h['partners']} (${h['activePartners']})'),
+        line(tr('Phones used in last 24 h'), '${h['activeToday']}'),
+        line(tr('Documents'), '${h['docs']} · ${mb((h['docBytes'] as num?) ?? 0)}'),
+        line(tr('Photos & documents in R2'), h['filesInR2'] == true ? tr('On') : tr('Off'), ok: h['filesInR2'] == true),
+        line(tr('Push notifications'), h['pushReady'] == true ? tr('On · {0} phones', [h['pushPhones']]) : tr('Off'), ok: h['pushReady'] == true),
         const SizedBox(height: 4),
-        Text('Daily request and database limits: Cloudflare dashboard → Workers & Pages → nukad-kart-api → Metrics.',
+        Text(tr('Daily request and database limits: Cloudflare dashboard → Workers & Pages → nukad-kart-api → Metrics.'),
             style: tx(11, color: kMute)),
       ]),
     );
@@ -115,7 +120,7 @@ class _AdminScreenState extends State<AdminScreen> {
     setState(() => _saving = true);
     try {
       await api.call('PUT', '/v1/admin/settings', {'upiId': upiId.text.trim(), 'upiName': upiName.text.trim()});
-      if (mounted) toast(context, 'UPI ID saved. New pass payments go here.');
+      if (mounted) toast(context, tr('UPI ID saved. New pass payments go here.'));
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -126,7 +131,7 @@ class _AdminScreenState extends State<AdminScreen> {
     setState(() => testMode = on);
     try {
       await api.call('PUT', '/v1/admin/settings', {'testMode': on});
-      if (mounted) toast(context, on ? 'Test mode on: every partner sees Demo pay' : 'Test mode off');
+      if (mounted) toast(context, on ? tr('Test mode on: every partner sees Demo pay') : tr('Test mode off'));
     } on ApiError catch (e) {
       if (mounted) {
         setState(() => testMode = !on);
@@ -139,7 +144,7 @@ class _AdminScreenState extends State<AdminScreen> {
     setState(() => _saving = true);
     try {
       await api.call('PUT', '/v1/admin/settings', {'party': party.map((k, c) => MapEntry(k, c.text.trim()))});
-      if (mounted) toast(context, 'Agreement details saved');
+      if (mounted) toast(context, tr('Agreement details saved'));
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -149,19 +154,19 @@ class _AdminScreenState extends State<AdminScreen> {
   Future<void> _decide(Map<String, dynamic> p, bool paid) async {
     String reason = '';
     if (!paid) {
-      final c = TextEditingController(text: 'Money not received in the bank');
+      final c = TextEditingController(text: tr('Money not received in the bank'));
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Mark as not received?'),
+          title: Text(tr('Mark as not received?')),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('${p['store']} · ₹${p['amount']} · ${p['id']}\nThe pass days from this payment are removed and the partner is told.'),
+            Text(tr('{0} · ₹{1} · {2}\nThe pass days from this payment are removed and the partner is told.', [p['store'], p['amount'], p['id']])),
             const SizedBox(height: 10),
-            TextField(controller: c, decoration: field('Reason')),
+            TextField(controller: c, decoration: field(tr('Reason'))),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Back')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Not received', style: TextStyle(color: kRed))),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Back'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Not received'), style: TextStyle(color: kRed))),
           ],
         ),
       );
@@ -171,7 +176,7 @@ class _AdminScreenState extends State<AdminScreen> {
     try {
       await api.call('POST', '/v1/admin/payments/${p['id']}/${paid ? 'confirm' : 'cancel'}', paid ? {} : {'reason': reason});
       await _loadPays();
-      if (mounted) toast(context, paid ? 'Marked paid' : 'Marked not received');
+      if (mounted) toast(context, paid ? tr('Marked paid') : tr('Marked not received'));
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -180,11 +185,11 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar('Admin', actions: [
+      appBar: bar(tr('Admin'), actions: [
         if (widget.root)
           PopupMenuButton<String>(
             onSelected: (_) => session.signOut(),
-            itemBuilder: (_) => const [PopupMenuItem(value: 'out', child: Text('Log out'))],
+            itemBuilder: (_) => [PopupMenuItem(value: 'out', child: Text(tr('Log out')))],
           ),
       ]),
       body: _loading
@@ -195,8 +200,8 @@ class _AdminScreenState extends State<AdminScreen> {
                 if (testMode) ...[
                   Box(
                     color: kRedBg,
-                    border: const Color(0xFFF7C1C1),
-                    child: Text('Test mode is ON · anyone can get a pass without paying. Turn it off before launch.',
+                    border: kRedLine,
+                    child: Text(tr('Test mode is ON · anyone can get a pass without paying. Turn it off before launch.'),
                         style: tx(12.5, color: kRed, weight: FontWeight.w700)),
                   ),
                   const SizedBox(height: 10),
@@ -205,55 +210,81 @@ class _AdminScreenState extends State<AdminScreen> {
                   child: Row(children: [
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Test mode', style: tx(14.5, weight: FontWeight.w800)),
-                        Text('Shows "Demo pay" to all partners', style: tx(12, color: kMute)),
+                        Text(tr('Test mode'), style: tx(14.5, weight: FontWeight.w800)),
+                        Text(tr('Shows "Demo pay" to all partners'), style: tx(12, color: kMute)),
                       ]),
                     ),
                     Switch(value: testMode, activeThumbColor: kBrand, activeTrackColor: kAct, onChanged: _setTestMode),
                   ]),
                 ),
                 const SizedBox(height: 10),
-                Btn('Partners to verify', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen()))),
+                Btn(tr('Partners to verify'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen()))),
                 const SizedBox(height: 10),
                 _healthCard(),
                 const SizedBox(height: 18),
-                Text('Pass payments go to', style: tx(15, weight: FontWeight.w800)),
+                Text(tr('Pass payments go to'), style: tx(15, weight: FontWeight.w800)),
                 const SizedBox(height: 8),
-                TextField(controller: upiId, decoration: field('UPI ID, e.g. 98xxxxxx@okaxis', label: 'UPI ID')),
+                TextField(controller: upiId, decoration: field(tr('UPI ID, e.g. 98xxxxxx@okaxis'), label: tr('UPI ID'))),
                 const SizedBox(height: 8),
-                TextField(controller: upiName, decoration: field('Name shown in the UPI app', label: 'Name')),
+                TextField(controller: upiName, decoration: field(tr('Name shown in the UPI app'), label: tr('Name'))),
                 const SizedBox(height: 8),
-                Btn(_saving ? 'Saving…' : 'Save UPI ID', onTap: _saving ? null : _saveUpi),
+                Btn(_saving ? tr('Saving…') : tr('Save UPI ID'), onTap: _saving ? null : _saveUpi),
                 const SizedBox(height: 22),
-                Text('Agreement details (Nukad Kart side)', style: tx(15, weight: FontWeight.w800)),
-                Text('Shown as the first party in every vendor agreement. Kept on the server, not in the app code.',
+                Text(tr('Agreement details (Nukad Kart side)'), style: tx(15, weight: FontWeight.w800)),
+                Text(tr('Shown as the first party in every vendor agreement. Kept on the server, not in the app code.'),
                     style: tx(12, color: kMute)),
                 const SizedBox(height: 8),
-                TextField(controller: party['legalName'], decoration: field('Proprietor’s full legal name', label: 'Legal name')),
+                TextField(controller: party['legalName'], decoration: field(tr('Proprietor’s full legal name'), label: tr('Legal name'))),
                 const SizedBox(height: 8),
-                TextField(controller: party['address'], maxLines: 2, decoration: field('Complete business address', label: 'Address')),
+                TextField(controller: party['address'], maxLines: 2, decoration: field(tr('Complete business address'), label: tr('Address'))),
                 const SizedBox(height: 8),
-                TextField(controller: party['city'], decoration: field('e.g. New Delhi, Delhi', label: 'Court city (jurisdiction)')),
+                TextField(controller: party['city'], decoration: field(tr('e.g. New Delhi, Delhi'), label: tr('Court city (jurisdiction)'))),
                 const SizedBox(height: 8),
                 TextField(controller: party['pan'], textCapitalization: TextCapitalization.characters, decoration: field('ABCDE1234F', label: 'PAN')),
                 const SizedBox(height: 8),
-                TextField(controller: party['email'], keyboardType: TextInputType.emailAddress, decoration: field('Official email', label: 'Email')),
+                TextField(controller: party['email'], keyboardType: TextInputType.emailAddress, decoration: field(tr('Official email'), label: tr('Email'))),
                 const SizedBox(height: 8),
-                Btn(_saving ? 'Saving…' : 'Save agreement details', outline: true, onTap: _saving ? null : _saveParty),
+                Btn(_saving ? tr('Saving…') : tr('Save agreement details'), outline: true, onTap: _saving ? null : _saveParty),
+                const SizedBox(height: 10),
+                Box(
+                  child: Row(children: [
+                    Container(
+                      width: 90,
+                      height: 50,
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: kLine)),
+                      child: sigB64.isEmpty ? Icon(Icons.draw_outlined, color: kMute) : Image.memory(base64Decode(sigB64), fit: BoxFit.contain),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(t('Nukad Kart signature'), style: tx(14, weight: FontWeight.w800)),
+                        Text(sigB64.isEmpty ? t('Not added yet: agreements show only the vendor’s sign') : sigName, style: tx(12, color: sigB64.isEmpty ? kAmb : kMute)),
+                      ]),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final done = await Navigator.push<bool>(context,
+                            MaterialPageRoute(builder: (_) => AdminSignatureScreen(name: sigName.isEmpty ? party['legalName']!.text : sigName, current: sigB64)));
+                        if (done == true) _load();
+                      },
+                      child: Text(sigB64.isEmpty ? t('Add') : t('Change')),
+                    ),
+                  ]),
+                ),
                 const SizedBox(height: 22),
                 Row(children: [
-                  Expanded(child: Text(all ? 'All recent payments' : 'Payments to check', style: tx(15, weight: FontWeight.w800))),
+                  Expanded(child: Text(all ? tr('All recent payments') : tr('Payments to check'), style: tx(15, weight: FontWeight.w800))),
                   TextButton(
                     onPressed: () {
                       all = !all;
                       _loadPays();
                     },
-                    child: Text(all ? 'Only to check' : 'Show all'),
+                    child: Text(all ? tr('Only to check') : tr('Show all')),
                   ),
                 ]),
-                Text('Match each Payment ID with the UPI note in your bank / UPI app history.', style: tx(12, color: kMute)),
+                Text(tr('Match each Payment ID with the UPI note in your bank / UPI app history.'), style: tx(12, color: kMute)),
                 const SizedBox(height: 8),
-                if (pays.isEmpty) Text('Nothing to check right now.', style: tx(13.5, color: kMute)),
+                if (pays.isEmpty) Text(tr('Nothing to check right now.'), style: tx(13.5, color: kMute)),
                 for (final p in pays)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -264,7 +295,7 @@ class _AdminScreenState extends State<AdminScreen> {
                           pill('${p['status']}', color: p['status'] == 'PAID' ? kAct : kAmb, bg: p['status'] == 'PAID' ? kOkBg : kAmbBg),
                         ]),
                         Text('${p['planName']} · ₹${p['amount']} · ${p['id']}', style: tx(13)),
-                        Text('${dateText((p['createdAt'] as num).toInt())} · UPI app said: ${p['upiStatus'] ?? 'nothing'}${p['upiRef'] != null ? ' · ref ${p['upiRef']}' : ''}',
+                        Text(tr('{0} · UPI app said: {1}{2}', [dateText((p['createdAt'] as num).toInt()), p['upiStatus'] ?? 'nothing', p['upiRef'] != null ? ' · ref ${p['upiRef']}' : '']),
                             style: tx(11.5, color: kMute)),
                         if (p['needsCheck'] == true) ...[
                           const SizedBox(height: 10),
@@ -273,15 +304,15 @@ class _AdminScreenState extends State<AdminScreen> {
                               child: FilledButton(
                                 onPressed: () => _decide(p, true),
                                 style: FilledButton.styleFrom(backgroundColor: kAct),
-                                child: Text(p['status'] == 'PAID' ? 'Money is in ✓' : 'Paid · start pass'),
+                                child: Text(p['status'] == 'PAID' ? tr('Money is in ✓') : tr('Paid · start pass')),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: OutlinedButton(
                                 onPressed: () => _decide(p, false),
-                                style: OutlinedButton.styleFrom(foregroundColor: kRed, side: const BorderSide(color: kRed)),
-                                child: const Text('Not received'),
+                                style: OutlinedButton.styleFrom(foregroundColor: kRed, side: BorderSide(color: kRed)),
+                                child: Text(tr('Not received')),
                               ),
                             ),
                           ]),
@@ -302,7 +333,7 @@ class _AdminScreenState extends State<AdminScreen> {
                             }
                             if (mounted) setState(() => _loadingMore = false);
                           },
-                    child: Text(_loadingMore ? 'Loading…' : 'Load more'),
+                    child: Text(_loadingMore ? tr('Loading…') : tr('Load more')),
                   ),
               ]),
             ),

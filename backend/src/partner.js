@@ -137,7 +137,8 @@ export async function isAdmin(env, email) {
   return list.includes(await sha256Hex(String(email).trim().toLowerCase()));
 }
 
-const PARTY_KEYS = { legalName: 'party_legal_name', address: 'party_address', city: 'party_city', pan: 'party_pan', email: 'party_email' };
+const PARTY_KEYS = { legalName: 'party_legal_name', address: 'party_address', city: 'party_city', pan: 'party_pan', email: 'party_email',
+  signName: 'party_sign_name', signature: 'party_signature' };
 
 const partyQuery = (env) => env.DB.prepare(`SELECT key, value FROM settings WHERE key IN (${Object.values(PARTY_KEYS).map(() => '?').join(',')})`)
   .bind(...Object.values(PARTY_KEYS));
@@ -170,6 +171,7 @@ async function myStore(env, uid) {
 
 /** Documents this shop must upload: PAN and Aadhaar always; GST / FSSAI when it has them. */
 export function requiredDocs(s) {
+  if (s.kind === 'thela') return ['aadhaar'];
   return ['pan', 'aadhaar', ...(s.gst_type && s.gst_type !== 'none' ? ['gst'] : []), ...(s.fssai ? ['fssai'] : [])];
 }
 
@@ -187,7 +189,8 @@ function storeOutWith(s, docs) {
   if (!s) return null;
   const have = new Set(docs.map((d) => d.type));
   const required = requiredDocs(s);
-  const optional = DOC_TYPES.filter((t) => !required.includes(t) && (t !== 'gst' || (s.gst_type && s.gst_type !== 'none')));
+  const optional = s.kind === 'thela' ? []
+    : DOC_TYPES.filter((t) => !required.includes(t) && (t !== 'gst' || (s.gst_type && s.gst_type !== 'none')));
   return { ...publicStore(s), requiredDocs: required, optionalDocs: optional, docsComplete: required.every((t) => have.has(t)) };
 }
 
@@ -349,15 +352,16 @@ export async function partnerRoute(req, env, path, m) {
       const bytes = b64ToBytes(photoB64);
       if (!(bytes[0] === 0xff && bytes[1] === 0xd8)) throw new HttpError(400, 'photo_must_be_jpeg');
     }
-    const pan = str('pan', 10).toUpperCase();
-    if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) throw new HttpError(400, 'bad_pan');
+    // Thela: only Aadhaar (last 4). Shop: PAN too, and GST / FSSAI when it has them.
+    const pan = kind === 'shop' ? str('pan', 10).toUpperCase() : '';
+    if (kind === 'shop' && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) throw new HttpError(400, 'bad_pan');
     const aadhaar4 = str('aadhaarLast4', 4);
     if (!/^\d{4}$/.test(aadhaar4)) throw new HttpError(400, 'bad_aadhaar');
-    const gstType = ['none', 'regular', 'composition'].includes(b.gstType) ? b.gstType : 'none';
+    const gstType = kind === 'shop' && ['none', 'regular', 'composition'].includes(b.gstType) ? b.gstType : 'none';
     const gstin = gstType === 'none' ? '' : str('gstin', 15).toUpperCase();
     if (gstType !== 'none' && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) throw new HttpError(400, 'bad_gstin');
     if (gstType !== 'none' && gstin.slice(2, 12) !== pan) throw new HttpError(400, 'gstin_pan_mismatch');
-    const fssai = str('fssai', 14).replace(/\D/g, '');
+    const fssai = kind === 'shop' ? str('fssai', 14).replace(/\D/g, '') : '';
     if (fssai && fssai.length !== 14) throw new HttpError(400, 'bad_fssai');
     // Address: shop no. and landmark are typed; area, city, state and PIN come from the map pin.
     const a = (k, max = 120) => String((b.addr || {})[k] ?? '').trim().slice(0, max);
@@ -696,8 +700,18 @@ export async function partnerRoute(req, env, path, m) {
     if (typeof b.testMode === 'boolean') put('test_mode', b.testMode ? '1' : '0');
     if (b.party && typeof b.party === 'object') {
       for (const [k, key] of Object.entries(PARTY_KEYS)) {
-        if (b.party[k] !== undefined) put(key, String(b.party[k] || '').trim().slice(0, 300));
+        if (k === 'signature' || b.party[k] === undefined) continue;
+        put(key, String(b.party[k] || '').trim().slice(0, 300));
       }
+    }
+    if (typeof b.signature === 'string') {
+      // Nukad Kart's own signature (PNG), put on every partner agreement.
+      if (b.signature) {
+        if (b.signature.length > 400_000) throw new HttpError(413, 'signature_too_big');
+        const png = b64ToBytes(b.signature.slice(0, 16));
+        if (!(png[0] === 0x89 && png[1] === 0x50)) throw new HttpError(400, 'signature_required');
+      }
+      put(PARTY_KEYS.signature, b.signature);
     }
     if (stmts.length) await env.DB.batch(stmts);
     return json({ ...(await upiSettings(env)), party: await partySettings(env) });

@@ -84,7 +84,7 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
     if (!mounted) return;
     if (at == null) {
       setState(() => _looking = false);
-      toast(context, 'Couldn’t find that place on the map. Try another search.');
+      toast(context, tr('Couldn’t find that place on the map. Try another search.'));
       return;
     }
     _pending = sug;
@@ -116,17 +116,17 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        if (mounted) toast(context, 'Allow location to use this, or move the map yourself.');
+        if (mounted) toast(context, tr('Allow location to use this, or move the map yourself.'));
         return;
       }
       if (!await Geolocator.isLocationServiceEnabled()) {
-        if (mounted) toast(context, 'Turn on location (GPS) on your phone.');
+        if (mounted) toast(context, tr('Turn on location (GPS) on your phone.'));
         return;
       }
       final pos = await Geolocator.getCurrentPosition();
       await _c?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(pos.latitude, pos.longitude), 17));
     } catch (_) {
-      if (mounted) toast(context, 'Could not get your location. Move the map to your door.');
+      if (mounted) toast(context, tr('Could not get your location. Move the map to your door.'));
     }
   }
 
@@ -140,7 +140,7 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
         textInputAction: TextInputAction.search,
         style: tx(14.5, weight: FontWeight.w600),
         decoration: InputDecoration(
-          hintText: 'Search area, street or landmark',
+          hintText: tr('Search area, street or landmark'),
           hintStyle: tx(14, color: kMute),
           prefixIcon: Icon(Icons.search, color: kMute),
           suffixIcon: _searching
@@ -190,7 +190,7 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
       else if (!_searching && _q.text.trim().length >= 3 && _qFocus.hasFocus)
         Padding(
           padding: const EdgeInsets.only(top: 6, left: 4),
-          child: Text('No places found. Try a nearby landmark or move the map.', style: tx(12, color: kMute)),
+          child: Text(tr('No places found. Try a nearby landmark or move the map.'), style: tx(12, color: kMute)),
         ),
       const SizedBox(height: 8),
       ClipRRect(
@@ -208,10 +208,10 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.map_outlined, color: kMute, size: 36),
                     SizedBox(height: 6),
-                    Text('Map didn’t load. Check your internet.', textAlign: TextAlign.center, style: tx(13, color: kMute)),
+                    Text(tr('Map didn’t load. Check your internet.'), textAlign: TextAlign.center, style: tx(13, color: kMute)),
                     TextButton(
                       onPressed: () => setState(() => _style = OlaMaps.style(dark: false, lang: 'en')),
-                      child: Text('Try again', style: tx(13, color: kAct, weight: FontWeight.w700)),
+                      child: Text(tr('Try again'), style: tx(13, color: kAct, weight: FontWeight.w700)),
                     ),
                   ]),
                 );
@@ -258,7 +258,7 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Icon(Icons.my_location, size: 16, color: kAct),
                           SizedBox(width: 6),
-                          Text('Use my location', style: tx(12.5, color: kAct, weight: FontWeight.w700)),
+                          Text(tr('Use my location'), style: tx(12.5, color: kAct, weight: FontWeight.w700)),
                         ]),
                       ),
                     ),
@@ -276,10 +276,10 @@ class _OlaMapPickerState extends State<OlaMapPicker> {
         Expanded(
           child: Text(
             _looking
-                ? 'Finding address…'
+                ? tr('Finding address…')
                 : (_place?.formatted.isNotEmpty == true
                     ? _place!.formatted
-                    : 'Move the map so the pin is on your shop door.'),
+                    : tr('Move the map so the pin is on your shop door.')),
             style: tx(12, color: kMute),
           ),
         ),

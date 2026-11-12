@@ -11,7 +11,7 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
-  static const reasons = ['Not getting enough orders', 'Pass is too costly', 'Closing my shop', 'Too hard to use', 'Other'];
+  static List<String> get reasons => [tr('Not getting enough orders'), tr('Pass is too costly'), tr('Closing my shop'), tr('Too hard to use'), tr('Other')];
   String? reason;
   final feedback = TextEditingController();
   final confirm = TextEditingController();
@@ -41,47 +41,47 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   Widget build(BuildContext context) {
     final ok = confirm.text.trim().toUpperCase() == 'DELETE';
     return Scaffold(
-      appBar: bar('Delete account'),
+      appBar: bar(tr('Delete account')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Box(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Deleted right away', style: tx(14.5, weight: FontWeight.w800)),
+            Text(tr('Deleted right away'), style: tx(14.5, weight: FontWeight.w800)),
             const SizedBox(height: 4),
-            Text('Your shop, shop photo, documents (PAN, Aadhaar, GST, FSSAI), and login on all phones. Customers stop seeing your shop.',
+            Text(tr('Your shop, shop photo, documents (PAN, Aadhaar, GST, FSSAI), and login on all phones. Customers stop seeing your shop.'),
                 style: tx(12.5, color: kMute)),
           ]),
         ),
         const SizedBox(height: 10),
         Box(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Kept because the law requires it', style: tx(14.5, weight: FontWeight.w800)),
+            Text(tr('Kept because the law requires it'), style: tx(14.5, weight: FontWeight.w800)),
             const SizedBox(height: 4),
-            Text('Your signed agreement and pass payment records (up to 8 years). The free-trial record is kept only as a code that can’t be read back, so a new account doesn’t get another trial.',
+            Text(tr('Your signed agreement and pass payment records (up to 8 years). The free-trial record is kept only as a code that can’t be read back, so a new account doesn’t get another trial.'),
                 style: tx(12.5, color: kMute)),
           ]),
         ),
         const SizedBox(height: 10),
         Box(
           color: kRedBg,
-          border: const Color(0xFFF7C1C1),
-          child: Text('Any pass days left are lost and are not refunded. This can’t be undone.',
+          border: kRedLine,
+          child: Text(tr('Any pass days left are lost and are not refunded. This can’t be undone.'),
               style: tx(12.5, color: kRed, weight: FontWeight.w700)),
         ),
         const SizedBox(height: 16),
-        Text('Why are you leaving? (optional)', style: tx(12.5, color: kMute, weight: FontWeight.w700)),
+        Text(tr('Why are you leaving? (optional)'), style: tx(12.5, color: kMute, weight: FontWeight.w700)),
         const SizedBox(height: 6),
         Wrap(spacing: 8, runSpacing: 8, children: [
           for (final r in reasons)
             ChoiceChip(label: Text(r), selected: reason == r, onSelected: (_) => setState(() => reason = r)),
         ]),
         const SizedBox(height: 10),
-        TextField(controller: feedback, maxLines: 3, decoration: field('Anything we could do better?')),
+        TextField(controller: feedback, maxLines: 3, decoration: field(tr('Anything we could do better?'))),
         const SizedBox(height: 16),
-        Text('Type DELETE to confirm', style: tx(12.5, color: kMute, weight: FontWeight.w700)),
+        Text(tr('Type DELETE to confirm'), style: tx(12.5, color: kMute, weight: FontWeight.w700)),
         const SizedBox(height: 6),
         TextField(controller: confirm, onChanged: (_) => setState(() {}), textCapitalization: TextCapitalization.characters, decoration: field('DELETE')),
         const SizedBox(height: 16),
-        Btn(_busy ? 'Deleting…' : 'Delete my account', color: kRed, onTap: ok && !_busy ? _delete : null),
+        Btn(_busy ? tr('Deleting…') : tr('Delete my account'), color: kRed, onTap: ok && !_busy ? _delete : null),
       ]),
     );
   }

@@ -11,7 +11,8 @@ import 'register.dart';
 
 String dateText(int secs) {
   final d = DateTime.fromMillisecondsSinceEpoch(secs * 1000);
-  const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  // ignore: i18n
+  const m = <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
   return '${d.day} ${m[d.month - 1]}, $h:${d.minute.toString().padLeft(2, '0')} ${d.hour < 12 ? 'am' : 'pm'}';
 }
@@ -56,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final r = await api.call('POST', '/v1/partner/submit');
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
-      if (mounted) toast(context, 'Sent. Nukad team will check again.');
+      if (mounted) toast(context, tr('Sent. Nukad team will check again.'));
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -66,15 +67,15 @@ class _HomeScreenState extends State<HomeScreen> {
   (String, String, Color, Color) _status(Map<String, dynamic> s) {
     final reason = s['offlineReason'];
     return switch (reason) {
-      null => ('You are LIVE', 'Customers within 500 m can see you and order.', Colors.white, kAct),
-      'no_pass' => ('Pass ended · hidden', 'Customers can’t see you. Buy a pass to go live.', kRed, kRedBg),
-      'blocked' => ('Account blocked', 'Contact Nukad Kart support.', kRed, kRedBg),
-      'closed_now' => ('Closed now', 'Outside your timings (${s['opensAt']} – ${s['closesAt']}). You show again at opening time.', kAmb, kAmbBg),
-      'missed_orders' => ('Offline for today', '5 orders were missed today. Switch on to go live again.', kAmb, kAmbBg),
-      'no_agreement' => ('Agreement not signed', 'Sign the partner agreement to go live.', kRed, kRedBg),
-      'not_verified' => ('Waiting for verification', 'Nukad team is verifying your details and documents. Your shop can go live after approval.', kAmb, kAmbBg),
-      'rejected' => ('Changes needed', 'Nukad team asked for changes. Fix them below and send again.', kRed, kRedBg),
-      _ => ('You are offline', 'Switch on to show your shop to customers.', kInk, kSurf),
+      null => (tr('You are LIVE'), tr('Customers within 500 m can see you and order.'), kOnAct, kAct),
+      'no_pass' => (tr('Pass ended · hidden'), tr('Customers can’t see you. Buy a pass to go live.'), kRed, kRedBg),
+      'blocked' => (tr('Account blocked'), tr('Contact Nukad Kart support.'), kRed, kRedBg),
+      'closed_now' => (tr('Closed now'), tr('Outside your timings ({0} – {1}). You show again at opening time.', [s['opensAt'], s['closesAt']]), kAmb, kAmbBg),
+      'missed_orders' => (tr('Offline for today'), tr('5 orders were missed today. Switch on to go live again.'), kAmb, kAmbBg),
+      'no_agreement' => (tr('Agreement not signed'), tr('Sign the partner agreement to go live.'), kRed, kRedBg),
+      'not_verified' => (tr('Waiting for verification'), tr('Nukad team is verifying your details and documents. Your shop can go live after approval.'), kAmb, kAmbBg),
+      'rejected' => (tr('Changes needed'), tr('Nukad team asked for changes. Fix them below and send again.'), kRed, kRedBg),
+      _ => (tr('You are offline'), tr('Switch on to show your shop to customers.'), kInk, kSurf),
     };
   }
 
@@ -92,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
           appBar: bar('${s['name']}', actions: [
             if (session.admin)
               IconButton(
-                tooltip: 'Admin',
+                tooltip: tr('Admin'),
                 icon: const Icon(Icons.admin_panel_settings_outlined),
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminScreen())),
               ),
@@ -104,10 +105,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AgreementScreen(viewOnly: true)));
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'agreement', child: Text('Partner agreement')),
-                PopupMenuItem(value: 'out', child: Text('Log out')),
-                PopupMenuItem(value: 'delete', child: Text('Delete account', style: TextStyle(color: kRed))),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'agreement', child: Text(tr('Partner agreement'))),
+                PopupMenuItem(value: 'out', child: Text(tr('Log out'))),
+                PopupMenuItem(value: 'delete', child: Text(tr('Delete account'), style: TextStyle(color: kRed))),
               ],
             ),
           ]),
@@ -120,9 +121,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(children: [
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(title, style: tx(18, color: s['offlineReason'] == null ? Colors.white : fg, weight: FontWeight.w800)),
+                      Text(title, style: tx(18, color: s['offlineReason'] == null ? kOnAct : fg, weight: FontWeight.w800)),
                       const SizedBox(height: 2),
-                      Text(sub, style: tx(12.5, color: s['offlineReason'] == null ? Colors.white : kInk)),
+                      Text(sub, style: tx(12.5, color: s['offlineReason'] == null ? kOnAct : kInk)),
                     ]),
                   ),
                   Switch(
@@ -137,11 +138,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 Box(
                   color: kSurf,
                   child: Row(children: [
-                    const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: kAmb)),
+                    SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: kAmb)),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                          'Nukad team is verifying your shop. This usually takes less than a day. Pull down to check. '
+                          tr('Nukad team is verifying your shop. This usually takes less than a day. Pull down to check. ')
                           '${session.trialAvailable ? 'Your 7-day free trial starts when you are approved.' : 'Free trial was already used on this number or phone.'}',
                           style: tx(12.5, weight: FontWeight.w600)),
                     ),
@@ -152,9 +153,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
                 Box(
                   color: kRedBg,
-                  border: const Color(0xFFF7C1C1),
+                  border: kRedLine,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('What to fix', style: tx(14, color: kRed, weight: FontWeight.w800)),
+                    Text(tr('What to fix'), style: tx(14, color: kRed, weight: FontWeight.w800)),
                     const SizedBox(height: 4),
                     Text('${s['reviewNote'] ?? ''}', style: tx(13.5)),
                     const SizedBox(height: 10),
@@ -162,50 +163,50 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                           child: OutlinedButton(
                               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                              child: const Text('Edit details'))),
+                              child: Text(tr('Edit details')))),
                       const SizedBox(width: 8),
                       Expanded(
                           child: OutlinedButton(
                               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DocsScreen(pushed: true))),
-                              child: const Text('Documents'))),
+                              child: Text(tr('Documents')))),
                     ]),
                     const SizedBox(height: 8),
-                    Btn(_busy ? 'Sending…' : 'Send for verification again', onTap: _busy ? null : _resubmit),
+                    Btn(_busy ? tr('Sending…') : tr('Send for verification again'), onTap: _busy ? null : _resubmit),
                   ]),
                 ),
               ],
               const SizedBox(height: 12),
               Box(
                 child: Row(children: [
-                  const Icon(Icons.confirmation_number_outlined, color: kAct, size: 28),
+                  Icon(Icons.confirmation_number_outlined, color: kAct, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(passActive ? '${s['trial'] == true ? 'Free trial' : 'Pass active'} · $daysLeft day${daysLeft == 1 ? '' : 's'} left' : 'No active pass',
+                      Text(passActive ? tr('{0} · {1} day{2} left', [s['trial'] == true ? 'Free trial' : 'Pass active', daysLeft, daysLeft == 1 ? '' : 's']) : tr('No active pass'),
                           style: tx(15, weight: FontWeight.w800)),
-                      Text(passActive ? 'Ends ${dateText(passUntil)}' : 'Your shop shows to customers only with a pass.',
+                      Text(passActive ? tr('Ends {0}', [dateText(passUntil)]) : tr('Your shop shows to customers only with a pass.'),
                           style: tx(12.5, color: kMute)),
                     ]),
                   ),
                   FilledButton(
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassScreen())),
                     style: FilledButton.styleFrom(backgroundColor: kAct),
-                    child: Text(passActive ? 'Extend' : 'Buy pass'),
+                    child: Text(passActive ? tr('Extend') : tr('Buy pass')),
                   ),
                 ]),
               ),
               const SizedBox(height: 12),
               Box(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Today', style: tx(15, weight: FontWeight.w800)),
+                  Text(tr('Today'), style: tx(15, weight: FontWeight.w800)),
                   const SizedBox(height: 6),
-                  Text('Missed orders: ${s['missedToday'] ?? 0} of 5', style: tx(13)),
-                  Text('Orders arrive here soon. A new order rings until you accept it (5 minutes).', style: tx(12, color: kMute)),
+                  Text(tr('Missed orders: {0} of 5', [s['missedToday'] ?? 0]), style: tx(13)),
+                  Text(tr('Orders arrive here soon. A new order rings until you accept it (5 minutes).'), style: tx(12, color: kMute)),
                 ]),
               ),
               if (session.payments.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text('Pass payments', style: tx(15, weight: FontWeight.w800)),
+                Text(tr('Pass payments'), style: tx(15, weight: FontWeight.w800)),
                 const SizedBox(height: 8),
                 for (final p in session.payments) PaymentRow(p),
               ],
@@ -225,11 +226,11 @@ class PaymentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, fg, bg) = switch (p['status']) {
-      'PAID' => ('Paid', kAct, kOkBg),
-      'CHECKING' => ('Being checked', kAmb, kAmbBg),
-      'FAILED' => ('Failed', kRed, kRedBg),
-      'CANCELLED' => ('Not received', kRed, kRedBg),
-      _ => ('Not finished', kMute, kSurf),
+      'PAID' => (tr('Paid'), kAct, kOkBg),
+      'CHECKING' => (tr('Being checked'), kAmb, kAmbBg),
+      'FAILED' => (tr('Failed'), kRed, kRedBg),
+      'CANCELLED' => (tr('Not received'), kRed, kRedBg),
+      _ => (tr('Not finished'), kMute, kSurf),
     };
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

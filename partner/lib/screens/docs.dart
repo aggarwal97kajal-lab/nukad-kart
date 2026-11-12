@@ -13,11 +13,11 @@ const maxDocBytes = 2 * 1024 * 1024;
 const _chunkBytes = 256 * 1024; // raw bytes per part; 4 parts go at once, so the meter moves smoothly
 const _parallel = 4;
 
-const docLabels = {
-  'pan': ('PAN card', 'Clear photo or PDF of your PAN card'),
-  'aadhaar': ('Aadhaar (masked)', 'Cover the first 8 digits before taking the photo'),
-  'gst': ('GST certificate', 'Needed because you entered a GSTIN'),
-  'fssai': ('FSSAI certificate', 'Required if you entered an FSSAI number'),
+Map<String, (String, String)> get docLabels => {
+  'pan': (tr('PAN card'), tr('Clear photo or PDF of your PAN card')),
+  'aadhaar': (tr('Aadhaar (masked)'), tr('Cover the first 8 digits before taking the photo')),
+  'gst': (tr('GST certificate'), tr('Needed because you entered a GSTIN')),
+  'fssai': (tr('FSSAI certificate'), tr('Required if you entered an FSSAI number')),
 };
 
 String sizeText(int b) => b >= 1024 * 1024 ? '${(b / 1024 / 1024).toStringAsFixed(1)} MB' : '${(b / 1024).round()} KB';
@@ -70,11 +70,11 @@ class _DocsScreenState extends State<DocsScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Text('${docLabels[type]!.$1} · JPG or PDF, max 2 MB', style: tx(15, weight: FontWeight.w800)),
+            child: Text(tr('{0} · JPG or PDF, max 2 MB', [docLabels[type]!.$1]), style: tx(15, weight: FontWeight.w800)),
           ),
-          ListTile(leading: const Icon(Icons.photo_camera_outlined), title: const Text('Take photo'), onTap: () => Navigator.pop(ctx, 'camera')),
-          ListTile(leading: const Icon(Icons.image_outlined), title: const Text('Choose JPG photo'), onTap: () => Navigator.pop(ctx, 'jpg')),
-          ListTile(leading: const Icon(Icons.picture_as_pdf_outlined), title: const Text('Choose PDF file'), onTap: () => Navigator.pop(ctx, 'pdf')),
+          ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(tr('Take photo')), onTap: () => Navigator.pop(ctx, 'camera')),
+          ListTile(leading: const Icon(Icons.image_outlined), title: Text(tr('Choose JPG photo')), onTap: () => Navigator.pop(ctx, 'jpg')),
+          ListTile(leading: const Icon(Icons.picture_as_pdf_outlined), title: Text(tr('Choose PDF file')), onTap: () => Navigator.pop(ctx, 'pdf')),
         ]),
       ),
     );
@@ -100,18 +100,18 @@ class _DocsScreenState extends State<DocsScreen> {
         mime = f.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg';
       }
     } catch (_) {
-      if (mounted) toast(context, 'Could not open the file. Try again.');
+      if (mounted) toast(context, tr('Could not open the file. Try again.'));
       return;
     }
     if (bytes == null || bytes.isEmpty || !mounted) return;
     if (bytes.length > maxDocBytes) {
-      toast(context, 'This file is ${sizeText(bytes.length)}. Max 2 MB: take a smaller photo or compress the PDF.');
+      toast(context, tr('This file is {0}. Max 2 MB: take a smaller photo or compress the PDF.', [sizeText(bytes.length)]));
       return;
     }
     final isJpg = bytes.length > 2 && bytes[0] == 0xff && bytes[1] == 0xd8;
     final isPdf = bytes.length > 4 && bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46;
     if ((mime == 'image/jpeg' && !isJpg) || (mime == 'application/pdf' && !isPdf)) {
-      toast(context, 'Only JPG photos or PDF files can be uploaded.');
+      toast(context, tr('Only JPG photos or PDF files can be uploaded.'));
       return;
     }
     await _upload(type, bytes, name, mime);
@@ -175,7 +175,7 @@ class _DocsScreenState extends State<DocsScreen> {
                 Text(
                     d != null
                         ? '${d['name'] ?? ''} · ${sizeText((d['size'] as num).toInt())} · ${d['mime'] == 'application/pdf' ? 'PDF' : 'JPG'}'
-                        : (isOptional ? (type == 'fssai' ? 'Add if you have one. Required only when you enter an FSSAI number.' : 'Add if you have it.') : hint),
+                        : (isOptional ? (type == 'fssai' ? tr('Add if you have one. Required only when you enter an FSSAI number.') : tr('Add if you have it.')) : hint),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: tx(12, color: d != null ? kAct : kMute)),
@@ -184,8 +184,8 @@ class _DocsScreenState extends State<DocsScreen> {
             const SizedBox(width: 8),
             OutlinedButton(
               onPressed: p != null ? null : () => _choose(type),
-              style: OutlinedButton.styleFrom(foregroundColor: kAct, side: const BorderSide(color: kAct)),
-              child: Text(d != null ? 'Change' : 'Upload'),
+              style: OutlinedButton.styleFrom(foregroundColor: kAct, side: BorderSide(color: kAct)),
+              child: Text(d != null ? tr('Change') : tr('Upload')),
             ),
           ]),
           if (p != null) ...[
@@ -199,7 +199,7 @@ class _DocsScreenState extends State<DocsScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            Text('Uploading ${sizeText(sent[type]!.$1)} of ${sizeText(sent[type]!.$2)} · ${(p * 100).round()}%',
+            Text(tr('Uploading {0} of {1} · {2}%', [sizeText(sent[type]!.$1), sizeText(sent[type]!.$2), (p * 100).round()]),
                 style: tx(11.5, color: kMute, weight: FontWeight.w700)),
           ],
         ]),
@@ -212,25 +212,25 @@ class _DocsScreenState extends State<DocsScreen> {
     final missing = required.where((t) => _doc(t) == null).length;
     final busy = progress.isNotEmpty;
     return Scaffold(
-      appBar: bar('Upload documents', actions: [
+      appBar: bar(tr('Upload documents'), actions: [
         if (!widget.pushed)
           PopupMenuButton<String>(
             onSelected: (_) => session.signOut(),
-            itemBuilder: (_) => const [PopupMenuItem(value: 'out', child: Text('Log out'))],
+            itemBuilder: (_) => [PopupMenuItem(value: 'out', child: Text(tr('Log out')))],
           ),
       ]),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(padding: const EdgeInsets.all(16), children: [
-              Text('Step 3 of 5', style: tx(12, color: kMute)),
+              Text(tr('Step 3 of 5'), style: tx(12, color: kMute)),
               const SizedBox(height: 8),
               Box(
                 color: kSurf,
                 child: Row(children: [
-                  const Icon(Icons.info_outline, color: kAct, size: 20),
+                  Icon(Icons.info_outline, color: kAct, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                      child: Text('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukad team checks them before your shop goes live.',
+                      child: Text(tr('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukad team checks them before your shop goes live.'),
                           style: tx(12.5, weight: FontWeight.w600))),
                 ]),
               ),
@@ -243,12 +243,12 @@ class _DocsScreenState extends State<DocsScreen> {
                   onPressed: busy
                       ? null
                       : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                  child: const Text('Change business details'),
+                  child: Text(tr('Change business details')),
                 ),
               ],
               const SizedBox(height: 8),
               Btn(
-                busy ? 'Uploading…' : (missing == 0 ? 'Continue' : 'Continue ($missing left)'),
+                busy ? tr('Uploading…') : (missing == 0 ? tr('Continue') : tr('Continue ({0} left)', [missing])),
                 onTap: busy || missing > 0
                     ? null
                     : () async {

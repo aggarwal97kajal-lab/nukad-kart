@@ -6,6 +6,10 @@ import '../session.dart';
 import '../ui.dart';
 
 const _deep = Color(0xFF284A1F);
+const _green = Color(0xFF315426);
+const _mute = Color(0xFF5E6A55);
+const _ink = Color(0xFF21331B);
+const _bgLight = Color(0xFFFBF8EF);
 const _cream = Color(0xFFFFF8DE);
 const _planDays = {'daily': 1, 'weekly': 7, 'monthly': 30, 'yearly': 365};
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -85,8 +89,8 @@ class _PassActiveScreenState extends State<PassActiveScreen> with SingleTickerPr
               child: Opacity(
                 opacity: _seg(t, 1.3, 1.7),
                 child: Column(children: [
-                  Text('Pass active!', style: tx(34, color: Colors.white, weight: FontWeight.w800)),
-                  Text('Your shop can go LIVE now', style: tx(15, color: const Color(0xFFE1ECD7))),
+                  Text(t('Pass active!'), style: tx(34, color: Colors.white, weight: FontWeight.w800)),
+                  Text(t('Your shop can go LIVE now'), style: tx(15, color: const Color(0xFFE1ECD7))),
                 ]),
               ),
             ),
@@ -99,11 +103,11 @@ class _PassActiveScreenState extends State<PassActiveScreen> with SingleTickerPr
                 child: Transform.rotate(
                   angle: (1 - _seg(t, 1.55, 2.3)) * -7 * math.pi / 180,
                   child: _Ticket(
-                    plan: '${p['planName'] ?? 'Pass'}',
+                    plan: t('${p['planName'] ?? 'Pass'}'),
                     days: (days * _out(_seg(t, 2.0, 2.9))).round(),
                     price: '₹${p['amount']}',
-                    till: until > 0 ? 'Valid till ${_till(until)}' : '',
-                    id: 'Payment ID ${p['id']}',
+                    till: until > 0 ? tr('Valid till {0}', [_till(until)]) : '',
+                    id: tr('Payment ID {0}', [p['id']]),
                     shine: _seg(t, 2.25, 2.9),
                   ),
                 ),
@@ -129,13 +133,13 @@ class _PassActiveScreenState extends State<PassActiveScreen> with SingleTickerPr
                           disabledBackgroundColor: kBrand,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                         ),
-                        child: Text(_busy ? 'Going LIVE…' : 'Go LIVE now', style: tx(19, weight: FontWeight.w800)),
+                        child: Text(_busy ? t('Going LIVE…') : t('Go LIVE now'), style: tx(19, weight: FontWeight.w800, color: _ink)),
                       ),
                     ),
                   ),
                   TextButton(
                     onPressed: t < 2.7 ? null : () => Navigator.pop(context),
-                    child: Text('Done', style: tx(15, color: const Color(0xFFE1ECD7), weight: FontWeight.w700)),
+                    child: Text(t('Done'), style: tx(15, color: const Color(0xFFE1ECD7), weight: FontWeight.w700)),
                   ),
                 ]),
               ),
@@ -166,26 +170,26 @@ class _Ticket extends StatelessWidget {
               Container(
                 color: kBrand,
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
-                child: Text('NUKAD KART  ·  PARTNER PASS', style: tx(13, weight: FontWeight.w800)),
+                child: Text('NUKAD KART  ·  PARTNER PASS', style: tx(13, weight: FontWeight.w800, color: _ink)),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
                 child: Row(children: [
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(plan, style: tx(30, weight: FontWeight.w800)),
-                      Text('$days day${days == 1 ? '' : 's'}', style: tx(17, color: kAct, weight: FontWeight.w800)),
+                      Text(plan, style: tx(30, weight: FontWeight.w800, color: _ink)),
+                      Text(days == 1 ? t('1 day') : tr('{0} days', [days]), style: tx(17, color: _green, weight: FontWeight.w800)),
                     ]),
                   ),
-                  Text(price, style: tx(28, weight: FontWeight.w800)),
+                  Text(price, style: tx(28, weight: FontWeight.w800, color: _ink)),
                 ]),
               ),
               const Padding(padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12), child: _Dots()),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  if (till.isNotEmpty) Text(till, style: tx(13, color: kMute)),
-                  Text(id, style: tx(12, color: kMute)),
+                  if (till.isNotEmpty) Text(till, style: tx(13, color: _mute)),
+                  Text(id, style: tx(12, color: _mute)),
                 ]),
               ),
             ]),
@@ -251,8 +255,8 @@ class _BackPainter extends CustomPainter {
     final center = Offset(s.width / 2, badgeY);
     // wave
     final k = _seg(t, 0, 0.75);
-    canvas.drawRect(Offset.zero & s, Paint()..color = kBg);
-    canvas.drawCircle(Offset(s.width / 2, s.height * 0.86), (3 * k * k - 2 * k * k * k) * s.height * 1.25, Paint()..color = kAct);
+    canvas.drawRect(Offset.zero & s, Paint()..color = _bgLight);
+    canvas.drawCircle(Offset(s.width / 2, s.height * 0.86), (3 * k * k - 2 * k * k * k) * s.height * 1.25, Paint()..color = _green);
     if (t > 0.75) {
       canvas.drawRect(Offset.zero & s, Paint()..color = _deep);
       // rays
@@ -304,7 +308,7 @@ class _BackPainter extends CustomPainter {
             ..strokeWidth = 13
             ..strokeCap = StrokeCap.round
             ..strokeJoin = StrokeJoin.round
-            ..color = kAct);
+            ..color = _green);
     }
   }
 

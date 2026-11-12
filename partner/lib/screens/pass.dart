@@ -54,13 +54,13 @@ class _PassScreenState extends State<PassScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar('Choose your pass'),
+      appBar: bar(tr('Choose your pass')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? Center(child: Text(_error!, style: tx(14)))
               : ListView(padding: const EdgeInsets.all(16), children: [
-                  Text('Your shop shows to customers within 500 m only while a pass is active. No commission on orders.',
+                  Text(tr('Your shop shows to customers within 500 m only while a pass is active. No commission on orders.'),
                       style: tx(13, color: kMute)),
                   const SizedBox(height: 12),
                   for (final p in plans)
@@ -71,7 +71,7 @@ class _PassScreenState extends State<PassScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: selected == p['id'] ? kSurf : Colors.white,
+                            color: selected == p['id'] ? kSurf : kCard,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: selected == p['id'] ? kAct : kLine, width: selected == p['id'] ? 2 : 1),
                           ),
@@ -81,10 +81,10 @@ class _PassScreenState extends State<PassScreen> {
                             Expanded(
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Row(children: [
-                                  Text('${p['name']}', style: tx(16, weight: FontWeight.w800)),
+                                  Text(t('${p['name']}'), style: tx(16, weight: FontWeight.w800)),
                                   if (p['id'] == 'monthly') ...[const SizedBox(width: 8), pill('POPULAR')],
                                 ]),
-                                Text('${p['days']} day${p['days'] == 1 ? '' : 's'}', style: tx(12, color: kMute)),
+                                Text(p['days'] == 1 ? t('1 day') : tr('{0} days', [p['days']]), style: tx(12, color: kMute)),
                               ]),
                             ),
                             Text('₹${p['price']}', style: tx(20, weight: FontWeight.w800)),
@@ -93,10 +93,10 @@ class _PassScreenState extends State<PassScreen> {
                       ),
                     ),
                   const SizedBox(height: 6),
-                  Text('🔒 Pay with any UPI app on this phone. A new pass starts when the current one ends.',
+                  Text(tr('🔒 Pay with any UPI app on this phone. A new pass starts when the current one ends.'),
                       style: tx(11.5, color: kMute)),
                   const SizedBox(height: 16),
-                  Btn('Pay ₹${_plan['price']} with UPI', onTap: _pay),
+                  Btn(tr('Pay ₹{0} with UPI', [_plan['price']]), onTap: _pay),
                 ]),
     );
   }
@@ -160,7 +160,7 @@ class _PayScreenState extends State<PayScreen> {
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     } catch (_) {
-      if (mounted) toast(context, 'Could not open ${app.name}. Try another app.');
+      if (mounted) toast(context, tr('Could not open {0}. Try another app.', [app.name]));
     }
     if (mounted) setState(() => _busy = null);
   }
@@ -192,36 +192,36 @@ class _PayScreenState extends State<PayScreen> {
     final st = session.store ?? {};
     final startsLater = st['passActive'] == true;
     return Scaffold(
-      appBar: bar('Pay for your pass'),
+      appBar: bar(tr('Pay for your pass')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Box(
           child: Row(children: [
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${p['name']} pass', style: tx(16, weight: FontWeight.w800)),
-                Text('${p['days']} day${p['days'] == 1 ? '' : 's'} · ${startsLater ? 'starts when your current pass ends' : 'starts now'}',
+                Text(tr('{0} pass', [t('${p['name']}')]), style: tx(16, weight: FontWeight.w800)),
+                Text(tr('{0} day{1} · {2}', [p['days'], p['days'] == 1 ? '' : 's', startsLater ? 'starts when your current pass ends' : 'starts now']),
                     style: tx(12, color: kMute)),
                 const SizedBox(height: 4),
-                Text('To: Nukad Kart', style: tx(12, color: kMute)),
+                Text(tr('To: Nukad Kart'), style: tx(12, color: kMute)),
               ]),
             ),
             Text('₹${p['price']}', style: tx(24, weight: FontWeight.w800)),
           ]),
         ),
         const SizedBox(height: 14),
-        Text('Pay with an app on this phone', style: tx(14, weight: FontWeight.w800)),
+        Text(tr('Pay with an app on this phone'), style: tx(14, weight: FontWeight.w800)),
         const SizedBox(height: 8),
         if (!widget.upiReady)
-          Box(color: kAmbBg, child: Text('UPI payments are not open yet. Try again later.', style: tx(13)))
+          Box(color: kAmbBg, child: Text(tr('UPI payments are not open yet. Try again later.'), style: tx(13)))
         else if (apps == null)
           const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator()))
         else if (apps!.isEmpty)
           Box(
-              child: Text('No UPI app found on this phone. Install Google Pay, PhonePe, Paytm, BHIM or your bank’s UPI app.',
+              child: Text(tr('No UPI app found on this phone. Install Google Pay, PhonePe, Paytm, BHIM or your bank’s UPI app.'),
                   style: tx(13.5)))
         else
           Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
             child: Column(children: [
               for (var i = 0; i < apps!.length; i++) ...[
                 if (i > 0) const Divider(height: 1, indent: 68),
@@ -232,34 +232,34 @@ class _PayScreenState extends State<PayScreen> {
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: apps![i].icon == null
-                        ? Container(width: 40, height: 40, color: kSurf, child: const Icon(Icons.account_balance_wallet_outlined, color: kAct))
+                        ? Container(width: 40, height: 40, color: kSurf, child: Icon(Icons.account_balance_wallet_outlined, color: kAct))
                         : Image.memory(apps![i].icon!, width: 40, height: 40, filterQuality: FilterQuality.medium),
                   ),
                   title: Text(apps![i].name, style: tx(15, weight: FontWeight.w700)),
                   trailing: _busy == apps![i].package
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
-                      : const Icon(Icons.chevron_right, color: kMute),
+                      : Icon(Icons.chevron_right, color: kMute),
                 ),
               ],
             ]),
           ),
         const SizedBox(height: 10),
         Row(children: [
-          const Icon(Icons.lock_outline, size: 15, color: kMute),
+          Icon(Icons.lock_outline, size: 15, color: kMute),
           const SizedBox(width: 6),
-          Expanded(child: Text('Tap an app: it opens with ₹${p['price']} filled in. Come back here after paying.', style: tx(11.5, color: kMute))),
+          Expanded(child: Text(tr('Tap an app: it opens with ₹{0} filled in. Come back here after paying.', [p['price']]), style: tx(11.5, color: kMute))),
         ]),
         if (widget.demo) ...[
           const SizedBox(height: 16),
           Box(
             color: kAmbBg,
-            border: const Color(0xFFFAC775),
+            border: kAmbLine,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              pill('TEST MODE', color: kAmb, bg: const Color(0xFFFAC775)),
+              pill(tr('TEST MODE'), color: kAmb, bg: kAmbLine),
               const SizedBox(height: 6),
-              Text('Start this pass without paying. It is marked DEMO and the admin can remove it.', style: tx(12.5)),
+              Text(tr('Start this pass without paying. It is marked DEMO and the admin can remove it.'), style: tx(12.5)),
               const SizedBox(height: 8),
-              Btn(_busy == 'demo' ? 'Starting…' : 'Demo pay ₹${p['price']}', outline: true, color: kAmb, onTap: _busy != null ? null : _demoPay),
+              Btn(_busy == 'demo' ? tr('Starting…') : tr('Demo pay ₹{0}', [p['price']]), outline: true, color: kAmb, onTap: _busy != null ? null : _demoPay),
             ]),
           ),
         ],
@@ -277,17 +277,17 @@ class PayResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     if (status == 'PAID') return PassActiveScreen(payment: payment);
     final (icon, title, body, color) = switch (status) {
-      'PAID' => (Icons.check_circle, 'Pass active', 'Your ${payment['planName']} pass is on. Switch LIVE on to show your shop.', kAct),
-      'FAILED' => (Icons.cancel, 'Payment failed', 'No money was taken for the pass. Try again or use another UPI app.', kRed),
+      'PAID' => (Icons.check_circle, tr('Pass active'), tr('Your {0} pass is on. Switch LIVE on to show your shop.', [payment['planName']]), kAct),
+      'FAILED' => (Icons.cancel, tr('Payment failed'), tr('No money was taken for the pass. Try again or use another UPI app.'), kRed),
       _ => (
           Icons.hourglass_top,
-          'Checking your payment…',
-          'We haven’t got the confirmation for ₹${payment['amount']} yet. If money left your account, don’t pay again: our team has been told and the pass starts as soon as it is confirmed.',
+          tr('Checking your payment…'),
+          tr('We haven’t got the confirmation for ₹{0} yet. If money left your account, don’t pay again: our team has been told and the pass starts as soon as it is confirmed.', [payment['amount']]),
           kAmb
         ),
     };
     return Scaffold(
-      appBar: bar('Payment'),
+      appBar: bar(tr('Payment')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(children: [
@@ -298,9 +298,9 @@ class PayResultScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(body, textAlign: TextAlign.center, style: tx(14, color: kMute)),
           const SizedBox(height: 10),
-          Text('Payment ID ${payment['id']} · ${dateText((payment['createdAt'] as num).toInt())}', style: tx(12, color: kMute)),
+          Text(tr('Payment ID {0} · {1}', [payment['id'], dateText((payment['createdAt'] as num).toInt())]), style: tx(12, color: kMute)),
           const Spacer(),
-          Btn('Done', onTap: () => Navigator.pop(context)),
+          Btn(tr('Done'), onTap: () => Navigator.pop(context)),
         ]),
       ),
     );

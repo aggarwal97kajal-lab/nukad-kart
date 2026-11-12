@@ -40,20 +40,20 @@ class _PartnersScreenState extends State<PartnersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar('Partners to verify', actions: [
+      appBar: bar(tr('Partners to verify'), actions: [
         TextButton(
             onPressed: () {
               all = !all;
               _load();
             },
-            child: Text(all ? 'Only waiting' : 'Show all')),
+            child: Text(all ? tr('Only waiting') : tr('Show all'))),
       ]),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(padding: const EdgeInsets.all(16), children: [
-                if (list.isEmpty) Text('Nobody is waiting right now.', style: tx(14, color: kMute)),
+                if (list.isEmpty) Text(tr('Nobody is waiting right now.'), style: tx(14, color: kMute)),
                 for (final p in list)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -67,7 +67,7 @@ class _PartnersScreenState extends State<PartnersScreen> {
                           Expanded(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text('${p['name']}', style: tx(15, weight: FontWeight.w800)),
-                              Text('${p['kind'] == 'thela' ? 'Thela' : 'Shop'} · ${p['phone']} · ${(p['docs'] as List).length} documents',
+                              Text(tr('{0} · {1} · {2} documents', [p['kind'] == 'thela' ? 'Thela' : 'Shop', p['phone'], (p['docs'] as List).length]),
                                   style: tx(12, color: kMute)),
                             ]),
                           ),
@@ -87,7 +87,7 @@ class _PartnersScreenState extends State<PartnersScreen> {
                             await _load(next: true);
                             if (mounted) setState(() => _loadingMore = false);
                           },
-                    child: Text(_loadingMore ? 'Loading…' : 'Load more'),
+                    child: Text(_loadingMore ? tr('Loading…') : tr('Load more')),
                   ),
               ]),
             ),
@@ -121,7 +121,7 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
             context,
             MaterialPageRoute(
                 builder: (_) => Scaffold(
-                      appBar: bar(docLabels['${d['type']}']?.$1 ?? 'Document'),
+                      appBar: bar(docLabels['${d['type']}']?.$1 ?? tr('Document')),
                       backgroundColor: Colors.black,
                       body: InteractiveViewer(maxScale: 6, child: Center(child: Image.memory(bytes))),
                     )));
@@ -139,11 +139,11 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Ask for changes'),
-          content: TextField(controller: c, maxLines: 3, decoration: field('e.g. PAN photo is blurry. Upload a clear one.')),
+          title: Text(tr('Ask for changes')),
+          content: TextField(controller: c, maxLines: 3, decoration: field(tr('e.g. PAN photo is blurry. Upload a clear one.'))),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Back')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Send', style: TextStyle(color: kRed))),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('Back'))),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr('Send'), style: TextStyle(color: kRed))),
           ],
         ),
       );
@@ -154,7 +154,7 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
     try {
       final r = await api.call('POST', '/v1/admin/partners/${widget.p['id']}/${approve ? 'approve' : 'reject'}', approve ? {} : {'reason': reason});
       if (!mounted) return;
-      toast(context, approve ? (r['trial'] == true ? 'Approved · 7-day trial started' : 'Approved (trial already used before)') : 'Sent back for changes');
+      toast(context, approve ? (r['trial'] == true ? tr('Approved · 7-day trial started') : tr('Approved (trial already used before)')) : tr('Sent back for changes'));
       Navigator.pop(context);
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
@@ -180,26 +180,26 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: Image.network('$apiBase/v1/stores/${p['id']}/photo', height: 200, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(height: 80, color: kSurf, alignment: Alignment.center, child: const Text('No photo'))),
+              errorBuilder: (_, __, ___) => Container(height: 80, color: kSurf, alignment: Alignment.center, child: Text(tr('No photo')))),
         ),
         const SizedBox(height: 12),
         Box(
           child: Column(children: [
-            _row('Type', p['kind'] == 'thela' ? 'Thela' : 'Shop'),
-            _row('Owner email', '${p['ownerEmail'] ?? ''}'),
-            _row('Mobile', '${p['phone'] ?? ''} (OTP verified)'),
-            _row('Address', '${p['address'] ?? ''}'),
-            _row('Timings', '${p['opensAt'] ?? ''} – ${p['closesAt'] ?? ''}'),
+            _row(tr('Type'), p['kind'] == 'thela' ? tr('Thela') : tr('Shop')),
+            _row(tr('Owner email'), '${p['ownerEmail'] ?? ''}'),
+            _row(tr('Mobile'), tr('{0} (OTP verified)', [p['phone'] ?? ''])),
+            _row(tr('Address'), '${p['address'] ?? ''}'),
+            _row(tr('Timings'), '${p['opensAt'] ?? ''} – ${p['closesAt'] ?? ''}'),
             _row('PAN', '${p['pan']}'),
-            _row('Aadhaar', 'XXXX XXXX ${p['aadhaarLast4']}'),
+            _row(tr('Aadhaar'), tr('XXXX XXXX {0}', [p['aadhaarLast4']])),
             _row('GST', '${p['gstType']} ${p['gstin']}'),
             _row('FSSAI', '${p['fssai']}'),
-            _row('Agreement', p['agreementSigned'] == true ? 'Signed v${p['agreementVersion']}' : 'Not signed'),
-            _row('Status', '${p['status']}${'${p['reviewNote'] ?? ''}'.isNotEmpty ? ' · ${p['reviewNote']}' : ''}'),
+            _row(tr('Agreement'), p['agreementSigned'] == true ? tr('Signed v{0}', [p['agreementVersion']]) : tr('Not signed')),
+            _row(tr('Status'), '${p['status']}${'${p['reviewNote'] ?? ''}'.isNotEmpty ? ' · ${p['reviewNote']}' : ''}'),
           ]),
         ),
         const SizedBox(height: 12),
-        Text('Documents', style: tx(15, weight: FontWeight.w800)),
+        Text(tr('Documents'), style: tx(15, weight: FontWeight.w800)),
         const SizedBox(height: 6),
         for (final d in docs)
           Padding(
@@ -212,19 +212,19 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
                   child: Text('${docLabels['${d['type']}']?.$1 ?? d['type']} · ${sizeText((d['size'] as num).toInt())}',
                       style: tx(13.5, weight: FontWeight.w700)),
                 ),
-                TextButton(onPressed: _opening != null ? null : () => _open(d), child: Text(_opening == d['id'] ? 'Opening…' : 'View')),
+                TextButton(onPressed: _opening != null ? null : () => _open(d), child: Text(_opening == d['id'] ? tr('Opening…') : tr('View'))),
               ]),
             ),
           ),
-        Text('Check: names match PAN, PAN on GST certificate matches, Aadhaar last 4 match, photo is a real shop front. Registered ${dateText(((p['createdAt'] ?? 0) as num).toInt())}.',
+        Text(tr('Check: names match PAN, PAN on GST certificate matches, Aadhaar last 4 match, photo is a real shop front. Registered {0}.', [dateText(((p['createdAt'] ?? 0) as num).toInt())]),
             style: tx(11.5, color: kMute)),
         const SizedBox(height: 16),
         if (p['status'] == 'review' || p['status'] == 'rejected' || p['status'] == 'pending') ...[
-          Btn(_busy ? 'Saving…' : 'Approve · shop can go live', onTap: _busy || p['agreementSigned'] != true ? null : () => _decide(true)),
+          Btn(_busy ? tr('Saving…') : tr('Approve · shop can go live'), onTap: _busy || p['agreementSigned'] != true ? null : () => _decide(true)),
           const SizedBox(height: 8),
-          Btn('Ask for changes', outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
+          Btn(tr('Ask for changes'), outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
         ] else if (p['status'] == 'active')
-          Btn('Ask for changes (takes shop offline)', outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
+          Btn(tr('Ask for changes (takes shop offline)'), outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
       ]),
     );
   }

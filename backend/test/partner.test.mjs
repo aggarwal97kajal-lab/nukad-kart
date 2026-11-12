@@ -56,4 +56,5 @@ test('shop pin vs photo GPS distance', () => {
 test('documents a shop must upload', () => {
   assert.deepEqual(requiredDocs({ gst_type: 'none', fssai: '' }), ['pan', 'aadhaar']);
   assert.deepEqual(requiredDocs({ gst_type: 'regular', fssai: '12345678901234' }), ['pan', 'aadhaar', 'gst', 'fssai']);
+  assert.deepEqual(requiredDocs({ kind: 'thela', gst_type: 'none', fssai: '' }), ['aadhaar']);
 });

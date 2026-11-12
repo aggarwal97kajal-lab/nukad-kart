@@ -24,9 +24,9 @@ class AgreementData {
   Map<String, dynamic> get vendor => Map<String, dynamic>.from((signed?['vendor'] ?? raw['vendor']) as Map);
   String get version => '${raw['version']}';
   List<String> get missingParty => [
-        if ('${party['legalName']}'.isEmpty) 'legal name',
+        if ('${party['legalName']}'.isEmpty) tr('legal name'),
         if ('${party['address']}'.isEmpty) 'address',
-        if ('${party['city']}'.isEmpty) 'court city',
+        if ('${party['city']}'.isEmpty) tr('court city'),
       ];
 
   static Future<AgreementData> load() async {
@@ -78,12 +78,12 @@ class _AgreementScreenState extends State<AgreementScreen> {
 
   Future<void> _sign() async {
     if (name.text.trim().length < 3) {
-      toast(context, 'Type your full name.');
+      toast(context, tr('Type your full name.'));
       return;
     }
     final png = await _pad.currentState?.toPng();
     if (png == null) {
-      toast(context, 'Sign in the box with your finger.');
+      toast(context, tr('Sign in the box with your finger.'));
       return;
     }
     setState(() => _saving = true);
@@ -124,11 +124,11 @@ class _AgreementScreenState extends State<AgreementScreen> {
   Widget build(BuildContext context) {
     final d = data;
     return Scaffold(
-      appBar: bar(signing ? 'Sign agreement' : 'Partner agreement', actions: [
+      appBar: bar(signing ? tr('Sign agreement') : tr('Partner agreement'), actions: [
         if (!widget.viewOnly)
           PopupMenuButton<String>(
             onSelected: (_) => session.signOut(),
-            itemBuilder: (_) => const [PopupMenuItem(value: 'out', child: Text('Log out'))],
+            itemBuilder: (_) => [PopupMenuItem(value: 'out', child: Text(tr('Log out')))],
           ),
       ]),
       body: _error != null
@@ -153,17 +153,17 @@ class _AgreementScreenState extends State<AgreementScreen> {
       ];
     }
     return [
-      if (!widget.viewOnly) Text('Step 4 of 5', style: tx(12, color: kMute)),
+      if (!widget.viewOnly) Text(tr('Step 4 of 5'), style: tx(12, color: kMute)),
       const SizedBox(height: 6),
       Box(
         color: kSurf,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Expanded(child: Text('Vendor Partnership Agreement', style: tx(16, weight: FontWeight.w800))),
+            Expanded(child: Text(tr('Vendor Partnership Agreement'), style: tx(16, weight: FontWeight.w800))),
             pill('v${d.version}'),
           ]),
           const SizedBox(height: 4),
-          Text('Read the full agreement before accepting. Your acceptance is recorded against your registered business account.',
+          Text(tr('Read the full agreement before accepting. Your acceptance is recorded against your registered business account.'),
               style: tx(12.5, color: kMute)),
         ]),
       ),
@@ -173,14 +173,14 @@ class _AgreementScreenState extends State<AgreementScreen> {
       if (d.missingParty.isNotEmpty)
         Box(
           color: kAmbBg,
-          border: const Color(0xFFFAC775),
+          border: kAmbLine,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Signing opens soon', style: tx(15, color: kAmb, weight: FontWeight.w800)),
+            Text(tr('Signing opens soon'), style: tx(15, color: kAmb, weight: FontWeight.w800)),
             const SizedBox(height: 4),
             Text(
                 session.admin
-                    ? 'Nukad Kart details missing: ${d.missingParty.join(', ')}. Fill them so partners can sign.'
-                    : 'Nukad Kart’s own legal details are being added. Your documents are saved; come back in a little while and pull down to refresh.',
+                    ? tr('Nukad Kart details missing: {0}. Fill them so partners can sign.', [d.missingParty.join(', ')])
+                    : tr('Nukad Kart’s own legal details are being added. Your documents are saved; come back in a little while and pull down to refresh.'),
                 style: tx(13)),
             if (session.admin) ...[
               const SizedBox(height: 8),
@@ -190,47 +190,47 @@ class _AgreementScreenState extends State<AgreementScreen> {
                   await Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminScreen()));
                   _load();
                 },
-                child: const Text('Fill now'),
+                child: Text(tr('Fill now')),
               ),
             ] else
-              TextButton(onPressed: _load, child: const Text('Check again')),
+              TextButton(onPressed: _load, child: Text(tr('Check again'))),
           ]),
         )
       else ...[
-        _check(agree, 'I have read and agree to the Vendor Partnership Agreement.', (v) => setState(() => agree = v)),
-        _check(authorised, 'I confirm that I am authorised to accept this agreement for my business.', (v) => setState(() => authorised = v)),
+        _check(agree, tr('I have read and agree to the Vendor Partnership Agreement.'), (v) => setState(() => agree = v)),
+        _check(authorised, tr('I confirm that I am authorised to accept this agreement for my business.'), (v) => setState(() => authorised = v)),
         const SizedBox(height: 12),
-        Btn('Continue to sign', onTap: agree && authorised ? () => setState(() => signing = true) : null),
+        Btn(tr('Continue to sign'), onTap: agree && authorised ? () => setState(() => signing = true) : null),
       ],
       const SizedBox(height: 20),
     ];
   }
 
   List<Widget> _signStep(AgreementData d) => [
-        Text('Step 5 of 5', style: tx(12, color: kMute)),
+        Text(tr('Step 5 of 5'), style: tx(12, color: kMute)),
         const SizedBox(height: 10),
-        Text('Full name (as on PAN)', style: tx(12.5, color: kMute, weight: FontWeight.w700)),
+        Text(tr('Full name (as on PAN)'), style: tx(12.5, color: kMute, weight: FontWeight.w700)),
         const SizedBox(height: 6),
-        TextField(controller: name, textCapitalization: TextCapitalization.words, decoration: field('Suraj Kumar')),
+        TextField(controller: name, textCapitalization: TextCapitalization.words, decoration: field(t('Full name'))),
         const SizedBox(height: 12),
         Row(children: [
-          Expanded(child: Text('Sign with your finger', style: tx(12.5, color: kMute, weight: FontWeight.w700))),
-          TextButton(onPressed: () => _pad.currentState?.clear(), child: const Text('Clear')),
+          Expanded(child: Text(tr('Sign with your finger'), style: tx(12.5, color: kMute, weight: FontWeight.w700))),
+          TextButton(onPressed: () => _pad.currentState?.clear(), child: Text(tr('Clear'))),
         ]),
         SignaturePad(key: _pad, onActive: (on) => setState(() => _drawing = on)),
         const SizedBox(height: 10),
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: const Color(0xFFF1EFE8), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: kLocked, borderRadius: BorderRadius.circular(12)),
           child: Row(children: [
-            const Icon(Icons.lock_outline, size: 16, color: kMute),
+            Icon(Icons.lock_outline, size: 16, color: kMute),
             const SizedBox(width: 8),
-            Text('Date: $today (today)', style: tx(13.5, weight: FontWeight.w700)),
+            Text(tr('Date: {0} (today)', [today]), style: tx(13.5, weight: FontWeight.w700)),
           ]),
         ),
         const SizedBox(height: 14),
-        Btn(_saving ? 'Signing…' : 'Accept and sign', onTap: _saving ? null : _sign),
-        TextButton(onPressed: _saving ? null : () => setState(() => signing = false), child: const Text('Back to agreement')),
+        Btn(_saving ? tr('Signing…') : tr('Accept and sign'), onTap: _saving ? null : _sign),
+        TextButton(onPressed: _saving ? null : () => setState(() => signing = false), child: Text(tr('Back to agreement'))),
       ];
 }
 
@@ -266,28 +266,28 @@ class AgreementDetails extends StatelessWidget {
     final paras = data.text.split(RegExp(r'\n\s*\n')).map((x) => x.trim()).where((x) => x.isNotEmpty).toList();
     final shown = showAll ? paras : paras.take(6).toList();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text('Version ${data.version} · Date ${data.signed?['date'] ?? todayText()}${data.signed != null ? ' · Ref ${data.signed!['id']}' : ''}',
+      Text(tr('Version {0} · Date {1}{2}', [data.version, data.signed?['date'] ?? todayText(), data.signed != null ? ' · Ref ${data.signed!['id']}' : '']),
           style: tx(12, color: kMute)),
       const SizedBox(height: 8),
-      _section('FIRST PARTY · PLATFORM', [
-        _row('Legal name', '${p['legalName']}'),
-        _row('Trading name', 'Nukad Kart'),
-        _row('Type', 'Sole proprietorship'),
-        _row('Address', '${p['address']}'),
+      _section(tr('FIRST PARTY · PLATFORM'), [
+        _row(tr('Legal name'), '${p['legalName']}'),
+        _row(tr('Trading name'), 'Nukad Kart'),
+        _row(tr('Type'), tr('Sole proprietorship')),
+        _row(tr('Address'), '${p['address']}'),
         _row('PAN', '${p['pan']}'),
-        _row('Email', '${p['email']}'),
+        _row(tr('Email'), '${p['email']}'),
       ]),
-      _section('SECOND PARTY · VENDOR (from your account)', [
-        _row('Store name', '${v['storeName']}'),
-        _row('Type', v['kind'] == 'thela' ? 'Thela (moving)' : 'Shop'),
-        _row('Address', '${v['address']}'),
-        _row('Mobile', '${v['phone']}'),
-        _row('Email', '${v['email']}'),
+      _section(tr('SECOND PARTY · VENDOR (from your account)'), [
+        _row(tr('Store name'), '${v['storeName']}'),
+        _row(tr('Type'), v['kind'] == 'thela' ? tr('Thela (moving)') : tr('Shop')),
+        _row(tr('Address'), '${v['address']}'),
+        _row(tr('Mobile'), '${v['phone']}'),
+        _row(tr('Email'), '${v['email']}'),
         _row('PAN', '${v['pan'] ?? ''}'),
-        _row('Aadhaar', '${v['aadhaarLast4'] ?? ''}'.isEmpty ? '' : 'XXXX XXXX ${v['aadhaarLast4']}'),
-        _row('GST', switch (v['gstType']) { 'regular' => 'Regular', 'composition' => 'Composition', _ => 'Not registered' }),
+        _row(tr('Aadhaar'), '${v['aadhaarLast4'] ?? ''}'.isEmpty ? '' : tr('XXXX XXXX {0}', [v['aadhaarLast4']])),
+        _row('GST', switch (v['gstType']) { 'regular' => tr('Regular'), 'composition' => tr('Composition'), _ => tr('Not registered') }),
         if (v['gstType'] != 'none') _row('GSTIN', '${v['gstin']}'),
-        _row('FSSAI', '${v['fssai']}'.isEmpty ? 'Not provided' : '${v['fssai']}'),
+        _row('FSSAI', '${v['fssai']}'.isEmpty ? tr('Not provided') : '${v['fssai']}'),
       ]),
       Box(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -296,7 +296,7 @@ class AgreementDetails extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(x, style: RegExp(r'^\d+\.\s+[A-Z]').hasMatch(x) ? tx(13.5, weight: FontWeight.w800) : tx(12.5)),
             ),
-          if (!showAll && onShowAll != null) TextButton(onPressed: onShowAll, child: const Text('Read full agreement')),
+          if (!showAll && onShowAll != null) TextButton(onPressed: onShowAll, child: Text(tr('Read full agreement'))),
         ]),
       ),
     ]);
@@ -319,10 +319,10 @@ class _SignedCardState extends State<SignedCard> {
     try {
       final (path, inDownloads) = await saveAgreementPdf(widget.data);
       if (mounted) {
-        showToastAction(context, inDownloads ? 'Saved to Downloads' : 'Saved in the app', 'Open', () => openAgreementFile(path));
+        showToastAction(context, inDownloads ? tr('Saved to Downloads') : tr('Saved in the app'), tr('Open'), () => openAgreementFile(path));
       }
     } catch (_) {
-      if (mounted) toast(context, 'Could not make the PDF. Try again.');
+      if (mounted) toast(context, tr('Could not make the PDF. Try again.'));
     }
     if (mounted) setState(() => _busy = false);
   }
@@ -332,7 +332,7 @@ class _SignedCardState extends State<SignedCard> {
     try {
       await shareAgreementPdf(widget.data);
     } catch (_) {
-      if (mounted) toast(context, 'Could not share the PDF. Try again.');
+      if (mounted) toast(context, tr('Could not share the PDF. Try again.'));
     }
     if (mounted) setState(() => _busy = false);
   }
@@ -350,28 +350,42 @@ class _SignedCardState extends State<SignedCard> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Box(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          kv('Reference', '${s['id']}'),
-          kv('Signed by', '${s['name']}'),
-          kv('Date', signedAtText(s)),
-          kv('Version', '${s['version']}'),
+          kv(tr('Reference'), '${s['id']}'),
+          kv(tr('Signed by'), '${s['name']}'),
+          kv(tr('Date'), signedAtText(s)),
+          kv(tr('Version'), '${s['version']}'),
           const Divider(),
-          Container(
-            color: Colors.white,
-            height: 90,
-            width: double.infinity,
-            child: Image.memory(base64Decode('${s['signature']}'), fit: BoxFit.contain),
-          ),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(child: _sigBox(t('VENDOR'), '${s['signature']}', '${s['name']}')),
+            const SizedBox(width: 8),
+            Expanded(child: _sigBox(t('FOR NUKAD KART'), '${widget.data.party['signature'] ?? ''}', '${widget.data.party['signName'] ?? ''}')),
+          ]),
         ]),
       ),
       const SizedBox(height: 10),
       Row(children: [
-        Expanded(child: Btn('Download PDF', outline: true, onTap: _busy ? null : _download)),
+        Expanded(child: Btn(tr('Download PDF'), outline: true, onTap: _busy ? null : _download)),
         const SizedBox(width: 10),
-        Expanded(child: Btn('Share', outline: true, onTap: _busy ? null : _share)),
+        Expanded(child: Btn(tr('Share'), outline: true, onTap: _busy ? null : _share)),
       ]),
     ]);
   }
 }
+
+Widget _sigBox(String who, String b64, String name) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(who, style: tx(10.5, color: kMute, weight: FontWeight.w800)),
+      const SizedBox(height: 4),
+      Container(
+        height: 70,
+        width: double.infinity,
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+        child: b64.isEmpty
+            ? Center(child: Text(t('Not added yet'), style: tx(11, color: const Color(0xFF5E6A55))))
+            : Image.memory(base64Decode(b64), fit: BoxFit.contain),
+      ),
+      const SizedBox(height: 4),
+      Text(name, maxLines: 2, style: tx(11.5, weight: FontWeight.w700)),
+    ]);
 
 String signedAtText(Map<String, dynamic> s) {
   final at = DateTime.fromMillisecondsSinceEpoch(((s['acceptedAt'] as num?) ?? 0).toInt() * 1000);
@@ -386,17 +400,17 @@ class SignedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar('Agreement signed'),
+      appBar: bar(tr('Agreement signed')),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         const SizedBox(height: 10),
-        const Icon(Icons.check_circle, color: kAct, size: 64),
+        Icon(Icons.check_circle, color: kAct, size: 64),
         const SizedBox(height: 6),
-        Text('Signed', textAlign: TextAlign.center, style: tx(20, weight: FontWeight.w800)),
-        Text('Nukad team will now verify your documents.', textAlign: TextAlign.center, style: tx(13, color: kMute)),
+        Text(tr('Signed'), textAlign: TextAlign.center, style: tx(20, weight: FontWeight.w800)),
+        Text(tr('Nukad team will now verify your documents.'), textAlign: TextAlign.center, style: tx(13, color: kMute)),
         const SizedBox(height: 16),
         SignedCard(data: data),
         const SizedBox(height: 16),
-        Btn('Go to my shop', onTap: () => Navigator.pop(context)),
+        Btn(tr('Go to my shop'), onTap: () => Navigator.pop(context)),
       ]),
     );
   }
@@ -416,12 +430,12 @@ class SignaturePadState extends State<SignaturePad> {
 
   void clear() => setState(_strokes.clear);
 
-  Future<Uint8List?> toPng() async {
+  Future<Uint8List?> toPng({bool transparent = false}) async {
     final points = _strokes.fold<int>(0, (n, s) => n + s.length);
     if (points < 8) return null;
     final rec = ui.PictureRecorder();
     final c = Canvas(rec);
-    c.drawRect(Offset.zero & _size, Paint()..color = Colors.white);
+    if (!transparent) c.drawRect(Offset.zero & _size, Paint()..color = Colors.white);
     _SigPainter(_strokes).paint(c, _size);
     final img = await rec.endRecording().toImage(_size.width.round(), _size.height.round());
     final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
@@ -457,7 +471,7 @@ class _SigPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = kInk
+      ..color = const Color(0xFF14203C) // ink pen, on the white box in both themes
       ..strokeWidth = 2.6
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round

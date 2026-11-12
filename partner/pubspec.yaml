@@ -25,6 +25,7 @@ dependencies:
   path_provider: ^2.1.5
   firebase_core: ^4.0.0
   firebase_messaging: ^16.0.0
+  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +53,11 @@ flutter:
           weight: 700
         - asset: assets/NotoSans-ExtraBold.ttf
           weight: 800
+    - family: NotoSansDevanagari
+      fonts:
+        - asset: assets/NotoSansDevanagari-Regular.ttf
+        - asset: assets/NotoSansDevanagari-Bold.ttf
+          weight: 700
 
 dependency_overrides:
   image: 4.5.4

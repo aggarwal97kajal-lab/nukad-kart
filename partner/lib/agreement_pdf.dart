@@ -18,6 +18,8 @@ Future<Uint8List> agreementPdf(AgreementData d) async {
   final bold = pw.Font.ttf(await rootBundle.load('assets/NotoSans-Bold.ttf'));
   final s = d.signed!, p = d.party, v = d.vendor;
   final sig = pw.MemoryImage(base64Decode('${s['signature']}'));
+  final nkSigB64 = '${p['signature'] ?? ''}';
+  final nkSig = nkSigB64.isEmpty ? null : pw.MemoryImage(base64Decode(nkSigB64));
   final green = PdfColor.fromInt(0xFF315426);
   final mute = PdfColor.fromInt(0xFF5E6A55);
   pw.TextStyle st(double size, {bool b = false, PdfColor? c}) => pw.TextStyle(font: b ? bold : regular, fontSize: size, color: c);
@@ -98,9 +100,27 @@ Future<Uint8List> agreementPdf(AgreementData d) async {
           row('Agreement version', '${s['version']}'),
           row('Date and time', signedAtText(s)),
           row('Electronic reference', '${s['id']}'),
+          pw.SizedBox(height: 8),
+          pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+            pw.Expanded(
+              child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                pw.Text('VENDOR', style: st(8.5, b: true, c: green)),
+                pw.Container(height: 60, width: 200, child: pw.Image(sig, fit: pw.BoxFit.contain)),
+                pw.Text('${s['name']}', style: st(9, b: true)),
+                pw.Text(signedAtText(s), style: st(8, c: mute)),
+              ]),
+            ),
+            pw.SizedBox(width: 16),
+            pw.Expanded(
+              child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                pw.Text('FOR NUKAD KART', style: st(8.5, b: true, c: green)),
+                pw.Container(height: 60, width: 200, child: nkSig == null ? pw.SizedBox() : pw.Image(nkSig, fit: pw.BoxFit.contain)),
+                pw.Text('${p['signName'] ?? ''}'.isEmpty ? '${p['legalName']}' : '${p['signName']}', style: st(9, b: true)),
+                pw.Text(signedAtText(s), style: st(8, c: mute)),
+              ]),
+            ),
+          ]),
           pw.SizedBox(height: 6),
-          pw.Text('Signature', style: st(9, c: mute)),
-          pw.Container(height: 70, width: 220, child: pw.Image(sig, fit: pw.BoxFit.contain)),
           pw.Text('The vendor ticked "I have read and agree" and "I am authorised to accept for my business", typed the name above and signed with a finger in the app. The server recorded the time, account and device.',
               style: st(7.5, c: mute)),
         ]),

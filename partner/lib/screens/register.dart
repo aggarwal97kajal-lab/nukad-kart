@@ -10,6 +10,7 @@ import '../session.dart';
 import '../ui.dart';
 import '../widgets/map_picker.dart';
 import '../ola.dart';
+import '../prefs.dart';
 
 /// FSSAI's official registration portal (FoSCoS).
 const fssaiPortal = 'https://foscos.fssai.gov.in/';
@@ -24,7 +25,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  String kind = 'shop';
+  String kind = prefs.kind == 'thela' ? 'thela' : 'shop';
   final name = TextEditingController();
   final shopNo = TextEditingController();
   final landmark = TextEditingController();
@@ -32,8 +33,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final pan = TextEditingController();
   final aadhaar4 = TextEditingController();
   OlaPlace? place; // area, city, state, PIN from the map pin (can't be typed)
-  final opens = TextEditingController(text: '8 am');
-  final closes = TextEditingController(text: '10 pm');
+  final opens = TextEditingController(text: tr('8 am'));
+  final closes = TextEditingController(text: tr('10 pm'));
   final fssai = TextEditingController();
   final gstin = TextEditingController();
   String gstType = 'none';
@@ -85,13 +86,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<Position?> _position() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      if (mounted) toast(context, 'Turn on location (GPS) and try again.');
+      if (mounted) toast(context, tr('Turn on location (GPS) and try again.'));
       return null;
     }
     var p = await Geolocator.checkPermission();
     if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
     if (p == LocationPermission.denied || p == LocationPermission.deniedForever) {
-      if (mounted) toast(context, 'Allow location to set where your shop is.');
+      if (mounted) toast(context, tr('Allow location to set where your shop is.'));
       return null;
     }
     return Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
@@ -106,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         lng = p.longitude;
       }
     } catch (_) {
-      if (mounted) toast(context, 'Could not get the location. Try again outside or near a window.');
+      if (mounted) toast(context, tr('Could not get the location. Try again outside or near a window.'));
     }
     if (mounted) setState(() => _locating = false);
   }
@@ -134,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       }
     } catch (_) {
-      if (mounted) toast(context, 'Could not read GPS. Stand outside the shop and take the photo again.');
+      if (mounted) toast(context, tr('Could not read GPS. Stand outside the shop and take the photo again.'));
     }
     if (mounted) setState(() => _photoGps = false);
   }
@@ -150,7 +151,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
             leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Take photo'),
+            title: Text(tr('Take photo')),
             onTap: () {
               Navigator.pop(ctx);
               _takePhoto(ImageSource.camera);
@@ -158,7 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Choose from gallery'),
+            title: Text(tr('Choose from gallery')),
             onTap: () {
               Navigator.pop(ctx);
               _takePhoto(ImageSource.gallery);
@@ -171,29 +172,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? get _locationError {
     if (kind != 'shop' || photo == null) return null; // editing without a new photo: the server checks the saved one
-    if (photoLat == null) return _photoGps ? null : 'The photo has no GPS. Turn on location and take the photo again at the shop.';
+    if (photoLat == null) return _photoGps ? null : tr('The photo has no GPS. Turn on location and take the photo again at the shop.');
     if ((photoAccuracy ?? 0) > maxPinDistance) {
-      return 'GPS is weak here (±${photoAccuracy!.round()} m). Step outside the shop and take the photo again.';
+      return tr('GPS is weak here (±{0} m). Step outside the shop and take the photo again.', [photoAccuracy!.round()]);
     }
     final d = pinDistance;
     if (d != null && d > maxPinDistance) {
       final far = d >= 1000 ? '${(d / 1000).toStringAsFixed(1)} km' : '${d.round()} m';
-      return 'This address is $far from where the shop photo was taken (allowed: ${maxPinDistance.round()} m). Move the pin to your shop or take the photo at the shop.';
+      return tr('This address is {0} from where the shop photo was taken (allowed: {1} m). Move the pin to your shop or take the photo at the shop.', [far, maxPinDistance.round()]);
     }
     return null;
   }
 
   Future<void> _save() async {
     if (photo == null && !editing) {
-      toast(context, kind == 'shop' ? 'Take a photo of the shop front.' : 'Add a photo of your thela.');
+      toast(context, kind == 'shop' ? tr('Take a photo of the shop front.') : tr('Add a photo of your thela.'));
       return;
     }
-    if (!RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$').hasMatch(pan.text.trim().toUpperCase())) {
-      toast(context, 'Enter a valid PAN (example: ABCDE1234F).');
+    if (kind == 'shop' && !RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$').hasMatch(pan.text.trim().toUpperCase())) {
+      toast(context, tr('Enter a valid PAN (example: ABCDE1234F).'));
       return;
     }
     if (aadhaar4.text.length != 4) {
-      toast(context, 'Enter the last 4 digits of Aadhaar.');
+      toast(context, tr('Enter the last 4 digits of Aadhaar.'));
       return;
     }
     final locErr = _locationError;
@@ -202,19 +203,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
     if (kind == 'shop' && shopNo.text.trim().isEmpty) {
-      toast(context, 'Enter the shop number.');
+      toast(context, tr('Enter the shop number.'));
       return;
     }
     if (kind == 'shop' && (place == null || place!.pin.length != 6)) {
-      toast(context, 'The map could not find the PIN here. Move the pin a little.');
+      toast(context, tr('The map could not find the PIN here. Move the pin a little.'));
       return;
     }
+    if (lat == null && kind == 'thela') {
+      // Thela: where they are now, only as a starting point. On the map a thela shows at its live location while LIVE.
+      await _locate();
+    }
     if (lat == null) {
-      toast(context, 'Set the shop location.');
+      if (mounted) toast(context, kind == 'shop' ? tr('Set the shop location.') : tr('Turn on location (GPS) and try again.'));
       return;
     }
     if (name.text.trim().length < 2) {
-      toast(context, 'Enter the shop name.');
+      toast(context, tr('Enter the shop name.'));
       return;
     }
     setState(() => _saving = true);
@@ -224,7 +229,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'kind': kind,
         'name': name.text.trim(),
         'address': address.text.trim(),
-        'pan': pan.text.trim().toUpperCase(),
+        'pan': kind == 'shop' ? pan.text.trim().toUpperCase() : '',
         'aadhaarLast4': aadhaar4.text,
         'addr': {
           'shop': shopNo.text.trim(),
@@ -240,8 +245,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'closesAt': closes.text.trim(),
         'door': kind == 'shop' && door,
         'pickup': kind == 'shop' && pickup,
-        'fssai': fssai.text.trim(),
-        'gstType': gstType,
+        'fssai': kind == 'shop' ? fssai.text.trim() : '',
+        'gstType': kind == 'shop' ? gstType : 'none',
         'gstin': gstin.text.trim().toUpperCase(),
         if (bytes != null) 'photo': base64Encode(bytes),
         'photoLat': kind == 'shop' ? photoLat : null,
@@ -252,7 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
       if (wasEditing && mounted && Navigator.canPop(context)) {
         Navigator.pop(context);
-        toast(context, 'Details saved. Tap “Send for verification” when ready.');
+        toast(context, tr('Details saved. Tap “Send for verification” when ready.'));
         return;
       }
     } on ApiError catch (e) {
@@ -264,7 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _locked(String t, {IconData icon = Icons.lock_outline}) => Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(color: const Color(0xFFF1EFE8), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFD3D1C7))),
+        decoration: BoxDecoration(color: kLocked, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLockedLine)),
         child: Row(children: [
           Icon(icon, size: 16, color: kMute),
           const SizedBox(width: 8),
@@ -289,7 +294,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(color: v == value ? kAct : Colors.transparent, borderRadius: BorderRadius.circular(9)),
-                  child: Text(label, style: tx(12.5, color: v == value ? Colors.white : kMute, weight: FontWeight.w800)),
+                  child: Text(label, style: tx(12.5, color: v == value ? kOnAct : kMute, weight: FontWeight.w800)),
                 ),
               ),
             ),
@@ -299,20 +304,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar(editing ? 'Business details' : 'Register', actions: [
-        if (!editing) TextButton(onPressed: session.signOut, child: Text('Log out', style: tx(13, weight: FontWeight.w700)))
+      appBar: bar(editing ? tr('Business details') : tr('Register'), actions: [
+        if (!editing) TextButton(onPressed: session.signOut, child: Text(tr('Log out'), style: tx(13, weight: FontWeight.w700)))
       ]),
       body: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 30), children: [
-        Text('Step 2 of 5 · Business details', style: tx(12, color: kMute)),
-        _label('I am a'),
-        _seg([('shop', 'Shop / kirana'), ('thela', 'Thela (moving)')], kind, (v) {
-          if (editing) return;
-          setState(() {
-            if (v != kind) photo = photoLat = photoLng = photoAccuracy = null;
-            kind = v;
-          });
-        }),
-        _label(kind == 'shop' ? 'Shop front photo (camera, at the shop)' : 'Photo of your thela'),
+        Text(tr('Step 2 of 5 · Business details'), style: tx(12, color: kMute)),
+        Row(children: [
+          Icon(kind == 'shop' ? Icons.storefront_outlined : Icons.shopping_cart_outlined, color: kAct),
+          const SizedBox(width: 8),
+          Expanded(child: Text(kind == 'shop' ? tr('Shop / kirana') : tr('Thela (moving)'), style: tx(15, weight: FontWeight.w800))),
+          if (!editing)
+            TextButton(
+              onPressed: () => setState(() {
+                kind = kind == 'shop' ? 'thela' : 'shop';
+                prefs.setKind(kind);
+                photo = photoLat = photoLng = photoAccuracy = null;
+              }),
+              child: Text(kind == 'shop' ? tr('I have a thela') : tr('I have a shop')),
+            ),
+        ]),
+        _label(kind == 'shop' ? tr('Shop front photo (camera, at the shop)') : tr('Photo of your thela')),
         GestureDetector(
           onTap: _photoMenu,
           child: Container(
@@ -322,9 +333,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: kSurf, borderRadius: BorderRadius.circular(16), border: Border.all(color: kAct, width: 1.5)),
             child: photo == null
                 ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Icon(Icons.photo_camera_outlined, color: kAct, size: 40),
+                    Icon(Icons.photo_camera_outlined, color: kAct, size: 40),
                     const SizedBox(height: 6),
-                    Text(editing ? 'Saved photo kept · tap to take a new one' : (kind == 'shop' ? 'Take photo' : 'Add photo'),
+                    Text(editing ? tr('Saved photo kept · tap to take a new one') : (kind == 'shop' ? tr('Take photo') : tr('Add photo')),
                         style: tx(14, color: kAct, weight: FontWeight.w800)),
                   ])
                 : Stack(fit: StackFit.expand, children: [
@@ -338,8 +349,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         padding: const EdgeInsets.all(8),
                         child: Text(
                             _photoGps
-                                ? '📍 Reading GPS…'
-                                : '📍 ${photoLat?.toStringAsFixed(5) ?? 'no GPS'}, ${photoLng?.toStringAsFixed(5) ?? ''}${photoAccuracy != null ? ' · ±${photoAccuracy!.round()} m' : ''} · tap to retake',
+                                ? tr('📍 Reading GPS…')
+                                : tr('📍 {0}, {1}{2} · tap to retake', [photoLat?.toStringAsFixed(5) ?? 'no GPS', photoLng?.toStringAsFixed(5) ?? '', photoAccuracy != null ? ' · ±${photoAccuracy!.round()} m' : '']),
                             style: tx(11.5, color: Colors.white)),
                       ),
                     ),
@@ -349,18 +360,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 8),
         Box(
           color: kAmbBg,
-          border: const Color(0xFFF2D3A6),
-          child: Text('Real photo only. A wrong or copied photo gets the account blocked.',
+          border: kAmbLine,
+          child: Text(tr('Real photo only. A wrong or copied photo gets the account blocked.'),
               style: tx(12.5, weight: FontWeight.w600)),
         ),
-        _label(kind == 'shop' ? 'Shop name' : 'Name customers see'),
-        TextField(controller: name, textCapitalization: TextCapitalization.words, decoration: field('e.g. Sharma General Store')),
-        _label('Phone for customers (verified)'),
+        _label(kind == 'shop' ? tr('Shop name') : tr('Name customers see')),
+        TextField(controller: name, textCapitalization: TextCapitalization.words,
+            decoration: field(kind == 'shop' ? tr('e.g. Sharma General Store') : tr('e.g. Raju Fresh Sabzi'))),
+        _label(tr('Phone for customers (verified)')),
         _locked('+91 ${session.phone}', icon: Icons.verified),
         if (kind == 'shop') ...[
-          _label('Shop address (search, then put the pin on your shop)'),
+          _label(tr('Shop address (search, then put the pin on your shop)')),
           if (photoLat == null && !(editing && photo == null && lat != null))
-            Box(color: kSurf, child: Text('Take the shop photo first. The map opens where the photo was taken.', style: tx(13)))
+            Box(color: kSurf, child: Text(tr('Take the shop photo first. The map opens where the photo was taken.'), style: tx(13)))
           else
             OlaMapPicker(
               lat: photoLat ?? lat!,
@@ -372,103 +384,90 @@ class _RegisterScreenState extends State<RegisterScreen> {
               }),
             ),
           const SizedBox(height: 8),
-          TextField(controller: shopNo, decoration: field('Shop No. 7, Ground floor', label: 'Shop no. / floor (you type)')),
+          TextField(controller: shopNo, decoration: field(tr('Shop No. 7, Ground floor'), label: tr('Shop no. / floor (you type)'))),
           const SizedBox(height: 8),
-          TextField(controller: landmark, decoration: field('Near metro pillar 812', label: 'Landmark (you type)')),
+          TextField(controller: landmark, decoration: field(tr('Near metro pillar 812'), label: tr('Landmark (you type)'))),
           const SizedBox(height: 8),
-          Text('From the map pin (can’t be typed)', style: tx(11.5, color: kMute, weight: FontWeight.w700)),
+          Text(tr('From the map pin (can’t be typed)'), style: tx(11.5, color: kMute, weight: FontWeight.w700)),
           const SizedBox(height: 4),
           _locked(place == null
-              ? 'Move the pin to your shop'
+              ? tr('Move the pin to your shop')
               : [place!.area, place!.city, [place!.state, place!.pin].where((x) => x.isNotEmpty).join(' ')].where((x) => x.isNotEmpty).join(' · '),
               icon: Icons.lock_outline),
           if (_locationError != null) ...[
             const SizedBox(height: 8),
             Box(
               color: kRedBg,
-              border: const Color(0xFFF7C1C1),
+              border: kRedLine,
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Icon(Icons.error_outline, color: kRed, size: 20),
+                Icon(Icons.error_outline, color: kRed, size: 20),
                 const SizedBox(width: 8),
                 Expanded(child: Text(_locationError!, style: tx(12.5, color: kRed, weight: FontWeight.w600))),
               ]),
             ),
           ] else if (pinDistance != null) ...[
             const SizedBox(height: 6),
-            Text('✓ Pin is ${pinDistance!.round()} m from the photo spot', style: tx(12, color: kAct, weight: FontWeight.w700)),
+            Text(tr('✓ Pin is {0} m from the photo spot', [pinDistance!.round()]), style: tx(12, color: kAct, weight: FontWeight.w700)),
           ],
-        ] else ...[
-          _label('Usual area'),
-          Box(
-            child: Row(children: [
-              const Icon(Icons.my_location, color: kAct),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                    lat == null ? 'Stand where you usually sell and tap “Use this spot”.' : 'Set: ${lat!.toStringAsFixed(5)}, ${lng!.toStringAsFixed(5)}',
-                    style: tx(13.5, weight: FontWeight.w600)),
-              ),
-              TextButton(onPressed: _locating ? null : _locate, child: Text(_locating ? 'Finding…' : 'Use this spot')),
-            ]),
-          ),
-          const SizedBox(height: 8),
-          TextField(controller: address, maxLines: 2, decoration: field('Area / market where you sell')),
         ],
         if (kind == 'shop') ...[
-          _label('Timings (the shop goes off the app after closing time)'),
+          _label(tr('Timings (the shop goes off the app after closing time)')),
           Row(children: [
-            Expanded(child: TextField(controller: opens, decoration: field('8 am', label: 'Opens'))),
+            Expanded(child: TextField(controller: opens, decoration: field(tr('8 am'), label: tr('Opens')))),
             const SizedBox(width: 10),
-            Expanded(child: TextField(controller: closes, decoration: field('10 pm', label: 'Closes'))),
+            Expanded(child: TextField(controller: closes, decoration: field(tr('10 pm'), label: tr('Closes')))),
           ]),
           const SizedBox(height: 6),
           SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: door,
               onChanged: (v) => setState(() => door = v),
-              title: Text('Home delivery (your own delivery person)', style: tx(14))),
+              title: Text(tr('Home delivery (your own delivery person)'), style: tx(14))),
           SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: pickup,
               onChanged: (v) => setState(() => pickup = v),
-              title: Text('Customer can pick up at the shop', style: tx(14))),
+              title: Text(tr('Customer can pick up at the shop'), style: tx(14))),
         ],
-        _label('PAN (required)'),
+        if (kind == 'shop') ...[
+        _label(tr('PAN (required)')),
         TextField(
             controller: pan,
             textCapitalization: TextCapitalization.characters,
             inputFormatters: [LengthLimitingTextInputFormatter(10)],
             decoration: field('ABCDE1234F')),
-        _label('Aadhaar · last 4 digits only (required)'),
+        ],
+        _label(tr('Aadhaar · last 4 digits only (required)')),
         TextField(
             controller: aadhaar4,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
-            decoration: field('4821').copyWith(prefixText: 'XXXX XXXX ')),
+            decoration: field('4821').copyWith(prefixText: tr('XXXX XXXX '))),
         const SizedBox(height: 4),
-        Text('We never ask for the full Aadhaar number.', style: tx(11.5, color: kMute)),
-        _label('FSSAI registration number (to sell food)'),
+        Text(tr('We never ask for the full Aadhaar number.'), style: tx(11.5, color: kMute)),
+        if (kind == 'shop') ...[
+        _label(tr('FSSAI registration number (to sell food)')),
         TextField(
             controller: fssai,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
-            decoration: field('14 digits · leave empty if you don’t have one')),
+            decoration: field(tr('14 digits · leave empty if you don’t have one'))),
         const SizedBox(height: 8),
         Box(
           color: kSurf,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('No FSSAI number? You can start with non-food items. Food categories open when you add it.',
+            Text(tr('No FSSAI number? You can start with non-food items. Food categories open when you add it.'),
                 style: tx(12.5)),
             const SizedBox(height: 6),
             GestureDetector(
               onTap: () => launchUrl(Uri.parse(fssaiPortal), mode: LaunchMode.externalApplication),
-              child: Text('How to get FSSAI registration → foscos.fssai.gov.in',
+              child: Text(tr('How to get FSSAI registration → foscos.fssai.gov.in'),
                   style: tx(13, color: kAct, weight: FontWeight.w800)),
             ),
           ]),
         ),
         _label('GST'),
-        _seg([('none', 'No GST'), ('regular', 'GST (Regular)'), ('composition', 'Composition')], gstType,
+        _seg([('none', tr('No GST')), ('regular', tr('GST (Regular)')), ('composition', tr('Composition'))], gstType,
             (v) => setState(() => gstType = v)),
         if (gstType != 'none') ...[
           const SizedBox(height: 8),
@@ -476,10 +475,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: gstin,
               textCapitalization: TextCapitalization.characters,
               inputFormatters: [LengthLimitingTextInputFormatter(15)],
-              decoration: field('GSTIN, e.g. 07ABCDE1234F1Z5')),
+              decoration: field(tr('GSTIN, e.g. 07ABCDE1234F1Z5'))),
+        ],
         ],
         const SizedBox(height: 22),
-        Btn(_saving ? 'Saving…' : 'Save and continue', onTap: _saving || _locationError != null ? null : _save),
+        Btn(_saving ? tr('Saving…') : tr('Save and continue'), onTap: _saving || _locationError != null ? null : _save),
       ]),
     );
   }

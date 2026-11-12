@@ -1,3 +1,4 @@
+import 'l10n.dart';
 import 'package:sendotp_flutter_sdk/sendotp_flutter_sdk.dart';
 
 /// MSG91 SMS code (same OTP widget as the customer app). The server re-checks the token with MSG91.
@@ -53,14 +54,14 @@ class Msg91OtpService extends OtpService {
     _init();
     try {
       final m = _asMap(await OTPWidget.sendOTP({'identifier': '91$mobile10'}));
-      if (!_ok(m)) throw OtpException(_msg(m, 'Could not send the code. Try again.'));
+      if (!_ok(m)) throw OtpException(_msg(m, tr('Could not send the code. Try again.')));
       final id = '${m['reqId'] ?? m['request_id'] ?? m['message'] ?? ''}';
-      if (id.isEmpty) throw OtpException('Could not send the code. Try again.');
+      if (id.isEmpty) throw OtpException(tr('Could not send the code. Try again.'));
       return id;
     } on OtpException {
       rethrow;
     } catch (e) {
-      throw OtpException('Could not send the code. Check your internet and try again.');
+      throw OtpException(tr('Could not send the code. Check your internet and try again.'));
     }
   }
 
@@ -69,11 +70,11 @@ class Msg91OtpService extends OtpService {
     _init();
     try {
       final m = _asMap(await OTPWidget.retryOTP({'reqId': requestId, 'retryChannel': 11}));
-      if (!_ok(m)) throw OtpException(_msg(m, 'Could not resend. Try again in a moment.'));
+      if (!_ok(m)) throw OtpException(_msg(m, tr('Could not resend. Try again in a moment.')));
     } on OtpException {
       rethrow;
     } catch (e) {
-      throw OtpException('Could not resend. Check your internet and try again.');
+      throw OtpException(tr('Could not resend. Check your internet and try again.'));
     }
   }
 
@@ -88,7 +89,7 @@ class Msg91OtpService extends OtpService {
       }
       return false;
     } catch (_) {
-      throw OtpException('Could not check the code. Check your internet and try again.');
+      throw OtpException(tr('Could not check the code. Check your internet and try again.'));
     }
   }
 }
