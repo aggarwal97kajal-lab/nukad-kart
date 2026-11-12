@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:maplibre_gl/maplibre_gl.dart';
 import '../data/demo_data.dart';
 import '../l10n.dart';
@@ -23,7 +24,9 @@ class ThelaRealMap extends StatefulWidget {
 class _ThelaRealMapState extends State<ThelaRealMap> {
   late final Future<String> _style = OlaMaps.style(dark: gDark, lang: gLang);
   MapLibreMapController? _c;
-  Circle? _thela, _halo;
+  Circle? _halo;
+  Symbol? _thela;
+  bool _icon = false;
   bool _ready = false;
   (double, double)? _shown;
 
@@ -65,6 +68,12 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
     await c.addLine(LineOptions(geometry: ring, lineColor: '#21331B', lineWidth: 1.6, lineOpacity: 0.8));
     final home = LatLng(widget.homeLat, widget.homeLng);
     await c.addCircle(CircleOptions(geometry: home, circleRadius: 9, circleColor: '#21331B', circleStrokeColor: '#FFFFFF', circleStrokeWidth: 3));
+    // The Nukad Kart branded thela (same picture as before).
+    try {
+      final b = await rootBundle.load('assets/images/markers/thela.png');
+      await c.addImage('nk-thela', b.buffer.asUint8List());
+      _icon = true;
+    } catch (_) {}
     _ready = true;
     await _move();
   }
@@ -74,9 +83,10 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
     if (!_ready || c == null) return;
     if (p == null) {
       if (_thela != null) {
-        await c.removeCircle(_thela!);
+        await c.removeSymbol(_thela!);
         await c.removeCircle(_halo!);
-        _thela = _halo = null;
+        _thela = null;
+        _halo = null;
       }
       return;
     }
@@ -85,15 +95,18 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
     final st = ThelaTracker.instance.of(widget.thelaId).status;
     final col = st == ThelaStatus.wasHere ? '#8A4B00' : '#3B6D11';
     if (_thela == null) {
-      _halo = await c.addCircle(CircleOptions(geometry: at, circleRadius: 22, circleColor: col, circleOpacity: 0.22));
-      _thela = await c.addCircle(CircleOptions(geometry: at, circleRadius: 11, circleColor: col, circleStrokeColor: '#FFFFFF', circleStrokeWidth: 3));
-      // Fit home and thela on screen.
-      final sw = LatLng(math.min(at.latitude, widget.homeLat), math.min(at.longitude, widget.homeLng));
-      final ne = LatLng(math.max(at.latitude, widget.homeLat), math.max(at.longitude, widget.homeLng));
-      await c.animateCamera(CameraUpdate.newLatLngBounds(LatLngBounds(southwest: sw, northeast: ne), left: 60, top: 60, right: 60, bottom: 60));
+      _halo = await c.addCircle(CircleOptions(geometry: at, circleRadius: 26, circleColor: col, circleOpacity: 0.22));
+      _thela = await c.addSymbol(_icon
+          ? SymbolOptions(geometry: at, iconImage: 'nk-thela', iconSize: 0.22, iconAnchor: 'bottom')
+          : SymbolOptions(geometry: at, textField: '🛒', textSize: 22));
+      // Fit home and thela on screen, but never closer than street level (they can be 1 m apart).
+      const pad = 0.0012; // ~130 m
+      final sw = LatLng(math.min(at.latitude, widget.homeLat) - pad, math.min(at.longitude, widget.homeLng) - pad);
+      final ne = LatLng(math.max(at.latitude, widget.homeLat) + pad, math.max(at.longitude, widget.homeLng) + pad);
+      await c.animateCamera(CameraUpdate.newLatLngBounds(LatLngBounds(southwest: sw, northeast: ne), left: 40, top: 40, right: 40, bottom: 40));
     } else {
       await c.updateCircle(_halo!, CircleOptions(geometry: at, circleColor: col));
-      await c.updateCircle(_thela!, CircleOptions(geometry: at, circleColor: col));
+      await c.updateSymbol(_thela!, SymbolOptions(geometry: at));
     }
     _shown = p;
   }
@@ -111,6 +124,7 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
             MapLibreMap(
               styleString: snap.data!,
               initialCameraPosition: CameraPosition(target: LatLng(widget.homeLat, widget.homeLng), zoom: 15.2),
+              minMaxZoomPreference: MinMaxZoomPreference(12, 18),
               onMapCreated: (c) => _c = c,
               onStyleLoadedCallback: _onStyle,
               compassEnabled: false,

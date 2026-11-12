@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'shell.dart';
 import 'live_setup.dart';
@@ -156,6 +157,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ]),
               ),
+              if (s['kind'] == 'thela' && s['live'] == true) ...[
+                const SizedBox(height: 8),
+                _LocationStatus(),
+              ],
               if (s['kind'] == 'thela' && session.selling > 0 && s['pricesConfirmed'] != s['today']) ...[
                 const SizedBox(height: 12),
                 Box(
@@ -288,6 +293,50 @@ class PaymentRow extends StatelessWidget {
           pill(label, color: fg, bg: bg),
         ]),
       ),
+    );
+  }
+}
+
+/// "Location sent 20 s ago" — shows a LIVE thela that customers can see it.
+class _LocationStatus extends StatefulWidget {
+  @override
+  State<_LocationStatus> createState() => _LocationStatusState();
+}
+
+class _LocationStatusState extends State<_LocationStatus> {
+  Timer? _t;
+  @override
+  void initState() {
+    super.initState();
+    _t = Timer.periodic(const Duration(seconds: 5), (_) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _t?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = ThelaLocation.instance;
+    return ListenableBuilder(
+      listenable: Listenable.merge([loc.lastOk, loc.lastError]),
+      builder: (context, _) {
+        final at = loc.lastOk.value;
+        final ago = at == null ? null : DateTime.now().difference(at).inSeconds;
+        final ok = ago != null && ago < 180;
+        final text = at == null
+            ? (loc.lastError.value != null ? tr('Location not sent: {0}', [loc.lastError.value]) : t('Sending your location…'))
+            : ago! < 60
+                ? tr('Location sent {0} s ago · customers see you', [ago])
+                : tr('Location sent {0} min ago', [ago ~/ 60]);
+        return Row(children: [
+          Icon(ok ? Icons.my_location : Icons.location_disabled, size: 16, color: ok ? kAct : kAmb),
+          const SizedBox(width: 6),
+          Expanded(child: Text(text, style: tx(12, color: ok ? kMute : kAmb, weight: FontWeight.w600))),
+        ]);
+      },
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'api.dart';
@@ -9,7 +10,7 @@ import 'session.dart';
 /// Battery plan:
 ///  * Balanced accuracy (phone towers + Wi-Fi, GPS only when needed) while moving.
 ///  * Sends only after ~75 m of movement, not on a timer.
-///  * When standing, one precise GPS fix every 4 minutes as a "still here".
+///  * When standing, a "still here" every 90 s (no GPS) and one precise GPS fix every 5 minutes.
 ///  * Runs as an ongoing notification ("Nukad Partner is sharing your location"), so Android
 ///    keeps it alive with the screen off — no "Allow all the time" location needed.
 /// No location for 10 minutes → the server hides the thela and sends a push.
@@ -20,8 +21,14 @@ class ThelaLocation {
 
   StreamSubscription<Position>? _sub;
   Timer? _beat;
-  DateTime _lastSent = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _starting = false;
+  Position? _last;
+  DateTime _lastSent = DateTime.fromMillisecondsSinceEpoch(0), _lastFix = DateTime.fromMillisecondsSinceEpoch(0);
   bool get running => _sub != null;
+
+  /// For the Home card: when the server last got this phone's location (null = not yet).
+  final lastOk = ValueNotifier<DateTime?>(null);
+  final lastError = ValueNotifier<String?>(null);
 
   // ----- phone setup checks (shown before going LIVE) -----
   static Future<bool> locationAllowed() async {
@@ -70,8 +77,20 @@ class ThelaLocation {
 
   // ----- sending -----
   Future<void> start() async {
-    if (running) return;
-    if (!await locationAllowed() || !await locationOn()) return;
+    if (running || _starting) return;
+    _starting = true;
+    try {
+      await _start();
+    } finally {
+      _starting = false;
+    }
+  }
+
+  Future<void> _start() async {
+    if (!await locationAllowed() || !await locationOn()) {
+      lastError.value = 'Location is off or not allowed';
+      return;
+    }
     final settings = AndroidSettings(
       accuracy: LocationAccuracy.medium,
       distanceFilter: 75,
@@ -85,7 +104,7 @@ class ThelaLocation {
       ),
     );
     _sub = Geolocator.getPositionStream(locationSettings: settings).listen(_send, onError: (_) {});
-    _beat = Timer.periodic(const Duration(minutes: 1), (_) => _heartbeat());
+    _beat = Timer.periodic(const Duration(seconds: 30), (_) => _heartbeat());
     _precise();
   }
 
@@ -107,11 +126,19 @@ class ThelaLocation {
     }
   }
 
+  /// Standing still: every 90 s tell the server "still here" with the last position (no GPS needed),
+  /// and every 5 min take one fresh GPS fix in case the phone moved without the stream noticing.
   void _heartbeat() {
-    if (DateTime.now().difference(_lastSent) >= const Duration(minutes: 4)) _precise();
+    final now = DateTime.now();
+    if (now.difference(_lastFix) >= const Duration(minutes: 5)) {
+      _precise();
+    } else if (now.difference(_lastSent) >= const Duration(seconds: 90) && _last != null) {
+      _send(_last!);
+    }
   }
 
   Future<void> _precise() async {
+    _lastFix = DateTime.now();
     try {
       final p = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 25)));
@@ -126,6 +153,7 @@ class ThelaLocation {
 
   Future<void> _send(Position p) async {
     if (p.accuracy > 300) return; // too rough to show on a map
+    _last = p;
     _lastSent = DateTime.now();
     try {
       final r = await api.call('POST', '/v1/partner/location', {
@@ -133,10 +161,14 @@ class ThelaLocation {
         'lng': p.longitude,
         if (p.speed > 0.5 && p.heading >= 0) 'heading': p.heading,
       });
+      lastOk.value = DateTime.now();
+      lastError.value = null;
       if (r['live'] == false) {
         await stop(); // switched off from another phone, or by the server
         session.refresh().catchError((_) {});
       }
-    } catch (_) {}
+    } catch (e) {
+      lastError.value = '$e';
+    }
   }
 }

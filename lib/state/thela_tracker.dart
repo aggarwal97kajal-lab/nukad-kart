@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import '../data/demo_data.dart';
 
 /// Live status of a moving seller (thela) as the customer sees it.
-///  standing    — location came in the last 2 min and the thela hasn't moved for 2 min
-///  moving      — location came in the last 2 min and it moved recently
-///  wasHere     — last location 2–10 min ago ("Was here 5 min ago")
+///  standing    — location came in the last 3 min and the thela hasn't moved for 2 min
+///  moving      — location came in the last 3 min and it moved recently
+///  wasHere     — last location 3–10 min ago ("Was here 5 min ago")
 ///  notAvailable — no location for 10 min, switched off, or outside 500 m (the server stops sending it)
 enum ThelaStatus { standing, moving, wasHere, notAvailable }
 
@@ -27,7 +27,7 @@ class ThelaTracker extends ChangeNotifier {
   static final ThelaTracker instance = ThelaTracker._();
 
   static const double radius = 500;
-  static const int freshSec = 120; // newer than this = LIVE
+  static const int freshSec = 180; // newer than this = LIVE (a standing thela's phone checks in every 90 s)
 
   final Map<String, ThelaLive> live = {};
   final Set<String> _everSeen = {};

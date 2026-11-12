@@ -341,7 +341,7 @@ class _HomeTabState extends State<HomeTab> {
           child: CardBox(
             padding: EdgeInsets.all(12),
             child: Row(children: [
-              EmojiTile(th.items.isEmpty ? '🛒' : th.items.first.emoji, size: 54, bg: kGBg),
+              EmojiTile(th.photoUrl ?? (th.items.isEmpty ? '🛒' : th.items.first.emoji), size: 54, bg: kGBg),
               SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

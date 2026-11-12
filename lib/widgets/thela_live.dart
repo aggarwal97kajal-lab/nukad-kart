@@ -7,7 +7,7 @@ import 'map_markers.dart';
 String thelaStatusLabel(ThelaStatus s, [int seenAgo = 0]) => switch (s) {
       ThelaStatus.standing => '● LIVE · Standing here',
       ThelaStatus.moving => '➜ LIVE · Moving',
-      ThelaStatus.wasHere => 'Was here ${(seenAgo / 60).round().clamp(2, 10)} min ago',
+      ThelaStatus.wasHere => 'Was here ${(seenAgo / 60).round().clamp(3, 10)} min ago',
       ThelaStatus.notAvailable => 'Not nearby now',
     };
 

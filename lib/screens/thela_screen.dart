@@ -64,6 +64,10 @@ class _ThelaView extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(8, 6, 16, 16),
                   child: Row(children: [
                     IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: Colors.white)),
+                    if (th.photoUrl != null) ...[
+                      ClipRRect(borderRadius: BorderRadius.circular(12), child: storeImage(th.photoUrl!, width: 54, height: 54)),
+                      SizedBox(width: 10),
+                    ],
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(th.name, style: head(19, color: Colors.white)),

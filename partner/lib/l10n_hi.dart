@@ -622,4 +622,8 @@ const Map<String, String> hi = {
   'Send test': 'टेस्ट भेजें',
   'Sent to {0} of {1} phones. It should appear in a few seconds.': '{1} में से {0} फ़ोन पर भेजा। कुछ सेकंड में दिखना चाहिए।',
   'Not sent.': 'नहीं भेजा गया।',
+  'Location not sent: {0}': 'लोकेशन नहीं गई: {0}',
+  'Sending your location…': 'आपकी लोकेशन भेजी जा रही है…',
+  'Location sent {0} s ago · customers see you': 'लोकेशन {0} सेकंड पहले गई · ग्राहक आपको देख रहे हैं',
+  'Location sent {0} min ago': 'लोकेशन {0} मिनट पहले गई',
 };
