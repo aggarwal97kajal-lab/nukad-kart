@@ -4,6 +4,7 @@ import '../session.dart';
 import '../ui.dart';
 import '../upi.dart';
 import 'home.dart';
+import 'pass_active.dart';
 
 class PassScreen extends StatefulWidget {
   const PassScreen({super.key});
@@ -274,6 +275,7 @@ class PayResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (status == 'PAID') return PassActiveScreen(payment: payment);
     final (icon, title, body, color) = switch (status) {
       'PAID' => (Icons.check_circle, 'Pass active', 'Your ${payment['planName']} pass is on. Switch LIVE on to show your shop.', kAct),
       'FAILED' => (Icons.cancel, 'Payment failed', 'No money was taken for the pass. Try again or use another UPI app.', kRed),
