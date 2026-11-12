@@ -442,6 +442,10 @@ class SignaturePadState extends State<SignaturePad> {
     return bytes?.buffer.asUint8List();
   }
 
+  bool _penUp = false;
+
+  bool _inside(Offset o) => o.dx >= 2 && o.dy >= 2 && o.dx <= _size.width - 2 && o.dy <= _size.height - 2;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, box) {
@@ -449,16 +453,35 @@ class SignaturePadState extends State<SignaturePad> {
       return Container(
         height: 160,
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: kAct, width: 1.5)),
-        // Raw pointer events, so the page doesn't scroll while signing.
-        child: Listener(
-          onPointerDown: (e) {
-            widget.onActive?.call(true);
-            setState(() => _strokes.add([e.localPosition]));
-          },
-          onPointerMove: (e) => setState(() => _strokes.last.add(e.localPosition)),
-          onPointerUp: (_) => widget.onActive?.call(false),
-          onPointerCancel: (_) => widget.onActive?.call(false),
-          child: CustomPaint(painter: _SigPainter(_strokes), size: Size.infinite),
+        // The ink stays inside the box: drawing outside is not recorded, and the line starts again when the finger comes back in.
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(11),
+          // Raw pointer events, so the page doesn't scroll while signing.
+          child: Listener(
+            onPointerDown: (e) {
+              widget.onActive?.call(true);
+              _penUp = false;
+              setState(() => _strokes.add([e.localPosition]));
+            },
+            onPointerMove: (e) {
+              final o = e.localPosition;
+              if (!_inside(o)) {
+                _penUp = true;
+                return;
+              }
+              setState(() {
+                if (_penUp || _strokes.isEmpty) {
+                  _strokes.add([o]);
+                  _penUp = false;
+                } else {
+                  _strokes.last.add(o);
+                }
+              });
+            },
+            onPointerUp: (_) => widget.onActive?.call(false),
+            onPointerCancel: (_) => widget.onActive?.call(false),
+            child: CustomPaint(painter: _SigPainter(_strokes), size: Size.infinite),
+          ),
         ),
       );
     });
