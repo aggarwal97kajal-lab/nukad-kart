@@ -58,7 +58,7 @@ jobs:
           echo "D1 database: $id"
 
       - name: Apply database migrations
-        run: $WRANGLER d1 migrations apply nukad-kart-db --remote
+        run: $WRANGLER d1 migrations apply nukad-kart-db-apac --remote
 
       - name: Deploy worker
         run: $WRANGLER deploy
