@@ -43,6 +43,7 @@ class _CallsCardState extends State<CallsCard> {
         coming = l(r['coming']);
         _at = DateTime.now();
       });
+      if (waiting.isEmpty) showCalls({'count': 0}); // nobody waiting: remove the alert
     } catch (_) {}
   }
 

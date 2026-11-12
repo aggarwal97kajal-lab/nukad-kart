@@ -52,6 +52,9 @@ class ApiError implements Exception {
         'not_verified' => tr('Nukad team is still verifying your shop.'),
         'already_approved' => tr('Your shop is already approved. Contact support to change details.'),
         'reason_required' => tr('Write a reason.'),
+        'account_is_thela' => tr('This Google account is registered as a Thela. Choose Thela, or log in with another Google account.'),
+        'account_is_shop' => tr('This Google account is registered as a Shop / Kirana. Choose Shop, or log in with another Google account.'),
+        'kind_locked' => tr('Shop / Thela can’t be changed after approval.'),
         _ => tr('Something went wrong ({0}). Try again.', [code]),
       };
   @override

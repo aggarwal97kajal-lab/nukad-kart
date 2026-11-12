@@ -23,6 +23,29 @@ Future<void> partnerBackgroundPush(RemoteMessage m) async {
   } catch (_) {}
   await _initLocal();
   if (m.data['type'] == 'order_new') await showOrderAlarm(m.data);
+  if (m.data['type'] == 'calls') await showCalls(m.data);
+}
+
+const _callsNotifId = 7001;
+
+/// Thela: one "customers calling you" notification, updated as calls come and go; count 0 removes it.
+Future<void> showCalls(Map<String, dynamic> d) async {
+  try {
+    final n = int.tryParse('${d['count'] ?? 0}') ?? 0;
+    if (n <= 0) {
+      await _local.cancel(_callsNotifId);
+      return;
+    }
+    await _local.show(
+      _callsNotifId,
+      '${d['title'] ?? 'A customer is calling you'}',
+      '${d['body'] ?? ''}',
+      NotificationDetails(
+        android: AndroidNotificationDetails(_calls.id, _calls.name,
+            channelDescription: _calls.description, importance: Importance.high, priority: Priority.high, timeoutAfter: 180000, onlyAlertOnce: false),
+      ),
+    );
+  } catch (_) {}
 }
 
 /// Called after login. Asks for notification permission once, sends this phone's token to the server,
@@ -38,6 +61,8 @@ Future<void> setupPush(VoidCallback onUpdate) async {
       FirebaseMessaging.onMessage.listen((m) {
         if (m.data['type'] == 'order_new') {
           showOrderAlarm(m.data);
+        } else if (m.data['type'] == 'calls') {
+          showCalls(m.data);
         } else {
           _showLocal(m);
         }

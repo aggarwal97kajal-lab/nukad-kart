@@ -17,7 +17,8 @@ class Session extends ChangeNotifier {
   String phone = '';
   bool phoneVerified = false, trialAvailable = true;
   int selling = 0; // products switched on (thela: items selling today)
-  Map<String, dynamic>? staffInfo; // logged in as shop staff (not owner): name, storeName, canOrders
+  Map<String, dynamic>? staffInfo;
+  Map<String, dynamic>? change; // latest asked change of name / address / photo (pending or rejected) // logged in as shop staff (not owner): name, storeName, canOrders
   bool _googleReady = false;
   String? _hw;
 
@@ -104,6 +105,13 @@ class Session extends ChangeNotifier {
     await _p!.setString('token', api.token);
     await _p!.setString('email', email);
     await refresh();
+    // One Google account = one business type. Chose Shop but this account is a Thela (or the other way)?
+    final want = _p!.getString('kind') ?? '';
+    if (store != null && want.isNotEmpty && store!['kind'] != want) {
+      final was = '${store!['kind']}';
+      await signOut();
+      throw ApiError(409, was == 'thela' ? 'account_is_thela' : 'account_is_shop');
+    }
     return true;
   }
 
@@ -122,6 +130,7 @@ class Session extends ChangeNotifier {
   }
 
   void _apply(Map<String, dynamic> r) {
+    change = r['change'] == null ? null : Map<String, dynamic>.from(r['change'] as Map);
     staffInfo = r['staff'] == null ? null : Map<String, dynamic>.from(r['staff'] as Map);
     admin = r['admin'] == true;
     selling = (r['selling'] as num?)?.toInt() ?? 0;

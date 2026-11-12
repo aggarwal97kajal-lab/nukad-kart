@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import '../api.dart';
 import '../ui.dart';
 import '../excel_io.dart';
+import 'changes_review.dart';
 import 'docs.dart';
 import 'home.dart';
 
@@ -254,6 +255,8 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
           Btn(tr('Ask for changes'), outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
         ] else if (p['status'] == 'active')
           Btn(tr('Ask for changes (takes shop offline)'), outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
+        const SizedBox(height: 8),
+        Btn(t('Agreement versions'), outline: true, onTap: () => showAgreementVersions(context, '${p['id']}')),
         if (p['kind'] != 'thela') ...[
           const SizedBox(height: 8),
           // Admin fills a shop's products from the shop's Excel (same template as the shop uses).

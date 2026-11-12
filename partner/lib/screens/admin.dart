@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../api.dart';
 import '../push.dart';
+import 'changes_review.dart';
 import '../session.dart';
 import '../ui.dart';
 import 'home.dart';
@@ -249,6 +250,8 @@ class _AdminScreenState extends State<AdminScreen> {
                 ),
                 const SizedBox(height: 10),
                 Btn(tr('Partners to verify'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen()))),
+                const SizedBox(height: 8),
+                Btn(tr('Detail changes to check'), outline: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangesReviewScreen()))),
                 const SizedBox(height: 10),
                 _healthCard(),
                 const SizedBox(height: 18),

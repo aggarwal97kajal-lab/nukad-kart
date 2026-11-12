@@ -138,7 +138,20 @@ class _AgreementScreenState extends State<AgreementScreen> {
               : ListView(
                   physics: _drawing ? const NeverScrollableScrollPhysics() : null,
                   padding: const EdgeInsets.all(16),
-                  children: signing ? _signStep(d) : _readStep(d),
+                  children: [
+                    // A live shop whose name / address / number changed: must sign again before going live.
+                    if (!widget.viewOnly && session.store?['status'] == 'active')
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Box(
+                          color: kSurf,
+                          border: kAmb,
+                          child: Text(tr('Your details changed. Sign the updated agreement to go live again. Your earlier agreement is kept.'),
+                              style: tx(13.5, weight: FontWeight.w800)),
+                        ),
+                      ),
+                    ...(signing ? _signStep(d) : _readStep(d)),
+                  ],
                 ),
     );
   }

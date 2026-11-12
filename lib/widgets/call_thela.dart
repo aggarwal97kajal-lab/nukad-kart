@@ -17,6 +17,7 @@ class CallThelaCard extends StatefulWidget {
 
 class _CallThelaCardState extends State<CallThelaCard> {
   Map<String, dynamic>? call; // my latest call (any thela)
+  int strikes = 0, strikesMax = 3, blockedUntil = 0;
   bool busy = false;
   Timer? _t;
   late final void Function(Map<String, dynamic>) _onPush = (d) {
@@ -28,9 +29,9 @@ class _CallThelaCardState extends State<CallThelaCard> {
     super.initState();
     pushListeners.add(_onPush);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
-    // While waiting for an answer, check every 5 s (the push may be late or off).
+    // While waiting for an answer or for the thela to come, check every 5 s (the push may be late or off).
     _t = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (call?['status'] == 'waiting') _load();
+      if (call?['status'] == 'waiting' || call?['status'] == 'coming') _load();
       if (mounted) setState(() {}); // countdown
     });
   }
@@ -48,7 +49,12 @@ class _CallThelaCardState extends State<CallThelaCard> {
     try {
       final r = await api.currentCall(s.apiToken);
       if (!mounted) return;
-      setState(() => call = r['call'] == null ? null : Map<String, dynamic>.from(r['call'] as Map));
+      setState(() {
+        call = r['call'] == null ? null : Map<String, dynamic>.from(r['call'] as Map);
+        strikes = (r['strikes'] as num?)?.toInt() ?? 0;
+        strikesMax = (r['strikesMax'] as num?)?.toInt() ?? 3;
+        blockedUntil = (r['blockedUntil'] as num?)?.toInt() ?? 0;
+      });
       _waitingSince = DateTime.now();
     } catch (_) {}
   }
@@ -124,17 +130,37 @@ class _CallThelaCardState extends State<CallThelaCard> {
           TextButton(onPressed: busy ? null : _cancel, child: Text('I don’t need it now')));
     }
     final failed = mine && (status == 'declined' || status == 'expired');
+    final paused = blockedUntil * 1000 > DateTime.now().millisecondsSinceEpoch;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (mine && status == 'no_show')
+        Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: NoteBox(
+              paused
+                  ? '$first came but couldn’t find you. This happened $strikes times, so calling thelas is paused for 7 days.'
+                  : '$first came but couldn’t find you. This is $strikes of $strikesMax — at $strikesMax, calling thelas is paused for 7 days.',
+              icon: Icons.report_gmailerrorred,
+              color: kRed,
+              bg: kRedBg),
+        ),
       if (failed)
         Padding(
           padding: EdgeInsets.only(bottom: 10),
           child: NoteBox('$first can’t come right now. Try again later, or call another thela nearby.', icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
         ),
-      if (widget.live)
+      if (paused)
+        NoteBox('Calling thelas is paused until ${_date(blockedUntil)} because thelas came and found nobody $strikesMax times.', icon: Icons.block)
+      else if (widget.live)
         PrimaryButton(busy ? 'Calling…' : 'Call to my street', onTap: busy ? null : _call)
       else
         NoteBox('You can call this thela when it is LIVE near you.', icon: Icons.info_outline),
     ]);
+  }
+
+  static String _date(int sec) {
+    final d = DateTime.fromMillisecondsSinceEpoch(sec * 1000);
+    const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${d.day} ${m[d.month - 1]}';
   }
 
   Widget _box(IconData icon, String title, String sub, Color fg, Color bg, Widget action) => Container(

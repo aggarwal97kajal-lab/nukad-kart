@@ -53,6 +53,22 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   String barcode = '', brand = '', category = '', unit = 'kg', offImage = '', credit = '';
   double gst = 5;
   Set<int> sizes = {};
+  bool per100 = false; // loose by weight: price typed per 100 g (saved per kg)
+  final sizeNum = TextEditingController();
+  String sizeUnit = 'g';
+
+  double? _perKg(double? v) => v == null ? null : (loose && unit == 'kg' && per100 ? v * 10 : v);
+
+  /// "250 g" → 250 + g, so the pack size is a number and a unit button.
+  void _splitSize() {
+    final m = RegExp(r'^\s*([\d.]+)\s*(g|gm|kg|ml|l|ltr|pcs|pc|piece|pieces)?\b', caseSensitive: false).firstMatch(size.text);
+    if (m == null) return;
+    sizeNum.text = m[1]!;
+    final u = (m[2] ?? 'g').toLowerCase();
+    sizeUnit = switch (u) { 'gm' => 'g', 'l' || 'ltr' => 'L', 'pc' || 'piece' || 'pieces' => 'pcs', _ => u };
+  }
+
+  void _joinSize() => size.text = sizeNum.text.trim().isEmpty ? '' : '${sizeNum.text.trim()} $sizeUnit';
   bool inStock = true, countStock = false, _saving = false;
   int stock = 0;
   File? ownPhoto;
@@ -69,6 +85,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     if (e != null) {
       name.text = '${e['name']}';
       size.text = '${e['size'] ?? ''}';
+      _splitSize();
       mrp.text = e['mrp'] == null ? '' : _num(e['mrp']);
       price.text = _num(e['price']);
       hsn.text = '${e['hsn'] ?? ''}';
@@ -93,6 +110,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       name.text = '${f['name'] ?? ''}';
       brand = '${f['brand'] ?? ''}';
       size.text = '${f['size'] ?? ''}';
+      _splitSize();
       category = '${f['category'] ?? ''}';
       offImage = '${f['image'] ?? ''}';
       if (offImage.isNotEmpty) credit = 'Photo: Open Food Facts (CC BY-SA)';
@@ -115,7 +133,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   @override
   void dispose() {
-    for (final c in [name, size, mrp, price, hsn]) {
+    for (final c in [name, size, mrp, price, hsn, sizeNum]) {
       c.dispose();
     }
     super.dispose();
@@ -157,7 +175,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   Future<void> _save() async {
-    final pr = double.tryParse(price.text.trim());
+    final pr = _perKg(double.tryParse(price.text.trim()));
     final m = double.tryParse(mrp.text.trim());
     String? err;
     if (name.text.trim().length < 2) err = t('Enter the product name.');
@@ -260,7 +278,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pr = double.tryParse(price.text.trim());
+    final pr = _perKg(double.tryParse(price.text.trim()));
     final m = double.tryParse(mrp.text.trim());
     final c = catByName(category);
     return Scaffold(
@@ -285,7 +303,28 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           Padding(padding: const EdgeInsets.only(top: 6), child: Text(t('Add an FSSAI number to sell food'), style: tx(12, color: kAmb, weight: FontWeight.w700))),
         if (!loose) ...[
           _label(t('Pack size')),
-          TextField(controller: size, decoration: field('250 g · 1 L · 6 pcs')),
+          Row(children: [
+            SizedBox(
+              width: 96,
+              child: TextField(
+                controller: sizeNum,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                onChanged: (_) => _joinSize(),
+                decoration: field('250'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Wrap(spacing: 6, children: [
+                for (final u in const ['g', 'kg', 'ml', 'L', 'pcs'])
+                  ChoiceChip(label: Text(u), selected: sizeUnit == u, onSelected: (_) => setState(() {
+                    sizeUnit = u;
+                    _joinSize();
+                  })),
+              ]),
+            ),
+          ]),
           Row(children: [
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -331,7 +370,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 ),
               ),
           ]),
-          _label(tr('Price per {0} ₹', [t(unit)])),
+          if (unit == 'kg')
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(spacing: 8, children: [
+                ChoiceChip(label: Text(t('Price per kg')), selected: !per100, onSelected: (_) => setState(() => per100 = false)),
+                ChoiceChip(label: Text(t('Price per 100 g')), selected: per100, onSelected: (_) => setState(() => per100 = true)),
+              ]),
+            ),
+          _label(unit == 'kg' && per100 ? t('Price per 100 g ₹') : tr('Price per {0} ₹', [t(unit)])),
           TextField(
               controller: price,
               onChanged: (_) => setState(() {}),

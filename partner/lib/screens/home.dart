@@ -5,6 +5,7 @@ import 'live_setup.dart';
 import 'calls_card.dart';
 import 'chats.dart';
 import 'staff.dart';
+import 'phone.dart';
 import '../thela_location.dart';
 import '../api.dart';
 import '../session.dart';
@@ -123,12 +124,16 @@ class _HomeScreenState extends State<HomeScreen> {
               onSelected: (v) {
                 if (v == 'out') session.signOut();
                 if (v == 'staff') Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffScreen()));
+                if (v == 'details') Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
+                if (v == 'number') Navigator.push(context, MaterialPageRoute(builder: (_) => const PhoneScreen(change: true)));
                 if (v == 'delete') Navigator.push(context, MaterialPageRoute(builder: (_) => const DeleteAccountScreen()));
                 if (v == 'agreement') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AgreementScreen(viewOnly: true)));
                 }
               },
               itemBuilder: (_) => [
+                PopupMenuItem(value: 'details', child: Text(tr('My details'))),
+                PopupMenuItem(value: 'number', child: Text(tr('Change mobile number'))),
                 if (s['kind'] != 'thela') PopupMenuItem(value: 'staff', child: Text(tr('Staff'))),
                 PopupMenuItem(value: 'agreement', child: Text(tr('Partner agreement'))),
                 PopupMenuItem(value: 'out', child: Text(tr('Log out'))),
@@ -162,6 +167,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ]),
               ),
+              if (session.change != null) ...[
+                const SizedBox(height: 12),
+                Box(
+                  color: session.change!['status'] == 'rejected' ? kRedBg : kSurf,
+                  child: Text(
+                      session.change!['status'] == 'rejected'
+                          ? tr('Your changes were not approved: {0}', [session.change!['note']])
+                          : t('Your new details are with the Nukad team. You stay live meanwhile.'),
+                      style: tx(12.5, weight: FontWeight.w700)),
+                ),
+              ],
               if (s['kind'] == 'thela' && s['live'] == true) ...[
                 const SizedBox(height: 8),
                 _LocationStatus(),

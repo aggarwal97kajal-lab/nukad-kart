@@ -113,6 +113,8 @@ class Api {
   Future<Map<String, dynamic>> myOrders(String token) => _call('GET', '/v1/me/orders', token: token);
   Future<Map<String, dynamic>> cancelOrderOnline(String token, String id) => _call('POST', '/v1/me/orders/$id/cancel', token: token);
 
+  Future<Map<String, dynamic>> pushTest(String token) => _call('POST', '/v1/me/push-test', token: token);
+
   // ----- Chat with a thela -----
   Future<Map<String, dynamic>> chat(String token, String thelaId) => _call('GET', '/v1/me/chats/$thelaId', token: token);
   Future<Map<String, dynamic>> sendChat(String token, String thelaId, String text, {String? address, double? lat, double? lng}) =>

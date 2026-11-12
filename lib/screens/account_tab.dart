@@ -1,6 +1,7 @@
 import '../services/api.dart';
 import '../services/google_auth.dart';
 import 'package:flutter/material.dart';
+import '../services/push.dart';
 import '../l10n.dart';
 import '../state/app_state.dart';
 import '../widgets/ui.dart';
@@ -109,6 +110,7 @@ class AccountTab extends StatelessWidget {
                 icon: Icons.notifications_none,
                 title: t('Notification preferences'),
                 onTap: () => open(const NotificationPrefsScreen())),
+            if (s.signedIn) _Row(icon: Icons.notifications_active_outlined, title: t('Test notification'), onTap: () => _testPush(context, s)),
             _Row(icon: Icons.help_outline, title: t('FAQ'), onTap: () => open(const FaqScreen())),
           ]),
           const SizedBox(height: 12),
@@ -156,6 +158,32 @@ class AccountTab extends StatelessWidget {
       behavior: SnackBarBehavior.floating,
     ));
   }
+}
+
+/// Sends a test push to this phone and says exactly what happened (to find why notifications don't arrive).
+Future<void> _testPush(BuildContext context, AppState s) async {
+  showToast(context, 'Sending a test…');
+  String text;
+  try {
+    await setupPush(s.apiToken, (_, __, ___) {}, force: true);
+    final r = await api.pushTest(s.apiToken);
+    final errs = ((r['errors'] as List?) ?? []).join('\n');
+    text = (r['sent'] ?? 0) > 0
+        ? 'Sent to ${r['sent']} of ${r['phones']} phones. It should appear in a few seconds.'
+        : 'Not sent. $errs';
+  } on ApiException catch (e) {
+    text = e.message;
+  }
+  if (pushProblem.isNotEmpty) text += '\n\nOn this phone: $pushProblem';
+  if (!context.mounted) return;
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Test notification'),
+      content: SelectableText(text),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK'))],
+    ),
+  );
 }
 
 class _Section extends StatelessWidget {

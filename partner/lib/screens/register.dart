@@ -114,6 +114,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   /// Shop: camera only, stamped with GPS where it was taken. Thela: camera or gallery, no GPS.
   Future<void> _takePhoto([ImageSource source = ImageSource.camera]) async {
+    if (source == ImageSource.camera) {
+      // The camera app can't show our text, so say it just before it opens.
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.screen_rotation, size: 40),
+          title: Text(t('Hold your phone sideways')),
+          content: Text(kind == 'shop'
+              ? t('Stand outside and fit the whole shop front, with its board, in the photo. Take it at the shop: the photo’s location is checked.')
+              : t('Fit the whole thela in the photo, with you standing next to it.')),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(t('Open camera')))],
+        ),
+      );
+      if (go != true) return;
+    }
     final x = await ImagePicker().pickImage(source: source, maxWidth: 1280, imageQuality: 70);
     if (x == null) return;
     photoAt = DateTime.now().millisecondsSinceEpoch ~/ 1000;
@@ -254,10 +269,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'photoAt': photoAt,
       });
       final wasEditing = editing;
+      final live = session.store?['status'] == 'active';
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
       if (wasEditing && mounted && Navigator.canPop(context)) {
         Navigator.pop(context);
-        toast(context, tr('Details saved. Tap “Send for verification” when ready.'));
+        toast(context, live
+            ? (r['changeSent'] == true
+                ? tr('Sent to the Nukad team. You stay live; the new details show after approval, then you sign the updated agreement.')
+                : tr('Saved.'))
+            : tr('Details saved. Tap “Send for verification” when ready.'));
+        session.refresh().catchError((_) {});
         return;
       }
     } on ApiError catch (e) {

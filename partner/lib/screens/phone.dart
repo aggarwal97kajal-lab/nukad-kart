@@ -7,7 +7,9 @@ import '../ui.dart';
 
 /// Step 1: verify the shop's mobile number by SMS code. The free trial is tied to this number and this phone.
 class PhoneScreen extends StatefulWidget {
-  const PhoneScreen({super.key});
+  /// From "My details": change the number of a live shop (the old one stays until the new one is verified).
+  final bool change;
+  const PhoneScreen({super.key, this.change = false});
   @override
   State<PhoneScreen> createState() => _PhoneScreenState();
 }
@@ -57,6 +59,11 @@ class _PhoneScreenState extends State<PhoneScreen> {
           'deviceId': await session.deviceId(),
         });
         await session.refresh();
+        if (widget.change && mounted) {
+          Navigator.pop(context);
+          toast(context, tr('Number changed. Sign the updated agreement to go live again.'));
+          return;
+        }
         if (mounted && r['trialAvailable'] == false) {
           toast(context, tr('Number verified. The free trial was already used on this number or this phone.'));
         }

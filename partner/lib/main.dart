@@ -228,9 +228,11 @@ class KindScreen extends StatelessWidget {
           Btn(t('Continue'), onTap: prefs.kind.isEmpty ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()))),
           const SizedBox(height: 14),
           Center(
-            child: TextButton(
+            child: OutlinedButton.icon(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffLoginScreen())),
-              child: Text(t('Staff login'), style: tx(15, color: kAct, weight: FontWeight.w800)),
+              icon: Icon(Icons.badge_outlined, color: kAct),
+              label: Text(t('Staff login'), style: tx(15, color: kAct, weight: FontWeight.w800)),
+              style: OutlinedButton.styleFrom(shape: const StadiumBorder(), side: BorderSide(color: kAct)),
             ),
           ),
           Center(child: Text(t('Login with the mobile number your store owner added.'), textAlign: TextAlign.center, style: tx(12, color: kMute))),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../push.dart';
 import '../ui.dart';
+import '../live_socket.dart';
 
 /// Thela Home: messages from customers (newest first). Tap to answer with one tap or by typing.
 class ChatsCard extends StatefulWidget {
@@ -76,7 +77,9 @@ class _ChatScreenState extends State<ChatScreen> {
   String? blocked;
   bool sending = false, typing = false;
   final text = TextEditingController();
+  final scroll = ScrollController();
   Timer? _t;
+  LiveSocket? _live;
 
   static const quick = ['Haan hai', 'Khatam ho gaya', '5 min mein aata hoon', 'Aaj nahi aaunga'];
 
@@ -84,22 +87,32 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _load();
-    _t = Timer.periodic(const Duration(seconds: 4), (_) => _load());
+    _live = LiveSocket(widget.id, _load); // new messages arrive at once
+    _t = Timer.periodic(const Duration(seconds: 15), (_) => _load());
   }
 
   @override
   void dispose() {
+    _live?.close();
     _t?.cancel();
+    scroll.dispose();
     text.dispose();
     super.dispose();
   }
 
   void _apply(Map<String, dynamic> r) {
     if (!mounted) return;
+    final n = ((r['messages'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    final grew = n.length != msgs.length;
     setState(() {
-      msgs = ((r['messages'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      blocked = r['blocked'] as String?;
+      msgs = n;
+      if (r.containsKey('blocked')) blocked = r['blocked'] as String?;
     });
+    if (grew) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (scroll.hasClients) scroll.jumpTo(scroll.position.maxScrollExtent);
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -110,11 +123,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _send(String v) async {
     if (v.trim().isEmpty) return;
-    setState(() => sending = true);
+    // Show it at once; the server's copy replaces it a moment later.
+    setState(() {
+      sending = true;
+      msgs = [...msgs, {'from': 'thela', 'text': v.trim(), 'pending': true}];
+    });
+    text.clear();
     try {
       _apply(await api.call('POST', '/v1/partner/chats/${widget.id}', {'text': v.trim()}));
-      text.clear();
     } on ApiError catch (e) {
+      setState(() => msgs = msgs.where((m) => m['pending'] != true).toList());
       if (mounted) toast(context, e.code == 'no_numbers' ? t('Phone numbers can’t be sent in chat.') : e.message);
     }
     if (mounted) setState(() => sending = false);
@@ -123,7 +141,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _action(String what) async {
     try {
       await api.call('POST', '/v1/partner/chats/${widget.id}/$what', {'reason': 'Reported by thela'});
-      if (mounted) toast(context, what == 'report' ? t('Reported. The chat is closed.') : t('Blocked.'));
+      if (mounted) toast(context, what == 'report' ? t('Reported. The chat is closed.') : what == 'unblock' ? t('Unblocked.') : t('Blocked.'));
       _load();
     } catch (_) {}
   }
@@ -135,14 +153,14 @@ class _ChatScreenState extends State<ChatScreen> {
         PopupMenuButton<String>(
           onSelected: _action,
           itemBuilder: (_) => [
-            PopupMenuItem(value: 'block', child: Text(t('Block'))),
+            if (blocked == 'thela') PopupMenuItem(value: 'unblock', child: Text(t('Unblock'))) else PopupMenuItem(value: 'block', child: Text(t('Block'))),
             PopupMenuItem(value: 'report', child: Text(t('Report'), style: TextStyle(color: kRed))),
           ],
         ),
       ]),
       body: Column(children: [
         Expanded(
-          child: ListView(padding: const EdgeInsets.all(12), children: [
+          child: ListView(controller: scroll, padding: const EdgeInsets.all(12), children: [
             for (final m in msgs)
               Align(
                 alignment: m['from'] == 'thela' ? Alignment.centerRight : Alignment.centerLeft,
@@ -150,13 +168,21 @@ class _ChatScreenState extends State<ChatScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(color: m['from'] == 'thela' ? kOkBg : kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kLine)),
-                  child: Text('${m['text']}', style: tx(14.5)),
+                  child: Text('${m['text']}${m['pending'] == true ? '  ·' : ''}', style: tx(14.5, color: m['pending'] == true ? kMute : null)),
                 ),
               ),
           ]),
         ),
         if (blocked != null)
-          Padding(padding: const EdgeInsets.all(14), child: Text(t('This chat is closed.'), style: tx(13, color: kMute)))
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: blocked == 'thela'
+                ? Row(children: [
+                    Expanded(child: Text(t('You blocked this chat.'), style: tx(13, color: kMute))),
+                    OutlinedButton(onPressed: () => _action('unblock'), child: Text(t('Unblock'))),
+                  ])
+                : Text(t('This chat is closed.'), style: tx(13, color: kMute)),
+          )
         else
           SafeArea(
             top: false,

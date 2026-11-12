@@ -48,7 +48,7 @@ const kGstRates = [0.0, 5.0, 18.0, 40.0];
 
 /// Sizes a customer can buy, per unit (grams, ml, pieces).
 const kUnitSizes = {
-  'kg': [100, 250, 500, 1000, 2000, 5000],
+  'kg': [25, 50, 100, 200, 250, 500, 1000, 2000, 5000],
   'litre': [250, 500, 1000, 2000, 5000],
   'piece': [1, 2, 3, 6, 12],
   'dozen': [1, 2],

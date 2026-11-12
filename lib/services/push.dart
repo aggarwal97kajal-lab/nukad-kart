@@ -16,10 +16,13 @@ const _channel = AndroidNotificationChannel('updates', 'Updates',
 bool _ready = false;
 String _sentFor = '';
 
+/// Last thing that went wrong while setting up notifications on this phone (shown by "Test notification").
+String pushProblem = '';
+
 /// After login: ask for notification permission once and send this phone's token to the server.
 /// [onPush] gets every push that arrives while the app is open (title, body, data).
-Future<void> setupPush(String apiToken, void Function(String title, String body, Map<String, dynamic> data) onPush) async {
-  if (apiToken.isEmpty || _sentFor == apiToken) return;
+Future<void> setupPush(String apiToken, void Function(String title, String body, Map<String, dynamic> data) onPush, {bool force = false}) async {
+  if (apiToken.isEmpty || (_sentFor == apiToken && !force)) return;
   _sentFor = apiToken;
   try {
     if (!_ready) {
@@ -42,10 +45,17 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
       FirebaseMessaging.instance.onTokenRefresh.listen((t) => api.pushToken(_sentFor, t).catchError((_) {}));
       _ready = true;
     }
-    await FirebaseMessaging.instance.requestPermission();
+    final perm = await FirebaseMessaging.instance.requestPermission();
+    if (perm.authorizationStatus == AuthorizationStatus.denied) pushProblem = 'Notifications are turned off for Nukad Kart in phone settings.';
     final t = await FirebaseMessaging.instance.getToken();
-    if (t != null) await api.pushToken(apiToken, t);
-  } catch (_) {
+    if (t == null) {
+      pushProblem = 'This phone did not give a notification token (Google Play services?).';
+    } else {
+      await api.pushToken(apiToken, t);
+      if (perm.authorizationStatus != AuthorizationStatus.denied) pushProblem = '';
+    }
+  } catch (e) {
+    pushProblem = '$e';
     _sentFor = ''; // try again next time
   }
 }
