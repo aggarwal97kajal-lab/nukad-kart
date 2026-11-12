@@ -1,0 +1,43 @@
+name: nukad_partner
+description: Nukad Partner — app for shops and thelas on Nukad Kart.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_sign_in: ^7.1.0
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
+  image_picker: ^1.1.2
+  geolocator: ^14.0.0
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FDC731"
+  adaptive_icon_foreground: "assets/icon_fg.png"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.png
+  fonts:
+    - family: NotoSans
+      fonts:
+        - asset: assets/NotoSans-Regular.ttf
+        - asset: assets/NotoSans-Bold.ttf
+          weight: 700
+        - asset: assets/NotoSans-ExtraBold.ttf
+          weight: 800

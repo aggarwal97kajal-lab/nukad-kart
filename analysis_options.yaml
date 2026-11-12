@@ -1,0 +1,4 @@
+analyzer:
+  exclude:
+    - partner/**
+    - backend/**

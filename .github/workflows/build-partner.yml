@@ -1,0 +1,80 @@
+name: Build Partner APK
+
+on:
+  push:
+    branches: [main]
+    paths: ['partner/**', '.github/workflows/build-partner.yml', 'tool/patch_gradle.py']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: partner
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create Android platform files
+        run: flutter create --platforms=android --org com.nukadkart --project-name nukad_partner .
+
+      - name: Permissions, UPI apps, app id com.nukadkart.partner
+        run: python3 tool/configure_android.py > /dev/null
+
+      - name: Sign with the same Nukad Kart key (SHA-1 93:52:A2:10…)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          [ -n "$KEYSTORE_PASSWORD" ] || { echo "::error::KEYSTORE_PASSWORD secret missing"; exit 1; }
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in ../android_extra/upload.jks.enc \
+            -out android/app/upload.jks -pass env:KEYSTORE_PASSWORD
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=nukadkart\nstoreFile=upload.jks\n' \
+            "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" > android/key.properties
+          python3 ../tool/patch_gradle.py > /dev/null
+          grep -n 'applicationId' android/app/build.gradle.kts
+
+      - run: flutter pub get
+
+      - name: App icon
+        run: dart run flutter_launcher_icons
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Check signing certificate
+        run: |
+          signer=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner
+          $signer verify --print-certs build/app/outputs/flutter-apk/app-release.apk | tee /tmp/cert.txt
+          grep -qi "SHA-1 digest: 9352a210781d39ee0c04efc3735fad0b5ea2b279" /tmp/cert.txt
+
+      - run: cp build/app/outputs/flutter-apk/app-release.apk ../NukadPartner.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: partner-v0.1.${{ github.run_number }}
+          name: Nukad Partner v0.1.${{ github.run_number }}
+          body: |
+            Partner app for shops and thelas: sign up, buy a pass with UPI, go LIVE. Admin screen for UPI ID and payment checks.
+            Install: download NukadPartner.apk on your Android phone and allow "Install unknown apps".
+          files: NukadPartner.apk
+          make_latest: false
