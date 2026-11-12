@@ -318,19 +318,20 @@ class _Scene extends StatelessWidget {
       ),
     ));
     // map pins around the logo
+    // Pin tips sit exactly on the dashed 500 m circle (centre 195,330 · radius 165).
     final pins = [
-      ['🏪', 40.0, 274.0, 1.67],
-      ['🥬', 350.0, 274.0, 1.72],
-      ['🍎', 40.0, 392.0, 1.78],
-      ['🥛', 350.0, 392.0, 1.83],
+      ['🏪', 41.3, 270.0, 1.67],
+      ['🥬', 348.7, 270.0, 1.72],
+      ['🍎', 42.1, 392.0, 1.78],
+      ['🥛', 347.9, 392.0, 1.83],
     ];
     for (final p in pins) {
       final pr = seg(t, p[3] as double, (p[3] as double) + 0.23);
       if (pr <= 0) continue;
       final e = Curves.elasticOut.transform(pr);
       out.add(Positioned(
-        left: (p[1] as double) - 19,
-        top: (p[2] as double) - 38 - 18 * (1 - pr),
+        left: (p[1] as double) - _MapPin.w / 2,
+        top: (p[2] as double) - _MapPin.h - 18 * (1 - pr),
         child: Transform.scale(
           scale: 0.3 + 0.7 * e,
           alignment: Alignment.bottomCenter,
@@ -460,24 +461,46 @@ class _Scene extends StatelessWidget {
 }
 
 class _MapPin extends StatelessWidget {
+  static const w = 40.0, h = 52.0;
   final String emoji;
   const _MapPin(this.emoji);
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 38,
-      height: 44,
-      child: Stack(alignment: Alignment.topCenter, children: [
-        Icon(Icons.location_on, size: 46, color: Colors.white, shadows: [
-          Shadow(color: Color(0x59000000), blurRadius: 10, offset: Offset(0, 4))
-        ]),
-        Padding(
-          padding: EdgeInsets.only(top: 8),
-          child: Text(emoji, style: TextStyle(fontSize: 15)),
+      width: w,
+      height: h,
+      child: CustomPaint(
+        painter: _PinPainter(),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: w,
+            height: w,
+            child: Center(child: Text(emoji, style: TextStyle(fontSize: 18, height: 1))),
+          ),
         ),
-      ]),
+      ),
     );
   }
+}
+
+/// White map pin: round head with the emoji in the middle, point at the bottom centre.
+class _PinPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = size.width / 2;
+    final c = Offset(r, r);
+    final path = Path()
+      ..moveTo(size.width / 2, size.height)
+      ..lineTo(c.dx - r * 0.62, c.dy + r * 0.78)
+      ..arcTo(Rect.fromCircle(center: c, radius: r), math.pi * 0.72, math.pi * 1.56, false)
+      ..close();
+    canvas.drawShadow(path, const Color(0x99000000), 4, false);
+    canvas.drawPath(path, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _CircleReveal extends CustomClipper<Path> {
