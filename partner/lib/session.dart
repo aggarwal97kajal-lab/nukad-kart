@@ -17,6 +17,7 @@ class Session extends ChangeNotifier {
   String phone = '';
   bool phoneVerified = false, trialAvailable = true;
   int selling = 0; // products switched on (thela: items selling today)
+  Map<String, dynamic>? staffInfo; // logged in as shop staff (not owner): name, storeName, canOrders
   bool _googleReady = false;
   String? _hw;
 
@@ -55,6 +56,21 @@ class Session extends ChangeNotifier {
     if (_googleReady) return;
     await GoogleSignIn.instance.initialize(serverClientId: googleWebClientId);
     _googleReady = true;
+  }
+
+  /// Staff login: the number the store owner added, verified by SMS code (no Google account).
+  Future<void> staffLogin(String phone10, String accessToken) async {
+    _p ??= await SharedPreferences.getInstance();
+    final r = await api.call('POST', '/v1/staff/login', {
+      'phone': phone10,
+      'accessToken': accessToken,
+      'device': {'name': 'Partner app (staff)', 'platform': 'Android', 'id': 'partner-${_p!.getString('installId')}'},
+    });
+    api.token = '${r['token']}';
+    email = '';
+    await _p!.setString('token', api.token);
+    await _p!.setString('email', '');
+    await refresh();
   }
 
   /// Google account chooser, then server login. Returns false when the person closes the chooser.
@@ -106,6 +122,7 @@ class Session extends ChangeNotifier {
   }
 
   void _apply(Map<String, dynamic> r) {
+    staffInfo = r['staff'] == null ? null : Map<String, dynamic>.from(r['staff'] as Map);
     admin = r['admin'] == true;
     selling = (r['selling'] as num?)?.toInt() ?? 0;
     final u = Map<String, dynamic>.from((r['user'] as Map?) ?? {});
@@ -132,6 +149,7 @@ class Session extends ChangeNotifier {
     api.token = '';
     email = '';
     store = null;
+    staffInfo = null;
     admin = false;
     payments = [];
     phone = '';

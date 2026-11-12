@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +13,17 @@ const _senderId = '173237735756';
 const _projectId = 'nukad-kart';
 
 bool _ready = false;
+const _options = FirebaseOptions(apiKey: _apiKey, appId: partnerFirebaseAppId, messagingSenderId: _senderId, projectId: _projectId);
+
+/// A new shop order while the app is closed or in the background: ring like an alarm.
+@pragma('vm:entry-point')
+Future<void> partnerBackgroundPush(RemoteMessage m) async {
+  try {
+    await Firebase.initializeApp(options: _options);
+  } catch (_) {}
+  await _initLocal();
+  if (m.data['type'] == 'order_new') await showOrderAlarm(m.data);
+}
 
 /// Called after login. Asks for notification permission once, sends this phone's token to the server,
 /// and calls [onUpdate] when a push arrives (approval, and new orders later) so the screen refreshes itself.
@@ -19,22 +31,23 @@ Future<void> setupPush(VoidCallback onUpdate) async {
   if (partnerFirebaseAppId.isEmpty) return;
   try {
     if (!_ready) {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: _apiKey,
-          appId: partnerFirebaseAppId,
-          messagingSenderId: _senderId,
-          projectId: _projectId,
-        ),
-      );
+      await Firebase.initializeApp(options: _options);
       await _initLocal();
+      FirebaseMessaging.onBackgroundMessage(partnerBackgroundPush);
       // Android shows nothing for a push while the app is open, so show it ourselves.
       FirebaseMessaging.onMessage.listen((m) {
-        _showLocal(m);
+        if (m.data['type'] == 'order_new') {
+          showOrderAlarm(m.data);
+        } else {
+          _showLocal(m);
+        }
         pushTick.value++;
         onUpdate();
       });
-      FirebaseMessaging.onMessageOpenedApp.listen((_) => pushTick.value++);
+      FirebaseMessaging.onMessageOpenedApp.listen((m) {
+        openedPush.value = '${m.data['type'] ?? ''}:${DateTime.now().millisecondsSinceEpoch}';
+        pushTick.value++;
+      });
       FirebaseMessaging.onMessageOpenedApp.listen((_) => onUpdate());
       FirebaseMessaging.instance.onTokenRefresh.listen(_send);
       _ready = true;
@@ -60,18 +73,70 @@ const _channel = AndroidNotificationChannel('updates', 'Updates',
 const _calls = AndroidNotificationChannel('calls', 'Customers calling you',
     description: 'A customer asks your thela to come to their street', importance: Importance.high);
 
+// Shop: new order alarm. Uses the phone's alarm tone and alarm volume; repeats until answered, stopped or 5 minutes.
+final _orders = AndroidNotificationChannel('orders_alarm', 'New orders (alarm)',
+    description: 'Rings for up to 5 minutes until you accept or reject',
+    importance: Importance.max,
+    sound: const UriAndroidNotificationSound('content://settings/system/alarm_alert'),
+    audioAttributesUsage: AudioAttributesUsage.alarm,
+    enableVibration: true,
+    vibrationPattern: Int64List.fromList([0, 800, 400, 800, 400, 800]));
+
+int orderNotifId(String orderId) => int.tryParse(orderId.replaceAll(RegExp(r'\D'), '')) ?? orderId.hashCode;
+
+Future<void> showOrderAlarm(Map<String, dynamic> d) async {
+  final id = '${d['id'] ?? ''}';
+  try {
+    await _local.show(
+      orderNotifId(id),
+      '${d['title'] ?? 'New order'}',
+      '${d['body'] ?? 'Open Nukad Partner to accept'}',
+      NotificationDetails(
+        android: AndroidNotificationDetails(_orders.id, _orders.name,
+            channelDescription: _orders.description,
+            importance: Importance.max,
+            priority: Priority.max,
+            category: AndroidNotificationCategory.alarm,
+            sound: _orders.sound,
+            audioAttributesUsage: AudioAttributesUsage.alarm,
+            additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT: the sound repeats until it is dismissed
+            timeoutAfter: 300000,
+            autoCancel: true,
+            actions: const [AndroidNotificationAction('stop', 'Stop ringing', cancelNotification: true)]),
+      ),
+      payload: id,
+    );
+  } catch (_) {}
+}
+
+/// Accepted / rejected / missed: stop the ringing for that order.
+Future<void> stopOrderAlarm(String orderId) async {
+  try {
+    await _local.cancel(orderNotifId(orderId));
+  } catch (_) {}
+}
+
+/// "type:time" of the last notification the person tapped (e.g. order_new → open the Orders tab).
+final openedPush = ValueNotifier<String>('');
+
 /// Goes up on every push that arrives while the app is open, so screens can reload.
 final pushTick = ValueNotifier<int>(0);
 
 Future<void> _initLocal() async {
   try {
-    await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')));
+    await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')),
+        onDidReceiveNotificationResponse: (r) {
+      if ((r.payload ?? '').startsWith('NK-')) openedPush.value = 'order_new:${DateTime.now().millisecondsSinceEpoch}';
+    });
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_calls);
+    await _local
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_orders);
   } catch (_) {}
 }
 

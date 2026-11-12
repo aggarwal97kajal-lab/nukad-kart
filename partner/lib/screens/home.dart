@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'shell.dart';
 import 'live_setup.dart';
 import 'calls_card.dart';
+import 'staff.dart';
 import '../thela_location.dart';
 import '../api.dart';
 import '../session.dart';
@@ -120,12 +121,14 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'out') session.signOut();
+                if (v == 'staff') Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffScreen()));
                 if (v == 'delete') Navigator.push(context, MaterialPageRoute(builder: (_) => const DeleteAccountScreen()));
                 if (v == 'agreement') {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AgreementScreen(viewOnly: true)));
                 }
               },
               itemBuilder: (_) => [
+                if (s['kind'] != 'thela') PopupMenuItem(value: 'staff', child: Text(tr('Staff'))),
                 PopupMenuItem(value: 'agreement', child: Text(tr('Partner agreement'))),
                 PopupMenuItem(value: 'out', child: Text(tr('Log out'))),
                 PopupMenuItem(value: 'delete', child: Text(tr('Delete account'), style: TextStyle(color: kRed))),

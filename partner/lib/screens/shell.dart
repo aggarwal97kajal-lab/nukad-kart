@@ -3,6 +3,8 @@ import '../ui.dart';
 import 'home.dart';
 import 'produce_picker.dart';
 import 'products.dart';
+import 'orders.dart';
+import '../push.dart';
 import '../session.dart';
 import '../thela_location.dart';
 
@@ -24,6 +26,12 @@ class _PartnerShellState extends State<PartnerShell> {
     // A LIVE thela keeps sending its location, also after the app was closed and opened again.
     session.addListener(_loc);
     _loc();
+    openedPush.addListener(_opened);
+  }
+
+  // Tapped a new-order notification: show the Orders tab.
+  void _opened() {
+    if (openedPush.value.startsWith('order_new') && session.store?['kind'] != 'thela') shellTab.value = 2;
   }
 
   void _loc() => ThelaLocation.instance.sync();
@@ -32,6 +40,7 @@ class _PartnerShellState extends State<PartnerShell> {
   void dispose() {
     shellTab.removeListener(_tab);
     session.removeListener(_loc);
+    openedPush.removeListener(_opened);
     super.dispose();
   }
 
@@ -42,15 +51,20 @@ class _PartnerShellState extends State<PartnerShell> {
     final tab = shellTab.value;
     final thela = session.store?['kind'] == 'thela';
     return Scaffold(
-      body: IndexedStack(index: tab, children: [const HomeScreen(), thela ? const ProducePickerScreen() : const ProductsScreen()]),
+      body: IndexedStack(index: thela && tab > 1 ? 0 : tab, children: [
+        const HomeScreen(),
+        thela ? const ProducePickerScreen() : const ProductsScreen(),
+        if (!thela) const OrdersScreen(),
+      ]),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: tab,
+        selectedIndex: thela && tab > 1 ? 0 : tab,
         backgroundColor: kCard,
         indicatorColor: kOkBg,
         onDestinationSelected: (i) => shellTab.value = i,
         destinations: [
           NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: t('Home')),
           NavigationDestination(icon: const Icon(Icons.inventory_2_outlined), selectedIcon: const Icon(Icons.inventory_2), label: t('Products')),
+          if (!thela) NavigationDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long), label: t('Orders')),
         ],
       ),
     );

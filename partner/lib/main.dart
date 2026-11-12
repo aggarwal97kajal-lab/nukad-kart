@@ -7,6 +7,7 @@ import 'ui.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
 import 'screens/shell.dart';
+import 'screens/staff.dart';
 import 'screens/agreement.dart';
 import 'screens/docs.dart';
 import 'screens/phone.dart';
@@ -225,6 +226,14 @@ class KindScreen extends StatelessWidget {
           _card('thela', Icons.shopping_cart_outlined, t('Thela (moving)'), t('Vegetables, fruits, chaat · only Aadhaar')),
           const SizedBox(height: 12),
           Btn(t('Continue'), onTap: prefs.kind.isEmpty ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()))),
+          const SizedBox(height: 14),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffLoginScreen())),
+              child: Text(t('Staff login'), style: tx(15, color: kAct, weight: FontWeight.w800)),
+            ),
+          ),
+          Center(child: Text(t('Login with the mobile number your store owner added.'), textAlign: TextAlign.center, style: tx(12, color: kMute))),
         ]),
       ),
     );
@@ -308,6 +317,8 @@ class _GateState extends State<Gate> {
         ),
       );
     }
+    // Shop staff: only orders / deliveries.
+    if (session.staffInfo != null) return const StaffShell();
     // Steps: phone OTP → business details → documents → agreement → waiting for Nukad team → home.
     // Admin without a shop: straight to the admin screen.
     if (session.admin && session.store == null) return const AdminScreen(root: true);
