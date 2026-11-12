@@ -618,4 +618,8 @@ const Map<String, String> hi = {
   'While you are LIVE you will see a notification “You are LIVE on Nukad Kart”. That keeps your location going. Battery use is low: the phone sends only when you move about 75 m, and once every 4 minutes when you stand.': 'LIVE रहते समय एक सूचना दिखेगी “You are LIVE on Nukad Kart”। उसी से आपकी लोकेशन चलती रहती है। बैटरी कम लगती है: फ़ोन तभी भेजता है जब आप लगभग 75 मीटर चलें, और खड़े रहने पर हर 4 मिनट में एक बार।',
   'Go LIVE': 'LIVE हो जाएँ',
   'Finish the steps above': 'ऊपर के काम पूरे करें',
+  'Send a test push to this phone to check notifications.': 'सूचनाएँ जाँचने के लिए इस फ़ोन पर टेस्ट पुश भेजें।',
+  'Send test': 'टेस्ट भेजें',
+  'Sent to {0} of {1} phones. It should appear in a few seconds.': '{1} में से {0} फ़ोन पर भेजा। कुछ सेकंड में दिखना चाहिए।',
+  'Not sent.': 'नहीं भेजा गया।',
 };

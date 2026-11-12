@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../api.dart';
+import '../push.dart';
 import '../session.dart';
 import '../ui.dart';
 import 'home.dart';
@@ -71,6 +72,25 @@ class _AdminScreenState extends State<AdminScreen> {
     if (mounted) setState(() {});
   }
 
+  String? _pushResult;
+  bool _pushBusy = false;
+
+  /// Sends a push to my own phone(s); shows exactly what the server got back.
+  Future<void> _testPush() async {
+    setState(() => _pushBusy = true);
+    try {
+      await setupPush(() {}); // make sure this phone's token is on the server
+      final r = await api.call('POST', '/v1/admin/push-test');
+      final errs = ((r['errors'] as List?) ?? []).join('\n');
+      _pushResult = (r['sent'] ?? 0) > 0
+          ? tr('Sent to {0} of {1} phones. It should appear in a few seconds.', [r['sent'], r['phones']])
+          : '${tr('Not sent.')} $errs';
+    } on ApiError catch (e) {
+      _pushResult = e.message;
+    }
+    if (mounted) setState(() => _pushBusy = false);
+  }
+
   Future<void> _loadHealth() async {
     try {
       health = await api.call('GET', '/v1/admin/health');
@@ -113,6 +133,12 @@ class _AdminScreenState extends State<AdminScreen> {
         line(tr('Documents'), '${h['docs']} · ${mb((h['docBytes'] as num?) ?? 0)}'),
         line(tr('Photos & documents in R2'), h['filesInR2'] == true ? tr('On') : tr('Off'), ok: h['filesInR2'] == true),
         line(tr('Push notifications'), h['pushReady'] == true ? tr('On · {0} phones', [h['pushPhones']]) : tr('Off'), ok: h['pushReady'] == true),
+        const SizedBox(height: 6),
+        Row(children: [
+          Expanded(child: Text(_pushResult ?? tr('Send a test push to this phone to check notifications.'), style: tx(11.5, color: kMute))),
+          const SizedBox(width: 8),
+          OutlinedButton(onPressed: _pushBusy ? null : _testPush, child: Text(_pushBusy ? '…' : tr('Send test'))),
+        ]),
         const SizedBox(height: 4),
         Text(tr('Daily request and database limits: Cloudflare dashboard → Workers & Pages → nukad-kart-api → Metrics.'),
             style: tx(11, color: kMute)),

@@ -185,7 +185,7 @@ function cleanAddress(a) {
 // Customers in the same ~1 km cell see the same shops, so the database is asked once per cell every
 // 30 seconds (per Cloudflare server) instead of once per customer. A shop switching LIVE shows within 30 s.
 const NEAR_CELL = 0.01; // degrees (~1.1 km)
-const NEAR_TTL_MS = 20_000;
+const NEAR_TTL_MS = 30_000; // shops only; thelas are read fresh every time
 /** A thela that has not sent its location for this long is hidden from customers. */
 export const THELA_STALE_S = 600;
 /** Moved within this long = "Moving"; otherwise "Standing here". */
@@ -194,26 +194,32 @@ const nearCache = new Map();
 
 const prodCache = new Map();
 
+const NEAR_COLS = `id, name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup, demo, status, live,
+  pass_until, missed_date, missed_count, photo_at, gst_type, fssai, agreement_version, live_lat, live_lng, live_at, moved_at, heading`;
+
+/** Shops (cached 20 s per ~1 km cell) + thelas (always fresh: they move and go offline any moment). */
 async function nearbyRows(env, lat, lng) {
   const cLat = Math.floor(lat / NEAR_CELL), cLng = Math.floor(lng / NEAR_CELL);
   const key = `${cLat}:${cLng}`;
-  const hit = nearCache.get(key);
-  if (hit && hit.at > Date.now() - NEAR_TTL_MS) return hit.rows;
   // The whole cell plus 500 m around it, so every customer inside the cell is covered.
   const pad = RADIUS_MAX_M / 111_000 + 0.001;
   const padLng = pad / Math.max(Math.cos((lat * Math.PI) / 180), 0.2);
-  // Shops by their address; thelas by where their phone last said they are.
   const la0 = cLat * NEAR_CELL - pad, la1 = (cLat + 1) * NEAR_CELL + pad, lo0 = cLng * NEAR_CELL - padLng, lo1 = (cLng + 1) * NEAR_CELL + padLng;
-  const { results } = await env.DB.prepare(
-    `SELECT id, name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup, demo, status, live,
-            pass_until, missed_date, missed_count, photo_at, gst_type, fssai, agreement_version, live_lat, live_lng, live_at, moved_at, heading
-     FROM stores WHERE active = 1 AND (
-       (kind != 'thela' AND lat BETWEEN ?1 AND ?2 AND lng BETWEEN ?3 AND ?4) OR
-       (kind = 'thela' AND live = 1 AND live_lat BETWEEN ?1 AND ?2 AND live_lng BETWEEN ?3 AND ?4))`,
-  ).bind(la0, la1, lo0, lo1).all();
+  const thelaQ = env.DB.prepare(`SELECT ${NEAR_COLS} FROM stores
+    WHERE kind = 'thela' AND live = 1 AND active = 1 AND live_lat BETWEEN ? AND ? AND live_lng BETWEEN ? AND ?`).bind(la0, la1, lo0, lo1);
+  const hit = nearCache.get(key);
+  if (hit && hit.at > Date.now() - NEAR_TTL_MS) {
+    const t = await thelaQ.all();
+    return [...hit.rows, ...t.results];
+  }
+  const [sh, th] = await env.DB.batch([
+    env.DB.prepare(`SELECT ${NEAR_COLS} FROM stores
+      WHERE kind != 'thela' AND active = 1 AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?`).bind(la0, la1, lo0, lo1),
+    thelaQ,
+  ]);
   if (nearCache.size > 2000) nearCache.clear();
-  nearCache.set(key, { at: Date.now(), rows: results });
-  return results;
+  nearCache.set(key, { at: Date.now(), rows: sh.results });
+  return [...sh.results, ...th.results];
 }
 
 // ---------- routes ----------
@@ -368,7 +374,9 @@ async function route(req, env) {
     if (hit && hit.at > Date.now() - 20_000) return json(hit.body);
     const [st, pr] = await env.DB.batch([
       env.DB.prepare('SELECT * FROM stores WHERE id = ? AND active = 1').bind(sp[1]),
-      env.DB.prepare('SELECT * FROM products WHERE store_id = ? AND in_stock = 1 ORDER BY category, name LIMIT 1000').bind(sp[1]),
+      // A thela sells only items from the app's photo list (aloo, pyaz…); older hand-added items stay hidden.
+      env.DB.prepare(`SELECT p.* FROM products p JOIN stores s ON s.id = p.store_id WHERE p.store_id = ? AND p.in_stock = 1
+        AND (s.kind != 'thela' OR p.produce_key IS NOT NULL) ORDER BY p.category, p.name LIMIT 1000`).bind(sp[1]),
     ]);
     const s = st.results[0];
     if (!s || s.demo || offlineReason(s, now()) != null) throw new HttpError(404, 'not_available');

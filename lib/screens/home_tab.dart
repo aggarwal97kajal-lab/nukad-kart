@@ -33,8 +33,15 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   void dispose() {
+    if (moving) LiveData.instance.fast(false);
     LiveData.instance.stopPolling();
     super.dispose();
+  }
+
+  void _setMoving(bool v) {
+    if (v == moving) return;
+    LiveData.instance.fast(v);
+    setState(() => moving = v);
   }
 
   /// Shops and thelas around the chosen address (again whenever the address changes).
@@ -182,9 +189,9 @@ class _HomeTabState extends State<HomeTab> {
                 padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
                 child: Row(children: [
-                  _seg(t('Shops'), Icons.storefront, !moving, () => setState(() => moving = false)),
+                  _seg(t('Shops'), Icons.storefront, !moving, () => _setMoving(false)),
                   _seg('${t('Moving sellers')} · ${kThelas.length}', Icons.shopping_cart_outlined, moving,
-                      () => setState(() => moving = true)),
+                      () => _setMoving(true)),
                 ]),
               ),
             ]),

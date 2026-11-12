@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:flutter/foundation.dart';
 import '../config/keys.dart';
 import '../data/demo_data.dart';
@@ -33,19 +35,49 @@ class LiveData extends ChangeNotifier {
     await _refresh(products: force || moved || DateTime.now().difference(_productsAt) > const Duration(minutes: 2));
   }
 
+  int _fast = 0; // screens that show thelas (Moving sellers tab, a thela's page)
+  DateTime _lastPoll = DateTime.now();
+  bool _paused = false;
+  AppLifecycleListener? _life;
+
+  /// Thelas move and go offline any moment: while a thela screen is open, ask every 10 s;
+  /// otherwise every 60 s; never while the app is in the background (saves requests).
+  void fast(bool on) {
+    _fast = math.max(0, _fast + (on ? 1 : -1));
+    if (on && DateTime.now().difference(_lastPoll) > const Duration(seconds: 10)) _tick(force: true);
+  }
+
   void startPolling() {
-    _poll ??= Timer.periodic(const Duration(seconds: 20), (_) {
-      if (_lat != null) _refresh(products: DateTime.now().difference(_productsAt) > const Duration(minutes: 2));
-    });
+    _life ??= AppLifecycleListener(
+      onPause: () => _paused = true,
+      onHide: () => _paused = true,
+      onResume: () {
+        _paused = false;
+        _tick(force: true);
+      },
+      onShow: () => _paused = false,
+    );
+    _poll ??= Timer.periodic(const Duration(seconds: 10), (_) => _tick());
+  }
+
+  void _tick({bool force = false}) {
+    if (_lat == null || _paused) return;
+    final every = _fast > 0 ? const Duration(seconds: 10) : const Duration(seconds: 60);
+    if (!force && DateTime.now().difference(_lastPoll) < every - const Duration(seconds: 1)) return;
+    _lastPoll = DateTime.now();
+    _refresh(products: DateTime.now().difference(_productsAt) > const Duration(minutes: 2));
   }
 
   void stopPolling() {
     _poll?.cancel();
     _poll = null;
+    _life?.dispose();
+    _life = null;
   }
 
   Future<void> _refresh({required bool products}) async {
     if (loading || _lat == null) return;
+    _lastPoll = DateTime.now();
     loading = true;
     if (!loaded) notifyListeners();
     final lat = _lat!, lng = _lng!;

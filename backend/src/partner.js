@@ -12,7 +12,7 @@
 //   POST /v1/admin/payments/:id/confirm          (admin)      money is in: pass starts
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
 import { HttpError, json, body, now, verifySession, verifyMsg91, haversineM, THELA_STALE_S } from './index.js';
-import { sendPush, pushReady } from './push.js';
+import { sendPush, sendPushDetail, pushReady } from './push.js';
 import { productRoute } from './products.js';
 
 export const PLANS = {
@@ -692,6 +692,13 @@ export async function partnerRoute(req, env, path, m) {
         .bind(AGREEMENT_VERSION, s.id),
     ]);
     return json({ id, store });
+  }
+
+  // Admin: send a test push to my own phone(s) and say exactly what happened.
+  if (path === '/v1/admin/push-test' && m === 'POST') {
+    const u = await admin(req, env);
+    const r = await sendPushDetail(env, u.id, { title: 'Test from Nukad Kart', body: 'Push notifications are working on this phone.', data: { type: 'test' } });
+    return json(r);
   }
 
   if (path === '/v1/admin/health' && m === 'GET') {

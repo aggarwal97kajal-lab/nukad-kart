@@ -4,12 +4,40 @@ import '../data/demo_data.dart';
 import '../widgets/ui.dart';
 import '../state/thela_tracker.dart';
 import '../widgets/thela_live.dart';
+import '../widgets/thela_real_map.dart';
+import '../services/live_data.dart';
+import '../state/app_state.dart';
 
 /// Moving sellers: no cart, no in-app payment. The customer sees where the thela is
 /// and today's prices, and pays the seller in person. Numbers are never shown.
-class ThelaScreen extends StatelessWidget {
+class ThelaScreen extends StatefulWidget {
   final Thela thela;
   const ThelaScreen({super.key, required this.thela});
+  @override
+  State<ThelaScreen> createState() => _ThelaScreenState();
+}
+
+/// While this page is open the thela's position is asked every 10 s.
+class _ThelaScreenState extends State<ThelaScreen> {
+  @override
+  void initState() {
+    super.initState();
+    LiveData.instance.fast(true);
+  }
+
+  @override
+  void dispose() {
+    LiveData.instance.fast(false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _ThelaView(thela: widget.thela);
+}
+
+class _ThelaView extends StatelessWidget {
+  final Thela thela;
+  const _ThelaView({required this.thela});
 
   static String _price(ThelaItem it) {
     final p = it.exactPrice == 0 ? it.price : it.exactPrice;
@@ -56,7 +84,7 @@ class ThelaScreen extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18),
-                child: ThelaLiveMap(thelaId: th.id, emoji: '🛒'),
+                child: ThelaRealMap(thelaId: th.id, homeLat: AppScope.of(context).current.lat, homeLng: AppScope.of(context).current.lng),
               ),
             ),
             Padding(

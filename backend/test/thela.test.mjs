@@ -62,3 +62,21 @@ test('going offline clears the location; location ignored while offline', async 
   const l = await call('POST', '/v1/partner/location', { lat: 28.7, lng: 77.1 }, auth);
   assert.equal(l.json.live, false);
 });
+
+test('offline thela disappears at once, even when shops are cached; hand-added thela items hidden', async () => {
+  const { DB, auth, call } = await setup();
+  await call('POST', '/v1/partner/location', { lat: 28.7010, lng: 77.1010 }, auth);
+  const q = '/v1/stores/nearby?lat=28.6851&lng=77.1051';
+  DB.raw.prepare("UPDATE stores SET lat = 28.6852, lng = 77.1052 WHERE id = 'sh1'").run();
+  DB.raw.prepare("UPDATE stores SET live_lat = 28.6853, live_lng = 77.1053 WHERE id = 'th1'").run();
+  let r = await call('GET', q);
+  assert.deepEqual(r.json.stores.map((s) => s.id).sort(), ['sh1', 'th1']);
+  await call('POST', '/v1/partner/live', { on: false }, auth);
+  r = await call('GET', q); // same cell: shops come from the cache, thelas fresh
+  assert.deepEqual(r.json.stores.map((s) => s.id), ['sh1']);
+  DB.raw.prepare("UPDATE stores SET live = 1, live_lat = 28.6853, live_lng = 77.1053, live_at = ? WHERE id = 'th1'").run(now());
+  DB.raw.prepare(`INSERT INTO products (id, store_id, kind, name, category, size, mrp, price, gst, in_stock, created_at, updated_at)
+    VALUES ('p9', 'th1', 'packed', 'Old item', 'Vegetables', '1 kg', 50, 40, 0, 1, 1, 1)`).run();
+  const pr = await call('GET', '/v1/stores/th1/products');
+  assert.deepEqual(pr.json.products.map((p) => p.id), ['p1']);
+});

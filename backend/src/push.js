@@ -33,14 +33,21 @@ async function accessToken(sa) {
 export const pushReady = (env) => !!env.FCM_SERVICE_ACCOUNT;
 
 /** Send to every phone of this user. Never throws: a failed push must not break the request. */
-export async function sendPush(env, userId, { title, body, data = {}, channel = 'updates' }) {
-  if (!env.FCM_SERVICE_ACCOUNT || !userId) return 0;
+export async function sendPush(env, userId, msg) {
+  return (await sendPushDetail(env, userId, msg)).sent;
+}
+
+/** Same as sendPush, but says what happened (for the admin "Send test" button). */
+export async function sendPushDetail(env, userId, { title, body, data = {}, channel = 'updates' }) {
+  const out = { phones: 0, sent: 0, errors: [] };
+  if (!env.FCM_SERVICE_ACCOUNT) return { ...out, errors: ['FCM_SERVICE_ACCOUNT secret is not set'] };
+  if (!userId) return out;
   try {
     const sa = JSON.parse(env.FCM_SERVICE_ACCOUNT);
     const { results } = await env.DB.prepare('SELECT token FROM push_tokens WHERE user_id = ?').bind(userId).all();
-    if (!results.length) return 0;
+    out.phones = results.length;
+    if (!results.length) return { ...out, errors: ['This account has no phone registered for push. Open the app once and allow notifications.'] };
     const at = await accessToken(sa);
-    let sent = 0;
     for (const { token } of results) {
       const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
         method: 'POST',
@@ -51,14 +58,15 @@ export async function sendPush(env, userId, { title, body, data = {}, channel = 
           android: { priority: 'high', notification: { channel_id: channel } },
         } }),
       });
-      if (res.ok) sent++;
-      else if (res.status === 404 || res.status === 400) {
+      if (res.ok) out.sent++;
+      else {
+        out.errors.push(`FCM ${res.status}: ${(await res.text()).slice(0, 200)}`);
         // App uninstalled or token changed: forget it.
-        await env.DB.prepare('DELETE FROM push_tokens WHERE token = ?').bind(token).run();
+        if (res.status === 404 || res.status === 400) await env.DB.prepare('DELETE FROM push_tokens WHERE token = ?').bind(token).run();
       }
     }
-    return sent;
-  } catch {
-    return 0;
+    return out;
+  } catch (e) {
+    return { ...out, errors: [...out.errors, String(e && e.message || e).slice(0, 200)] };
   }
 }
