@@ -34,7 +34,7 @@ class ProductScreen extends StatelessWidget {
           height: 240,
           color: kCream,
           alignment: Alignment.center,
-          child: Text(product.emoji, style: TextStyle(fontSize: 130)),
+          child: ProductPic(product.emoji, size: 200),
         ),
         Padding(
           padding: EdgeInsets.all(16),

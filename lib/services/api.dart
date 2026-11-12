@@ -92,7 +92,10 @@ class Api {
       _call('POST', '/v1/me/delete', token: token, body: {'reason': reason, 'feedback': feedback});
 
   Future<Map<String, dynamic>> nearbyStores(double lat, double lng) =>
-      _call('GET', '/v1/stores/nearby?lat=$lat&lng=$lng');
+      _call('GET', '/v1/stores/nearby?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}');
+
+  /// What a shop / thela sells right now (in stock only).
+  Future<Map<String, dynamic>> storeProducts(String storeId) => _call('GET', '/v1/stores/$storeId/products');
 }
 
 final api = Api();

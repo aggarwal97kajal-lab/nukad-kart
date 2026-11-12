@@ -142,8 +142,6 @@ class ThelaRequest {
 const int kFreeDeliveryMin = 199;
 const int kDeliveryFee = 20;
 
-/// Demo: pin codes where the demo shops are. Any other pin shows "No stores available".
-const Set<String> kServiceablePins = {'110085', '110086', '110089'};
 
 class Address {
   final String flat, floor, area, city, state, country, pin, name, phone;
@@ -262,7 +260,8 @@ class AppState extends ChangeNotifier {
   int currentIdx = -1;
   Address get current => (currentIdx >= 0 && currentIdx < addresses.length) ? addresses[currentIdx] : kGuestLocation;
   String get address => current.short;
-  bool get serviceable => kServiceablePins.contains(current.pin);
+  /// The cart's shop is within 500 m of the chosen address (the nearby list is loaded for that address).
+  bool get serviceable => cartStoreId == null || kStores.any((x) => x.id == cartStoreId);
   final Map<String, bool> notifPrefs = {
     'Order updates': true,
     'Thela replies': true,
@@ -717,8 +716,8 @@ class AppState extends ChangeNotifier {
     final sid = cartStoreId!;
     final lines = <OrderLine>[];
     cart.forEach((pid, q) {
-      final l = listingFor(sid, pid)!;
-      lines.add(OrderLine(pid, q, l.price));
+      final l = listingFor(sid, pid);
+      if (l != null) lines.add(OrderLine(pid, q, l.price)); // items the shop stopped selling are skipped
     });
     _orderSeq++;
     final o = Order('NK-$_orderSeq', sid, lines, door, DateTime.now());

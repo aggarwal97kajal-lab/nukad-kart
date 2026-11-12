@@ -4,15 +4,17 @@ import '../state/thela_tracker.dart';
 import 'ui.dart';
 import 'map_markers.dart';
 
-String thelaStatusLabel(ThelaStatus s) => switch (s) {
-      ThelaStatus.hereNow => '● HERE NOW',
-      ThelaStatus.movingAway => '➜ MOVING AWAY',
-      ThelaStatus.notAvailable => 'NOT AVAILABLE',
+String thelaStatusLabel(ThelaStatus s, [int seenAgo = 0]) => switch (s) {
+      ThelaStatus.standing => '● LIVE · Standing here',
+      ThelaStatus.moving => '➜ LIVE · Moving',
+      ThelaStatus.wasHere => 'Was here ${(seenAgo / 60).round().clamp(2, 10)} min ago',
+      ThelaStatus.notAvailable => 'Not nearby now',
     };
 
-Widget thelaStatusPill(ThelaStatus s) => switch (s) {
-      ThelaStatus.hereNow => Pill(thelaStatusLabel(s), color: kGText, bg: kPillBg),
-      ThelaStatus.movingAway => Pill(thelaStatusLabel(s), color: kAmb, bg: kAmbBg),
+Widget thelaStatusPill(ThelaStatus s, [int seenAgo = 0]) => switch (s) {
+      ThelaStatus.standing => Pill(thelaStatusLabel(s), color: kGText, bg: kPillBg),
+      ThelaStatus.moving => Pill(thelaStatusLabel(s), color: kGText, bg: kPillBg),
+      ThelaStatus.wasHere => Pill(thelaStatusLabel(s, seenAgo), color: kAmb, bg: kAmbBg),
       ThelaStatus.notAvailable => Pill(thelaStatusLabel(s), color: kMute, bg: kLine),
     };
 
@@ -21,9 +23,10 @@ String thelaStatusLine(ThelaLive t) {
   final m = hh.minute.toString().padLeft(2, '0');
   final h = hh.hourOfPeriod == 0 ? 12 : hh.hourOfPeriod;
   return switch (t.status) {
-    ThelaStatus.hereNow => '${t.d.round()} m away · live on map',
-    ThelaStatus.movingAway => '${t.d.round().clamp(0, 500)} m · heading out of your area',
-    ThelaStatus.notAvailable => 'Left your 500 m · last seen $h:$m ${hh.period == DayPeriod.am ? 'am' : 'pm'}',
+    ThelaStatus.standing => '${t.d.round()} m away · on the map',
+    ThelaStatus.moving => '${t.d.round()} m away · moving',
+    ThelaStatus.wasHere => '${t.d.round()} m away when last seen',
+    ThelaStatus.notAvailable => 'Last seen $h:$m ${hh.period == DayPeriod.am ? 'am' : 'pm'}',
   };
 }
 
@@ -50,7 +53,7 @@ class ThelaLiveMap extends StatelessWidget {
               SizedBox(height: 10),
               Text('Location hidden', style: head(18)),
               SizedBox(height: 4),
-              Text('This seller went outside your 500 m area, so the live map stopped.',
+              Text('This thela is not within 500 m right now, or its location stopped for 10 minutes.',
                   textAlign: TextAlign.center, style: body(13, color: kMute)),
             ]),
           );
@@ -103,7 +106,7 @@ class _MapPainter extends CustomPainter {
     _label(canvas, c + Offset(r * 0.62, r * 0.72), '500 m', kCard, kInk);
 
     Offset at(double dist) => c + Offset(math.cos(angle), math.sin(angle)) * dist * scale;
-    if (status == ThelaStatus.movingAway && trail.length > 1) {
+    if (status == ThelaStatus.moving && trail.length > 1) {
       final p = Paint()
         ..color = Color(0xFF8A4B00)
         ..strokeWidth = 4
@@ -117,7 +120,7 @@ class _MapPainter extends CustomPainter {
     _icon(canvas, c, Icons.home, Colors.white, 17);
     // thela
     final pos = at(d.clamp(0, 545));
-    final col = status == ThelaStatus.hereNow ? Color(0xFF315426) : Color(0xFF8A4B00);
+    final col = status == ThelaStatus.wasHere ? Color(0xFF8A4B00) : Color(0xFF315426);
     canvas.drawCircle(pos, 25, Paint()..color = col.withAlpha(46));
     final img = MapMarkers.thela;
     var labelAt = pos - Offset(0, 36);
@@ -137,7 +140,7 @@ class _MapPainter extends CustomPainter {
         ..layout();
       tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
     }
-    _label(canvas, labelAt, '${d.round()} m · live', Color(0xFF21331B), kBrand);
+    _label(canvas, labelAt, status == ThelaStatus.wasHere ? '${d.round()} m · last seen' : '${d.round()} m · live', Color(0xFF21331B), kBrand);
   }
 
   void _dashedCircle(Canvas canvas, Offset c, double r, Paint p) {

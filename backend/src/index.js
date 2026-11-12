@@ -10,9 +10,11 @@
 //   GET  /v1/me/sessions                                      (auth) phones where this account is logged in
 //   POST /v1/me/sessions/logout { id }                       (auth) log out one phone
 //   POST /v1/me/sessions/logout-others                        (auth) log out every other phone
-//   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m)
+//   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m); thelas by live location
+//   GET  /v1/stores/:id/products                              what a store / thela sells now
 
-import { isAdmin, partnerRoute, offlineReason } from './partner.js';
+import { isAdmin, partnerRoute, offlineReason, staleThelas } from './partner.js';
+import { productOut } from './products.js';
 
 export const RADIUS_MAX_M = 500;
 const SESSION_DAYS = 30;
@@ -183,8 +185,14 @@ function cleanAddress(a) {
 // Customers in the same ~1 km cell see the same shops, so the database is asked once per cell every
 // 30 seconds (per Cloudflare server) instead of once per customer. A shop switching LIVE shows within 30 s.
 const NEAR_CELL = 0.01; // degrees (~1.1 km)
-const NEAR_TTL_MS = 30_000;
+const NEAR_TTL_MS = 20_000;
+/** A thela that has not sent its location for this long is hidden from customers. */
+export const THELA_STALE_S = 600;
+/** Moved within this long = "Moving"; otherwise "Standing here". */
+const THELA_MOVING_S = 120;
 const nearCache = new Map();
+
+const prodCache = new Map();
 
 async function nearbyRows(env, lat, lng) {
   const cLat = Math.floor(lat / NEAR_CELL), cLng = Math.floor(lng / NEAR_CELL);
@@ -194,11 +202,15 @@ async function nearbyRows(env, lat, lng) {
   // The whole cell plus 500 m around it, so every customer inside the cell is covered.
   const pad = RADIUS_MAX_M / 111_000 + 0.001;
   const padLng = pad / Math.max(Math.cos((lat * Math.PI) / 180), 0.2);
+  // Shops by their address; thelas by where their phone last said they are.
+  const la0 = cLat * NEAR_CELL - pad, la1 = (cLat + 1) * NEAR_CELL + pad, lo0 = cLng * NEAR_CELL - padLng, lo1 = (cLng + 1) * NEAR_CELL + padLng;
   const { results } = await env.DB.prepare(
     `SELECT id, name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup, demo, status, live,
-            pass_until, missed_date, missed_count, photo_at, gst_type, fssai, agreement_version
-     FROM stores WHERE active = 1 AND lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?`,
-  ).bind(cLat * NEAR_CELL - pad, (cLat + 1) * NEAR_CELL + pad, cLng * NEAR_CELL - padLng, (cLng + 1) * NEAR_CELL + padLng).all();
+            pass_until, missed_date, missed_count, photo_at, gst_type, fssai, agreement_version, live_lat, live_lng, live_at, moved_at, heading
+     FROM stores WHERE active = 1 AND (
+       (kind != 'thela' AND lat BETWEEN ?1 AND ?2 AND lng BETWEEN ?3 AND ?4) OR
+       (kind = 'thela' AND live = 1 AND live_lat BETWEEN ?1 AND ?2 AND live_lng BETWEEN ?3 AND ?4))`,
+  ).bind(la0, la1, lo0, lo1).all();
   if (nearCache.size > 2000) nearCache.clear();
   nearCache.set(key, { at: Date.now(), rows: results });
   return results;
@@ -349,6 +361,23 @@ async function route(req, env) {
     return json({ ok: true });
   }
 
+  // What a shop / thela is selling now (in stock only). Short cache: prices change during the day.
+  const sp = path.match(/^\/v1\/stores\/([\w-]+)\/products$/);
+  if (sp && m === 'GET') {
+    const hit = prodCache.get(sp[1]);
+    if (hit && hit.at > Date.now() - 20_000) return json(hit.body);
+    const [st, pr] = await env.DB.batch([
+      env.DB.prepare('SELECT * FROM stores WHERE id = ? AND active = 1').bind(sp[1]),
+      env.DB.prepare('SELECT * FROM products WHERE store_id = ? AND in_stock = 1 ORDER BY category, name LIMIT 1000').bind(sp[1]),
+    ]);
+    const s = st.results[0];
+    if (!s || s.demo || offlineReason(s, now()) != null) throw new HttpError(404, 'not_available');
+    const out = { storeId: s.id, products: pr.results.map(productOut) };
+    if (prodCache.size > 500) prodCache.clear();
+    prodCache.set(sp[1], { at: Date.now(), body: out });
+    return json(out);
+  }
+
   if (path === '/v1/stores/nearby' && m === 'GET') {
     const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'));
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
@@ -358,13 +387,21 @@ async function route(req, env) {
     // (after closing time they drop off the map) and not paused for missed orders.
     const t = now();
     const stores = results
-      .filter((s) => s.demo || offlineReason(s, t) == null)
-      .map((s) => ({
-        id: s.id, name: s.name, kind: s.kind, lat: s.lat, lng: s.lng, address: s.address, phone: s.phone,
-        opensAt: s.opens_at, closesAt: s.closes_at, door: !!s.door_delivery, pickup: !!s.pickup,
-        gstType: s.gst_type || 'none', fssai: s.fssai || '', photo: s.photo_at ? `/v1/stores/${s.id}/photo` : null,
-        distanceM: Math.round(haversineM(lat, lng, s.lat, s.lng)),
-      }))
+      .filter((s) => !s.demo && offlineReason(s, t) == null)
+      .filter((s) => s.kind !== 'thela' || (s.live_at && t - s.live_at <= THELA_STALE_S))
+      .map((s) => {
+        const thela = s.kind === 'thela';
+        const sLat = thela ? s.live_lat : s.lat, sLng = thela ? s.live_lng : s.lng;
+        return {
+          id: s.id, name: s.name, kind: s.kind, lat: sLat, lng: sLng, address: thela ? '' : s.address,
+          // A thela's number is never shared; customers reach it through the app.
+          phone: thela ? '' : s.phone,
+          opensAt: s.opens_at, closesAt: s.closes_at, door: !!s.door_delivery, pickup: !!s.pickup,
+          gstType: s.gst_type || 'none', fssai: s.fssai || '', photo: s.photo_at ? `/v1/stores/${s.id}/photo` : null,
+          distanceM: Math.round(haversineM(lat, lng, sLat, sLng)),
+          ...(thela ? { seenAgo: t - s.live_at, moving: !!s.moved_at && t - s.moved_at <= THELA_MOVING_S, heading: s.heading } : {}),
+        };
+      })
       .filter((s) => s.distanceM <= radius)
       .sort((a, b) => a.distanceM - b.distanceM);
     return json({ radius, count: stores.length, stores });
@@ -382,5 +419,9 @@ export default {
       console.error(e);
       return json({ error: 'server_error' }, 500);
     }
+  },
+  // Every 5 minutes: thelas whose location stopped coming are hidden; tell the seller once.
+  async scheduled(_ev, env, ectx) {
+    ectx.waitUntil(staleThelas(env).catch((e) => console.error(e)));
   },
 };

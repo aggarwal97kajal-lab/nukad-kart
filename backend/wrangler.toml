@@ -7,6 +7,10 @@ workers_dev = true
 [placement]
 mode = "smart"
 
+# Every 5 minutes: hide thelas whose location stopped and tell the seller.
+[triggers]
+crons = ["*/5 * * * *"]
+
 [vars]
 # Google "Web client" ID(s) from Firebase, comma separated. Filled in once Google sign-in is enabled.
 GOOGLE_CLIENT_IDS = "173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com"

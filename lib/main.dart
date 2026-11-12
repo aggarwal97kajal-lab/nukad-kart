@@ -56,7 +56,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) => Future.delayed(const Duration(seconds: 4), _checkSession));
     ThelaTracker.instance.onBackInArea = (thelaId) {
       final th = thelaById(thelaId);
-      s.addNotification('${th.name} is back near you', 'Within 500 m of ${s.address} now. Call or WhatsApp to buy.');
+      s.addNotification('${th.name} is back near you', 'Within 500 m of ${s.address} now.');
       messengerKey.currentState?.showSnackBar(SnackBar(
         behavior: SnackBarBehavior.floating,
         backgroundColor: kToastBg,

@@ -1,4 +1,5 @@
-// Demo data for the first APK. Replace with API calls when the backend is ready.
+// Catalogue shapes. Shops, thelas, products and prices come from the server (services/live_data.dart);
+// only the category tree and tax table are fixed here.
 
 class SubCategory {
   final String name;
@@ -53,6 +54,7 @@ const List<MainCategory> kCategories = [
     SubCategory('Dry fruits & cereals', '🥜'),
     SubCategory('Chicken, meat & fish', '🍗'),
     SubCategory('Vegetables', '🥦'),
+    SubCategory('Fruits', '🍎'),
   ]),
   MainCategory('Snacks & Drinks', '🍟', [
     SubCategory('Chips & Namkeen', '🍟'),
@@ -103,6 +105,7 @@ const Map<String, (String, double)> kCategoryTax = {
   'Dry fruits & cereals': ('0801', 5),
   'Chicken, meat & fish': ('0207', 0),
   'Vegetables': ('0709', 0),
+  'Fruits': ('0810', 0),
   'Chips & Namkeen': ('2005', 5),
   'Sweets & Chocolates': ('1806', 5),
   'Drinks & Juices': ('2202', 5),
@@ -123,46 +126,20 @@ const Map<String, (String, double)> kCategoryTax = {
   'Home & Pooja': ('3307', 5),
 };
 
-const List<Product> kProducts = [
-  Product('p1', 'Chakki Atta', '5 kg', '🌾', 'Atta, rice & dal', 260),
-  Product('p2', 'Basmati Rice', '1 kg', '🍚', 'Atta, rice & dal', 130),
-  Product('p3', 'Toor Dal', '1 kg', '🫘', 'Atta, rice & dal', 180),
-  Product('p4', 'Mustard Oil', '1 L', '🫙', 'Oil, ghee & masala', 190),
-  Product('p5', 'Desi Ghee', '500 ml', '🧈', 'Oil, ghee & masala', 340),
-  Product('p6', 'Toned Milk', '500 ml', '🥛', 'Dairy, bread & eggs', 34),
-  Product('p7', 'Brown Bread', '400 g', '🍞', 'Dairy, bread & eggs', 50),
-  Product('p8', 'Eggs', '6 pc', '🥚', 'Dairy, bread & eggs', 48),
-  Product('p9', 'Glucose Biscuits', '250 g', '🍪', 'Bakery & biscuits', 30),
-  Product('p10', 'Cashews', '200 g', '🥜', 'Dry fruits & cereals', 220),
-  Product('p11', 'Potato', '1 kg', '🥔', 'Vegetables', 30),
-  Product('p12', 'Tomato', '1 kg', '🍅', 'Vegetables', 40),
-  Product('p13', 'Onion', '1 kg', '🧅', 'Vegetables', 35),
-  Product('p14', 'Salted Chips', '52 g', '🍟', 'Chips & Namkeen', 20),
-  Product('p15', 'Milk Chocolate', '50 g', '🍫', 'Sweets & Chocolates', 50),
-  Product('p16', 'Mango Juice', '1 L', '🧃', 'Drinks & Juices', 110),
-  Product('p17', 'Assam Tea', '250 g', '☕', 'Tea, Coffee & Milk Drinks', 140),
-  Product('p18', 'Masala Noodles', '70 g', '🍜', 'Instant Food', 15),
-  Product('p19', 'Tomato Ketchup', '500 g', '🍯', 'Sauces & Spreads', 120),
-  Product('p20', 'Vanilla Ice Cream', '500 ml', '🍦', 'Icecreams & more', 150),
-  Product('p21', 'Bath Soap', '4 × 100 g', '🧼', 'Bath & Body', 160),
-  Product('p22', 'Herbal Shampoo', '180 ml', '🧴', 'Hair', 190),
-  Product('p23', 'Face Wash', '100 ml', '🧴', 'Skin & Face', 175),
-  Product('p24', 'Kajal', '0.35 g', '💄', 'Beauty & Cosmetics', 199),
-  Product('p25', 'Sanitary Pads', '8 pc', '🌸', 'Feminine Hygiene', 60),
-  Product('p26', 'Baby Wipes', '72 pc', '🍼', 'Baby Care', 99),
-  Product('p27', 'Bandage Strips', '20 pc', '🩹', 'Health & Pharma', 40),
-  Product('p28', 'Dishwash Liquid', '500 ml', '🧽', 'Cleaners & Repellents', 110),
-  Product('p29', 'Mosquito Coil', '10 pc', '🦟', 'Cleaners & Repellents', 45),
-  Product('p30', 'LED Bulb', '9 W', '💡', 'Electronics', 99),
-  Product('p31', 'AA Batteries', '4 pc', '🔋', 'Electronics', 80),
-  Product('p32', 'Notebook', '172 pages', '📓', 'Stationary & Games', 60),
-  Product('p33', 'Diya Set', '6 pc', '🪔', 'Home & Pooja', 60),
-  Product('p34', 'Agarbatti', '100 g', '🪔', 'Home & Pooja', 50),
-  Product('p35', 'Camphor', '50 g', '🕯️', 'Home & Pooja', 70),
-  Product('p36', 'Floor Cleaner', '1 L', '🧴', 'Cleaners & Repellents', 199),
-];
+/// Everything the nearby shops sell (filled from the server).
+final List<Product> kProducts = [];
 
-Product productById(String id) => kProducts.firstWhere((p) => p.id == id);
+final Map<String, Product> _productSeen = {};
+
+/// Old orders can name a product the shop no longer sells, so unknown ids get a placeholder.
+Product productById(String id) =>
+    _productSeen[id] ?? kProducts.firstWhere((p) => p.id == id, orElse: () => Product(id, 'Item', '', '🛍️', '', 0));
+
+void rememberProducts(Iterable<Product> list) {
+  for (final p in list) {
+    _productSeen[p.id] = p;
+  }
+}
 
 class Store {
   final String id;
@@ -176,8 +153,11 @@ class Store {
   final String phone;
   final String opensAt;
   final String address;
-  /// Shop photo. Vendors must upload a real photo of their shop to sign up.
-  String get photo => 'assets/images/stores/$id.jpg';
+  /// Shop photo (server URL). Vendors must upload a real photo of their shop to sign up.
+  final String? photoUrl;
+  String get photo => photoUrl ?? 'assets/images/stores/$id.jpg';
+  final double lat, lng;
+  String get ratingText => rating > 0 ? '★ $rating' : 'New';
   String get hours => '$opensAt – $openTill';
 
   /// Open right now? Uses the shop's daily timings.
@@ -209,37 +189,17 @@ class Store {
       this.stateCode = '07',
       this.billPrefix = 'NK',
       this.logo,
-      this.billTerms = const []});
+      this.billTerms = const [],
+      this.photoUrl,
+      this.lat = 0,
+      this.lng = 0});
 }
 
 /// How a shop is registered under GST. Decides the bill title and tax columns.
 enum BillGst { none, regular, composition }
 
-const List<Store> kStores = [
-  Store('s1', 'Sharma General Store', 180, 4.6, 212, true, true, '10 pm', '+91 98765 11001',
-      opensAt: '8 am',
-      address: 'Shop 4, Block C Market, Sector 21, Rohini, New Delhi 110086',
-      gst: BillGst.regular,
-      gstin: '07ABCPS1234K1ZO',
-      fssai: '13324011000704',
-      billPrefix: 'SGS',
-      logo: 'assets/images/stores/s1_logo.png',
-      billTerms: ['Goods once sold will be exchanged only if damaged.', 'Fresh items: no return.', 'Queries: call +91 98765 11001.']),
-  Store('s2', 'Gupta Kirana & Dairy', 320, 4.4, 98, true, false, '9:30 pm', '+91 98765 11002',
-      opensAt: '6 am',
-      address: 'B-118, near Durga Mandir, Sector 21, Rohini, New Delhi 110086',
-      gst: BillGst.composition,
-      gstin: '07AAGPG5678L1Z8',
-      fssai: '23324011000881',
-      billPrefix: 'GKD',
-      billTerms: ['Milk and curd: no return.', 'Please check items at the door.']),
-  // Demo: closes early so you can see a closed shop in the evening.
-  Store('s3', 'Balaji Provision', 470, 4.2, 54, false, true, '6 pm', '+91 98765 11003',
-      opensAt: '9 am',
-      address: 'Shop 11, Pocket 3 Market, Sector 22, Rohini, New Delhi 110086',
-      fssai: '23324011000992',
-      billPrefix: 'BP'),
-];
+/// Shops within 500 m of the customer's address (filled from the server).
+final List<Store> kStores = [];
 
 /// "9:30 pm" -> minutes after midnight.
 int _minutes(String s) {
@@ -250,7 +210,17 @@ int _minutes(String s) {
   return h * 60 + int.parse(m.group(2) ?? '0');
 }
 
-Store storeById(String id) => kStores.firstWhere((s) => s.id == id);
+final Map<String, Store> _storeSeen = {};
+
+/// Old orders can name a shop that is no longer nearby, so unknown ids get a placeholder.
+Store storeById(String id) =>
+    _storeSeen[id] ?? kStores.firstWhere((s) => s.id == id, orElse: () => Store(id, 'Shop', 0, 0, 0, false, false, '', ''));
+
+void rememberStores(Iterable<Store> list) {
+  for (final s in list) {
+    _storeSeen[s.id] = s;
+  }
+}
 
 class Listing {
   final String storeId;
@@ -260,24 +230,8 @@ class Listing {
   const Listing(this.storeId, this.productId, this.price, this.stock);
 }
 
-/// Every store sells most products, at its own price (always ≤ MRP, GST included).
-final List<Listing> kListings = _buildListings();
-
-List<Listing> _buildListings() {
-  final out = <Listing>[];
-  for (var si = 0; si < kStores.length; si++) {
-    final s = kStores[si];
-    for (var pi = 0; pi < kProducts.length; pi++) {
-      final p = kProducts[pi];
-      if ((pi + si) % 5 == 4) continue; // not every store sells everything
-      final discount = ((pi * 7 + si * 3) % 4) * (p.mrp >= 100 ? 5 : 1);
-      final int price = p.mrp - discount;
-      final stock = ((pi + si * 2) % 9 == 0) ? 0 : 5 + (pi * 3 + si) % 30;
-      out.add(Listing(s.id, p.id, price, stock));
-    }
-  }
-  return out;
-}
+/// Each shop's price and stock for a product (filled from the server).
+final List<Listing> kListings = [];
 
 List<Listing> listingsForStore(String storeId) =>
     kListings.where((l) => l.storeId == storeId).toList();
@@ -301,8 +255,9 @@ class ThelaItem {
   final String hindi;
   final int price;
   final String unit;
-  final String emoji;
-  const ThelaItem(this.english, this.hindi, this.price, this.unit, this.emoji);
+  final String emoji; // an emoji, or the item's photo (asset path or URL)
+  final num exactPrice;
+  const ThelaItem(this.english, this.hindi, this.price, this.unit, this.emoji, {this.exactPrice = 0});
 }
 
 class Thela {
@@ -316,30 +271,16 @@ class Thela {
   final String phone;
   final int lastSeenSec;
   final List<ThelaItem> items;
+  final double lat, lng;
+  final bool moving;
+  final String? photoUrl;
   const Thela(this.id, this.name, this.sells, this.distanceM, this.rating, this.door, this.pickup,
-      this.phone, this.lastSeenSec, this.items);
+      this.phone, this.lastSeenSec, this.items, {this.lat = 0, this.lng = 0, this.moving = false, this.photoUrl});
+  String get ratingText => rating > 0 ? '★ $rating' : 'New';
 }
 
-const List<Thela> kThelas = [
-  Thela('t1', 'Ramu Sabzi Wala', 'Vegetables', 220, 4.8, true, true, '+91 98111 22001', 20, [
-    ThelaItem('Tomato', 'Tamatar', 40, 'kg', '🍅'),
-    ThelaItem('Onion', 'Pyaaz', 35, 'kg', '🧅'),
-    ThelaItem('Potato', 'Aloo', 28, 'kg', '🥔'),
-    ThelaItem('Spinach', 'Palak', 15, 'bunch', '🥬'),
-    ThelaItem('Lady finger', 'Bhindi', 60, 'kg', '🫛'),
-  ]),
-  Thela('t2', 'Fresh Phal Thela', 'Fruits', 380, 4.5, false, true, '+91 98111 22002', 45, [
-    ThelaItem('Banana', 'Kela', 60, 'dozen', '🍌'),
-    ThelaItem('Apple', 'Seb', 160, 'kg', '🍎'),
-    ThelaItem('Papaya', 'Papita', 50, 'pc', '🥭'),
-    ThelaItem('Grapes', 'Angoor', 90, 'kg', '🍇'),
-  ]),
-  Thela('t3', 'Lakshmi Sabzi', 'Vegetables & herbs', 450, 4.3, true, false, '+91 98111 22003', 90, [
-    ThelaItem('Coriander', 'Dhaniya', 10, 'bunch', '🌿'),
-    ThelaItem('Green chilli', 'Hari mirch', 80, 'kg', '🌶️'),
-    ThelaItem('Cauliflower', 'Gobhi', 30, 'pc', '🥦'),
-    ThelaItem('Carrot', 'Gajar', 40, 'kg', '🥕'),
-  ]),
-];
+/// Thelas whose live location is within 500 m (filled from the server).
+final List<Thela> kThelas = [];
 
-Thela thelaById(String id) => kThelas.firstWhere((t) => t.id == id);
+Thela thelaById(String id) =>
+    kThelas.firstWhere((t) => t.id == id, orElse: () => Thela(id, 'Thela', '', 0, 0, false, false, '', 0, const []));

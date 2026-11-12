@@ -49,6 +49,7 @@ flutter:
     - assets/images/stores/
     - assets/images/categories/
     - assets/images/markers/
+    - assets/produce/
   fonts:
     # Noto Sans (SIL Open Font Licence) — brand guidelines "Golden Corner"
     - family: NotoSans

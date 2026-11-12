@@ -50,7 +50,7 @@ class SubcategoryScreen extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(color: kCream, borderRadius: BorderRadius.circular(10)),
                   alignment: Alignment.center,
-                  child: Text(p.emoji, style: TextStyle(fontSize: 54)),
+                  child: ProductPic(p.emoji, size: 90),
                 );
                 final card = CardBox(
                   padding: EdgeInsets.all(10),

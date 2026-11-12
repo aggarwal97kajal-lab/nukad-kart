@@ -114,8 +114,7 @@ class _LiveOrderBarState extends State<LiveOrderBar> {
                   child: Row(children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(storeById(o.storeId).photo, width: 48, height: 48, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const SizedBox(width: 48, height: 48)),
+                      child: storeImage(storeById(o.storeId).photo, width: 48, height: 48),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

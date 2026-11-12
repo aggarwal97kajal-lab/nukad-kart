@@ -413,7 +413,20 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget _line(AppState s, String storeId, String pid, int qty, bool last) {
     final p = productById(pid);
-    final l = listingFor(storeId, pid)!;
+    final l0 = listingFor(storeId, pid);
+    if (l0 == null) {
+      return Container(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(border: last ? null : Border(bottom: BorderSide(color: kLine))),
+        child: Row(children: [
+          EmojiTile(p.emoji, size: 46),
+          SizedBox(width: 12),
+          Expanded(child: Text('${p.name} — not available now', style: body(13, color: kMute))),
+          TextButton(onPressed: () { for (var i = 0; i < qty; i++) { s.remove(pid); } }, child: Text('Remove')),
+        ]),
+      );
+    }
+    final l = l0;
     return Container(
       padding: EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(border: last ? null : Border(bottom: BorderSide(color: kLine))),

@@ -85,7 +85,7 @@ class _StoreScreenState extends State<StoreScreen> {
               ),
               background: Hero(
                 tag: 'store-photo-${st.id}',
-                child: Image.asset(st.photo, fit: BoxFit.cover),
+                child: storeImage(st.photo),
               ),
             );
           }),
@@ -176,7 +176,7 @@ class _StoreScreenState extends State<StoreScreen> {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(color: kPillBg, borderRadius: BorderRadius.circular(14)),
-            child: Text('★ ${st.rating} (${st.ratingCount})', style: body(13, color: kGText, weight: FontWeight.w800)),
+            child: Text(st.ratingCount > 0 ? '★ ${st.rating} (${st.ratingCount})' : 'New on Nukad Kart', style: body(13, color: kGText, weight: FontWeight.w800)),
           ),
         ]),
         line(Icons.place_outlined, '${st.distanceM} m from ${s.current.label.toLowerCase() == 'home' ? 'your home' : s.current.label}'),
@@ -229,7 +229,7 @@ class _StoreScreenState extends State<StoreScreen> {
         height: 110,
         alignment: Alignment.center,
         decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
-        child: Text(p.emoji, style: TextStyle(fontSize: 56)),
+        child: ProductPic(p.emoji, size: 90),
       ),
       if (off > 0)
         Positioned(

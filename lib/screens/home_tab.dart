@@ -13,6 +13,7 @@ import 'address_screen.dart';
 import '../widgets/typing_hint.dart';
 import '../widgets/thela_live.dart';
 import '../state/thela_tracker.dart';
+import '../services/live_data.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -22,10 +23,41 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   bool moving = false;
+  String _at = '';
+
+  @override
+  void initState() {
+    super.initState();
+    LiveData.instance.startPolling();
+  }
+
+  @override
+  void dispose() {
+    LiveData.instance.stopPolling();
+    super.dispose();
+  }
+
+  /// Shops and thelas around the chosen address (again whenever the address changes).
+  void _loadFor(AppState s) {
+    final key = '${s.current.lat},${s.current.lng}';
+    if (key == _at) return;
+    if (_at.isNotEmpty) ThelaTracker.instance.reset();
+    _at = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) => LiveData.instance.loadFor(s.current.lat, s.current.lng));
+  }
+
+  Future<void> _pull(AppState s) => LiveData.instance.loadFor(s.current.lat, s.current.lng, force: true);
 
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
+    _loadFor(s);
+    return ListenableBuilder(listenable: LiveData.instance, builder: (context, _) => _build(context, s));
+  }
+
+  Widget _build(BuildContext context, AppState s) {
+    final ld = LiveData.instance;
+    final empty = moving ? kThelas.isEmpty : kStores.isEmpty;
     return Column(children: [
       Container(
         decoration: BoxDecoration(
@@ -160,9 +192,14 @@ class _HomeTabState extends State<HomeTab> {
         ),
       ),
       Expanded(
-          child: !s.serviceable
-              ? _notServiceable(context, s)
-              : (moving ? _movingList(context) : _shopList(context))),
+          child: RefreshIndicator(
+            onRefresh: () => _pull(s),
+            child: !ld.loaded
+                ? (ld.error != null ? _loadError(context, s) : const Center(child: CircularProgressIndicator()))
+                : empty
+                    ? _notServiceable(context, s)
+                    : (moving ? _movingList(context) : _shopList(context)),
+          )),
     ]);
   }
 
@@ -226,6 +263,18 @@ class _HomeTabState extends State<HomeTab> {
     ]);
   }
 
+  Widget _loadError(BuildContext context, AppState s) {
+    return ListView(padding: EdgeInsets.fromLTRB(16, 40, 16, 24), children: [
+      Icon(Icons.wifi_off, size: 56, color: kMute),
+      SizedBox(height: 10),
+      Text('Couldn’t load shops near you', textAlign: TextAlign.center, style: head(18)),
+      SizedBox(height: 6),
+      Text('Check your internet and pull down to try again.', textAlign: TextAlign.center, style: body(14, color: kMute)),
+      SizedBox(height: 16),
+      Center(child: TextButton(onPressed: () => _pull(s), child: Text('Try again'))),
+    ]);
+  }
+
   /// G05: no shops within 500 m of the chosen address.
   Widget _notServiceable(BuildContext context, AppState s) {
     return ListView(padding: EdgeInsets.fromLTRB(16, 18, 16, 24), children: [
@@ -236,9 +285,11 @@ class _HomeTabState extends State<HomeTab> {
         child: Column(children: [
           Icon(Icons.storefront_outlined, size: 64, color: Color(0xFFC5CFC6)),
           SizedBox(height: 10),
-          Text('No stores available', style: head(20)),
+          Text(moving ? 'No thela near you right now' : 'No stores available', style: head(20)),
           SizedBox(height: 6),
-          Text('We don’t deliver to ${s.current.short} yet.\nTry changing your location.',
+          Text(moving
+              ? 'Thelas show here when they are LIVE within 500 m of ${s.current.short}. Pull down to check again.'
+              : 'No Nukad Kart shop is open within 500 m of ${s.current.short} right now.\nTry changing your location.',
               textAlign: TextAlign.center, style: body(14, color: kMute)),
           SizedBox(height: 18),
           SizedBox(
@@ -266,7 +317,7 @@ class _HomeTabState extends State<HomeTab> {
     return ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, 24), children: [
       Text(t('Moving sellers near you'), style: head(17)),
       SizedBox(height: 4),
-      Text(t('Call or WhatsApp them, then pay in person. Only sellers within 500 m are shown.'),
+      Text(t('Live thelas within 500 m. Pay the seller in person.'),
           style: body(12.5, color: kMute)),
       SizedBox(height: 12),
       for (final th in kThelas) ...[
@@ -283,16 +334,16 @@ class _HomeTabState extends State<HomeTab> {
           child: CardBox(
             padding: EdgeInsets.all(12),
             child: Row(children: [
-              EmojiTile(th.items.first.emoji, size: 54, bg: kGBg),
+              EmojiTile(th.items.isEmpty ? '🛒' : th.items.first.emoji, size: 54, bg: kGBg),
               SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(th.name, style: head(15)),
                   SizedBox(height: 2),
-                  Text('${th.sells} · ★ ${th.rating}', style: body(12, color: kMute)),
+                  Text('${th.sells} · ${th.items.length} items', style: body(12, color: kMute)),
                   SizedBox(height: 5),
                   Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                    thelaStatusPill(lv.status),
+                    thelaStatusPill(lv.status, lv.seenAgo),
                     Text(thelaStatusLine(lv), style: body(11.5, color: kMute)),
                   ]),
                 ]),
@@ -327,8 +378,8 @@ class _StoreCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(14),
               child: store.isOpen
-                  ? Image.asset(store.photo, width: 64, height: 64, fit: BoxFit.cover)
-                  : greyed(Image.asset(store.photo, width: 64, height: 64, fit: BoxFit.cover)),
+                  ? storeImage(store.photo, width: 64, height: 64)
+                  : greyed(storeImage(store.photo, width: 64, height: 64)),
             ),
           ),
           SizedBox(width: 12),
@@ -338,8 +389,8 @@ class _StoreCard extends StatelessWidget {
               SizedBox(height: 2),
               Text(
                   store.isOpen
-                      ? '${store.distanceM} m · Open till ${store.openTill} · ★ ${store.rating}'
-                      : '${store.distanceM} m · Opens ${store.opensAt} · ★ ${store.rating}',
+                      ? '${store.distanceM} m · Open till ${store.openTill} · ${store.ratingText}'
+                      : '${store.distanceM} m · Opens ${store.opensAt} · ${store.ratingText}',
                   style: body(12, color: kMute)),
               SizedBox(height: 5),
               Wrap(spacing: 5, runSpacing: 6, children: [

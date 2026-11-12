@@ -4,6 +4,7 @@ import 'home.dart';
 import 'produce_picker.dart';
 import 'products.dart';
 import '../session.dart';
+import '../thela_location.dart';
 
 /// Which bottom tab is showing; Home's "Change prices" jumps to Products.
 final shellTab = ValueNotifier<int>(0);
@@ -20,11 +21,17 @@ class _PartnerShellState extends State<PartnerShell> {
   void initState() {
     super.initState();
     shellTab.addListener(_tab);
+    // A LIVE thela keeps sending its location, also after the app was closed and opened again.
+    session.addListener(_loc);
+    _loc();
   }
+
+  void _loc() => ThelaLocation.instance.sync();
 
   @override
   void dispose() {
     shellTab.removeListener(_tab);
+    session.removeListener(_loc);
     super.dispose();
   }
 

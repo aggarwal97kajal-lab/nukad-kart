@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'shell.dart';
+import 'live_setup.dart';
+import '../thela_location.dart';
 import '../api.dart';
 import '../session.dart';
 import '../ui.dart';
@@ -40,6 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// The switch moves at once; the server confirms in the background (and it flips back if the server says no).
   Future<void> _setLive(bool on) async {
     if (_liveBusy) return;
+    // A thela is seen on the map only while its location comes in: set the phone up first.
+    if (on && session.store?['kind'] == 'thela' && !await ThelaLocation.ready()) {
+      final ok = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const LiveSetupScreen()));
+      if (ok != true || !mounted) return;
+    }
     final before = Map<String, dynamic>.from(session.store!);
     _liveBusy = true;
     session.setStore({...before, 'live': on, 'offlineReason': on ? null : 'switched_off'});
@@ -51,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) toast(context, e.message);
     }
     _liveBusy = false;
+    ThelaLocation.instance.sync();
   }
 
   Future<void> _resubmit() async {

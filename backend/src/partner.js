@@ -5,12 +5,13 @@
 //   POST /v1/partner/payments    { plan, key }   (auth)       start a pass payment (same key = same payment)
 //   POST /v1/partner/payments/:key/done { upiStatus, upiRef, app }   back from the UPI app
 //   POST /v1/partner/live        { on }          (auth)       go live / offline
+//   POST /v1/partner/location    { lat, lng, heading? } (auth) thela: where I am now (on movement, or every few minutes)
 //   GET  /v1/stores/:id/photo                                 shop photo (JPEG)
 //   GET/PUT /v1/admin/settings { upiId, upiName } (admin)     where partners pay
 //   GET  /v1/admin/payments?status=CHECKING|ALL  (admin)
 //   POST /v1/admin/payments/:id/confirm          (admin)      money is in: pass starts
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
-import { HttpError, json, body, now, verifySession, verifyMsg91 } from './index.js';
+import { HttpError, json, body, now, verifySession, verifyMsg91, haversineM, THELA_STALE_S } from './index.js';
 import { sendPush, pushReady } from './push.js';
 import { productRoute } from './products.js';
 
@@ -630,8 +631,26 @@ export async function partnerRoute(req, env, path, m) {
     }
     // Going live again after the "5 missed orders" pause starts a fresh count for today. One round trip.
     const w = on ? env.DB.prepare('UPDATE stores SET live = 1, missed_count = 0 WHERE id = ?').bind(s.id)
-      : env.DB.prepare('UPDATE stores SET live = 0 WHERE id = ?').bind(s.id);
+      : env.DB.prepare('UPDATE stores SET live = 0, live_lat = NULL, live_lng = NULL, live_at = NULL, moved_at = NULL WHERE id = ?').bind(s.id);
     return json({ store: await writeAndRead(env, u.id, [w]) });
+  }
+
+  if (path === '/v1/partner/location' && m === 'POST') {
+    const { s } = await ctx(req, env);
+    if (!s || s.kind !== 'thela') throw new HttpError(400, 'thela_only');
+    if (!s.live) return json({ ok: false, live: false });
+    const b = await body(req);
+    const lat = Number(b.lat), lng = Number(b.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
+    const t = now();
+    // The phone sends on ~75 m of movement, plus a heartbeat every few minutes while standing.
+    if (s.live_at && t - s.live_at < 10) return json({ ok: true });
+    const moved = s.live_lat == null || haversineM(s.live_lat, s.live_lng, lat, lng) >= 50; // cell/wifi fixes wobble ~30–50 m
+    const heading = Number.isFinite(Number(b.heading)) && b.heading !== null ? Math.round(Number(b.heading)) % 360 : null;
+    await env.DB.prepare(`UPDATE stores SET live_lat = ?, live_lng = ?, live_at = ?, moved_at = CASE WHEN ? THEN ? ELSE moved_at END,
+        heading = COALESCE(?, heading), stale_pushed = 0 WHERE id = ?`)
+      .bind(lat, lng, t, moved ? 1 : 0, t, moved ? heading : null, s.id).run();
+    return json({ ok: true, live: true });
   }
 
   if (path === '/v1/partner/agreement' && m === 'GET') {
@@ -830,4 +849,23 @@ export async function partnerRoute(req, env, path, m) {
   }
 
   return null;
+}
+
+/** Cron: LIVE thelas whose phone stopped sending location are hidden (nearby skips them); tell each seller once. */
+export async function staleThelas(env) {
+  const t = now();
+  const { results } = await env.DB.prepare(
+    `SELECT id, owner_id FROM stores WHERE kind = 'thela' AND live = 1 AND stale_pushed = 0 AND live_at IS NOT NULL AND live_at < ? LIMIT 200`,
+  ).bind(t - THELA_STALE_S).all();
+  for (const r of results) {
+    await env.DB.prepare('UPDATE stores SET stale_pushed = 1 WHERE id = ?').bind(r.id).run();
+    if (r.owner_id) {
+      await sendPush(env, r.owner_id, {
+        title: 'Customers can’t see your thela',
+        body: 'Your location stopped for 10 minutes. Open Nukad Partner and check location is on.',
+        data: { type: 'location_stale' },
+      }).catch(() => {});
+    }
+  }
+  return results.length;
 }

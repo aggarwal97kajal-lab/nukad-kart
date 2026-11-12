@@ -149,9 +149,40 @@ class EmojiTile extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(color: bg ?? kCream, borderRadius: BorderRadius.circular(size * 0.24)),
       alignment: Alignment.center,
-      child: Text(emoji, style: TextStyle(fontSize: size * 0.52)),
+      clipBehavior: Clip.antiAlias,
+      child: isPicture(emoji) ? Padding(padding: EdgeInsets.all(size * 0.06), child: ProductPic(emoji, size: size)) : Text(emoji, style: TextStyle(fontSize: size * 0.52)),
     );
   }
+}
+
+/// Product / produce "emoji" fields can also hold a photo: an app asset or a server URL.
+bool isPicture(String v) => v.startsWith('assets/') || v.startsWith('http');
+
+/// Shows a product's photo, or its emoji when it has none.
+class ProductPic extends StatelessWidget {
+  final String pic;
+  final double size;
+  const ProductPic(this.pic, {super.key, this.size = 56});
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Text('🛍️', style: TextStyle(fontSize: size * 0.5));
+    if (pic.startsWith('assets/')) {
+      return Image.asset(pic, width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => fallback);
+    }
+    if (pic.startsWith('http')) {
+      return Image.network(pic, width: size, height: size, fit: BoxFit.contain, errorBuilder: (_, __, ___) => fallback);
+    }
+    return Text(pic, style: TextStyle(fontSize: size * 0.52));
+  }
+}
+
+/// A shop photo from the server, or an app asset for older saved data.
+Widget storeImage(String src, {double? width, double? height}) {
+  final err = (BuildContext _, Object __, StackTrace? ___) =>
+      Container(width: width, height: height, color: kSurf, alignment: Alignment.center, child: Icon(Icons.storefront, color: kMute));
+  return src.startsWith('http')
+      ? Image.network(src, width: width, height: height, fit: BoxFit.cover, errorBuilder: err)
+      : Image.asset(src, width: width, height: height, fit: BoxFit.cover, errorBuilder: err);
 }
 
 class QtyStepper extends StatelessWidget {
