@@ -6,6 +6,9 @@
 //   POST /v1/me/phone           { accessToken, phone }       (auth) phone verified by MSG91
 //   PUT  /v1/me                 { name, address? }           (auth)
 //   POST /v1/me/delete          { reason, feedback }         (auth) removes profile; next Google login starts fresh
+//   GET  /v1/me/sessions                                      (auth) phones where this account is logged in
+//   POST /v1/me/sessions/logout { id }                       (auth) log out one phone
+//   POST /v1/me/sessions/logout-others                        (auth) log out every other phone
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m)
 
 export const RADIUS_MAX_M = 500;
@@ -64,8 +67,8 @@ async function hmacKey(secret) {
   return crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
 
-export async function signSession(uid, secret, days = SESSION_DAYS) {
-  const payload = b64url(enc.encode(JSON.stringify({ uid, exp: now() + days * 86400 })));
+export async function signSession(uid, secret, days = SESSION_DAYS, sid = undefined) {
+  const payload = b64url(enc.encode(JSON.stringify({ uid, sid, exp: now() + days * 86400 })));
   const sig = await crypto.subtle.sign('HMAC', await hmacKey(secret), enc.encode(payload));
   return `${payload}.${b64url(sig)}`;
 }
@@ -138,13 +141,25 @@ async function profile(db, uid) {
   return { user: publicUser(user), addresses: results, profileComplete: complete };
 }
 
-async function auth(req, env) {
+const SEEN_EVERY = 600; // update last_seen at most every 10 minutes (saves database writes)
+
+async function session(req, env) {
   const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
   const s = await verifySession(token, env.SESSION_SECRET);
-  if (!s) throw new HttpError(401, 'not_signed_in');
-  const live = await env.DB.prepare('SELECT id FROM users WHERE id = ? AND deleted_at IS NULL').bind(s.uid).first();
-  if (!live) throw new HttpError(401, 'not_signed_in');
-  return s.uid;
+  if (!s || !s.sid) throw new HttpError(401, 'not_signed_in');
+  const row = await env.DB.prepare(
+    `SELECT s.id, s.last_seen FROM sessions s JOIN users u ON u.id = s.user_id
+     WHERE s.id = ? AND s.user_id = ? AND s.revoked_at IS NULL AND u.deleted_at IS NULL`,
+  ).bind(s.sid, s.uid).first();
+  if (!row) throw new HttpError(401, 'not_signed_in');
+  if (now() - row.last_seen > SEEN_EVERY) {
+    await env.DB.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(now(), s.sid).run();
+  }
+  return { uid: s.uid, sid: s.sid };
+}
+
+async function auth(req, env) {
+  return (await session(req, env)).uid;
 }
 
 const ADDRESS_FIELDS = ['label', 'name', 'phone', 'flat', 'floor', 'area', 'city', 'state', 'country', 'pin'];
@@ -175,7 +190,7 @@ async function route(req, env) {
   if (m === 'POST' && path === '/v1/auth/google') {
     const audiences = String(env.GOOGLE_CLIENT_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
     if (!audiences.length) throw new HttpError(503, 'google_not_configured');
-    const { idToken } = await body(req);
+    const { idToken, device } = await body(req);
     const c = await verifyGoogleIdToken(idToken, audiences);
     const t = now();
     let user = await env.DB.prepare('SELECT * FROM users WHERE google_sub = ?').bind(c.sub).first();
@@ -187,7 +202,20 @@ async function route(req, env) {
     } else if (user.email !== c.email) {
       await env.DB.prepare('UPDATE users SET email = ?, updated_at = ? WHERE id = ?').bind(c.email, t, user.id).run();
     }
-    const token = await signSession(user.id, env.SESSION_SECRET);
+    const sid = crypto.randomUUID();
+    const d = device && typeof device === 'object' ? device : {};
+    const role = (await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(user.id).first())?.role || 'customer';
+    const stmts = [];
+    // A thela account works on one phone at a time: logging in here logs out every other phone.
+    if (role === 'thela') {
+      stmts.push(env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL').bind(t, user.id));
+    }
+    stmts.push(env.DB.prepare(
+      'INSERT INTO sessions (id, user_id, device, platform, city, created_at, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ).bind(sid, user.id, String(d.name || 'Unknown phone').slice(0, 60), String(d.platform || '').slice(0, 40),
+      String(req.cf?.city || '').slice(0, 60) || null, t, t));
+    await env.DB.batch(stmts);
+    const token = await signSession(user.id, env.SESSION_SECRET, SESSION_DAYS, sid);
     return json({ token, ...(await profile(env.DB, user.id)) });
   }
 
@@ -235,11 +263,35 @@ async function route(req, env) {
       env.DB.prepare('INSERT INTO deletion_requests (id, user_id, reason, feedback, created_at) VALUES (?, ?, ?, ?, ?)')
         .bind(crypto.randomUUID(), uid, String(b.reason || '').slice(0, 200), String(b.feedback || '').slice(0, 1000), t),
       env.DB.prepare('DELETE FROM addresses WHERE user_id = ?').bind(uid),
+      env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL').bind(t, uid),
       // Keep only the row id (orders and complaints will point to it); personal details are wiped.
       env.DB.prepare(
         "UPDATE users SET google_sub = 'deleted:' || id, email = '', name = NULL, phone = NULL, phone_verified = 0, deleted_at = ?, updated_at = ? WHERE id = ?",
       ).bind(t, t, uid),
     ]);
+    return json({ ok: true });
+  }
+
+  if (path === '/v1/me/sessions' && m === 'GET') {
+    const { uid, sid } = await session(req, env);
+    const { results } = await env.DB.prepare(
+      'SELECT id, device, platform, city, created_at, last_seen FROM sessions WHERE user_id = ? AND revoked_at IS NULL ORDER BY last_seen DESC',
+    ).bind(uid).all();
+    return json({ sessions: results.map((r) => ({ ...r, current: r.id === sid })) });
+  }
+
+  if (path === '/v1/me/sessions/logout' && m === 'POST') {
+    const { uid } = await session(req, env);
+    const { id } = await body(req);
+    await env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE id = ? AND user_id = ? AND revoked_at IS NULL')
+      .bind(now(), String(id || ''), uid).run();
+    return json({ ok: true });
+  }
+
+  if (path === '/v1/me/sessions/logout-others' && m === 'POST') {
+    const { uid, sid } = await session(req, env);
+    await env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND id != ? AND revoked_at IS NULL')
+      .bind(now(), uid, sid).run();
     return json({ ok: true });
   }
 

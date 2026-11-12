@@ -103,6 +103,7 @@ class AccountTab extends StatelessWidget {
             _Row(icon: Icons.lock_outline, title: t('Account privacy'), onTap: () => open(const PrivacyScreen())),
             _Row(icon: Icons.gavel_outlined, title: t('Terms & conditions'), onTap: () => open(const TermsScreen())),
             _Row(icon: Icons.policy_outlined, title: t('Privacy policy'), onTap: () => open(const PrivacyPolicyScreen())),
+            _Row(icon: Icons.devices_outlined, title: t('Logged-in devices'), onTap: () => open(const LoggedInDevicesScreen())),
             _Row(
                 icon: Icons.notifications_none,
                 title: t('Notification preferences'),

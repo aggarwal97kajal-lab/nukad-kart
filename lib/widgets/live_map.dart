@@ -1,6 +1,7 @@
 import 'dart:ui' show PathMetric;
 import 'package:flutter/material.dart';
 import 'ui.dart';
+import 'map_markers.dart';
 
 /// G07: live position of the delivery person while the order is out for delivery.
 /// Demo: the rider moves along a drawn route. The real app reads the store
@@ -178,16 +179,23 @@ class _RoutePainter extends CustomPainter {
     _marker(canvas, home, Color(0xFFD64545), Icons.home);
 
     final pos = m.getTangentForOffset(m.length * t)?.position ?? store;
-    canvas.drawCircle(pos, 28, Paint()..color = Color(0x407CC242));
-    canvas.drawCircle(pos, 18, Paint()..color = kG);
-    canvas.drawCircle(
-        pos,
-        18,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3);
-    _icon(canvas, pos, Icons.delivery_dining, Colors.white, 20);
+    final bikeImg = MapMarkers.bike;
+    var labelAt = pos.translate(0, -36);
+    if (bikeImg != null) {
+      final r = MapMarkers.draw(canvas, bikeImg, pos.translate(0, -8), 66);
+      labelAt = Offset(pos.dx, r.top - 14);
+    } else {
+      canvas.drawCircle(pos, 28, Paint()..color = Color(0x407CC242));
+      canvas.drawCircle(pos, 18, Paint()..color = kG);
+      canvas.drawCircle(
+          pos,
+          18,
+          Paint()
+            ..color = Colors.white
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3);
+      _icon(canvas, pos, Icons.delivery_dining, Colors.white, 20);
+    }
 
     final tp = TextPainter(
       text: TextSpan(
@@ -196,7 +204,7 @@ class _RoutePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     final r = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: pos.translate(0, -36), width: tp.width + 20, height: 24), Radius.circular(12));
+        Rect.fromCenter(center: labelAt, width: tp.width + 20, height: 24), Radius.circular(12));
     canvas.drawRRect(r, Paint()..color = Color(0xFF14201A));
     tp.paint(canvas, Offset(r.center.dx - tp.width / 2, r.center.dy - tp.height / 2));
   }

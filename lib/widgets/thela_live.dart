@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../state/thela_tracker.dart';
 import 'ui.dart';
+import 'map_markers.dart';
 
 String thelaStatusLabel(ThelaStatus s) => switch (s) {
       ThelaStatus.hereNow => '● HERE NOW',
@@ -118,18 +119,25 @@ class _MapPainter extends CustomPainter {
     final pos = at(d.clamp(0, 545));
     final col = status == ThelaStatus.hereNow ? Color(0xFF315426) : Color(0xFF8A4B00);
     canvas.drawCircle(pos, 25, Paint()..color = col.withAlpha(46));
-    canvas.drawCircle(pos, 17, Paint()..color = kBrand);
-    canvas.drawCircle(
-        pos,
-        17,
-        Paint()
-          ..color = Color(0xFF21331B)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3);
-    final tp = TextPainter(text: TextSpan(text: emoji, style: TextStyle(fontSize: 16)), textDirection: TextDirection.ltr)
-      ..layout();
-    tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
-    _label(canvas, pos - Offset(0, 36), '${d.round()} m · live', Color(0xFF21331B), kBrand);
+    final img = MapMarkers.thela;
+    var labelAt = pos - Offset(0, 36);
+    if (img != null) {
+      final r = MapMarkers.draw(canvas, img, pos.translate(0, -6), 70);
+      labelAt = Offset(pos.dx, r.top - 12);
+    } else {
+      canvas.drawCircle(pos, 17, Paint()..color = kBrand);
+      canvas.drawCircle(
+          pos,
+          17,
+          Paint()
+            ..color = Color(0xFF21331B)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3);
+      final tp = TextPainter(text: TextSpan(text: emoji, style: TextStyle(fontSize: 16)), textDirection: TextDirection.ltr)
+        ..layout();
+      tp.paint(canvas, pos - Offset(tp.width / 2, tp.height / 2));
+    }
+    _label(canvas, labelAt, '${d.round()} m · live', Color(0xFF21331B), kBrand);
   }
 
   void _dashedCircle(Canvas canvas, Offset c, double r, Paint p) {

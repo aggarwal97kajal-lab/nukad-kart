@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'widgets/map_markers.dart';
+import 'services/cart_reminder.dart';
 import 'package:flutter/services.dart';
 import 'l10n.dart';
 import 'state/app_state.dart';
@@ -7,6 +9,9 @@ import 'screens/splash_screen.dart';
 import 'data/demo_data.dart';
 import 'widgets/cart_widgets.dart';
 import 'state/thela_tracker.dart';
+import 'services/api.dart';
+import 'services/google_auth.dart';
+import 'screens/login_screen.dart';
 
 final navKey = GlobalKey<NavigatorState>();
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -17,6 +22,10 @@ Future<void> main() async {
   // The green launch screen stays up while saved settings load (a few ms).
   final state = AppState();
   await state.load();
+  await MapMarkers.load();
+  state.scheduleCartReminder = (title, body, at) => CartReminder.schedule(title, body, at);
+  state.cancelCartReminder = () => CartReminder.cancel();
+  state.logSentCartReminder();
   runApp(NukadKartApp(state: state));
 }
 
@@ -44,6 +53,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     final s = AppScope.read(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) => Future.delayed(const Duration(seconds: 4), _checkSession));
     ThelaTracker.instance.onBackInArea = (thelaId) {
       final th = thelaById(thelaId);
       s.addNotification('${th.name} is back near you', 'Within 500 m of ${s.address} now. Call or WhatsApp to buy.');
@@ -92,6 +102,34 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
 
   @override
   void didChangePlatformBrightness() => setState(() {});
+
+  DateTime _lastCheck = DateTime.fromMillisecondsSinceEpoch(0);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState st) {
+    if (st == AppLifecycleState.resumed) _checkSession();
+  }
+
+  /// If this phone was logged out from another phone (Logged-in devices), sign out here too.
+  Future<void> _checkSession() async {
+    if (!mounted) return;
+    final s = AppScope.read(context);
+    if (!s.signedIn || s.apiToken.isEmpty) return;
+    if (DateTime.now().difference(_lastCheck) < const Duration(minutes: 1)) return;
+    _lastCheck = DateTime.now();
+    try {
+      await api.me(s.apiToken);
+    } on ApiException catch (e) {
+      if (e.code != 'not_signed_in' && e.code != 'unknown_user') return;
+      s.signOut();
+      await googleAuth.signOut();
+      navKey.currentState?.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+      messengerKey.currentState?.showSnackBar(const SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text('You were logged out on this phone. Log in again to continue.'),
+      ));
+    }
+  }
 
   void _rebuildAll() {
     final ctx = navKey.currentContext;

@@ -57,8 +57,21 @@ class Api {
   }
 
   /// Sends Google's ID token; returns {token, user, addresses, profileComplete}.
-  Future<Map<String, dynamic>> googleLogin(String idToken) =>
-      _call('POST', '/v1/auth/google', body: {'idToken': idToken});
+  Future<Map<String, dynamic>> googleLogin(String idToken, {Map<String, String>? device}) =>
+      _call('POST', '/v1/auth/google', body: {'idToken': idToken, if (device != null) 'device': device});
+
+  Future<Map<String, dynamic>> me(String token) => _call('GET', '/v1/me', token: token);
+
+  /// Phones where this account is logged in.
+  Future<List<Map<String, dynamic>>> sessions(String token) async {
+    final d = await _call('GET', '/v1/me/sessions', token: token);
+    return ((d['sessions'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> logoutSession(String token, String id) =>
+      _call('POST', '/v1/me/sessions/logout', token: token, body: {'id': id});
+
+  Future<void> logoutOtherSessions(String token) => _call('POST', '/v1/me/sessions/logout-others', token: token);
 
   /// Sends the MSG91 access token so the server can confirm the number itself.
   Future<Map<String, dynamic>> verifyPhone(String token, String accessToken, String phone) =>

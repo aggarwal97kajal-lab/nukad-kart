@@ -7,6 +7,7 @@ import 'home_shell.dart';
 import 'account_pages.dart';
 import '../services/api.dart';
 import '../services/google_auth.dart';
+import '../services/device_name.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -150,7 +151,7 @@ Future<bool> googleSignInFlow(BuildContext context) async {
   // Server login. If the server cannot be reached, carry on with what is saved on this phone.
   Map<String, dynamic>? server;
   try {
-    server = await api.googleLogin(g.idToken);
+    server = await api.googleLogin(g.idToken, device: await deviceInfo());
   } on ApiException catch (e) {
     if (!e.unavailable) {
       await googleAuth.signOut();

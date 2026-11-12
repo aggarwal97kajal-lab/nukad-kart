@@ -7,6 +7,7 @@ import '../state/app_state.dart';
 import '../widgets/ui.dart';
 import '../widgets/live_map.dart';
 import 'rating_sheet.dart';
+import '../widgets/bill_card.dart';
 import 'report_screen.dart';
 
 class OrderScreen extends StatefulWidget {
@@ -66,6 +67,10 @@ class _OrderScreenState extends State<OrderScreen> {
         if (o.otp != null && o.isOpen) ...[
           SizedBox(height: 12),
           _otpCard(context, s, o),
+        ],
+        if (o.status == OrderStatus.delivered) ...[
+          SizedBox(height: 12),
+          BillCard(order: o),
         ],
         SizedBox(height: 12),
         CardBox(

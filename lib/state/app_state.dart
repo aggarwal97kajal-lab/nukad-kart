@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/widgets.dart';
 import '../data/demo_data.dart';
+import '../services/bill.dart';
 import '../l10n.dart';
 
 enum OrderStatus { placed, accepted, packed, outForDelivery, delivered, rejected, autoCancelled, cancelled }
@@ -40,8 +41,57 @@ class Order {
   int wrongOtpTries = 0;
   OrderStatus status = OrderStatus.placed;
   final Map<OrderStatus, DateTime> times = {};
+
+  /// Bill number from the shop's own series, given when the order is delivered.
+  String billNo = '';
+
+  /// Who and where, as it was when the order was placed (for the bill).
+  String toName = '', toPhone = '', toAddress = '', toState = '';
+
   Order(this.id, this.storeId, this.lines, this.door, this.placedAt) {
     times[OrderStatus.placed] = placedAt;
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'storeId': storeId,
+        'door': door,
+        'placedAt': placedAt.toIso8601String(),
+        'fee': fee,
+        'otp': otp,
+        'status': status.name,
+        'times': times.map((k, v) => MapEntry(k.name, v.toIso8601String())),
+        'billNo': billNo,
+        'to': [toName, toPhone, toAddress, toState],
+        'lines': lines.map((l) => [l.productId, l.qty, l.price]).toList(),
+      };
+
+  static Order fromJson(Map<String, dynamic> j) {
+    final o = Order(
+      '${j['id']}',
+      '${j['storeId']}',
+      ((j['lines'] as List?) ?? [])
+          .map((e) => OrderLine('${(e as List)[0]}', (e[1] as num).toInt(), (e[2] as num).toInt()))
+          .toList(),
+      j['door'] == true,
+      DateTime.parse('${j['placedAt']}'),
+    );
+    o.fee = (j['fee'] as num?)?.toInt() ?? 0;
+    o.otp = j['otp'] as String?;
+    o.status = OrderStatus.values.firstWhere((v) => v.name == j['status'], orElse: () => OrderStatus.placed);
+    ((j['times'] as Map?) ?? {}).forEach((k, v) {
+      final st = OrderStatus.values.where((x) => x.name == k);
+      if (st.isNotEmpty) o.times[st.first] = DateTime.parse('$v');
+    });
+    o.billNo = '${j['billNo'] ?? ''}';
+    final to = (j['to'] as List?) ?? const [];
+    if (to.length == 4) {
+      o.toName = '${to[0]}';
+      o.toPhone = '${to[1]}';
+      o.toAddress = '${to[2]}';
+      o.toState = '${to[3]}';
+    }
+    return o;
   }
   int get total => lines.fold(0, (s, l) => s + l.price * l.qty);
   int get payable => total + fee;
@@ -124,7 +174,11 @@ class AppNotification {
   final String body;
   final DateTime at;
   bool read = false;
-  AppNotification(this.title, this.body) : at = DateTime.now();
+  AppNotification(this.title, this.body, {DateTime? at}) : at = at ?? DateTime.now();
+
+  Map<String, dynamic> toJson() => {'t': title, 'b': body, 'at': at.toIso8601String(), 'r': read};
+  static AppNotification fromJson(Map<String, dynamic> j) =>
+      AppNotification('${j['t']}', '${j['b']}', at: DateTime.tryParse('${j['at']}'))..read = j['r'] == true;
 }
 
 enum AppTheme { light, dark, system }
@@ -320,6 +374,10 @@ class AppState extends ChangeNotifier {
     phoneVerified = false;
     cart.clear();
     cartStoreId = null;
+    orders.clear();
+    notifications.clear();
+    ratings.clear();
+    billSeq.clear();
     notifyListeners();
   }
 
@@ -349,6 +407,10 @@ class AppState extends ChangeNotifier {
         'currentIdx': currentIdx,
         'strikes': strikes,
         'phoneVerified': phoneVerified,
+        'orders': orders.take(50).map((o) => o.toJson()).toList(),
+        'notifications': notifications.take(60).map((n) => n.toJson()).toList(),
+        'ratings': ratings,
+        'billSeq': billSeq,
       };
 
   void _readProfile(Map<String, dynamic> p) {
@@ -360,7 +422,32 @@ class AppState extends ChangeNotifier {
     currentIdx = (p['currentIdx'] as num?)?.toInt() ?? (addresses.isEmpty ? -1 : 0);
     strikes = (p['strikes'] as num?)?.toInt() ?? 0;
     phoneVerified = p['phoneVerified'] == true;
+    orders
+      ..clear()
+      ..addAll(((p['orders'] as List?) ?? []).map((e) {
+        try {
+          return Order.fromJson(Map<String, dynamic>.from(e as Map));
+        } catch (_) {
+          return null;
+        }
+      }).whereType<Order>());
+    for (final o in orders) {
+      final n = int.tryParse(o.id.replaceFirst('NK-', '')) ?? 0;
+      if (n > _orderSeq) _orderSeq = n;
+    }
+    notifications
+      ..clear()
+      ..addAll(((p['notifications'] as List?) ?? []).map((e) => AppNotification.fromJson(Map<String, dynamic>.from(e as Map))));
+    ratings
+      ..clear()
+      ..addAll(Map<String, dynamic>.from((p['ratings'] as Map?) ?? {}).map((k, v) => MapEntry(k, (v as num).toInt())));
+    billSeq
+      ..clear()
+      ..addAll(Map<String, dynamic>.from((p['billSeq'] as Map?) ?? {}).map((k, v) => MapEntry(k, (v as num).toInt())));
   }
+
+  /// Last bill number used per shop and financial year, e.g. {"s1|26-27": 231}.
+  final Map<String, int> billSeq = {};
 
   void _storeProfile() {
     if (signedIn && email.isNotEmpty && profileComplete) _profiles[email] = _profileJson();
@@ -386,6 +473,16 @@ class AppState extends ChangeNotifier {
       final prof = Map<String, dynamic>.from((j['profiles'] as Map?) ?? {});
       prof.forEach((k, v) => _profiles[k] = Map<String, dynamic>.from(v as Map));
       _readProfile(Map<String, dynamic>.from((j['session'] as Map?) ?? {}));
+      final c = Map<String, dynamic>.from((j['cart'] as Map?) ?? {});
+      final items = Map<String, dynamic>.from((c['items'] as Map?) ?? {});
+      if (c['store'] != null && items.isNotEmpty) {
+        cartStoreId = '${c['store']}';
+        items.forEach((k, v) => cart[k] = (v as num).toInt());
+      }
+      cartReminders = j['cartReminders'] != false;
+      lastCartReminderAt = DateTime.tryParse('${j['cartReminderAt'] ?? ''}');
+      _cartReminderLogged = '${j['cartReminderLogged'] ?? ''}';
+      _cartSig = _sig;
       if (signedIn && !profileComplete) {
         signedIn = false;
         guest = true;
@@ -411,13 +508,83 @@ class AppState extends ChangeNotifier {
           'acceptedTerms': acceptedTerms,
           'profiles': _profiles,
           'session': _profileJson(),
+          'cart': {'store': cartStoreId, 'items': cart},
+          'cartReminders': cartReminders,
+          'cartReminderAt': lastCartReminderAt?.toIso8601String(),
+          'cartReminderLogged': _cartReminderLogged,
         }));
   }
 
   @override
   void notifyListeners() {
+    _cartWatch();
     super.notifyListeners();
     _save();
+  }
+
+  // ----- cart reminder: once, ~30 min after items are left in the cart -----
+  bool cartReminders = true;
+  DateTime? lastCartReminderAt;
+  String _cartReminderLogged = '';
+  String _cartSig = '';
+
+  /// Set by main(): schedules / cancels the phone notification.
+  void Function(String title, String body, DateTime at)? scheduleCartReminder;
+  void Function()? cancelCartReminder;
+
+  String get _sig => cartStoreId == null || cart.isEmpty
+      ? ''
+      : '$cartStoreId:${(cart.keys.toList()..sort()).map((k) => '$k*${cart[k]}').join(',')}';
+
+  /// What to send and when, or null when no reminder should go out.
+  /// No reminder: switched off, empty cart, already reminded today, or the shop will be closed by then.
+  (String, String, DateTime)? cartReminderPlan(DateTime now) {
+    if (!cartReminders || cartStoreId == null || cart.isEmpty) return null;
+    final last = lastCartReminderAt;
+    if (last != null && last.isBefore(now) && last.year == now.year && last.month == now.month && last.day == now.day) {
+      return null;
+    }
+    final at = now.add(const Duration(minutes: 30));
+    final st = storeById(cartStoreId!);
+    if (!st.isOpenAt(at)) return null;
+    final names = cart.keys.map((id) => productById(id).name).toList();
+    final more = names.length > 2 ? ' and ${names.length - 2} more' : '';
+    return (
+      'Your cart at ${st.name} is waiting 🛒',
+      '${names.take(2).join(', ')}$more · ₹$cartTotal. The shop is open till ${st.openTill}.',
+      at
+    );
+  }
+
+  void _cartWatch() {
+    final sig = _sig;
+    if (sig == _cartSig) return;
+    _cartSig = sig;
+    final plan = cartReminderPlan(DateTime.now());
+    if (plan == null) {
+      // Keep today's "already reminded" mark if it went out; otherwise forget the pending one.
+      if (lastCartReminderAt != null && lastCartReminderAt!.isAfter(DateTime.now())) lastCartReminderAt = null;
+      cancelCartReminder?.call();
+      return;
+    }
+    lastCartReminderAt = plan.$3;
+    scheduleCartReminder?.call(plan.$1, plan.$2, plan.$3);
+  }
+
+  void setCartReminders(bool on) {
+    cartReminders = on;
+    _cartSig = '#'; // re-plan
+    notifyListeners();
+  }
+
+  /// After the app opens: put a reminder that already went out into the notification list.
+  void logSentCartReminder() {
+    final at = lastCartReminderAt;
+    if (at == null || at.isAfter(DateTime.now()) || cart.isEmpty || _cartReminderLogged == at.toIso8601String()) return;
+    _cartReminderLogged = at.toIso8601String();
+    final st = cartStoreId == null ? null : storeById(cartStoreId!);
+    notifications.insert(0, AppNotification('Your cart is waiting', '${st?.name ?? 'Your shop'} · $cartCount item(s) · ₹$cartTotal', at: at));
+    notifyListeners();
   }
 
   // ----- cart: one store at a time -----
@@ -483,12 +650,31 @@ class AppState extends ChangeNotifier {
     _orderSeq++;
     final o = Order('NK-$_orderSeq', sid, lines, door, DateTime.now());
     o.fee = deliveryFeeFor(o.total, door);
+    final a = current;
+    o.toName = name.isNotEmpty ? name : a.name;
+    o.toPhone = phone.isNotEmpty ? phone : a.phone;
+    o.toAddress = door ? a.full : 'Pickup from the shop';
+    o.toState = a.state;
     orders.insert(0, o);
     cart.clear();
     cartStoreId = null;
     notifyListeners();
     _simulate(o);
     return o;
+  }
+
+  /// Puts an old order's items back in the cart (replaces the cart). Returns how many items could be added.
+  int reorder(Order o) {
+    cart.clear();
+    cartStoreId = o.storeId;
+    for (final l in o.lines) {
+      final li = listingFor(o.storeId, l.productId);
+      if (li == null || li.stock <= 0) continue;
+      cart[l.productId] = l.qty;
+    }
+    if (cart.isEmpty) cartStoreId = null;
+    notifyListeners();
+    return cart.length;
   }
 
   void _simulate(Order o) {
@@ -531,8 +717,12 @@ class AppState extends ChangeNotifier {
       return false;
     }
     o.status = OrderStatus.delivered;
-    o.times[OrderStatus.delivered] = DateTime.now();
-    notifications.insert(0, AppNotification('Delivered', 'Order #${o.id} was delivered'));
+    final now = DateTime.now();
+    o.times[OrderStatus.delivered] = now;
+    final key = '${o.storeId}|${financialYear(now)}';
+    billSeq[key] = (billSeq[key] ?? 0) + 1;
+    o.billNo = billNumber(storeById(o.storeId), now, billSeq[key]!);
+    notifications.insert(0, AppNotification('Order delivered', '#${o.id} from ${storeById(o.storeId).name}. Your bill is ready.'));
     notifyListeners();
     return true;
   }

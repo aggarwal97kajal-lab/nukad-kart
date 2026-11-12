@@ -88,7 +88,40 @@ class Product {
   final String sub;
   final int mrp;
   const Product(this.id, this.name, this.size, this.emoji, this.sub, this.mrp);
+
+  /// HSN code and GST % used on GST bills. The shop sets these in the Partner app;
+  /// the demo uses a typical value for the category.
+  (String, double) get hsnGst => kCategoryTax[sub] ?? ('9999', 18);
 }
+
+/// Typical HSN and GST % per category (demo values; shops confirm per product).
+const Map<String, (String, double)> kCategoryTax = {
+  'Atta, rice & dal': ('1006', 5),
+  'Oil, ghee & masala': ('1514', 5),
+  'Dairy, bread & eggs': ('0401', 0),
+  'Bakery & biscuits': ('1905', 5),
+  'Dry fruits & cereals': ('0801', 5),
+  'Chicken, meat & fish': ('0207', 0),
+  'Vegetables': ('0709', 0),
+  'Chips & Namkeen': ('2005', 5),
+  'Sweets & Chocolates': ('1806', 5),
+  'Drinks & Juices': ('2202', 5),
+  'Tea, Coffee & Milk Drinks': ('0902', 5),
+  'Instant Food': ('1902', 5),
+  'Sauces & Spreads': ('2103', 5),
+  'Icecreams & more': ('2105', 5),
+  'Bath & Body': ('3401', 5),
+  'Hair': ('3305', 5),
+  'Skin & Face': ('3304', 5),
+  'Beauty & Cosmetics': ('3304', 5),
+  'Feminine Hygiene': ('9619', 0),
+  'Baby Care': ('9619', 5),
+  'Health & Pharma': ('3004', 5),
+  'Cleaners & Repellents': ('3402', 5),
+  'Electronics': ('8539', 18),
+  'Stationary & Games': ('4820', 5),
+  'Home & Pooja': ('3307', 5),
+};
 
 const List<Product> kProducts = [
   Product('p1', 'Chakki Atta', '5 kg', '🌾', 'Atta, rice & dal', 260),
@@ -154,18 +187,58 @@ class Store {
   }
 
   bool get isOpen => isOpenAt(DateTime.now());
+
+  // ----- bill settings (set by the shop in the Partner app) -----
+  final BillGst gst;
+  final String gstin;
+  final String fssai;
+  final String stateName;
+  final String stateCode;
+  final String billPrefix;
+  final String? logo;
+  final List<String> billTerms;
+
   const Store(this.id, this.name, this.distanceM, this.rating, this.ratingCount, this.door,
-      this.pickup, this.openTill, this.phone, {this.opensAt = '8 am', this.address = ''});
+      this.pickup, this.openTill, this.phone,
+      {this.opensAt = '8 am',
+      this.address = '',
+      this.gst = BillGst.none,
+      this.gstin = '',
+      this.fssai = '',
+      this.stateName = 'Delhi',
+      this.stateCode = '07',
+      this.billPrefix = 'NK',
+      this.logo,
+      this.billTerms = const []});
 }
+
+/// How a shop is registered under GST. Decides the bill title and tax columns.
+enum BillGst { none, regular, composition }
 
 const List<Store> kStores = [
   Store('s1', 'Sharma General Store', 180, 4.6, 212, true, true, '10 pm', '+91 98765 11001',
-      opensAt: '8 am', address: 'Shop 4, Block C Market, Sector 21, Rohini, New Delhi 110086'),
+      opensAt: '8 am',
+      address: 'Shop 4, Block C Market, Sector 21, Rohini, New Delhi 110086',
+      gst: BillGst.regular,
+      gstin: '07ABCPS1234K1Z5',
+      fssai: '13324011000704',
+      billPrefix: 'SGS',
+      logo: 'assets/images/stores/s1_logo.png',
+      billTerms: ['Goods once sold will be exchanged only if damaged.', 'Fresh items: no return.', 'Queries: call +91 98765 11001.']),
   Store('s2', 'Gupta Kirana & Dairy', 320, 4.4, 98, true, false, '9:30 pm', '+91 98765 11002',
-      opensAt: '6 am', address: 'B-118, near Durga Mandir, Sector 21, Rohini, New Delhi 110086'),
+      opensAt: '6 am',
+      address: 'B-118, near Durga Mandir, Sector 21, Rohini, New Delhi 110086',
+      gst: BillGst.composition,
+      gstin: '07AAGPG5678L1Z2',
+      fssai: '23324011000881',
+      billPrefix: 'GKD',
+      billTerms: ['Milk and curd: no return.', 'Please check items at the door.']),
   // Demo: closes early so you can see a closed shop in the evening.
   Store('s3', 'Balaji Provision', 470, 4.2, 54, false, true, '6 pm', '+91 98765 11003',
-      opensAt: '9 am', address: 'Shop 11, Pocket 3 Market, Sector 22, Rohini, New Delhi 110086'),
+      opensAt: '9 am',
+      address: 'Shop 11, Pocket 3 Market, Sector 22, Rohini, New Delhi 110086',
+      fssai: '23324011000992',
+      billPrefix: 'BP'),
 ];
 
 /// "9:30 pm" -> minutes after midnight.

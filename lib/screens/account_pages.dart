@@ -753,32 +753,103 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     super.dispose();
   }
 
+  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  String _dayLabel(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(d.year, d.month, d.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return t('Today');
+    if (diff == 1) return t('Yesterday');
+    return '${d.day} ${_months[d.month - 1]}${d.year == now.year ? '' : ' ${d.year}'}';
+  }
+
+  (IconData, Color, Color) _look(String title) {
+    final x = title.toLowerCase();
+    if (x.contains('cart')) return (Icons.shopping_cart_outlined, kAmb, kAmbBg);
+    if (x.contains('delivered') || x.contains('accepted')) return (Icons.check_circle_outline, kG, kGBg);
+    if (x.contains('code')) return (Icons.key_outlined, kBlu, kBluBg);
+    if (x.contains('thela')) return (Icons.storefront_outlined, kG, kGBg);
+    if (x.contains('cancel') || x.contains('not taken')) return (Icons.cancel_outlined, kRed, kRedBg);
+    return (Icons.notifications_none, kG, kGBg);
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
+    // Newest first, grouped by day.
+    final list = [...s.notifications]..sort((a, b) => b.at.compareTo(a.at));
+    final groups = <String, List<AppNotification>>{};
+    for (final n in list) {
+      groups.putIfAbsent(_dayLabel(n.at), () => []).add(n);
+    }
     return _Page(title: t('Notifications'), children: [
-      if (s.notifications.isEmpty) _empty('🔔', 'No notifications yet', 'Order updates and thela replies show up here.'),
-      for (final n in s.notifications)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: CardBox(
-            border: n.read ? null : kG,
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              CircleAvatar(backgroundColor: kGBg, child: Icon(Icons.notifications_none, color: kG)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(n.title, style: body(14, weight: FontWeight.w700)),
-                  const SizedBox(height: 2),
-                  Text(n.body, style: body(12.5, color: kMute)),
-                  const SizedBox(height: 4),
-                  Text(TimeOfDay.fromDateTime(n.at).format(context), style: body(11, color: kMute)),
-                ]),
-              ),
+      CardBox(
+        padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+        child: Row(children: [
+          Icon(Icons.shopping_cart_outlined, color: kGText, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Cart reminders', style: body(14, weight: FontWeight.w700)),
+              Text('One reminder, about 30 min after you leave items in the cart', style: body(11.5, color: kMute)),
             ]),
           ),
+          Switch(value: s.cartReminders, activeColor: kG, onChanged: s.setCartReminders),
+        ]),
+      ),
+      if (list.isEmpty) _empty('🔔', 'No notifications yet', 'Order updates and thela replies show up here.'),
+      for (final g in groups.entries) ...[
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
+          child: Text(g.key.toUpperCase(), style: body(12, color: kMute, weight: FontWeight.w800).copyWith(letterSpacing: .8)),
         ),
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
+          child: Column(children: [
+            for (var i = 0; i < g.value.length; i++) _row(context, g.value[i], i > 0),
+          ]),
+        ),
+      ],
     ]);
+  }
+
+  Widget _row(BuildContext context, AppNotification n, bool divider) {
+    final (icon, fg, bg) = _look(n.title);
+    return Container(
+      decoration: BoxDecoration(
+        color: n.read ? kCard : kBrand.withAlpha(gDark ? 30 : 40),
+        border: divider ? Border(top: BorderSide(color: kLine)) : null,
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: fg, size: 21),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Text(n.title, style: body(14, weight: FontWeight.w700))),
+              const SizedBox(width: 8),
+              Text(TimeOfDay.fromDateTime(n.at).format(context), style: body(11.5, color: kMute)),
+            ]),
+            const SizedBox(height: 2),
+            Text(n.body, style: body(12.5, color: kMute)),
+          ]),
+        ),
+        if (!n.read)
+          Padding(
+            padding: const EdgeInsets.only(left: 8, top: 5),
+            child: Container(width: 9, height: 9, decoration: BoxDecoration(color: kRed, shape: BoxShape.circle)),
+          ),
+      ]),
+    );
   }
 }
 
@@ -1027,3 +1098,134 @@ class PrivacyPolicyScreen extends StatelessWidget {
   }
 }
 
+
+
+// ---------------- Logged-in devices ----------------
+class LoggedInDevicesScreen extends StatefulWidget {
+  const LoggedInDevicesScreen({super.key});
+  @override
+  State<LoggedInDevicesScreen> createState() => _LoggedInDevicesScreenState();
+}
+
+class _LoggedInDevicesScreenState extends State<LoggedInDevicesScreen> {
+  List<Map<String, dynamic>>? _list;
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final s = AppScope.read(context);
+    if (s.apiToken.isEmpty) {
+      setState(() => _error = 'Log in again to see your devices.');
+      return;
+    }
+    try {
+      final l = await api.sessions(s.apiToken);
+      if (mounted) setState(() {
+        _list = l;
+        _error = null;
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    }
+  }
+
+  String _ago(int secs) {
+    final d = DateTime.fromMillisecondsSinceEpoch(secs * 1000);
+    final diff = DateTime.now().difference(d);
+    if (diff.inMinutes < 15) return 'active now';
+    if (diff.inHours < 1) return 'last used ${diff.inMinutes} min ago';
+    if (diff.inDays < 1) return 'last used ${diff.inHours} h ago';
+    if (diff.inDays < 7) return 'last used ${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
+    const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return 'last used ${d.day} ${m[d.month - 1]}';
+  }
+
+  Future<void> _logout(String? id) async {
+    final s = AppScope.read(context);
+    setState(() => _busy = true);
+    try {
+      if (id == null) {
+        await api.logoutOtherSessions(s.apiToken);
+      } else {
+        await api.logoutSession(s.apiToken, id);
+      }
+      if (mounted) showToast(context, id == null ? 'Logged out of all other devices' : 'Device logged out');
+    } on ApiException catch (e) {
+      if (mounted) showToast(context, e.message);
+    }
+    if (mounted) setState(() => _busy = false);
+    await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppScope.of(context);
+    final list = _list;
+    final others = list?.where((d) => d['current'] != true).length ?? 0;
+    return _Page(title: t('Logged-in devices'), children: [
+      Text('Phones where your Google account ${s.email} is logged in to Nukad Kart. Don’t recognise one? Log it out.',
+          style: body(13, color: kMute)),
+      const SizedBox(height: 12),
+      if (_error != null)
+        NoteBox(_error!, icon: Icons.info_outline)
+      else if (list == null)
+        const Padding(padding: EdgeInsets.all(30), child: Center(child: CircularProgressIndicator()))
+      else ...[
+        Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+          child: Column(children: [
+            for (var i = 0; i < list.length; i++)
+              Container(
+                decoration: BoxDecoration(border: i == 0 ? null : Border(top: BorderSide(color: kLine))),
+                padding: const EdgeInsets.all(14),
+                child: Row(children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
+                    child: Icon(Icons.smartphone, color: kGText),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Flexible(child: Text('${list[i]['device'] ?? 'Phone'}', style: body(14.5, weight: FontWeight.w700))),
+                        if (list[i]['current'] == true) ...[const SizedBox(width: 6), Pill('THIS PHONE')],
+                      ]),
+                      Text(
+                          [
+                            if ('${list[i]['platform'] ?? ''}'.isNotEmpty) '${list[i]['platform']}',
+                            if ('${list[i]['city'] ?? ''}'.isNotEmpty && list[i]['city'] != null) '${list[i]['city']}',
+                            list[i]['current'] == true ? 'active now' : _ago((list[i]['last_seen'] as num).toInt()),
+                          ].join(' · '),
+                          style: body(12, color: kMute)),
+                    ]),
+                  ),
+                  if (list[i]['current'] != true)
+                    OutlinedButton(
+                      onPressed: _busy ? null : () => _logout('${list[i]['id']}'),
+                      style: OutlinedButton.styleFrom(
+                          foregroundColor: kRed,
+                          side: BorderSide(color: kRed),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      child: const Text('Log out'),
+                    ),
+                ]),
+              ),
+          ]),
+        ),
+        const SizedBox(height: 14),
+        if (others > 0) PrimaryButton('Log out of all other devices', color: kRed, onTap: _busy ? null : () => _logout(null)),
+        const SizedBox(height: 8),
+        Text('Place is approximate, from the phone’s internet connection.', style: body(11.5, color: kMute)),
+      ],
+    ]);
+  }
+}

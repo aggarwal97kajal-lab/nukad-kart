@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nukad_kart/services/bill.dart';
 import 'package:nukad_kart/data/demo_data.dart';
 import 'package:nukad_kart/state/app_state.dart';
 import 'package:nukad_kart/state/thela_tracker.dart';
@@ -56,6 +57,72 @@ void main() {
     expect(s.current.lat, 28.718);
     s.signOut();
     expect(s.apiToken, '');
+  });
+
+  test('GST bill inside Delhi splits CGST and SGST; amount in words', () {
+    final st = storeById('s1'); // GST (Regular)
+    final rice = kProducts.firstWhere((p) => p.sub == 'Atta, rice & dal'); // 5 %
+    final b = buildBill(
+      store: st,
+      orderId: 'NK-1',
+      number: billNumber(st, DateTime(2026, 11, 12), 231),
+      date: DateTime(2026, 11, 12),
+      items: [(rice, 2, 105)],
+      deliveryFee: 20,
+      customerName: 'Priya',
+      customerPhone: '9876543210',
+      customerAddress: 'Rohini',
+      customerState: 'Delhi',
+    );
+    expect(b.title, 'Tax Invoice');
+    expect(b.number, 'SGS/26-27/000231');
+    expect(b.interState, isFalse);
+    expect(b.total, 230);
+    expect((b.taxable + b.cgst + b.sgst - b.total).abs() < 0.02, isTrue);
+    expect((b.cgst - b.sgst).abs() < 0.02, isTrue);
+    expect(b.igst, 0);
+    expect(amountInWords(230), 'Rupees Two Hundred Thirty Only');
+    expect(amountInWords(125430.5), 'Rupees One Lakh Twenty Five Thousand Four Hundred Thirty and Fifty Paise Only');
+  });
+
+  test('other state uses IGST; shop without GST gives a Bill of Supply', () {
+    final rice = kProducts.firstWhere((p) => p.sub == 'Atta, rice & dal');
+    final inter = buildBill(
+        store: storeById('s1'), orderId: 'NK-2', number: 'x', date: DateTime(2027, 2, 1), items: [(rice, 1, 105)],
+        deliveryFee: 0, customerName: '', customerPhone: '', customerAddress: '', customerState: 'Haryana');
+    expect(inter.interState, isTrue);
+    expect(inter.cgst, 0);
+    expect(inter.igst > 0, isTrue);
+    expect(financialYear(DateTime(2027, 2, 1)), '26-27');
+    expect(financialYear(DateTime(2027, 4, 1)), '27-28');
+    final none = buildBill(
+        store: storeById('s3'), orderId: 'NK-3', number: 'x', date: DateTime(2026, 11, 12), items: [(rice, 1, 105)],
+        deliveryFee: 20, customerName: '', customerPhone: '', customerAddress: '', customerState: 'Delhi');
+    expect(none.title, 'Bill of Supply');
+    expect(none.cgst + none.sgst + none.igst, 0);
+    expect(none.total, 125);
+    expect(buildBill(
+        store: storeById('s2'), orderId: 'NK-4', number: 'x', date: DateTime(2026, 11, 12), items: [(rice, 1, 105)],
+        deliveryFee: 0, customerName: '', customerPhone: '', customerAddress: '', customerState: 'Delhi').note,
+        contains('Composition'));
+  });
+
+  test('cart reminder: once a day, only while the shop will be open', () {
+    final s = AppState();
+    final pid = kListings.firstWhere((l) => l.storeId == 's1' && l.stock > 0).productId;
+    s.add('s1', pid); // Sharma: 8 am – 10 pm
+    s.lastCartReminderAt = null; // ignore the one planned from the real clock
+    final noon = DateTime(2026, 11, 12, 12);
+    final plan = s.cartReminderPlan(noon);
+    expect(plan, isNotNull);
+    expect(plan!.$3, noon.add(const Duration(minutes: 30)));
+    expect(plan.$1, contains('Sharma General Store'));
+    expect(s.cartReminderPlan(DateTime(2026, 11, 12, 21, 45)), isNull); // shop closed by 10:15 pm
+    s.lastCartReminderAt = DateTime(2026, 11, 12, 10);
+    expect(s.cartReminderPlan(noon), isNull); // already reminded today
+    expect(s.cartReminderPlan(DateTime(2026, 11, 13, 12)), isNotNull); // next day is fine
+    s.cartReminders = false;
+    expect(s.cartReminderPlan(DateTime(2026, 11, 13, 12)), isNull);
   });
 
   test('unknown pin code is not serviceable', () {
