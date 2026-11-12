@@ -188,12 +188,16 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
             _row(tr('Type'), p['kind'] == 'thela' ? tr('Thela') : tr('Shop')),
             _row(tr('Owner email'), '${p['ownerEmail'] ?? ''}'),
             _row(tr('Mobile'), tr('{0} (OTP verified)', [p['phone'] ?? ''])),
-            _row(tr('Address'), '${p['address'] ?? ''}'),
-            _row(tr('Timings'), '${p['opensAt'] ?? ''} – ${p['closesAt'] ?? ''}'),
-            _row('PAN', '${p['pan']}'),
+            if (p['kind'] != 'thela') ...[
+              _row(tr('Address'), '${p['address'] ?? ''}'),
+              _row(tr('Timings'), '${p['opensAt'] ?? ''} – ${p['closesAt'] ?? ''}'),
+              _row('PAN', '${p['pan']}'),
+            ],
             _row(tr('Aadhaar'), tr('XXXX XXXX {0}', [p['aadhaarLast4']])),
-            _row('GST', '${p['gstType']} ${p['gstin']}'),
-            _row('FSSAI', '${p['fssai']}'),
+            if (p['kind'] != 'thela') ...[
+              _row('GST', '${p['gstType']} ${p['gstin']}'),
+              _row('FSSAI', '${p['fssai']}'),
+            ],
             _row(tr('Agreement'), p['agreementSigned'] == true ? tr('Signed v{0}', [p['agreementVersion']]) : tr('Not signed')),
             _row(tr('Status'), '${p['status']}${'${p['reviewNote'] ?? ''}'.isNotEmpty ? ' · ${p['reviewNote']}' : ''}'),
           ]),
@@ -216,7 +220,10 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
               ]),
             ),
           ),
-        Text(tr('Check: names match PAN, PAN on GST certificate matches, Aadhaar last 4 match, photo is a real shop front. Registered {0}.', [dateText(((p['createdAt'] ?? 0) as num).toInt())]),
+        Text(
+            p['kind'] == 'thela'
+                ? tr('Check: Aadhaar last 4 match, the name looks real, photo is a real thela. Registered {0}.', [dateText(((p['createdAt'] ?? 0) as num).toInt())])
+                : tr('Check: names match PAN, PAN on GST certificate matches, Aadhaar last 4 match, photo is a real shop front. Registered {0}.', [dateText(((p['createdAt'] ?? 0) as num).toInt())]),
             style: tx(11.5, color: kMute)),
         const SizedBox(height: 16),
         if (p['status'] == 'review' || p['status'] == 'rejected' || p['status'] == 'pending') ...[

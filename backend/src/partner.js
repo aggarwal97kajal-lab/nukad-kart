@@ -382,7 +382,7 @@ export async function partnerRoute(req, env, path, m) {
     const id = existing?.id || `p_${crypto.randomUUID().slice(0, 8)}`;
     const cols = {
       name, kind, lat, lng, address, phone: u.partner_phone, phone_verified: 1, device_hash: u.partner_device_hash,
-      opens_at: str('opensAt', 10), closes_at: str('closesAt', 10), door_delivery: b.door === false ? 0 : 1, pickup: b.pickup === false ? 0 : 1,
+      opens_at: kind === 'shop' ? str('opensAt', 10) : '', closes_at: kind === 'shop' ? str('closesAt', 10) : '', door_delivery: b.door === false ? 0 : 1, pickup: b.pickup === false ? 0 : 1,
       fssai, gst_type: gstType, gstin, pan, aadhaar_last4: aadhaar4,
       addr_shop: addr.shop, addr_landmark: addr.landmark, addr_area: addr.area, addr_city: addr.city, addr_state: addr.state, addr_pin: addr.pin,
     };

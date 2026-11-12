@@ -81,7 +81,11 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget _healthCard() {
     final h = health;
     if (h == null) return const SizedBox.shrink();
-    String mb(num b) => b >= 1024 * 1024 * 1024 ? '${(b / 1073741824).toStringAsFixed(2)} GB' : '${(b / 1048576).toStringAsFixed(1)} MB';
+    String mb(num b) => b >= 1073741824
+        ? '${(b / 1073741824).toStringAsFixed(2)} GB'
+        : b >= 1048576
+            ? '${(b / 1048576).toStringAsFixed(1)} MB'
+            : '${(b / 1024).ceil()} KB';
     final used = ((h['dbBytes'] as num?) ?? 0) / ((h['dbLimitBytes'] as num?) ?? 1);
     Widget line(String k, String v, {bool ok = true}) => Padding(
           padding: const EdgeInsets.only(bottom: 3),
@@ -214,7 +218,7 @@ class _AdminScreenState extends State<AdminScreen> {
                         Text(tr('Shows "Demo pay" to all partners'), style: tx(12, color: kMute)),
                       ]),
                     ),
-                    Switch(value: testMode, activeThumbColor: kBrand, activeTrackColor: kAct, onChanged: _setTestMode),
+                    Switch(value: testMode, onChanged: _setTestMode),
                   ]),
                 ),
                 const SizedBox(height: 10),

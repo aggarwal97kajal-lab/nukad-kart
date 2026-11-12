@@ -97,6 +97,21 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
           outline: kLine,
           outlineVariant: kLine,
         ),
+        // Switches readable in both themes: ON = coloured track with a contrasting knob, OFF = grey.
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected)
+              ? (gDark ? const Color(0xFF21331B) : Colors.white)
+              : (gDark ? const Color(0xFF9E9E9E) : const Color(0xFF8A8A8A))),
+          trackColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected)
+              ? (st.contains(WidgetState.disabled) ? kAct.withValues(alpha: 0.5) : kAct)
+              : (gDark ? const Color(0xFF3A3A3A) : const Color(0xFFE4E1D6))),
+          trackOutlineColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected)
+              ? Colors.transparent
+              : (gDark ? const Color(0xFF5A5A5A) : const Color(0xFFB8B4A6))),
+          thumbIcon: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected)
+              ? Icon(Icons.check, size: 16, color: kAct)
+              : null),
+        ),
         scaffoldBackgroundColor: kBg,
         canvasColor: kCard,
         dividerColor: kLine,

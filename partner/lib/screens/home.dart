@@ -128,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Switch(
                     value: s['live'] == true,
-                    activeThumbColor: kBrand,
                     onChanged: (s['live'] != true && (!passActive || s['status'] != 'active')) ? null : _setLive,
                   ),
                 ]),
