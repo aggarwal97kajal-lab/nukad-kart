@@ -48,6 +48,9 @@ class Order {
   /// Who and where, as it was when the order was placed (for the bill).
   String toName = '', toPhone = '', toAddress = '', toState = '';
 
+  /// Business buyer (optional): printed under "Bill to" so they can claim input tax credit.
+  String buyerGstin = '', buyerBusiness = '';
+
   Order(this.id, this.storeId, this.lines, this.door, this.placedAt) {
     times[OrderStatus.placed] = placedAt;
   }
@@ -63,6 +66,7 @@ class Order {
         'times': times.map((k, v) => MapEntry(k.name, v.toIso8601String())),
         'billNo': billNo,
         'to': [toName, toPhone, toAddress, toState],
+        'b2b': [buyerGstin, buyerBusiness],
         'lines': lines.map((l) => [l.productId, l.qty, l.price]).toList(),
       };
 
@@ -85,6 +89,11 @@ class Order {
     });
     o.billNo = '${j['billNo'] ?? ''}';
     final to = (j['to'] as List?) ?? const [];
+    final b2b = (j['b2b'] as List?) ?? const [];
+    if (b2b.length == 2) {
+      o.buyerGstin = '${b2b[0]}';
+      o.buyerBusiness = '${b2b[1]}';
+    }
     if (to.length == 4) {
       o.toName = '${to[0]}';
       o.toPhone = '${to[1]}';
@@ -411,6 +420,7 @@ class AppState extends ChangeNotifier {
         'notifications': notifications.take(60).map((n) => n.toJson()).toList(),
         'ratings': ratings,
         'billSeq': billSeq,
+        'b2b': [savedGstin, savedBusiness],
       };
 
   void _readProfile(Map<String, dynamic> p) {
@@ -441,6 +451,9 @@ class AppState extends ChangeNotifier {
     ratings
       ..clear()
       ..addAll(Map<String, dynamic>.from((p['ratings'] as Map?) ?? {}).map((k, v) => MapEntry(k, (v as num).toInt())));
+    final b2b = (p['b2b'] as List?) ?? const [];
+    savedGstin = b2b.length == 2 ? '${b2b[0]}' : '';
+    savedBusiness = b2b.length == 2 ? '${b2b[1]}' : '';
     billSeq
       ..clear()
       ..addAll(Map<String, dynamic>.from((p['billSeq'] as Map?) ?? {}).map((k, v) => MapEntry(k, (v as num).toInt())));
@@ -653,7 +666,10 @@ class AppState extends ChangeNotifier {
   int _orderSeq = 20480;
   final List<Timer> _timers = [];
 
-  Order placeOrder({required bool door}) {
+  /// Last business details used, to fill the box next time.
+  String savedGstin = '', savedBusiness = '';
+
+  Order placeOrder({required bool door, String gstin = '', String business = ''}) {
     final sid = cartStoreId!;
     final lines = <OrderLine>[];
     cart.forEach((pid, q) {
@@ -668,6 +684,12 @@ class AppState extends ChangeNotifier {
     o.toPhone = phone.isNotEmpty ? phone : a.phone;
     o.toAddress = door ? a.full : 'Pickup from the shop';
     o.toState = a.state;
+    if (gstin.isNotEmpty) {
+      o.buyerGstin = gstin;
+      o.buyerBusiness = business;
+      savedGstin = gstin;
+      savedBusiness = business;
+    }
     orders.insert(0, o);
     cart.clear();
     cartStoreId = null;

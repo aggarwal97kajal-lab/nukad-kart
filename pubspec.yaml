@@ -1,7 +1,7 @@
 name: nukad_kart
 description: "Nukad Kart - Apne Nukkad Ki Har Dukaan! Customer app (demo data build)."
 publish_to: 'none'
-version: 0.9.1+18
+version: 0.9.2+19
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

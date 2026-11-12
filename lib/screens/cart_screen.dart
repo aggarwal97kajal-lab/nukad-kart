@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/gstin.dart';
 import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
@@ -18,6 +19,81 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   bool? door;
 
+  // Optional GST bill for a business buyer.
+  bool _b2b = false;
+  bool _b2bInit = false;
+  final _gstin = TextEditingController();
+  final _biz = TextEditingController();
+  bool _gstinTouched = false;
+
+  @override
+  void dispose() {
+    _gstin.dispose();
+    _biz.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _dec(String hint, {String? error}) => InputDecoration(
+        hintText: hint,
+        hintStyle: body(13.5, color: kMute),
+        errorText: error,
+        isDense: true,
+        filled: true,
+        fillColor: kCard,
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kLine)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kG, width: 2)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kRed)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: kRed, width: 2)),
+      );
+
+  Widget _b2bCard(Store st) {
+    if (st.gst != BillGst.regular) {
+      return Text('${st.name} is not GST-registered, so its bill has no GST to claim.',
+          style: body(12, color: kMute));
+    }
+    final g = normalizeGstin(_gstin.text);
+    final bad = _gstinTouched && g.isNotEmpty && !isValidGstin(g);
+    return CardBox(
+      padding: EdgeInsets.fromLTRB(14, 8, 8, _b2b ? 14 : 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.business_center_outlined, color: kGText, size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Buying for a business?', style: body(14, weight: FontWeight.w700)),
+              Text('Add your GSTIN to get a GST bill for input tax credit', style: body(11.5, color: kMute)),
+            ]),
+          ),
+          Switch(value: _b2b, activeThumbColor: kG, onChanged: (v) => setState(() => _b2b = v)),
+        ]),
+        if (_b2b) ...[
+          SizedBox(height: 10),
+          TextField(
+            controller: _gstin,
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 15,
+            onChanged: (_) => setState(() => _gstinTouched = normalizeGstin(_gstin.text).length >= 15),
+            style: body(15, weight: FontWeight.w700).copyWith(letterSpacing: 1.2),
+            decoration: _dec('GSTIN, e.g. 07ABCDE1234F1Z5', error: bad ? 'This GSTIN is not valid. Check it.' : null)
+                .copyWith(counterText: ''),
+          ),
+          SizedBox(height: 8),
+          TextField(
+            controller: _biz,
+            textCapitalization: TextCapitalization.words,
+            onChanged: (_) => setState(() {}),
+            style: body(14.5, weight: FontWeight.w600),
+            decoration: _dec('Business name, as registered under GST'),
+          ),
+          SizedBox(height: 6),
+          Text('Printed under “Bill to”. The shop reports it as a business sale so you can claim the credit.',
+              style: body(11.5, color: kMute)),
+        ],
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
@@ -36,6 +112,11 @@ class _CartScreenState extends State<CartScreen> {
     }
     final st = storeById(s.cartStoreId!);
     door ??= st.door;
+    if (!_b2bInit) {
+      _b2bInit = true;
+      _gstin.text = s.savedGstin;
+      _biz.text = s.savedBusiness;
+    }
     final entries = s.cart.entries.toList();
     final items = s.cartTotal;
     final isDoor = door ?? true;
@@ -74,6 +155,8 @@ class _CartScreenState extends State<CartScreen> {
           SizedBox(width: 10),
           Expanded(child: _opt(t('I’ll pick up'), 'At the shop counter', false, st.pickup)),
         ]),
+        SizedBox(height: 12),
+        _b2bCard(st),
         SizedBox(height: 16),
         CardBox(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -134,7 +217,21 @@ class _CartScreenState extends State<CartScreen> {
       if (ok != true) return;
       s.acceptTerms();
     }
-    final o = s.placeOrder(door: door ?? true);
+    var gstin = '', business = '';
+    if (_b2b && shop.gst == BillGst.regular) {
+      gstin = normalizeGstin(_gstin.text);
+      business = _biz.text.trim();
+      if (!isValidGstin(gstin)) {
+        setState(() => _gstinTouched = true);
+        showToast(context, 'Enter a valid GSTIN, or turn off “Buying for a business”.');
+        return;
+      }
+      if (business.length < 2) {
+        showToast(context, 'Enter the business name as registered under GST.');
+        return;
+      }
+    }
+    final o = s.placeOrder(door: door ?? true, gstin: gstin, business: business);
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => OrderScreen(orderId: o.id)));
   }

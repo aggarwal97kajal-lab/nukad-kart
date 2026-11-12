@@ -25,6 +25,8 @@ Bill billFor(Order o) {
     customerPhone: o.toPhone,
     customerAddress: o.toAddress,
     customerState: o.toState,
+    buyerGstin: o.buyerGstin,
+    buyerBusiness: o.buyerBusiness,
   );
 }
 
@@ -216,6 +218,8 @@ Future<Uint8List> billPdf(Bill b) async {
                 left: pw.BorderSide(color: ink), right: pw.BorderSide(color: ink), bottom: pw.BorderSide(color: ink))),
         child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
           pw.Text('Bill to', style: pw.TextStyle(font: bold, fontSize: 9)),
+          if (b.buyerBusiness.isNotEmpty) pw.Text(b.buyerBusiness, style: pw.TextStyle(font: bold, fontSize: 9.5)),
+          if (b.buyerGstin.isNotEmpty) pw.Text('GSTIN: ${b.buyerGstin}', style: pw.TextStyle(font: bold, fontSize: 8.5)),
           pw.Text('${b.customerName}${b.customerPhone.isEmpty ? '' : ' · +91 ${b.customerPhone}'}',
               style: const pw.TextStyle(fontSize: 8.5)),
           pw.Text(b.customerAddress, style: const pw.TextStyle(fontSize: 8.5)),

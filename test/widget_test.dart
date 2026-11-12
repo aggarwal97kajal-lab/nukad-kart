@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nukad_kart/services/bill.dart';
+import 'package:nukad_kart/services/gstin.dart';
 import 'package:nukad_kart/data/demo_data.dart';
 import 'package:nukad_kart/state/app_state.dart';
 import 'package:nukad_kart/state/thela_tracker.dart';
@@ -129,6 +130,29 @@ void main() {
     // Empty cart: no reminders.
     s.remove(pid);
     expect(s.cartReminderPlan(noon), isEmpty);
+  });
+
+  test('GSTIN check and business buyer on the bill', () {
+    expect(isValidGstin('27AAPFU0939F1ZV'), isTrue);
+    expect(isValidGstin('27aapfu0939f1zv'), isTrue); // lower case typed
+    expect(isValidGstin('27AAPFU0939F1ZA'), isFalse); // wrong check digit
+    expect(isValidGstin('27AAPFU0939F1Z'), isFalse); // too short
+    expect(isValidGstin(storeById('s1').gstin), isTrue);
+    final rice = kProducts.firstWhere((p) => p.sub == 'Atta, rice & dal');
+    BillGst g(String id) => storeById(id).gst;
+    expect(g('s1'), BillGst.regular);
+    final b = buildBill(
+        store: storeById('s1'), orderId: 'NK-5', number: 'x', date: DateTime(2026, 11, 12), items: [(rice, 1, 105)],
+        deliveryFee: 0, customerName: 'Rahul', customerPhone: '', customerAddress: '', customerState: 'Delhi',
+        buyerGstin: '27AAPFU0939F1ZV', buyerBusiness: 'Rahul Traders');
+    expect(b.buyerGstin, '27AAPFU0939F1ZV');
+    expect(b.buyerBusiness, 'Rahul Traders');
+    // No GST shop: business details are not printed (no credit to claim).
+    final n = buildBill(
+        store: storeById('s3'), orderId: 'NK-6', number: 'x', date: DateTime(2026, 11, 12), items: [(rice, 1, 105)],
+        deliveryFee: 0, customerName: '', customerPhone: '', customerAddress: '', customerState: 'Delhi',
+        buyerGstin: '27AAPFU0939F1ZV', buyerBusiness: 'Rahul Traders');
+    expect(n.buyerGstin, '');
   });
 
   test('unknown pin code is not serviceable', () {

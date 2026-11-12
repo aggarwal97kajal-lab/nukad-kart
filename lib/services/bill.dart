@@ -18,6 +18,7 @@ class Bill {
   final String number, orderId, title, note;
   final DateTime date;
   final String customerName, customerPhone, customerAddress, placeOfSupply;
+  final String buyerGstin, buyerBusiness;
   final bool chargesGst, interState;
   final List<BillLine> lines;
   const Bill({
@@ -31,6 +32,8 @@ class Bill {
     required this.customerPhone,
     required this.customerAddress,
     required this.placeOfSupply,
+    this.buyerGstin = '',
+    this.buyerBusiness = '',
     required this.chargesGst,
     required this.interState,
     required this.lines,
@@ -76,6 +79,8 @@ Bill buildBill({
   required String customerPhone,
   required String customerAddress,
   required String customerState,
+  String buyerGstin = '',
+  String buyerBusiness = '',
 }) {
   final gst = store.gst == BillGst.regular;
   final inter = gst && customerState.isNotEmpty && customerState != store.stateName;
@@ -113,6 +118,8 @@ Bill buildBill({
     customerName: customerName,
     customerPhone: customerPhone,
     customerAddress: customerAddress,
+    buyerGstin: gst ? buyerGstin : '',
+    buyerBusiness: gst ? buyerBusiness : '',
     placeOfSupply: customerState.isEmpty ? store.stateName : '$customerState${code == null ? '' : ' ($code)'}',
     chargesGst: gst,
     interState: inter,
