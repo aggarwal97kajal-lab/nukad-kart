@@ -182,8 +182,8 @@ class _RoutePainter extends CustomPainter {
     final bikeImg = MapMarkers.bike;
     var labelAt = pos.translate(0, -36);
     if (bikeImg != null) {
-      final r = MapMarkers.draw(canvas, bikeImg, pos.translate(0, -18), 92);
-      labelAt = Offset(pos.dx, r.top - 6);
+      final r = MapMarkers.draw(canvas, bikeImg, pos.translate(0, -18), 92, within: size);
+      labelAt = r.top > 30 ? Offset(r.center.dx, r.top - 6) : Offset(r.center.dx, r.bottom + 14);
     } else {
       canvas.drawCircle(pos, 28, Paint()..color = Color(0x407CC242));
       canvas.drawCircle(pos, 18, Paint()..color = kG);

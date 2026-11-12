@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/live_order_bar.dart';
 import '../l10n.dart';
 import '../widgets/ui.dart';
 import '../widgets/cart_widgets.dart';
@@ -28,6 +29,7 @@ class _HomeShellState extends State<HomeShell> {
       ]),
       bottomNavigationBar: Column(mainAxisSize: MainAxisSize.min, children: [
         if (index < 2) CartBar(),
+        if (index < 2) LiveOrderBar(),
         NavigationBarTheme(
           data: NavigationBarThemeData(
             backgroundColor: kCard,

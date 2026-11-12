@@ -704,10 +704,16 @@ class AppState extends ChangeNotifier {
   int _orderSeq = 20480;
   final List<Timer> _timers = [];
 
+  /// At most this many orders can be live (not yet delivered or cancelled) at once.
+  static const maxLiveOrders = 2;
+  List<Order> get liveOrders => orders.where((o) => o.isOpen).toList();
+  bool get canPlaceAnotherOrder => liveOrders.length < maxLiveOrders;
+
   /// Last business details used, to fill the box next time.
   String savedGstin = '', savedBusiness = '';
 
   Order placeOrder({required bool door, String gstin = '', String business = ''}) {
+    if (!canPlaceAnotherOrder) throw StateError('Only $maxLiveOrders live orders at a time');
     final sid = cartStoreId!;
     final lines = <OrderLine>[];
     cart.forEach((pid, q) {

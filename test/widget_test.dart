@@ -167,6 +167,21 @@ void main() {
     expect(s.orderRatings['NK-1']!.summary, 'On time');
   });
 
+  test('at most 2 live orders at a time', () {
+    final s = AppState();
+    final pid = kListings.firstWhere((l) => l.storeId == 's1' && l.stock > 0).productId;
+    for (var i = 0; i < 2; i++) {
+      s.add('s1', pid);
+      s.placeOrder(door: false);
+    }
+    expect(s.liveOrders.length, 2);
+    expect(s.canPlaceAnotherOrder, isFalse);
+    s.add('s1', pid);
+    expect(() => s.placeOrder(door: false), throwsStateError);
+    s.orders.first.status = OrderStatus.delivered; // one delivered: a new order is allowed
+    expect(s.canPlaceAnotherOrder, isTrue);
+  });
+
   test('unknown pin code is not serviceable', () {
     final s = AppState();
     s.saveAddress(const Address(area: 'Uttam Nagar', pin: '110059'));

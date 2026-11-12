@@ -21,10 +21,15 @@ class MapMarkers {
     return (await codec.getNextFrame()).image;
   }
 
-  /// Draws [img] [width] wide, centred on [at]. Returns the drawn rectangle.
-  static Rect draw(Canvas canvas, ui.Image img, Offset at, double width) {
+  /// Draws [img] [width] wide, centred on [at] (kept inside [within] if given). Returns the drawn rectangle.
+  static Rect draw(Canvas canvas, ui.Image img, Offset at, double width, {Size? within}) {
     final h = width * img.height / img.width;
-    final dst = Rect.fromCenter(center: at, width: width, height: h);
+    var c = at;
+    if (within != null) {
+      c = Offset(c.dx.clamp(width / 2 + 2, within.width - width / 2 - 2).toDouble(),
+          c.dy.clamp(h / 2 + 2, within.height - h / 2 - 2).toDouble());
+    }
+    final dst = Rect.fromCenter(center: c, width: width, height: h);
     canvas.drawImageRect(img, Offset.zero & Size(img.width.toDouble(), img.height.toDouble()), dst,
         Paint()..filterQuality = FilterQuality.medium);
     return dst;

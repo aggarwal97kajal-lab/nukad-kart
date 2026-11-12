@@ -127,6 +127,11 @@ class _CartScreenState extends State<CartScreen> {
       backgroundColor: kBg,
       appBar: simpleAppBar(t('Your cart'), subtitle: '${st.name} · ${st.distanceM} m'),
       body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 20), children: [
+        if (!s.canPlaceAnotherOrder) ...[
+          NoteBox('You have ${AppState.maxLiveOrders} orders on the way. You can place this one after one of them is delivered.',
+              icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
+          SizedBox(height: 12),
+        ],
         if (isDoor) ...[
           _addressCard(context, s),
           if (!s.serviceable) ...[
@@ -210,6 +215,26 @@ class _CartScreenState extends State<CartScreen> {
     }
     if ((door ?? true) && !s.serviceable) {
       showToast(context, '${shop.name} doesn’t deliver to ${s.current.short}. Change the address or choose pickup.');
+      return;
+    }
+    if (!s.canPlaceAnotherOrder) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: kCard,
+          surfaceTintColor: kCard,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          title: Text('You already have ${AppState.maxLiveOrders} live orders', style: head(19)),
+          content: Text(
+            'You can have up to ${AppState.maxLiveOrders} orders on the way at a time. '
+            'Your cart is saved: place this order as soon as one of them is delivered.',
+            style: body(14, color: kMute),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK', style: body(14, color: kGText, weight: FontWeight.w800))),
+          ],
+        ),
+      );
       return;
     }
     if (!s.acceptedTerms) {
