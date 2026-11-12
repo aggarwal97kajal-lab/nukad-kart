@@ -5,7 +5,7 @@ import 'api.dart';
 
 /// Firebase app id of the Partner app (com.nukadkart.partner), from its google-services.json
 /// ("mobilesdk_app_id"). Empty = push notifications are off in this build.
-const partnerFirebaseAppId = '';
+const partnerFirebaseAppId = '1:173237735756:android:a7532a4a386387eb9fbfe9';
 const _apiKey = 'AIzaSyBYy_HDbaZnlLttkPrU5HfjN5bri4BQNio';
 const _senderId = '173237735756';
 const _projectId = 'nukad-kart';
