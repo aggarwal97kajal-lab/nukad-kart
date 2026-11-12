@@ -10,7 +10,7 @@
 //   GET  /v1/admin/payments?status=CHECKING|ALL  (admin)
 //   POST /v1/admin/payments/:id/confirm          (admin)      money is in: pass starts
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
-import { HttpError, json, body, now, session, verifyMsg91 } from './index.js';
+import { HttpError, json, body, now, verifySession, verifyMsg91 } from './index.js';
 
 export const PLANS = {
   daily: { name: 'Daily', price: 99, days: 1 },
@@ -83,10 +83,42 @@ export function offlineReason(s, t = now()) {
 }
 
 // ---------- helpers ----------
+const STORE_Q = 'SELECT * FROM stores WHERE owner_id = ? ORDER BY created_at DESC LIMIT 1';
+const DOCS_Q = `SELECT id, type, mime, name, size, created_at FROM partner_docs WHERE done = 1 AND store_id =
+  (SELECT id FROM stores WHERE owner_id = ? ORDER BY created_at DESC LIMIT 1) ORDER BY created_at`;
+const docOut = (d) => ({ id: d.id, type: d.type, mime: d.mime, name: d.name, size: d.size, uploadedAt: d.created_at });
+
+/**
+ * Who is calling + their shop + its documents, in ONE database round trip
+ * (the database is far from India, so every extra trip costs ~0.1–0.3 s).
+ */
+async function ctx(req, env) {
+  const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  const sess = await verifySession(token, env.SESSION_SECRET);
+  if (!sess || !sess.sid) throw new HttpError(401, 'not_signed_in');
+  const t = now();
+  const [ur, sr, dr] = await env.DB.batch([
+    env.DB.prepare(`SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
+      WHERE s.id = ? AND s.user_id = ? AND s.revoked_at IS NULL AND u.deleted_at IS NULL`).bind(sess.sid, sess.uid),
+    env.DB.prepare(STORE_Q).bind(sess.uid),
+    env.DB.prepare(DOCS_Q).bind(sess.uid),
+    // "last seen" for Logged-in devices, at most every 10 minutes
+    env.DB.prepare('UPDATE sessions SET last_seen = ? WHERE id = ? AND last_seen < ?').bind(t, sess.sid, t - 600),
+  ]);
+  const u = ur.results[0];
+  if (!u) throw new HttpError(401, 'not_signed_in');
+  return { u, s: sr.results[0] || null, docs: dr.results.map(docOut) };
+}
+
 async function me(req, env) {
-  const { uid } = await session(req, env);
-  const user = await env.DB.prepare('SELECT id, email, name, phone, partner_phone, partner_device_hash FROM users WHERE id = ?').bind(uid).first();
-  return user;
+  return (await ctx(req, env)).u;
+}
+
+/** Run writes and read the shop back in the same round trip. */
+async function writeAndRead(env, uid, stmts = []) {
+  const res = await env.DB.batch([...stmts, env.DB.prepare(STORE_Q).bind(uid), env.DB.prepare(DOCS_Q).bind(uid)]);
+  const s = res[res.length - 2].results[0] || null;
+  return storeOutWith(s, res[res.length - 1].results.map(docOut));
 }
 
 export async function sha256Hex(text) {
@@ -102,9 +134,14 @@ export async function isAdmin(env, email) {
 
 const PARTY_KEYS = { legalName: 'party_legal_name', address: 'party_address', city: 'party_city', pan: 'party_pan', email: 'party_email' };
 
+const partyQuery = (env) => env.DB.prepare(`SELECT key, value FROM settings WHERE key IN (${Object.values(PARTY_KEYS).map(() => '?').join(',')})`)
+  .bind(...Object.values(PARTY_KEYS));
+
 async function partySettings(env) {
-  const { results } = await env.DB.prepare(`SELECT key, value FROM settings WHERE key IN (${Object.values(PARTY_KEYS).map(() => '?').join(',')})`)
-    .bind(...Object.values(PARTY_KEYS)).all();
+  return partyFrom((await partyQuery(env).all()).results);
+}
+
+function partyFrom(results) {
   const m = Object.fromEntries(results.map((r) => [r.key, r.value]));
   return Object.fromEntries(Object.entries(PARTY_KEYS).map(([k, key]) => [k, m[key] || '']));
 }
@@ -116,7 +153,7 @@ async function upiSettings(env) {
 }
 
 async function admin(req, env) {
-  const u = await me(req, env);
+  const { u } = await ctx(req, env);
   if (!(await isAdmin(env, u.email))) throw new HttpError(403, 'not_admin');
   return u;
 }
@@ -132,15 +169,20 @@ export function requiredDocs(s) {
 
 async function docList(env, s) {
   const { results } = await env.DB.prepare('SELECT id, type, mime, name, size, created_at FROM partner_docs WHERE store_id = ? AND done = 1 ORDER BY created_at').bind(s.id).all();
-  return results.map((d) => ({ id: d.id, type: d.type, mime: d.mime, name: d.name, size: d.size, uploadedAt: d.created_at }));
+  return results.map(docOut);
 }
 
-async function storeOut(env, s) {
+async function storeOut(env, s, docs) {
   if (!s) return null;
-  const docs = await docList(env, s);
+  return storeOutWith(s, docs || (await docList(env, s)));
+}
+
+function storeOutWith(s, docs) {
+  if (!s) return null;
   const have = new Set(docs.map((d) => d.type));
   const required = requiredDocs(s);
-  return { ...publicStore(s), requiredDocs: required, docsComplete: required.every((t) => have.has(t)) };
+  const optional = DOC_TYPES.filter((t) => !required.includes(t) && (t !== 'gst' || (s.gst_type && s.gst_type !== 'none')));
+  return { ...publicStore(s), requiredDocs: required, optionalDocs: optional, docsComplete: required.every((t) => have.has(t)) };
 }
 
 async function trialAvailable(env, phone, devHash) {
@@ -150,8 +192,8 @@ async function trialAvailable(env, phone, devHash) {
   return !row;
 }
 
-async function submitForReview(env, s) {
-  const out = await storeOut(env, s);
+async function submitForReview(env, s, docs) {
+  const out = await storeOut(env, s, docs);
   if (!out.docsComplete) throw new HttpError(400, 'docs_missing');
   if (s.agreement_version !== AGREEMENT_VERSION) throw new HttpError(403, 'agreement_needed');
   if (s.status === 'pending' || s.status === 'rejected') {
@@ -198,6 +240,11 @@ async function activate(env, p, by) {
 }
 
 const b64ToBytes = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+function bytesToB64(u8) {
+  let out = '';
+  for (let i = 0; i < u8.length; i += 0x8000) out += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(out);
+}
 
 // ---------- routes ----------
 export async function partnerRoute(req, env, path, m) {
@@ -213,19 +260,18 @@ export async function partnerRoute(req, env, path, m) {
   }
 
   if (path === '/v1/partner/me' && m === 'GET') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     const pays = s
       ? (await env.DB.prepare('SELECT * FROM pass_payments WHERE store_id = ? ORDER BY created_at DESC LIMIT 10').bind(s.id).all()).results
       : [];
     return json({ user: { email: u.email, name: u.name, phone: u.partner_phone || '', phoneVerified: !!u.partner_phone,
-      trialAvailable: u.partner_phone ? await trialAvailable(env, u.partner_phone, u.partner_device_hash) : true }, admin: await isAdmin(env, u.email), store: await storeOut(env, s),
+      trialAvailable: u.partner_trial_ok !== 0 }, admin: await isAdmin(env, u.email), store: storeOutWith(s, docs),
       payments: pays.map(payPublic) });
   }
 
   if (path === '/v1/partner/phone' && m === 'POST') {
     // Step 1: verified mobile number (MSG91 SMS code) + this phone's hardware id, for the one-trial rule.
-    const u = await me(req, env);
+    const { u, s } = await ctx(req, env);
     if (!env.MSG91_AUTHKEY) throw new HttpError(503, 'phone_check_not_configured');
     const b = await body(req);
     const claimed = String(b.phone || '').replace(/\D/g, '').slice(-10);
@@ -236,16 +282,16 @@ export async function partnerRoute(req, env, path, m) {
     if (other) throw new HttpError(409, 'phone_in_use');
     const hw = String(b.deviceId || '').trim();
     const devHash = hw ? await sha256Hex('dev:' + hw) : null;
-    const stmts = [env.DB.prepare('UPDATE users SET partner_phone = ?, partner_device_hash = COALESCE(?, partner_device_hash), updated_at = ? WHERE id = ?')
-      .bind(claimed, devHash, now(), u.id)];
-    const s = await myStore(env, u.id);
+    const ok = await trialAvailable(env, claimed, devHash);
+    const stmts = [env.DB.prepare('UPDATE users SET partner_phone = ?, partner_device_hash = COALESCE(?, partner_device_hash), partner_trial_ok = ?, updated_at = ? WHERE id = ?')
+      .bind(claimed, devHash, ok ? 1 : 0, now(), u.id)];
     if (s) stmts.push(env.DB.prepare('UPDATE stores SET phone = ?, phone_verified = 1, device_hash = COALESCE(?, device_hash) WHERE id = ?').bind(claimed, devHash, s.id));
     await env.DB.batch(stmts);
-    return json({ phone: claimed, trialAvailable: await trialAvailable(env, claimed, devHash) });
+    return json({ phone: claimed, trialAvailable: ok });
   }
 
   if (path === '/v1/partner/register' && m === 'POST') {
-    const u = await me(req, env);
+    const { u, s: existing } = await ctx(req, env);
     if (!u.partner_phone) throw new HttpError(400, 'phone_first');
     const b = await body(req);
     const str = (k, max = 120) => String(b[k] ?? '').trim().slice(0, max);
@@ -255,7 +301,6 @@ export async function partnerRoute(req, env, path, m) {
     const lat = Number(b.lat), lng = Number(b.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'location_required');
     if (kind === 'shop' && (parseTime(b.opensAt) == null || parseTime(b.closesAt) == null)) throw new HttpError(400, 'timings_required');
-    const existing = await myStore(env, u.id);
     if (existing && existing.status === 'active') throw new HttpError(409, 'already_approved');
     const photoB64 = String(b.photo || '');
     if (!photoB64 && !existing) throw new HttpError(400, 'photo_required');
@@ -309,21 +354,19 @@ export async function partnerRoute(req, env, path, m) {
         VALUES (${keys.map(() => '?').join(', ')}, ?, ?, 'pending', 0, 0, 1, 0, ?)`).bind(...keys.map((k) => cols[k]), id, u.id, t));
     }
     if (photoB64) stmts.push(env.DB.prepare('INSERT OR REPLACE INTO store_photos (store_id, photo, updated_at) VALUES (?, ?, ?)').bind(id, photoB64, t));
-    await env.DB.batch(stmts);
-    return json({ store: await storeOut(env, await myStore(env, u.id)) });
+    return json({ store: await writeAndRead(env, u.id, stmts) });
   }
 
   // ---------- documents (JPG / PDF, max 2 MB, uploaded in chunks so the app can show progress) ----------
   if (path === '/v1/partner/docs' && m === 'GET') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
-    return json({ docs: await docList(env, s), required: requiredDocs(s) });
+    const out = storeOutWith(s, docs);
+    return json({ docs, required: out.requiredDocs, optional: out.optionalDocs });
   }
 
   if (path === '/v1/partner/docs' && m === 'POST') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
     if (s.status === 'active' || s.status === 'review') throw new HttpError(409, 'docs_locked');
     const b = await body(req);
@@ -335,7 +378,7 @@ export async function partnerRoute(req, env, path, m) {
     if (!(size > 0)) throw new HttpError(400, 'doc_empty');
     if (size > MAX_DOC_BYTES) throw new HttpError(413, 'doc_too_big');
     const chunks = Number(b.chunks);
-    if (!(chunks >= 1 && chunks <= 8)) throw new HttpError(400, 'bad_chunks');
+    if (!(chunks >= 1 && chunks <= 16)) throw new HttpError(400, 'bad_chunks');
     const id = `D${crypto.randomUUID().replace(/-/g, '').slice(0, 14)}`;
     await env.DB.prepare('INSERT INTO partner_docs (id, store_id, type, mime, name, size, chunks, done, created_at) VALUES (?,?,?,?,?,?,?,0,?)')
       .bind(id, s.id, type, mime, String(b.name || '').slice(0, 100), size, chunks, now()).run();
@@ -344,39 +387,44 @@ export async function partnerRoute(req, env, path, m) {
 
   const chunk = path.match(/^\/v1\/partner\/docs\/(D\w+)\/(\d+)$/);
   if (chunk && m === 'PUT') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
-    const d = s && (await env.DB.prepare('SELECT * FROM partner_docs WHERE id = ? AND store_id = ?').bind(chunk[1], s.id).first());
+    // One part of a document, sent as raw bytes (no base64 on the phone: ~25% less to upload).
+    const { s } = await ctx(req, env);
+    if (!s) throw new HttpError(404, 'no_doc');
+    const docId = chunk[1], idx = Number(chunk[2]);
+    const raw = new Uint8Array(await req.arrayBuffer());
+    if (!raw.length || raw.length > 1_048_576) throw new HttpError(400, 'bad_chunk');
+    // Save the part and see how many parts are in: one round trip.
+    const [, info] = await env.DB.batch([
+      env.DB.prepare(`INSERT OR REPLACE INTO doc_chunks (doc_id, idx, data)
+        SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM partner_docs WHERE id = ? AND store_id = ? AND chunks > ? AND done = 0)`)
+        .bind(docId, idx, bytesToB64(raw), docId, s.id, idx),
+      env.DB.prepare(`SELECT d.chunks, d.type, d.mime, d.done, (SELECT COUNT(*) FROM doc_chunks c WHERE c.doc_id = d.id) AS n,
+        (SELECT substr(c.data, 1, 16) FROM doc_chunks c WHERE c.doc_id = d.id AND c.idx = 0) AS head
+        FROM partner_docs d WHERE d.id = ? AND d.store_id = ?`).bind(docId, s.id),
+    ]);
+    const d = info.results[0];
     if (!d) throw new HttpError(404, 'no_doc');
-    const idx = Number(chunk[2]);
-    if (idx >= d.chunks) throw new HttpError(400, 'bad_chunks');
-    const { data } = await body(req);
-    const b64 = String(data || '');
-    if (!b64 || b64.length > 1_000_000) throw new HttpError(400, 'bad_chunk');
-    await env.DB.prepare('INSERT OR REPLACE INTO doc_chunks (doc_id, idx, data) VALUES (?, ?, ?)').bind(d.id, idx, b64).run();
-    const have = await env.DB.prepare('SELECT COUNT(*) AS n, SUM(LENGTH(data)) AS len FROM doc_chunks WHERE doc_id = ?').bind(d.id).first();
-    if (have.n < d.chunks) return json({ done: false, received: have.n });
-    // All parts in: check the file really is a JPG / PDF of the declared size, then keep only this one per type.
-    const first = b64ToBytes((await env.DB.prepare('SELECT data FROM doc_chunks WHERE doc_id = ? AND idx = 0').bind(d.id).first()).data.slice(0, 16));
+    if (d.n < d.chunks) return json({ done: false, received: d.n });
+    // All parts in: check it really is a JPG / PDF, keep only this one per type, and send back the list. One round trip.
+    const first = d.head ? b64ToBytes(d.head) : new Uint8Array();
     const isJpg = first[0] === 0xff && first[1] === 0xd8;
     const isPdf = first[0] === 0x25 && first[1] === 0x50 && first[2] === 0x44 && first[3] === 0x46;
     if ((d.mime === 'image/jpeg' && !isJpg) || (d.mime === 'application/pdf' && !isPdf)) {
-      await env.DB.batch([env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id = ?').bind(d.id), env.DB.prepare('DELETE FROM partner_docs WHERE id = ?').bind(d.id)]);
+      await env.DB.batch([env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id = ?').bind(docId), env.DB.prepare('DELETE FROM partner_docs WHERE id = ?').bind(docId)]);
       throw new HttpError(400, 'doc_must_be_jpg_or_pdf');
     }
-    const old = (await env.DB.prepare('SELECT id FROM partner_docs WHERE store_id = ? AND type = ? AND id != ?').bind(s.id, d.type, d.id).all()).results;
-    const stmts = [env.DB.prepare('UPDATE partner_docs SET done = 1 WHERE id = ?').bind(d.id)];
-    for (const o of old) {
-      stmts.push(env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id = ?').bind(o.id), env.DB.prepare('DELETE FROM partner_docs WHERE id = ?').bind(o.id));
-    }
-    await env.DB.batch(stmts);
-    return json({ done: true, docs: await docList(env, s) });
+    const res = await env.DB.batch([
+      env.DB.prepare('UPDATE partner_docs SET done = 1 WHERE id = ?').bind(docId),
+      env.DB.prepare('DELETE FROM doc_chunks WHERE doc_id IN (SELECT id FROM partner_docs WHERE store_id = ? AND type = ? AND id != ?)').bind(s.id, d.type, docId),
+      env.DB.prepare('DELETE FROM partner_docs WHERE store_id = ? AND type = ? AND id != ?').bind(s.id, d.type, docId),
+      env.DB.prepare('SELECT id, type, mime, name, size, created_at FROM partner_docs WHERE done = 1 AND store_id = ? ORDER BY created_at').bind(s.id),
+    ]);
+    return json({ done: true, docs: res[3].results.map(docOut) });
   }
 
   const myDoc = path.match(/^\/v1\/partner\/docs\/(D\w+)$/);
   if (myDoc && m === 'DELETE') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(404, 'no_doc');
     if (s.status === 'active' || s.status === 'review') throw new HttpError(409, 'docs_locked');
     await env.DB.batch([
@@ -388,16 +436,14 @@ export async function partnerRoute(req, env, path, m) {
 
   if (path === '/v1/partner/submit' && m === 'POST') {
     // Send for Nukad team verification (needs all documents + the signed agreement).
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
-    await submitForReview(env, s);
-    return json({ store: await storeOut(env, await myStore(env, u.id)) });
+    await submitForReview(env, s, docs);
+    return json({ store: await writeAndRead(env, u.id) });
   }
 
   if (path === '/v1/partner/delete' && m === 'POST') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     const b = await body(req);
     const t = now();
     const stmts = [env.DB.prepare('INSERT INTO deletion_requests (id, user_id, reason, feedback, created_at) VALUES (?, ?, ?, ?, ?)')
@@ -422,8 +468,7 @@ export async function partnerRoute(req, env, path, m) {
   }
 
   if (path === '/v1/partner/payments' && m === 'POST') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
     const upi = await upiSettings(env);
     const b = await body(req);
@@ -443,7 +488,7 @@ export async function partnerRoute(req, env, path, m) {
         VALUES (?, ?, ?, ?, ?, ?, 'CREATED', 'DEMO', 'Demo', ?, ?, ?)`).bind(id, key, s.id, u.id, b.plan, plan.price, t, t, t).run();
       await activate(env, await env.DB.prepare('SELECT * FROM pass_payments WHERE id = ?').bind(id).first(), 'demo');
       const p = await env.DB.prepare('SELECT * FROM pass_payments WHERE id = ?').bind(id).first();
-      return json({ payment: payPublic(p), store: await storeOut(env, await myStore(env, u.id)), ...upi });
+      return json({ payment: payPublic(p), store: await writeAndRead(env, u.id), ...upi });
     }
     // 3 failed / cancelled in 24 h: wait a day (stops abuse of "paid" claims).
     const bad = await env.DB.prepare("SELECT COUNT(*) AS n FROM pass_payments WHERE store_id = ? AND status IN ('FAILED','CANCELLED') AND created_at > ?")
@@ -460,7 +505,7 @@ export async function partnerRoute(req, env, path, m) {
 
   const done = path.match(/^\/v1\/partner\/payments\/([\w-]+)\/done$/);
   if (done && m === 'POST') {
-    const u = await me(req, env);
+    const { u } = await ctx(req, env);
     const p = await env.DB.prepare('SELECT * FROM pass_payments WHERE idem_key = ? AND owner_id = ?').bind(done[1], u.id).first();
     if (!p) throw new HttpError(404, 'no_payment');
     if (p.status !== 'CREATED') return json({ payment: payPublic(p) });
@@ -481,12 +526,11 @@ export async function partnerRoute(req, env, path, m) {
         .bind(st, ref, app, t, p.id).run();
     }
     const out = await env.DB.prepare('SELECT * FROM pass_payments WHERE id = ?').bind(p.id).first();
-    return json({ payment: payPublic(out), store: await storeOut(env, await myStore(env, u.id)) });
+    return json({ payment: payPublic(out), store: await writeAndRead(env, u.id) });
   }
 
   if (path === '/v1/partner/live' && m === 'POST') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
     const { on } = await body(req);
     if (on) {
@@ -494,32 +538,33 @@ export async function partnerRoute(req, env, path, m) {
       if (s.agreement_version !== AGREEMENT_VERSION) throw new HttpError(403, 'agreement_needed');
       if (s.status !== 'active') throw new HttpError(403, 'not_verified');
       if (!(s.pass_until > now())) throw new HttpError(402, 'no_pass');
-      // Going live again after the "3 missed orders" pause starts a fresh count for today.
-      await env.DB.prepare('UPDATE stores SET live = 1, missed_count = 0 WHERE id = ?').bind(s.id).run();
-    } else {
-      await env.DB.prepare('UPDATE stores SET live = 0 WHERE id = ?').bind(s.id).run();
     }
-    return json({ store: await storeOut(env, await myStore(env, u.id)) });
+    // Going live again after the "5 missed orders" pause starts a fresh count for today. One round trip.
+    const w = on ? env.DB.prepare('UPDATE stores SET live = 1, missed_count = 0 WHERE id = ?').bind(s.id)
+      : env.DB.prepare('UPDATE stores SET live = 0 WHERE id = ?').bind(s.id);
+    return json({ store: await writeAndRead(env, u.id, [w]) });
   }
 
   if (path === '/v1/partner/agreement' && m === 'GET') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
-    const last = await env.DB.prepare('SELECT * FROM agreements WHERE store_id = ? ORDER BY accepted_at DESC LIMIT 1').bind(s.id).first();
-    return json({ version: AGREEMENT_VERSION, party: await partySettings(env), vendor: vendorDetails(s, u),
+    const [lr, pr] = await env.DB.batch([
+      env.DB.prepare('SELECT * FROM agreements WHERE store_id = ? ORDER BY accepted_at DESC LIMIT 1').bind(s.id),
+      partyQuery(env),
+    ]);
+    const last = lr.results[0];
+    return json({ version: AGREEMENT_VERSION, party: partyFrom(pr.results), vendor: vendorDetails(s, u),
       signed: last ? { version: last.version, name: last.signer_name, date: last.signed_date, acceptedAt: last.accepted_at,
         id: last.id, signature: last.signature, vendor: JSON.parse(last.snapshot).vendor } : null });
   }
 
   if (path === '/v1/partner/agreement' && m === 'POST') {
-    const u = await me(req, env);
-    const s = await myStore(env, u.id);
+    const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
     const b = await body(req);
     if (b.version !== AGREEMENT_VERSION) throw new HttpError(409, 'agreement_changed');
     if (b.agree !== true || b.authorised !== true) throw new HttpError(400, 'agree_required');
-    if (!(await storeOut(env, s)).docsComplete) throw new HttpError(400, 'docs_missing');
+    if (!storeOutWith(s, docs).docsComplete) throw new HttpError(400, 'docs_missing');
     const name = String(b.name || '').trim().slice(0, 80);
     if (name.length < 3) throw new HttpError(400, 'signer_name_required');
     const sig = String(b.signature || '');
@@ -530,14 +575,15 @@ export async function partnerRoute(req, env, path, m) {
     const id = `AG-${istDate(t).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
     const snapshot = JSON.stringify({ party: await partySettings(env), vendor: vendorDetails(s, u) });
     const signedDate = istDate(t).split('-').reverse().join('/');
-    await env.DB.batch([
+    // Save, mark signed, send to "waiting for Nukad team", and read back: one round trip.
+    const store = await writeAndRead(env, u.id, [
       env.DB.prepare(`INSERT INTO agreements (id, store_id, owner_id, version, signer_name, signature, snapshot, signed_date, accepted_at, device, ip)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)`).bind(id, s.id, u.id, AGREEMENT_VERSION, name, sig, snapshot, signedDate, t,
         String(b.device || '').slice(0, 80), req.headers.get('cf-connecting-ip') || ''),
-      env.DB.prepare('UPDATE stores SET agreement_version = ? WHERE id = ?').bind(AGREEMENT_VERSION, s.id),
+      env.DB.prepare("UPDATE stores SET agreement_version = ?, status = CASE WHEN status IN ('pending','rejected') THEN 'review' ELSE status END, review_note = NULL WHERE id = ?")
+        .bind(AGREEMENT_VERSION, s.id),
     ]);
-    await submitForReview(env, await myStore(env, u.id));
-    return json({ id, store: await storeOut(env, await myStore(env, u.id)) });
+    return json({ id, store });
   }
 
   if (path === '/v1/admin/settings' && m === 'GET') {
@@ -572,9 +618,14 @@ export async function partnerRoute(req, env, path, m) {
       `SELECT s.*, u.email AS owner_email FROM stores s LEFT JOIN users u ON u.id = s.owner_id
        WHERE s.owner_id IS NOT NULL AND s.demo = 0 ${all ? "AND s.status != 'deleted'" : "AND s.status = 'review'"} ORDER BY s.created_at DESC LIMIT 100`,
     ).all();
-    const out = [];
-    for (const r of results) out.push({ ...(await storeOut(env, r)), ownerEmail: r.owner_email, docs: await docList(env, r), hasPhoto: true });
-    return json({ partners: out });
+    const ids = results.map((r) => r.id);
+    const all2 = ids.length
+      ? (await env.DB.prepare(`SELECT id, store_id, type, mime, name, size, created_at FROM partner_docs WHERE done = 1 AND store_id IN (${ids.map(() => '?').join(',')})`)
+        .bind(...ids).all()).results
+      : [];
+    const by = {};
+    for (const d of all2) (by[d.store_id] ||= []).push(docOut(d));
+    return json({ partners: results.map((r) => ({ ...storeOutWith(r, by[r.id] || []), ownerEmail: r.owner_email, docs: by[r.id] || [] })) });
   }
 
   const adDoc = path.match(/^\/v1\/admin\/docs\/(D\w+)$/);

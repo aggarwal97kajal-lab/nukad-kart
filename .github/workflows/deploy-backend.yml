@@ -32,12 +32,23 @@ jobs:
           [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "CLOUDFLARE_API_TOKEN secret missing"; exit 1; }
           [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || { echo "CLOUDFLARE_ACCOUNT_ID secret missing"; exit 1; }
 
-      - name: Find or create the D1 database
+      - name: Find or create the D1 database (Asia-Pacific, near India)
         run: |
-          id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db") | .uuid')
+          # The first database was made from a US GitHub runner, so it lives in the US: every query from
+          # India crossed the world. The data is copied once into a new database placed in Asia-Pacific.
+          id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db-apac") | .uuid')
           if [ -z "$id" ]; then
-            $WRANGLER d1 create nukad-kart-db
-            id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db") | .uuid')
+            old=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db") | .uuid')
+            $WRANGLER d1 create nukad-kart-db-apac --location apac
+            id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db-apac") | .uuid')
+            if [ -n "$old" ]; then
+              $WRANGLER d1 export nukad-kart-db --remote --output /tmp/dump.sql
+              ls -la /tmp/dump.sql
+              grep -c 'd1_migrations' /tmp/dump.sql || { echo "::error::export has no migrations table"; exit 1; }
+              sed -i "s/__D1_ID__/$id/" wrangler.toml
+              $WRANGLER d1 execute nukad-kart-db-apac --remote --file /tmp/dump.sql
+              $WRANGLER d1 execute nukad-kart-db-apac --remote --command "SELECT COUNT(*) AS migrations FROM d1_migrations; SELECT COUNT(*) AS stores FROM stores; SELECT COUNT(*) AS users FROM users"
+            fi
           fi
           [ -n "$id" ] || { echo "could not get database id"; exit 1; }
           sed -i "s/__D1_ID__/$id/" wrangler.toml
@@ -62,6 +73,7 @@ jobs:
         run: |
           base=https://nukad-kart-api.aggarwal97kajal.workers.dev
           for i in 1 2 3 4 5 6; do curl -fsS $base/health && break; sleep 10; done
+          echo; for i in 1 2 3; do curl -s -o /dev/null -w 'health %{time_total}s\n' $base/health; done
           echo
           curl -fsS "$base/v1/stores/nearby?lat=28.718&lng=77.096" | tee /tmp/near.json
           echo

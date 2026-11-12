@@ -33,15 +33,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  bool _liveBusy = false;
+
+  /// The switch moves at once; the server confirms in the background (and it flips back if the server says no).
   Future<void> _setLive(bool on) async {
-    setState(() => _busy = true);
+    if (_liveBusy) return;
+    final before = Map<String, dynamic>.from(session.store!);
+    _liveBusy = true;
+    session.setStore({...before, 'live': on, 'offlineReason': on ? null : 'switched_off'});
     try {
       final r = await api.call('POST', '/v1/partner/live', {'on': on});
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
     } on ApiError catch (e) {
+      session.setStore(before);
       if (mounted) toast(context, e.message);
     }
-    if (mounted) setState(() => _busy = false);
+    _liveBusy = false;
   }
 
   Future<void> _resubmit() async {
@@ -121,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Switch(
                     value: s['live'] == true,
                     activeThumbColor: kBrand,
-                    onChanged: _busy || (s['live'] != true && (!passActive || s['status'] != 'active')) ? null : _setLive,
+                    onChanged: (s['live'] != true && (!passActive || s['status'] != 'active')) ? null : _setLive,
                   ),
                 ]),
               ),

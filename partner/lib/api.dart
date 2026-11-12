@@ -59,7 +59,7 @@ class ApiError implements Exception {
 
 class Api {
   String token = '';
-  final _http = http.Client();
+  final http.Client _http = http.Client();
 
   Future<Map<String, dynamic>> call(String method, String path, [Object? body]) async {
     final req = http.Request(method, Uri.parse('$apiBase$path'))
@@ -84,6 +84,28 @@ class Api {
 }
 
 extension ApiBytes on Api {
+  /// Upload raw bytes (document parts). No base64, so less to send.
+  Future<Map<String, dynamic>> putBytes(String path, List<int> data) async {
+    final req = http.Request('PUT', Uri.parse('$apiBase$path'))
+      ..headers['content-type'] = 'application/octet-stream'
+      ..headers['authorization'] = 'Bearer $token'
+      ..bodyBytes = data;
+    http.Response res;
+    try {
+      res = await http.Response.fromStream(await _http.send(req).timeout(const Duration(seconds: 60)));
+    } on TimeoutException {
+      throw const ApiError(0, 'timeout');
+    } catch (_) {
+      throw const ApiError(0, 'offline');
+    }
+    Map<String, dynamic> out = {};
+    try {
+      out = Map<String, dynamic>.from(jsonDecode(res.body) as Map);
+    } catch (_) {}
+    if (res.statusCode >= 400) throw ApiError(res.statusCode, '${out['error'] ?? 'error'}');
+    return out;
+  }
+
   /// Raw file (admin document view).
   Future<(Uint8List, String)> bytes(String path) async {
     try {

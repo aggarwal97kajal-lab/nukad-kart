@@ -189,8 +189,10 @@ async function route(req, env) {
   if (partner) return partner;
 
   if (m === 'GET' && (path === '/' || path === '/health')) {
-    const row = await env.DB.prepare('SELECT COUNT(*) AS n FROM stores WHERE active = 1').first();
-    return json({ ok: true, service: 'nukad-kart-api', stores: row.n, time: new Date().toISOString() });
+    const t0 = Date.now();
+    const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM stores WHERE active = 1').all();
+    return json({ ok: true, service: 'nukad-kart-api', stores: r.results[0].n, time: new Date().toISOString(),
+      worker: req.cf?.colo || '', db: r.meta?.served_by_region || r.meta?.served_by || '', dbMs: Date.now() - t0 });
   }
 
   if (m === 'POST' && path === '/v1/auth/google') {

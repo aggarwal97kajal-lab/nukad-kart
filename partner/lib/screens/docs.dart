@@ -10,13 +10,14 @@ import '../ui.dart';
 import 'register.dart';
 
 const maxDocBytes = 2 * 1024 * 1024;
-const _chunkBytes = 384 * 1024; // ~0.5 MB per request after base64: quick on mobile data, and the meter moves smoothly
+const _chunkBytes = 256 * 1024; // raw bytes per part; 4 parts go at once, so the meter moves smoothly
+const _parallel = 4;
 
 const docLabels = {
   'pan': ('PAN card', 'Clear photo or PDF of your PAN card'),
   'aadhaar': ('Aadhaar (masked)', 'Cover the first 8 digits before taking the photo'),
   'gst': ('GST certificate', 'Needed because you entered a GSTIN'),
-  'fssai': ('FSSAI certificate', 'Needed because you entered an FSSAI number'),
+  'fssai': ('FSSAI certificate', 'Required if you entered an FSSAI number'),
 };
 
 String sizeText(int b) => b >= 1024 * 1024 ? '${(b / 1024 / 1024).toStringAsFixed(1)} MB' : '${(b / 1024).round()} KB';
@@ -32,7 +33,7 @@ class DocsScreen extends StatefulWidget {
 
 class _DocsScreenState extends State<DocsScreen> {
   List<Map<String, dynamic>> docs = [];
-  List<String> required = [];
+  List<String> required = [], optional = [];
   bool _loading = true;
   final Map<String, double> progress = {}; // type → 0..1 while uploading
   final Map<String, (int, int)> sent = {}; // type → (bytes sent, total)
@@ -48,6 +49,7 @@ class _DocsScreenState extends State<DocsScreen> {
       final r = await api.call('GET', '/v1/partner/docs');
       docs = ((r['docs'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
       required = ((r['required'] as List?) ?? []).map((e) => '$e').toList();
+      optional = ((r['optional'] as List?) ?? []).map((e) => '$e').toList();
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -124,18 +126,25 @@ class _DocsScreenState extends State<DocsScreen> {
     try {
       final r = await api.call('POST', '/v1/partner/docs', {'type': type, 'mime': mime, 'size': bytes.length, 'name': name, 'chunks': parts});
       final id = '${r['id']}';
-      for (var i = 0; i < parts; i++) {
-        final end = (i + 1) * _chunkBytes > bytes.length ? bytes.length : (i + 1) * _chunkBytes;
-        final res = await api.call('PUT', '/v1/partner/docs/$id/$i', {'data': base64Encode(bytes.sublist(i * _chunkBytes, end))});
-        if (!mounted) return;
-        setState(() {
-          progress[type] = end / bytes.length;
-          sent[type] = (end, bytes.length);
-        });
-        if (res['done'] == true) {
-          docs = ((res['docs'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      var next = 0, doneBytes = 0;
+      Future<void> worker() async {
+        while (next < parts) {
+          final i = next++;
+          final end = (i + 1) * _chunkBytes > bytes.length ? bytes.length : (i + 1) * _chunkBytes;
+          final res = await api.putBytes('/v1/partner/docs/$id/$i', bytes.sublist(i * _chunkBytes, end));
+          doneBytes += end - i * _chunkBytes;
+          if (!mounted) return;
+          setState(() {
+            progress[type] = doneBytes / bytes.length;
+            sent[type] = (doneBytes, bytes.length);
+          });
+          if (res['done'] == true) {
+            docs = ((res['docs'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          }
         }
       }
+
+      await Future.wait([for (var k = 0; k < (parts < _parallel ? parts : _parallel); k++) worker()]);
       if (mounted) toast(context, '${docLabels[type]!.$1} uploaded');
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
@@ -148,7 +157,7 @@ class _DocsScreenState extends State<DocsScreen> {
     if (widget.pushed) session.refresh().catchError((_) {});
   }
 
-  Widget _row(String type) {
+  Widget _row(String type, {bool isOptional = false}) {
     final d = _doc(type);
     final p = progress[type];
     final (title, hint) = docLabels[type]!;
@@ -162,11 +171,11 @@ class _DocsScreenState extends State<DocsScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('$title *', style: tx(14.5, weight: FontWeight.w800)),
+                Text(isOptional ? '$title (optional)' : '$title *', style: tx(14.5, weight: FontWeight.w800)),
                 Text(
                     d != null
                         ? '${d['name'] ?? ''} · ${sizeText((d['size'] as num).toInt())} · ${d['mime'] == 'application/pdf' ? 'PDF' : 'JPG'}'
-                        : hint,
+                        : (isOptional ? (type == 'fssai' ? 'Add if you have one. Required only when you enter an FSSAI number.' : 'Add if you have it.') : hint),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: tx(12, color: d != null ? kAct : kMute)),
@@ -227,6 +236,7 @@ class _DocsScreenState extends State<DocsScreen> {
               ),
               const SizedBox(height: 12),
               for (final t in required) _row(t),
+              for (final t in optional) _row(t, isOptional: true),
               if (!widget.pushed) ...[
                 const SizedBox(height: 8),
                 TextButton(
