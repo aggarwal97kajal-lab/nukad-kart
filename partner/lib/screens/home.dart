@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'shell.dart';
 import 'live_setup.dart';
 import 'calls_card.dart';
+import 'chats.dart';
 import 'staff.dart';
 import '../thela_location.dart';
 import '../api.dart';
@@ -166,6 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _LocationStatus(),
                 const CallsCard(),
               ],
+              if (s['kind'] == 'thela') const ChatsCard(),
               if (s['kind'] == 'thela' && session.selling > 0 && s['pricesConfirmed'] != s['today']) ...[
                 const SizedBox(height: 12),
                 Box(

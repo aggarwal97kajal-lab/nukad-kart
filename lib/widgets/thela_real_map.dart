@@ -27,6 +27,7 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
   Circle? _halo;
   Symbol? _thela;
   bool _icon = false;
+  int _anim = 0;
   bool _ready = false;
   (double, double)? _shown;
 
@@ -105,8 +106,20 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
       final ne = LatLng(math.max(at.latitude, widget.homeLat) + pad, math.max(at.longitude, widget.homeLng) + pad);
       await c.animateCamera(CameraUpdate.newLatLngBounds(LatLngBounds(southwest: sw, northeast: ne), left: 40, top: 40, right: 40, bottom: 40));
     } else {
-      await c.updateCircle(_halo!, CircleOptions(geometry: at, circleColor: col));
-      await c.updateSymbol(_thela!, SymbolOptions(geometry: at));
+      // Glide from the last spot to the new one (looks continuous instead of jumping).
+      final from = _shown ?? p;
+      _shown = p;
+      final mine = ++_anim;
+      const steps = 12;
+      for (var i = 1; i <= steps; i++) {
+        if (mine != _anim || !mounted) return;
+        final f = i / steps;
+        final g = LatLng(from.$1 + (p.$1 - from.$1) * f, from.$2 + (p.$2 - from.$2) * f);
+        await c.updateCircle(_halo!, CircleOptions(geometry: g, circleColor: col));
+        await c.updateSymbol(_thela!, SymbolOptions(geometry: g));
+        await Future.delayed(const Duration(milliseconds: 250));
+      }
+      return;
     }
     _shown = p;
   }

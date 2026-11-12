@@ -4,6 +4,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import '../api.dart';
 import '../ui.dart';
+import '../excel_io.dart';
 import 'docs.dart';
 import 'home.dart';
 
@@ -103,6 +104,27 @@ class PartnerReviewScreen extends StatefulWidget {
 }
 
 class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
+  Future<void> _uploadFor() async {
+    try {
+      final rows = await pickRows();
+      if (rows == null || !mounted) return;
+      final r = await api.call('POST', '/v1/admin/stores/${widget.p['id']}/products/bulk', {'rows': rows});
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('${widget.p['name']}'),
+          content: SingleChildScrollView(child: Text(uploadSummary(r))),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('OK')))],
+        ),
+      );
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+    }
+  }
+
   bool _busy = false;
   String? _opening;
 
@@ -232,6 +254,16 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
           Btn(tr('Ask for changes'), outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
         ] else if (p['status'] == 'active')
           Btn(tr('Ask for changes (takes shop offline)'), outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
+        if (p['kind'] != 'thela') ...[
+          const SizedBox(height: 8),
+          // Admin fills a shop's products from the shop's Excel (same template as the shop uses).
+          Btn(t('Upload products (Excel)'), outline: true, onTap: _busy ? null : _uploadFor),
+          TextButton(onPressed: () async {
+            final r = await api.call('GET', '/v1/partner/categories');
+            await saveTemplate(((r['categories'] as List?) ?? []).map((c) => '${(c as Map)['name']}').toList());
+            if (mounted) toast(context, t('Template saved in Downloads.'));
+          }, child: Text(t('Download Excel template'))),
+        ],
       ]),
     );
   }

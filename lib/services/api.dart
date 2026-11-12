@@ -21,6 +21,9 @@ class ApiException implements Exception {
         'items_unavailable' => 'These items just went out of stock. Pull down to refresh the shop.',
         'no_door_delivery' => 'This shop doesn’t deliver. Choose pickup.',
         'cannot_cancel' => 'This order can’t be cancelled any more.',
+        'no_numbers' => 'Phone numbers can’t be sent in chat. Use “Call to my street” instead.',
+        'chat_closed' => 'This chat is closed.',
+        'chat_blocked' => 'Chat is paused for a few days after reports from sellers.',
         'already_calling' => 'You are already calling a thela. Wait for its answer or cancel it.',
         'calls_blocked' => 'Calling is paused for a few days: thelas came and found nobody 3 times.',
         'thela_not_live' => 'This thela is not live right now.',
@@ -109,6 +112,14 @@ class Api {
   Future<Map<String, dynamic>> placeOrder(String token, Map<String, dynamic> order) => _call('POST', '/v1/orders', token: token, body: order);
   Future<Map<String, dynamic>> myOrders(String token) => _call('GET', '/v1/me/orders', token: token);
   Future<Map<String, dynamic>> cancelOrderOnline(String token, String id) => _call('POST', '/v1/me/orders/$id/cancel', token: token);
+
+  // ----- Chat with a thela -----
+  Future<Map<String, dynamic>> chat(String token, String thelaId) => _call('GET', '/v1/me/chats/$thelaId', token: token);
+  Future<Map<String, dynamic>> sendChat(String token, String thelaId, String text, {String? address, double? lat, double? lng}) =>
+      _call('POST', '/v1/me/chats/$thelaId', token: token, body: {'text': text, if (address != null) 'address': address, if (lat != null) 'lat': lat, if (lng != null) 'lng': lng});
+  Future<void> chatAction(String token, String thelaId, String what, {String reason = ''}) =>
+      _call('POST', '/v1/me/chats/$thelaId/$what', token: token, body: {'reason': reason});
+  Future<void> watchThela(String thelaId) => _call('POST', '/v1/thelas/$thelaId/watch');
 
   // ----- Call to my street -----
   Future<Map<String, dynamic>> callThela(String token, String thelaId, double lat, double lng, String address) =>

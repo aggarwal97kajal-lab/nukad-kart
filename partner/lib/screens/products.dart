@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../catalog.dart';
 import '../ui.dart';
+import '../excel_io.dart';
 import 'product_form.dart';
 import 'scanner.dart';
 
@@ -137,11 +138,56 @@ class _ProductsScreenState extends State<ProductsScreen> {
         child: ChoiceChip(label: Text(label), selected: on, onSelected: (_) => onTap()),
       );
 
+  Future<void> _excel(String what) async {
+    try {
+      if (what == 'template') {
+        final r = await api.call('GET', '/v1/partner/categories');
+        await saveTemplate(((r['categories'] as List?) ?? []).map((c) => '${(c as Map)['name']}').toList());
+        if (mounted) toast(context, t('Template saved in Downloads.'));
+      } else if (what == 'export') {
+        final n = await exportProducts();
+        if (mounted) toast(context, tr('{0} products saved in Downloads.', [n]));
+      } else {
+        final rows = await pickRows();
+        if (rows == null || !mounted) return;
+        if (rows.isEmpty) {
+          toast(context, t('No rows found in the sheet.'));
+          return;
+        }
+        final r = await api.call('POST', '/v1/partner/products/bulk', {'rows': rows});
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(t('Excel upload')),
+            content: SingleChildScrollView(child: Text(uploadSummary(r))),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('OK')))],
+          ),
+        );
+        _load();
+      }
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    } catch (e) {
+      if (mounted) toast(context, '$e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: bar(t('Products'), actions: [
-        Center(child: Padding(padding: const EdgeInsets.only(right: 8), child: Text(tr('{0} items', [total]), style: tx(12.5, color: kOnHeader)))),
+        Center(child: Padding(padding: const EdgeInsets.only(right: 4), child: Text(tr('{0} items', [total]), style: tx(12.5, color: kOnHeader)))),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.table_view_outlined),
+          tooltip: 'Excel',
+          onSelected: _excel,
+          itemBuilder: (_) => [
+            PopupMenuItem(value: 'template', child: Text(t('Download Excel template'))),
+            PopupMenuItem(value: 'upload', child: Text(t('Upload Excel'))),
+            PopupMenuItem(value: 'export', child: Text(t('Export my products to Excel'))),
+          ],
+        ),
       ]),
       floatingActionButton: FloatingActionButton.extended(onPressed: _add, icon: const Icon(Icons.add), label: Text(t('Add product'))),
       body: Column(children: [

@@ -42,8 +42,11 @@ class LiveData extends ChangeNotifier {
 
   /// Thelas move and go offline any moment: while a thela screen is open, ask every 10 s;
   /// otherwise every 60 s; never while the app is in the background (saves requests).
-  void fast(bool on) {
+  int _watching = 0; // a thela's own page is open: every 5 s
+
+  void fast(bool on, {bool watching = false}) {
     _fast = math.max(0, _fast + (on ? 1 : -1));
+    if (watching) _watching = math.max(0, _watching + (on ? 1 : -1));
     if (on && DateTime.now().difference(_lastPoll) > const Duration(seconds: 10)) _tick(force: true);
   }
 
@@ -57,12 +60,12 @@ class LiveData extends ChangeNotifier {
       },
       onShow: () => _paused = false,
     );
-    _poll ??= Timer.periodic(const Duration(seconds: 10), (_) => _tick());
+    _poll ??= Timer.periodic(const Duration(seconds: 5), (_) => _tick());
   }
 
   void _tick({bool force = false}) {
     if (_lat == null || _paused) return;
-    final every = _fast > 0 ? const Duration(seconds: 10) : const Duration(seconds: 60);
+    final every = _watching > 0 ? const Duration(seconds: 5) : _fast > 0 ? const Duration(seconds: 10) : const Duration(seconds: 60);
     if (!force && DateTime.now().difference(_lastPoll) < every - const Duration(seconds: 1)) return;
     _lastPoll = DateTime.now();
     _refresh(products: DateTime.now().difference(_productsAt) > const Duration(minutes: 2));

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/api.dart';
 import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../widgets/ui.dart';
@@ -6,6 +8,7 @@ import '../state/thela_tracker.dart';
 import '../widgets/thela_live.dart';
 import '../widgets/thela_real_map.dart';
 import '../widgets/call_thela.dart';
+import 'thela_chat.dart';
 import '../services/live_data.dart';
 import '../state/app_state.dart';
 
@@ -20,15 +23,21 @@ class ThelaScreen extends StatefulWidget {
 
 /// While this page is open the thela's position is asked every 10 s.
 class _ThelaScreenState extends State<ThelaScreen> {
+  Timer? _watch;
+
   @override
   void initState() {
     super.initState();
-    LiveData.instance.fast(true);
+    LiveData.instance.fast(true, watching: true);
+    // The thela's phone sends its location every few seconds while someone is looking.
+    api.watchThela(widget.thela.id).catchError((_) {});
+    _watch = Timer.periodic(const Duration(seconds: 20), (_) => api.watchThela(widget.thela.id).catchError((_) {}));
   }
 
   @override
   void dispose() {
-    LiveData.instance.fast(false);
+    _watch?.cancel();
+    LiveData.instance.fast(false, watching: true);
     super.dispose();
   }
 
@@ -115,6 +124,9 @@ class _ThelaView extends StatelessWidget {
                 ]),
                 SizedBox(height: 12),
                 CallThelaCard(thela: th, live: lv.status == ThelaStatus.standing || lv.status == ThelaStatus.moving),
+                SizedBox(height: 8),
+                PrimaryButton('Chat with ${th.name.split(' ').first}', outline: true,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ThelaChatScreen(thela: th)))),
                 SizedBox(height: 16),
                 Text(t('Today’s prices'), style: head(16)),
                 SizedBox(height: 8),

@@ -104,7 +104,7 @@ class ThelaLocation {
       ),
     );
     _sub = Geolocator.getPositionStream(locationSettings: settings).listen(_send, onError: (_) {});
-    _beat = Timer.periodic(const Duration(seconds: 30), (_) => _heartbeat());
+    _beat = Timer.periodic(const Duration(seconds: 5), (_) => _heartbeat());
     _precise();
   }
 
@@ -128,8 +128,23 @@ class ThelaLocation {
 
   /// Standing still: every 90 s tell the server "still here" with the last position (no GPS needed),
   /// and every 5 min take one fresh GPS fix in case the phone moved without the stream noticing.
+  DateTime _fastUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _fixing = false;
+
   void _heartbeat() {
     final now = DateTime.now();
+    // A customer has this thela's page open: send a fresh position every 5 s (GPS on only while watched).
+    if (now.isBefore(_fastUntil)) {
+      if (!_fixing) {
+        _fixing = true;
+        Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 4)))
+            .then(_send)
+            .catchError((_) {})
+            .whenComplete(() => _fixing = false);
+      }
+      return;
+    }
+    if (now.difference(_lastSent) < const Duration(seconds: 25) && now.difference(_lastFix) < const Duration(minutes: 5)) return;
     if (now.difference(_lastFix) >= const Duration(minutes: 5)) {
       _precise();
     } else if (now.difference(_lastSent) >= const Duration(seconds: 90) && _last != null) {
@@ -162,6 +177,7 @@ class ThelaLocation {
         if (p.speed > 0.5 && p.heading >= 0) 'heading': p.heading,
       });
       lastOk.value = DateTime.now();
+      if (r['fast'] == true) _fastUntil = DateTime.now().add(const Duration(seconds: 30));
       lastError.value = null;
       if (r['live'] == false) {
         await stop(); // switched off from another phone, or by the server
