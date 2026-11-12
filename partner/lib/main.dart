@@ -6,7 +6,7 @@ import 'prefs.dart';
 import 'ui.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
-import 'screens/home.dart';
+import 'screens/shell.dart';
 import 'screens/agreement.dart';
 import 'screens/docs.dart';
 import 'screens/phone.dart';
@@ -315,6 +315,6 @@ class _GateState extends State<Gate> {
     if (session.store == null) return const RegisterScreen();
     if (session.store!['docsComplete'] != true) return const DocsScreen();
     if (session.store!['agreementSigned'] != true) return const AgreementScreen();
-    return const HomeScreen();
+    return const PartnerShell();
   }
 }

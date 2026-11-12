@@ -12,6 +12,7 @@
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
 import { HttpError, json, body, now, verifySession, verifyMsg91 } from './index.js';
 import { sendPush, pushReady } from './push.js';
+import { productRoute } from './products.js';
 
 export const PLANS = {
   daily: { name: 'Daily', price: 99, days: 1 },
@@ -286,6 +287,9 @@ function bytesToB64(u8) {
 
 // ---------- routes ----------
 export async function partnerRoute(req, env, path, m) {
+  const prod = await productRoute(req, env, path, m, ctx);
+  if (prod) return prod;
+
   if (path === '/v1/partner/plans' && m === 'GET') {
     return json({ plans: Object.entries(PLANS).map(([id, p]) => ({ id, ...p })), ...(await upiSettings(env)) });
   }
@@ -523,6 +527,12 @@ export async function partnerRoute(req, env, path, m) {
       .bind(crypto.randomUUID(), u.id, 'partner: ' + String(b.reason || '').slice(0, 190), String(b.feedback || '').slice(0, 1000), t)];
     if (s) {
       const all = await env.DB.prepare('SELECT id, chunks FROM partner_docs WHERE store_id = ?').bind(s.id).all();
+      const prods = await env.DB.prepare('SELECT id FROM products WHERE store_id = ?').bind(s.id).all();
+      if (env.FILES && prods.results.length) {
+        const keys = prods.results.map((r) => `products/${r.id}.jpg`);
+        for (let i = 0; i < keys.length; i += 1000) await env.FILES.delete(keys.slice(i, i + 1000));
+      }
+      stmts.push(env.DB.prepare('DELETE FROM products WHERE store_id = ?').bind(s.id));
       await deleteDocFiles(env, all.results);
       if (env.FILES) await env.FILES.delete(photoKey(s.id));
       // Shop, photo and documents go now. Signed agreement and pass payments stay (legal records); trial claims are hashes.

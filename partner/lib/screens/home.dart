@@ -128,6 +128,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Switch(
                     value: s['live'] == true,
+                    // The LIVE card is filled with the action colour, so the ON switch uses the opposite colours to stay visible.
+                    activeTrackColor: kOnAct,
+                    trackOutlineColor: WidgetStateProperty.all(s['live'] == true ? kOnAct : null),
+                    thumbColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? kAct : null),
+                    thumbIcon: WidgetStateProperty.resolveWith(
+                        (st) => st.contains(WidgetState.selected) ? Icon(Icons.check, size: 16, color: kOnAct) : null),
                     onChanged: (s['live'] != true && (!passActive || s['status'] != 'active')) ? null : _setLive,
                   ),
                 ]),
