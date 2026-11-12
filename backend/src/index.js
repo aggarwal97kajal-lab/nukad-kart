@@ -6,6 +6,7 @@
 //   POST /v1/me/phone           { accessToken, phone }       (auth) phone verified by MSG91
 //   PUT  /v1/me                 { name, address? }           (auth)
 //   POST /v1/me/delete          { reason, feedback }         (auth) removes profile; next Google login starts fresh
+//   POST /v1/me/logout                                        (auth) log out this phone
 //   GET  /v1/me/sessions                                      (auth) phones where this account is logged in
 //   POST /v1/me/sessions/logout { id }                       (auth) log out one phone
 //   POST /v1/me/sessions/logout-others                        (auth) log out every other phone
@@ -210,10 +211,20 @@ async function route(req, env) {
     if (role === 'thela') {
       stmts.push(env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL').bind(t, user.id));
     }
+    const devName = String(d.name || 'Unknown phone').slice(0, 60);
+    const devPlatform = String(d.platform || '').slice(0, 40);
+    const devId = String(d.id || '').slice(0, 64) || null;
+    if (devId) {
+      // Same phone logging in again: its old session is replaced, not listed twice.
+      // Older sessions made before phones sent an id are matched by model + Android version.
+      stmts.push(env.DB.prepare(
+        `UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL
+         AND (device_id = ? OR (device_id IS NULL AND device = ? AND platform = ?))`,
+      ).bind(t, user.id, devId, devName, devPlatform));
+    }
     stmts.push(env.DB.prepare(
-      'INSERT INTO sessions (id, user_id, device, platform, city, created_at, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    ).bind(sid, user.id, String(d.name || 'Unknown phone').slice(0, 60), String(d.platform || '').slice(0, 40),
-      String(req.cf?.city || '').slice(0, 60) || null, t, t));
+      'INSERT INTO sessions (id, user_id, device, platform, city, created_at, last_seen, device_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    ).bind(sid, user.id, devName, devPlatform, String(req.cf?.city || '').slice(0, 60) || null, t, t, devId));
     await env.DB.batch(stmts);
     const token = await signSession(user.id, env.SESSION_SECRET, SESSION_DAYS, sid);
     return json({ token, ...(await profile(env.DB, user.id)) });
@@ -269,6 +280,12 @@ async function route(req, env) {
         "UPDATE users SET google_sub = 'deleted:' || id, email = '', name = NULL, phone = NULL, phone_verified = 0, deleted_at = ?, updated_at = ? WHERE id = ?",
       ).bind(t, t, uid),
     ]);
+    return json({ ok: true });
+  }
+
+  if (path === '/v1/me/logout' && m === 'POST') {
+    const { sid } = await session(req, env);
+    await env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE id = ?').bind(now(), sid).run();
     return json({ ok: true });
   }
 

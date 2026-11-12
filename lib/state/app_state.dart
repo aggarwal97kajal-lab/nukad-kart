@@ -312,6 +312,13 @@ class AppState extends ChangeNotifier {
   /// Session token from the Nukad Kart server ('' when signed in offline).
   String apiToken = '';
 
+  /// Random id made once per app install. Tells the server "same phone" when logging in again.
+  String installId = '';
+  static String _newId() {
+    final r = math.Random.secure();
+    return List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  }
+
   /// Fills name, number and addresses from the server (e.g. after reinstalling the app).
   void applyServerProfile(Map<String, dynamic> data) {
     final u = Map<String, dynamic>.from((data['user'] as Map?) ?? {});
@@ -474,7 +481,10 @@ class AppState extends ChangeNotifier {
     try {
       _prefs = await SharedPreferences.getInstance();
       final raw = _prefs!.getString(_key);
-      if (raw == null) return;
+      if (raw == null) {
+        installId = _newId();
+        return;
+      }
       final j = Map<String, dynamic>.from(jsonDecode(raw) as Map);
       theme = AppTheme.values.firstWhere((v) => v.name == j['theme'], orElse: () => AppTheme.light);
       lang = '${j['lang'] ?? 'en'}';
@@ -482,6 +492,7 @@ class AppState extends ChangeNotifier {
       signedIn = j['signedIn'] == true;
       email = '${j['email'] ?? ''}';
       apiToken = '${j['apiToken'] ?? ''}';
+      installId = '${j['installId'] ?? ''}';
       acceptedTerms = j['acceptedTerms'] == true;
       final prof = Map<String, dynamic>.from((j['profiles'] as Map?) ?? {});
       prof.forEach((k, v) => _profiles[k] = Map<String, dynamic>.from(v as Map));
@@ -502,6 +513,7 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // Bad or old data: start fresh.
     }
+    if (installId.isEmpty) installId = _newId();
   }
 
   void _save() {
@@ -517,6 +529,7 @@ class AppState extends ChangeNotifier {
           'signedIn': signedIn,
           'email': email,
           'apiToken': apiToken,
+          'installId': installId,
           'acceptedTerms': acceptedTerms,
           'profiles': _profiles,
           'session': _profileJson(),

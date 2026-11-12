@@ -62,6 +62,9 @@ class Api {
 
   Future<Map<String, dynamic>> me(String token) => _call('GET', '/v1/me', token: token);
 
+  /// Ends this phone's session on the server.
+  Future<void> logout(String token) => _call('POST', '/v1/me/logout', token: token);
+
   /// Phones where this account is logged in.
   Future<List<Map<String, dynamic>>> sessions(String token) async {
     final d = await _call('GET', '/v1/me/sessions', token: token);

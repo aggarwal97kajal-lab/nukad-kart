@@ -1,3 +1,4 @@
+import '../services/api.dart';
 import '../services/google_auth.dart';
 import 'package:flutter/material.dart';
 import '../l10n.dart';
@@ -137,7 +138,17 @@ class AccountTab extends StatelessWidget {
     );
     if (choice == null || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    AppScope.read(context).signOut();
+    final s = AppScope.read(context);
+    final token = s.apiToken;
+    if (token.isNotEmpty) {
+      // End the session(s) on the server too. Logging out here still works when offline.
+      try {
+        if (choice == 'all') await api.logoutOtherSessions(token);
+        await api.logout(token);
+      } on ApiException catch (_) {}
+      if (!context.mounted) return;
+    }
+    s.signOut();
     googleAuth.signOut();
     Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
     messenger.showSnackBar(SnackBar(

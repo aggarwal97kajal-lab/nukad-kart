@@ -151,7 +151,7 @@ Future<bool> googleSignInFlow(BuildContext context) async {
   // Server login. If the server cannot be reached, carry on with what is saved on this phone.
   Map<String, dynamic>? server;
   try {
-    server = await api.googleLogin(g.idToken, device: await deviceInfo());
+    server = await api.googleLogin(g.idToken, device: {...await deviceInfo(), 'id': s.installId});
   } on ApiException catch (e) {
     if (!e.unavailable) {
       await googleAuth.signOut();
