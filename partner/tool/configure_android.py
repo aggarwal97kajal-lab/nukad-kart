@@ -10,14 +10,22 @@ for perm in ["INTERNET", "CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATI
 s = re.sub(r'android:label="[^"]*"', 'android:label="Nukad Partner"', s, count=1)
 # UPI apps register "upi://pay" (scheme + host). Asking only for "upi" hides most of them on Android 11+,
 # so ask for both, and name the common UPI apps too.
+# Package names from Razorpay's list of UPI apps (docs: payments/payment-methods/upi/supported-apps),
+# plus CheQ (com.cheq.retail, Google Play). Wrong guesses from before (slice, kiwi, bharatpe, cheq) are fixed.
 UPI_PACKAGES = [
-    "com.google.android.apps.nbu.paisa.user",  # Google Pay
-    "com.phonepe.app", "net.one97.paytm", "in.org.npci.upiapp",  # PhonePe, Paytm, BHIM
-    "in.amazon.mShop.android.shopping", "com.amazon.mShop.android.shopping",
-    "money.super.payments", "com.dreamplug.androidapp", "com.cheq.retail", "app.cheq.android",
-    "com.whatsapp", "com.mobikwik_new", "com.freecharge.android", "com.myairtelapp", "com.csam.icici.bank.imobile",
-    "com.sbi.upi", "com.snapwork.hdfc", "com.axis.mobile", "com.msf.kbank.mobile", "com.fampay.in", "com.naviapp",
-    "com.slice", "com.kiwi.android", "com.jio.myjio", "com.bharatpe.app",
+    "com.google.android.apps.nbu.paisa.user", "com.phonepe.app", "net.one97.paytm", "com.dreamplug.androidapp",
+    "in.org.npci.upiapp", "com.tatadigital.tcp", "com.csam.icici.bank.imobile", "in.amazon.mShop.android.shopping",
+    "com.samsung.android.spay", "com.mobikwik_new", "in.gokiwi.kiwitpap", "com.naviapp", "money.super.payments",
+    "com.shriram.one", "com.kotak811mobilebankingapp.instantsavingsupiscanandpayrecharge", "indwin.c3.shareapp",
+    "com.hdfcbank.payzapp", "com.epifi.paisa", "com.popclub.android", "org.altruist.BajajExperia", "com.postpe.app",
+    "com.whatsapp", "com.whatsapp.w4b", "com.fampay.in", "com.olive.kotak.upi", "com.msf.kbank.mobile", "com.sbi.upi",
+    "com.sbi.lotusintouch", "com.snapwork.hdfc", "com.upi.axispay", "com.axis.mobile", "money.jupiter",
+    "com.idfcfirstbank.optimus", "com.canarabank.mobility", "com.bankofbaroda.upi", "com.fss.pnbpsp", "com.mgs.pnbupi",
+    "com.fedmobile", "com.iexceed.appzillon.ippbMB", "com.jio.myjio", "com.infrasoft.uboi", "com.freecharge.android",
+    "com.SIBMobile", "com.nextbillion.groww", "com.dbs.in.digitalbank", "com.IndianBank.IndOASIS",
+    "com.ausmallfinancebank.amb", "com.infrasofttech.CentralBank", "com.rblbank.mobank", "com.fss.indus",
+    "com.indusind.indie", "com.lcode.ucoupi", "in.irisbyyes.app", "com.icicibank.pockets", "com.lcode.csbupi",
+    "com.euronet.iobupi", "com.flipkart.android", "com.myairtelapp", "com.cheq.retail",
 ]
 queries = [
     '<intent><action android:name="android.intent.action.VIEW"/><data android:scheme="upi" android:host="pay"/></intent>',
