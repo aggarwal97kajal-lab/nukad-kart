@@ -17,7 +17,7 @@ class MapMarkers {
 
   static Future<ui.Image> _load(String asset) async {
     final data = await rootBundle.load(asset);
-    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: 240);
+    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: 300);
     return (await codec.getNextFrame()).image;
   }
 

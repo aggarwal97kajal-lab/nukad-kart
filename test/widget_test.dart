@@ -155,6 +155,18 @@ void main() {
     expect(n.buyerGstin, '');
   });
 
+  test('order rating is per order and separate from the store rating', () {
+    final s = AppState();
+    s.rateOrder('NK-1', const OrderRating(5, good: ['On time']));
+    expect(s.orderRatings['NK-1']!.stars, 5);
+    expect(s.orderRatings.containsKey('NK-2'), isFalse); // same shop, other order: not rated
+    expect(s.shouldAskOrderRating('NK-2'), isTrue);
+    expect(s.ratings.containsKey('s1'), isFalse); // store rating untouched
+    s.rate('s1', 3);
+    expect(s.orderRatings['NK-1']!.stars, 5);
+    expect(s.orderRatings['NK-1']!.summary, 'On time');
+  });
+
   test('unknown pin code is not serviceable', () {
     final s = AppState();
     s.saveAddress(const Address(area: 'Uttam Nagar', pin: '110059'));

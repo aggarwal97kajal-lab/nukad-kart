@@ -112,6 +112,24 @@ class Order {
       status == OrderStatus.outForDelivery;
 }
 
+/// Rating for one order: stars plus what went well / wrong. Separate from the shop's overall rating.
+class OrderRating {
+  final int stars;
+  final List<String> good, bad;
+  final String comment;
+  const OrderRating(this.stars, {this.good = const [], this.bad = const [], this.comment = ''});
+
+  String get summary => [...good, ...bad].join(' · ');
+
+  Map<String, dynamic> toJson() => {'s': stars, 'g': good, 'b': bad, 'c': comment};
+  static OrderRating fromJson(Map<String, dynamic> j) => OrderRating(
+        (j['s'] as num?)?.toInt() ?? 0,
+        good: ((j['g'] as List?) ?? []).map((e) => '$e').toList(),
+        bad: ((j['b'] as List?) ?? []).map((e) => '$e').toList(),
+        comment: '${j['c'] ?? ''}',
+      );
+}
+
 class ThelaRequest {
   final String thelaId;
   final String slot;
@@ -393,6 +411,7 @@ class AppState extends ChangeNotifier {
     orders.clear();
     notifications.clear();
     ratings.clear();
+    orderRatings.clear();
     billSeq.clear();
     notifyListeners();
   }
@@ -406,6 +425,7 @@ class AppState extends ChangeNotifier {
     wishlist.clear();
     bookmarks.clear();
     ratings.clear();
+    orderRatings.clear();
     ratingPromptShown.clear();
     notifications.clear();
     orders.clear();
@@ -426,6 +446,7 @@ class AppState extends ChangeNotifier {
         'orders': orders.take(50).map((o) => o.toJson()).toList(),
         'notifications': notifications.take(60).map((n) => n.toJson()).toList(),
         'ratings': ratings,
+        'orderRatings': orderRatings.map((k, v) => MapEntry(k, v.toJson())),
         'billSeq': billSeq,
         'b2b': [savedGstin, savedBusiness],
       };
@@ -461,6 +482,10 @@ class AppState extends ChangeNotifier {
     final b2b = (p['b2b'] as List?) ?? const [];
     savedGstin = b2b.length == 2 ? '${b2b[0]}' : '';
     savedBusiness = b2b.length == 2 ? '${b2b[1]}' : '';
+    orderRatings
+      ..clear()
+      ..addAll(Map<String, dynamic>.from((p['orderRatings'] as Map?) ?? {})
+          .map((k, v) => MapEntry(k, OrderRating.fromJson(Map<String, dynamic>.from(v as Map)))));
     billSeq
       ..clear()
       ..addAll(Map<String, dynamic>.from((p['billSeq'] as Map?) ?? {}).map((k, v) => MapEntry(k, (v as num).toInt())));
@@ -800,6 +825,18 @@ class AppState extends ChangeNotifier {
 
   void rate(String vendorId, int stars) {
     ratings[vendorId] = stars;
+    notifyListeners();
+  }
+
+  // ----- order ratings: one per order, separate from the shop's overall rating -----
+  final Map<String, OrderRating> orderRatings = {};
+  final Set<String> orderPromptShown = {};
+
+  bool shouldAskOrderRating(String orderId) =>
+      !orderRatings.containsKey(orderId) && !orderPromptShown.contains(orderId);
+
+  void rateOrder(String orderId, OrderRating r) {
+    orderRatings[orderId] = r;
     notifyListeners();
   }
 

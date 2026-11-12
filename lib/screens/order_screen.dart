@@ -41,10 +41,10 @@ class _OrderScreenState extends State<OrderScreen> {
     final o = s.orders.firstWhere((x) => x.id == widget.orderId);
     final st = storeById(o.storeId);
 
-    if (o.status == OrderStatus.delivered && !_askedRating && s.shouldAskRating(st.id)) {
+    if (o.status == OrderStatus.delivered && !_askedRating && s.shouldAskOrderRating(o.id)) {
       _askedRating = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) showRatingSheet(context, vendorId: st.id, vendorName: st.name);
+        if (mounted) showOrderRatingSheet(context, o, storeName: st.name);
       });
     }
 
@@ -138,23 +138,69 @@ class _OrderScreenState extends State<OrderScreen> {
               'Need a change? Call the store: ${st.phone}.'),
         ],
         if (o.status == OrderStatus.delivered) ...[
-          if (s.ratings.containsKey(st.id))
-            CardBox(
-              child: Row(children: [
-                Text('Your rating for this store', style: body(12.5, color: kMute)),
-                SizedBox(width: 8),
-                StarRow(value: s.ratings[st.id]!, size: 16),
-                Spacer(),
-                GestureDetector(
-                  onTap: () => showRatingSheet(context, vendorId: st.id, vendorName: st.name, editing: true),
-                  child: Text(t('Edit'), style: body(13, color: kG, weight: FontWeight.w700)),
-                ),
-              ]),
-            ),
+          _ratingsCard(context, s, o, st),
           SizedBox(height: 10),
           PrimaryButton(t('Report a problem'), outline: true, color: kRed,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(order: o)))),
         ],
+      ]),
+    );
+  }
+
+  Widget _ratingsCard(BuildContext context, AppState s, Order o, Store st) {
+    final or = s.orderRatings[o.id];
+    final sr = s.ratings[st.id];
+    Widget row(String label, Widget value, String? sub, VoidCallback onTap, String action) => InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(14),
+            child: Row(children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(label, style: body(11.5, color: kMute, weight: FontWeight.w800).copyWith(letterSpacing: .6)),
+                  SizedBox(height: 4),
+                  value,
+                  if (sub != null && sub.isNotEmpty) ...[
+                    SizedBox(height: 2),
+                    Text(sub, style: body(11.5, color: kMute)),
+                  ],
+                ]),
+              ),
+              Text(action, style: body(13, color: kGText, weight: FontWeight.w800)),
+            ]),
+          ),
+        );
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kLine)),
+      child: Column(children: [
+        row(
+          'THIS ORDER',
+          or == null
+              ? Text('Not rated yet', style: body(13.5, weight: FontWeight.w700))
+              : Row(children: [
+                  StarRow(value: or.stars, size: 18),
+                  SizedBox(width: 8),
+                  Text('${or.stars} · ${ratingWord(or.stars)}', style: body(13.5, weight: FontWeight.w700)),
+                ]),
+          or?.summary,
+          () => showOrderRatingSheet(context, o, storeName: st.name, editing: or != null),
+          or == null ? 'Rate' : t('Edit'),
+        ),
+        Divider(height: 1, color: kLine),
+        row(
+          '${st.name.toUpperCase()} (OVERALL)',
+          sr == null
+              ? Text('Not rated yet', style: body(13.5, weight: FontWeight.w700))
+              : Row(children: [
+                  StarRow(value: sr, size: 18),
+                  SizedBox(width: 8),
+                  Text('$sr', style: body(13.5, weight: FontWeight.w700)),
+                ]),
+          'Your overall rating of the shop. Counts once in its public rating.',
+          () => showRatingSheet(context, vendorId: st.id, vendorName: st.name, editing: sr != null),
+          sr == null ? 'Rate' : t('Edit'),
+        ),
       ]),
     );
   }

@@ -100,7 +100,7 @@ class OrderHistoryCard extends StatelessWidget {
     final o = order;
     final st = storeById(o.storeId);
     final delivered = o.status == OrderStatus.delivered;
-    final rated = s.ratings[st.id];
+    final rated = s.orderRatings[o.id];
     final mins = delivered && o.times[OrderStatus.delivered] != null
         ? o.times[OrderStatus.delivered]!.difference(o.placedAt).inMinutes.clamp(1, 999)
         : null;
@@ -183,19 +183,25 @@ class OrderHistoryCard extends StatelessWidget {
           ),
         ),
         if (delivered && rated != null)
-          Container(
-            margin: EdgeInsets.fromLTRB(14, 0, 14, 12),
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
-            child: Row(children: [
-              StarRow(value: rated, size: 16),
-              SizedBox(width: 8),
-              Expanded(child: Text('You rated $rated', style: body(13, weight: FontWeight.w700))),
-              GestureDetector(
-                onTap: () => showRatingSheet(context, vendorId: st.id, vendorName: st.name, editing: true),
-                child: Text('Edit', style: body(13, color: kGText, weight: FontWeight.w800)),
-              ),
-            ]),
+          InkWell(
+            onTap: () => showOrderRatingSheet(context, o, storeName: st.name, editing: true),
+            child: Container(
+              margin: EdgeInsets.fromLTRB(14, 0, 14, 12),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12)),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  StarRow(value: rated.stars, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('Order rated ${rated.stars}', style: body(13, weight: FontWeight.w700))),
+                  Text(t('Edit'), style: body(13, color: kGText, weight: FontWeight.w800)),
+                ]),
+                if (rated.summary.isNotEmpty) ...[
+                  SizedBox(height: 3),
+                  Text(rated.summary, style: body(11.5, color: kMute)),
+                ],
+              ]),
+            ),
           ),
         Container(
           decoration: BoxDecoration(border: Border(top: BorderSide(color: kLine))),
@@ -203,7 +209,7 @@ class OrderHistoryCard extends StatelessWidget {
             action(t('Reorder'), Icons.replay_rounded, () => _reorder(context)),
             if (delivered && rated == null)
               action(t('Rate order'), Icons.star_border_rounded,
-                  () => showRatingSheet(context, vendorId: st.id, vendorName: st.name),
+                  () => showOrderRatingSheet(context, o, storeName: st.name),
                   left: true),
           ]),
         ),
