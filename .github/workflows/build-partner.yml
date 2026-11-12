@@ -61,15 +61,20 @@ jobs:
         run: flutter test
 
       - name: Build APK
-        run: flutter build apk --release
+        # One APK per phone type: ~3x smaller than one APK for all phones (that one passed 100 MB, which some
+        # phones' installers refuse). Version code goes up with every build, so a new APK always installs as an update.
+        run: flutter build apk --release --split-per-abi --build-number=${{ github.run_number }} --build-name=0.1.${{ github.run_number }}
 
       - name: Check signing certificate
         run: |
           signer=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner
-          $signer verify --print-certs build/app/outputs/flutter-apk/app-release.apk | tee /tmp/cert.txt
+          $signer verify --print-certs build/app/outputs/flutter-apk/app-arm64-v8a-release.apk | tee /tmp/cert.txt
           grep -qi "SHA-1 digest: 9352a210781d39ee0c04efc3735fad0b5ea2b279" /tmp/cert.txt
 
-      - run: cp build/app/outputs/flutter-apk/app-release.apk ../NukadPartner.apk
+      - run: |
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk ../NukadPartner.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk ../NukadPartner-old-phones.apk
+          ls -la ../NukadPartner*.apk
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -79,5 +84,8 @@ jobs:
           body: |
             Partner app for shops and thelas: sign up, buy a pass with UPI, go LIVE. Admin screen for UPI ID and payment checks.
             Install: download NukadPartner.apk on your Android phone and allow "Install unknown apps".
-          files: NukadPartner.apk
+            Very old or cheap phone (32-bit)? Use NukadPartner-old-phones.apk instead.
+          files: |
+            NukadPartner.apk
+            NukadPartner-old-phones.apk
           make_latest: false
