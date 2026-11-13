@@ -114,3 +114,26 @@ test('chat inbox: waiting first, reply to all, busy count for customers', async 
   r = await call('GET', '/v1/partner/chats', null, 'owner');
   assert.equal(r.json.waiting, 0);
 });
+
+test('coming call: "I’m coming out" confirms it; no confirm in 3 minutes drops it (chat counts as confirm)', async () => {
+  const { DB, call } = await setup();
+  let r = await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4' }, 'c1');
+  const a = r.json.call.id;
+  r = await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4' }, 'c2');
+  const b = r.json.call.id;
+  r = await call('POST', '/v1/thelas/th1/call', { lat: 28.7010, lng: 77.1, address: 'Gali 4' }, 'c3');
+  const c = r.json.call.id;
+  await call('POST', '/v1/partner/calls/answer', { ids: [a, b, c], coming: true }, 'owner');
+  r = await call('GET', '/v1/me/calls/current', null, 'c1');
+  assert.ok(r.json.call.confirmLeft > 0);
+  r = await call('POST', `/v1/me/calls/${a}/out`, {}, 'c1');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  r = await call('POST', '/v1/me/chats/th1', { text: 'Bhaiya 1 kg tamatar' }, 'c3');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  DB.raw.prepare('UPDATE calls SET answered_at = ?').run(T - 200);
+  r = await call('GET', '/v1/partner/calls', null, 'owner');
+  assert.equal(r.json.coming[0].count, 2);
+  assert.equal(r.json.coming[0].out, 2);
+  r = await call('GET', '/v1/me/calls/current', null, 'c2');
+  assert.equal(r.json.call.status, 'unconfirmed');
+});

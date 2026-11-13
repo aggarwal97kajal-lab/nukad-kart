@@ -139,6 +139,11 @@ class _CartScreenState extends State<CartScreen> {
             SizedBox(height: 8),
             NoteBox('${st.name} doesn’t deliver to ${s.current.label} (${s.current.pin}). '
                 'Pick another address or choose pickup.', icon: Icons.error_outline, color: kRed, bg: kRedBg),
+            if (s.here != null) ...[
+              // Ordering in a new area: add the address here first (or pick a saved one near this shop).
+              SizedBox(height: 8),
+              PrimaryButton(t('Add an address here'), onTap: () => showAddressPicker(context, title: t('Delivery address in this area'))),
+            ],
           ],
           SizedBox(height: 12),
         ],

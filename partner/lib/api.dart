@@ -48,14 +48,15 @@ class ApiError implements Exception {
         'doc_too_big' => tr('File is bigger than 2 MB. Take a smaller photo or compress the PDF.'),
         'doc_must_be_jpg_or_pdf' => tr('Only JPG photos or PDF files can be uploaded.'),
         'docs_missing' => tr('Upload all required documents first.'),
-        'docs_locked' => tr('Documents can’t be changed while Nukad team is checking them.'),
-        'not_verified' => tr('Nukad team is still verifying your shop.'),
+        'docs_locked' => tr('This document is already with Nukad Kart team and can’t be changed now.'),
+        'not_verified' => tr('Nukad Kart team is still verifying your shop.'),
         'already_approved' => tr('Your shop is already approved. Contact support to change details.'),
         'slow_down' => tr('Too many tries. Wait a minute and try again.'),
         'reason_required' => tr('Write a reason.'),
         'account_is_thela' => tr('This Google account is registered as a Thela. Choose Thela, or log in with another Google account.'),
         'account_is_shop' => tr('This Google account is registered as a Shop / Kirana. Choose Shop, or log in with another Google account.'),
         'kind_locked' => tr('Shop / Thela can’t be changed after approval.'),
+        'doc_needed' => tr('The certificate for the new number is not uploaded yet.'),
         _ => tr('Something went wrong ({0}). Try again.', [code]),
       };
   @override

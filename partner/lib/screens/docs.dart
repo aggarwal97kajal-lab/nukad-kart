@@ -24,7 +24,7 @@ String sizeText(int b) => b >= 1024 * 1024 ? '${(b / 1024 / 1024).toStringAsFixe
 
 /// Step 3: PAN, Aadhaar (masked), GST and FSSAI documents. JPG or PDF, up to 2 MB each.
 class DocsScreen extends StatefulWidget {
-  /// Opened from home to fix documents after Nukad team asked for changes.
+  /// Opened from home to fix documents after Nukad Kart team asked for changes.
   final bool pushed;
   const DocsScreen({super.key, this.pushed = false});
   @override
@@ -33,7 +33,8 @@ class DocsScreen extends StatefulWidget {
 
 class _DocsScreenState extends State<DocsScreen> {
   List<Map<String, dynamic>> docs = [];
-  List<String> required = [], optional = [];
+  List<String> required = [], optional = [], locked = [];
+  bool live = false;
   bool _loading = true;
   final Map<String, double> progress = {}; // type → 0..1 while uploading
   final Map<String, (int, int)> sent = {}; // type → (bytes sent, total)
@@ -50,6 +51,8 @@ class _DocsScreenState extends State<DocsScreen> {
       docs = ((r['docs'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
       required = ((r['required'] as List?) ?? []).map((e) => '$e').toList();
       optional = ((r['optional'] as List?) ?? []).map((e) => '$e').toList();
+      locked = ((r['locked'] as List?) ?? []).map((e) => '$e').toList();
+      live = r['live'] == true;
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -154,13 +157,14 @@ class _DocsScreenState extends State<DocsScreen> {
       progress.remove(type);
       sent.remove(type);
     });
-    if (widget.pushed) session.refresh().catchError((_) {});
+    if (widget.pushed || live) session.refresh().catchError((_) {});
   }
 
   Widget _row(String type, {bool isOptional = false}) {
     final d = _doc(type);
     final p = progress[type];
     final (title, hint) = docLabels[type]!;
+    final isLocked = locked.contains(type) && d != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Box(
@@ -173,7 +177,9 @@ class _DocsScreenState extends State<DocsScreen> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(isOptional ? '$title (optional)' : '$title *', style: tx(14.5, weight: FontWeight.w800)),
                 Text(
-                    d != null
+                    isLocked
+                        ? (live ? tr('Approved · locked') : tr('With Nukad Kart team for checking'))
+                        : d != null
                         ? '${d['name'] ?? ''} · ${sizeText((d['size'] as num).toInt())} · ${d['mime'] == 'application/pdf' ? 'PDF' : 'JPG'}'
                         : (isOptional ? (type == 'fssai' ? tr('Add if you have one. Required only when you enter an FSSAI number.') : tr('Add if you have it.')) : hint),
                     maxLines: 2,
@@ -182,6 +188,9 @@ class _DocsScreenState extends State<DocsScreen> {
               ]),
             ),
             const SizedBox(width: 8),
+            if (isLocked)
+              Icon(Icons.lock_outline, color: kMute, size: 20)
+            else
             OutlinedButton(
               onPressed: p != null ? null : () => _choose(type),
               style: OutlinedButton.styleFrom(foregroundColor: kAct, side: BorderSide(color: kAct)),
@@ -222,7 +231,16 @@ class _DocsScreenState extends State<DocsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(padding: const EdgeInsets.all(16), children: [
-              Text(tr('Step 3 of 5'), style: tx(12, color: kMute)),
+              if (!live) Text(tr('Step 3 of 5'), style: tx(12, color: kMute)),
+              if (live)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Box(
+                    color: kOkBg,
+                    child: Text(tr('Your shop stays live. Add the new document below; Nukad Kart team checks it with your change.'),
+                        style: tx(13, weight: FontWeight.w700)),
+                  ),
+                ),
               const SizedBox(height: 8),
               Box(
                 color: kSurf,
@@ -230,7 +248,7 @@ class _DocsScreenState extends State<DocsScreen> {
                   Icon(Icons.info_outline, color: kAct, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                      child: Text(tr('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukad team checks them before your shop goes live.'),
+                      child: Text(tr('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukad Kart team checks them before your shop goes live.'),
                           style: tx(12.5, weight: FontWeight.w600))),
                 ]),
               ),

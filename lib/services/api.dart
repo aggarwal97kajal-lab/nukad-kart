@@ -12,9 +12,10 @@ class ApiException implements Exception {
   /// Readable message for the customer.
   String get message => switch (code) {
         'slow_down' => 'Too many tries. Wait a minute and try again.',
+        'call_not_coming' => 'This call is no longer active. Call again if you still need the thela.',
         'bad_request' => 'Something went wrong. Try again.',
         'phone_in_use' => 'This number is already linked to another account.',
-        'email_used_by_partner' => 'This Google account is used for a shop in the Nukad Partner app. Use a different Google account to shop.',
+        'email_used_by_partner' => 'This Google account is used for a shop in the Nukad Kart Partner app. Use a different Google account to shop.',
         'phone_not_verified' || 'phone_mismatch' => 'This number could not be confirmed. Send a new code and try again.',
         'not_signed_in' || 'unknown_user' => 'Your session ended. Log in again.',
         'offline' || 'timeout' => 'No internet connection. Try again.',
@@ -134,6 +135,7 @@ class Api {
       _call('POST', '/v1/thelas/$thelaId/call', token: token, body: {'lat': lat, 'lng': lng, 'address': address});
   Future<Map<String, dynamic>> currentCall(String token) => _call('GET', '/v1/me/calls/current', token: token);
   Future<void> cancelCall(String token, String id) => _call('POST', '/v1/me/calls/$id/cancel', token: token);
+  Future<void> callOut(String token, String id) => _call('POST', '/v1/me/calls/$id/out', token: token);
 
   /// What a shop / thela sells right now (in stock only).
   Future<Map<String, dynamic>> storeProducts(String storeId) => _call('GET', '/v1/stores/$storeId/products');

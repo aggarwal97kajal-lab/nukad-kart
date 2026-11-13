@@ -29,6 +29,16 @@ class AgreementData {
         if ('${party['city']}'.isEmpty) tr('court city'),
       ];
 
+  /// A signed copy as the admin sees it (from the saved snapshot), for the same PDF.
+  static Future<AgreementData> fromSigned(Map<String, dynamic> a) async {
+    final party = Map<String, dynamic>.from((a['party'] as Map?) ?? {});
+    final signed = Map<String, dynamic>.from((a['signed'] as Map?) ?? {});
+    final t = await rootBundle.loadString('assets/agreement_v1.txt');
+    final city = '${party['city'] ?? ''}';
+    return AgreementData({'version': a['version'], 'party': party, 'signed': signed, 'vendor': signed['vendor'] ?? {}},
+        t.replaceAll('{{city}}', city.isEmpty ? '[city]' : city));
+  }
+
   static Future<AgreementData> load() async {
     final r = await api.call('GET', '/v1/partner/agreement');
     final t = await rootBundle.loadString('assets/agreement_v1.txt');
@@ -419,7 +429,7 @@ class SignedScreen extends StatelessWidget {
         Icon(Icons.check_circle, color: kAct, size: 64),
         const SizedBox(height: 6),
         Text(tr('Signed'), textAlign: TextAlign.center, style: tx(20, weight: FontWeight.w800)),
-        Text(tr('Nukad team will now verify your documents.'), textAlign: TextAlign.center, style: tx(13, color: kMute)),
+        Text(tr('Nukad Kart team will now verify your documents.'), textAlign: TextAlign.center, style: tx(13, color: kMute)),
         const SizedBox(height: 16),
         SignedCard(data: data),
         const SizedBox(height: 16),

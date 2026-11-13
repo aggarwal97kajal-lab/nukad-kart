@@ -11,6 +11,7 @@ import '../ui.dart';
 import '../widgets/map_picker.dart';
 import '../ola.dart';
 import '../prefs.dart';
+import 'docs.dart';
 
 /// FSSAI's official registration portal (FoSCoS).
 const fssaiPortal = 'https://foscos.fssai.gov.in/';
@@ -50,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
     final st = session.store;
     if (st == null) return;
-    // Fixing details after Nukad team asked for changes: start from what was sent.
+    // Fixing details after Nukad Kart team asked for changes: start from what was sent.
     kind = '${st['kind']}' == 'thela' ? 'thela' : 'shop';
     name.text = '${st['name'] ?? ''}';
     opens.text = '${st['opensAt'] ?? ''}';
@@ -272,13 +273,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final live = session.store?['status'] == 'active';
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
       if (wasEditing && mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
+        final nav = Navigator.of(context);
+        final needsDoc = ((r['needsDocs'] as List?) ?? []).isNotEmpty;
+        nav.pop();
         toast(context, live
-            ? (r['changeSent'] == true
-                ? tr('Sent to the Nukad team. You stay live; the new details show after approval, then you sign the updated agreement.')
+            ? (needsDoc
+                ? tr('Now upload the certificate for the new number. Nukad Kart team checks both together.')
+                : r['changeSent'] == true
+                ? tr('Sent to the Nukad Kart team. You stay live; the new details show after approval, then you sign the updated agreement.')
                 : tr('Saved.'))
             : tr('Details saved. Tap “Send for verification” when ready.'));
         session.refresh().catchError((_) {});
+        if (live && needsDoc) nav.push(MaterialPageRoute(builder: (_) => const DocsScreen(pushed: true)));
         return;
       }
     } on ApiError catch (e) {
@@ -352,7 +358,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
                 color: kSurf, borderRadius: BorderRadius.circular(16), border: Border.all(color: kAct, width: 1.5)),
-            child: photo == null
+            child: photo == null && editing && session.store?['hasPhoto'] == true
+                ? Stack(fit: StackFit.expand, children: [
+                    // The photo customers see now, until a new one is taken (and approved).
+                    Image.network('$apiBase/v1/stores/${session.store!['id']}/photo?v=${session.store!['photoAt'] ?? 0}', fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(color: kSurf, alignment: Alignment.center, child: Text(tr('Photo could not load'), style: tx(13, color: kMute)))),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                        child: Text(tr('Current photo'), style: tx(12, color: Colors.white, weight: FontWeight.w700)),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        color: Colors.black54,
+                        padding: const EdgeInsets.all(8),
+                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          const Icon(Icons.photo_camera_outlined, color: Colors.white, size: 18),
+                          const SizedBox(width: 6),
+                          Text(tr('Tap to take a new photo'), style: tx(13, color: Colors.white, weight: FontWeight.w800)),
+                        ]),
+                      ),
+                    ),
+                  ])
+                : photo == null
                 ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.photo_camera_outlined, color: kAct, size: 40),
                     const SizedBox(height: 6),

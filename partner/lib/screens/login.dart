@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const Spacer(),
             ClipRRect(borderRadius: BorderRadius.circular(36), child: Image.asset('assets/logo.png', width: 200)),
             const SizedBox(height: 20),
-            Text(tr('Nukad Partner'), style: tx(28, color: const Color(0xFF21331B), weight: FontWeight.w800)),
+            Text(tr('Nukad Kart Partner'), style: tx(28, color: const Color(0xFF21331B), weight: FontWeight.w800)),
             const SizedBox(height: 6),
             Text(t('Get orders from customers within 500 m.'), textAlign: TextAlign.center, style: tx(14.5, color: const Color(0xFF21331B))),
             const SizedBox(height: 14),

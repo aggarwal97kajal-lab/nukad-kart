@@ -1,17 +1,16 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
 import '../api.dart';
 import '../ui.dart';
 import '../excel_io.dart';
+import 'admin_docs.dart';
 import 'changes_review.dart';
-import 'docs.dart';
 import 'home.dart';
 
 /// Admin: partners waiting for verification.
 class PartnersScreen extends StatefulWidget {
-  const PartnersScreen({super.key});
+  /// true: every partner (approved too), to see their documents and agreements any time.
+  final bool startAll;
+  const PartnersScreen({super.key, this.startAll = false});
   @override
   State<PartnersScreen> createState() => _PartnersScreenState();
 }
@@ -23,6 +22,7 @@ class _PartnersScreenState extends State<PartnersScreen> {
   @override
   void initState() {
     super.initState();
+    all = widget.startAll;
     _load();
   }
 
@@ -42,7 +42,7 @@ class _PartnersScreenState extends State<PartnersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar(tr('Partners to verify'), actions: [
+      appBar: bar(all ? tr('All partners') : tr('Partners to verify'), actions: [
         TextButton(
             onPressed: () {
               all = !all;
@@ -127,34 +127,6 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
   }
 
   bool _busy = false;
-  String? _opening;
-
-  Future<void> _open(Map<String, dynamic> d) async {
-    setState(() => _opening = '${d['id']}');
-    try {
-      final (bytes, mime) = await api.bytes('/v1/admin/docs/${d['id']}');
-      if (!mounted) return;
-      if (mime.contains('pdf')) {
-        final dir = await getTemporaryDirectory();
-        final f = File('${dir.path}/${d['type']}_${d['id']}.pdf');
-        await f.writeAsBytes(bytes, flush: true);
-        await OpenFilex.open(f.path);
-      } else {
-        await Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => Scaffold(
-                      appBar: bar(docLabels['${d['type']}']?.$1 ?? tr('Document')),
-                      backgroundColor: Colors.black,
-                      body: InteractiveViewer(maxScale: 6, child: Center(child: Image.memory(bytes))),
-                    )));
-      }
-    } on ApiError catch (e) {
-      if (mounted) toast(context, e.message);
-    }
-    if (mounted) setState(() => _opening = null);
-  }
-
   Future<void> _decide(bool approve) async {
     String reason = '';
     if (!approve) {
@@ -228,21 +200,8 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
         const SizedBox(height: 12),
         Text(tr('Documents'), style: tx(15, weight: FontWeight.w800)),
         const SizedBox(height: 6),
-        for (final d in docs)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Box(
-              child: Row(children: [
-                Icon(d['mime'] == 'application/pdf' ? Icons.picture_as_pdf_outlined : Icons.image_outlined, color: kAct),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text('${docLabels['${d['type']}']?.$1 ?? d['type']} · ${sizeText((d['size'] as num).toInt())}',
-                      style: tx(13.5, weight: FontWeight.w700)),
-                ),
-                TextButton(onPressed: _opening != null ? null : () => _open(d), child: Text(_opening == d['id'] ? tr('Opening…') : tr('View'))),
-              ]),
-            ),
-          ),
+        AdminDocList(docs: docs, missing: ((p['missingDocs'] as List?) ?? []).map((e) => '$e').toList()),
+        const SizedBox(height: 4),
         Text(
             p['kind'] == 'thela'
                 ? tr('Check: Aadhaar last 4 match, the name looks real, photo is a real thela. Registered {0}.', [dateText(((p['createdAt'] ?? 0) as num).toInt())])

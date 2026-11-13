@@ -22,7 +22,7 @@ class HomeTab extends StatefulWidget {
   State<HomeTab> createState() => _HomeTabState();
 }
 
-class _HomeTabState extends State<HomeTab> {
+class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   bool moving = false;
   String _at = '';
 
@@ -30,10 +30,21 @@ class _HomeTabState extends State<HomeTab> {
   void initState() {
     super.initState();
     LiveData.instance.startPolling();
+    WidgetsBinding.instance.addObserver(this);
+    // Sellers around where the phone is now (only while the app is open).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) AppScope.read(context).checkHere();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState st) {
+    if (st == AppLifecycleState.resumed && mounted) AppScope.read(context).checkHere();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (moving) LiveData.instance.fast(false);
     LiveData.instance.stopPolling();
     super.dispose();
@@ -47,16 +58,44 @@ class _HomeTabState extends State<HomeTab> {
 
   /// Shops and thelas around the chosen address (again whenever the address changes).
   void _loadFor(AppState s) {
-    final key = '${s.current.lat},${s.current.lng}';
+    final b = s.browse;
+    final key = '${b.lat},${b.lng}';
     if (key == _at) return;
     if (_at.isNotEmpty) ThelaTracker.instance.reset();
     _at = key;
-    WidgetsBinding.instance.addPostFrameCallback((_) => LiveData.instance.loadFor(s.current.lat, s.current.lng));
-    // "A thela is LIVE near you" alerts are for this address.
+    WidgetsBinding.instance.addPostFrameCallback((_) => LiveData.instance.loadFor(b.lat, b.lng));
+    // "A thela is LIVE near you" alerts stay with the chosen (home) address, not where the phone is.
     s.sendSpot();
   }
 
-  Future<void> _pull(AppState s) => LiveData.instance.loadFor(s.current.lat, s.current.lng, force: true);
+  Future<void> _pull(AppState s) async {
+    await s.checkHere();
+    await LiveData.instance.loadFor(s.browse.lat, s.browse.lng, force: true);
+  }
+
+  /// Away from the chosen address: say so, and let them switch between "near me now" and the saved address.
+  Widget _awayBanner(AppState s) {
+    if (s.here == null) return SizedBox.shrink();
+    final now = s.browsingHere;
+    return Container(
+      margin: EdgeInsets.fromLTRB(16, 10, 16, 0),
+      padding: EdgeInsets.fromLTRB(14, 10, 8, 10),
+      decoration: BoxDecoration(color: kBluBg, borderRadius: BorderRadius.circular(14)),
+      child: Row(children: [
+        Icon(now ? Icons.my_location : Icons.home_outlined, color: kBlu, size: 20),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+              now ? t('You are in a new area. Showing sellers within 500 m of where you are now.') : tr('Showing sellers near {0}.', [s.current.label]),
+              style: body(12.5, color: kBlu, weight: FontWeight.w700)),
+        ),
+        TextButton(
+          onPressed: () => s.setUseHere(!now),
+          child: Text(now ? tr('Use {0}', [s.current.label]) : t('Near me now'), style: body(12.5, color: kBlu, weight: FontWeight.w800)),
+        ),
+      ]),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,11 +133,11 @@ class _HomeTabState extends State<HomeTab> {
                   behavior: HitTestBehavior.opaque,
                   onTap: () => showAddressPicker(context),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(deliverToLabel(s.current.label),
+                    Text(s.browsingHere ? t('Near you now') : deliverToLabel(s.current.label),
                         style: body(11.5, color: kMute, weight: FontWeight.w700)),
                     Row(children: [
                       Flexible(
-                        child: Text(s.address,
+                        child: Text(s.browsingHere ? t('Your current location') : s.address,
                             maxLines: 1, overflow: TextOverflow.ellipsis, style: head(16)),
                       ),
                       Icon(Icons.keyboard_arrow_down, color: kInk),
@@ -201,13 +240,14 @@ class _HomeTabState extends State<HomeTab> {
           ),
         ),
       ),
+      _awayBanner(s),
       Expanded(
           child: RefreshIndicator(
             onRefresh: () => _pull(s),
             child: !ld.loaded
                 ? (ld.error != null ? _loadError(context, s) : const Center(child: CircularProgressIndicator()))
                 : empty
-                    ? _notServiceable(context, s)
+                    ? (moving ? _noThelas(context, s) : _notServiceable(context, s))
                     : (moving ? _movingList(context) : _shopList(context)),
           )),
     ]);
@@ -282,6 +322,60 @@ class _HomeTabState extends State<HomeTab> {
       Text('Check your internet and pull down to try again.', textAlign: TextAlign.center, style: body(14, color: kMute)),
       SizedBox(height: 16),
       Center(child: TextButton(onPressed: () => _pull(s), child: Text('Try again'))),
+    ]);
+  }
+
+  /// No thela LIVE nearby: a promise and an alert button instead of an empty screen.
+  Widget _noThelas(BuildContext context, AppState s) {
+    final on = s.signedIn && s.thelaAlerts;
+    return ListView(padding: EdgeInsets.fromLTRB(16, 18, 16, 24), children: [
+      CardBox(
+        padding: EdgeInsets.fromLTRB(20, 26, 20, 22),
+        child: Column(children: [
+          Text('🛺', style: TextStyle(fontSize: 52)),
+          SizedBox(height: 8),
+          Text(t('No thela is LIVE right now'), textAlign: TextAlign.center, style: head(20)),
+          SizedBox(height: 6),
+          Text(t('We’ll tell you as soon as one comes within 500 m. Thelas usually come in the morning and evening.'),
+              textAlign: TextAlign.center, style: body(14, color: kMute)),
+          SizedBox(height: 16),
+          if (on)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(color: kPillBg, borderRadius: BorderRadius.circular(14)),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.notifications_active_outlined, color: kG, size: 20),
+                SizedBox(width: 8),
+                Flexible(child: Text(t('Alert is on. We’ll tell you when a thela is near.'), style: body(13.5, color: kG, weight: FontWeight.w800))),
+              ]),
+            )
+          else
+            SizedBox(
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  if (!s.signedIn) {
+                    showToast(context, t('Log in to get thela alerts.'));
+                    return;
+                  }
+                  s.setNotif('Thela LIVE near me', true);
+                  showToast(context, t('Done. We’ll tell you when a thela is near.'));
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: kG, foregroundColor: kOnG, shape: StadiumBorder(), elevation: 0,
+                    padding: EdgeInsets.symmetric(horizontal: 26)),
+                icon: Icon(Icons.notifications_none, size: 18),
+                label: Text(t('Alert me when a thela comes'), style: head(15, color: kOnG)),
+              ),
+            ),
+          SizedBox(height: 14),
+          if (kStores.isNotEmpty)
+            GestureDetector(
+              onTap: () => _setMoving(false),
+              child: Text(tr('Meanwhile: {0} shops near you →', [kStores.length]), style: body(13.5, color: kG, weight: FontWeight.w800)),
+            ),
+        ]),
+      ),
     ]);
   }
 

@@ -6,6 +6,7 @@ import '../services/api.dart';
 import '../services/push.dart';
 import '../state/app_state.dart';
 import 'ui.dart';
+import '../screens/thela_chat.dart';
 
 /// "Call to my street": ask a LIVE thela to come to the customer's address. No cart, no numbers.
 class CallThelaCard extends StatefulWidget {
@@ -68,7 +69,8 @@ class _CallThelaCardState extends State<CallThelaCard> {
       showToast(context, t('Log in to call a thela to your street.'));
       return;
     }
-    final a = s.current;
+    // Where the phone is now when away from home (the thela must be within 500 m of it).
+    final a = s.browse;
     final ok = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: kCard,
@@ -96,6 +98,23 @@ class _CallThelaCardState extends State<CallThelaCard> {
       if (mounted) showToast(context, e.message);
     }
     if (mounted) setState(() => busy = false);
+  }
+
+  Future<void> _out() async {
+    final s = AppScope.read(context);
+    setState(() => busy = true);
+    try {
+      await api.callOut(s.apiToken, '${call?['id']}');
+      await _load();
+    } on ApiException catch (e) {
+      if (mounted) showToast(context, e.message);
+    }
+    if (mounted) setState(() => busy = false);
+  }
+
+  /// Writing the items in chat also tells the thela the customer is coming out.
+  void _chat() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => ThelaChatScreen(thela: widget.thela))).then((_) => _load());
   }
 
   Future<void> _cancel() async {
@@ -127,6 +146,28 @@ class _CallThelaCardState extends State<CallThelaCard> {
     if (mine && status == 'coming') {
       final d = widget.thela.distanceM;
       final mins = (d / 60).ceil().clamp(1, 30);
+      if (c['out'] != true) {
+        // No-show fix: the customer says "I'm coming out" (or writes the items in chat) within 3 minutes.
+        final left = ((c['confirmLeft'] as num?) ?? 0).toInt();
+        return Container(
+          padding: EdgeInsets.all(14),
+          decoration: BoxDecoration(color: kAmbBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBrand, width: 1.5)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text(tr('{0} is coming · about {1} min', [first, mins]), style: head(15)),
+            SizedBox(height: 4),
+            Text(tr('Are you coming out? {0} waits for you. No answer in {1} and the call is cancelled.',
+                [first, left > 0 ? '${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')}' : t('a moment')]),
+                style: body(12.5, color: kMute)),
+            SizedBox(height: 10),
+            PrimaryButton(busy ? t('Sending…') : t('✋ Yes, I’m coming out'), onTap: busy ? null : _out),
+            SizedBox(height: 6),
+            Row(children: [
+              Expanded(child: TextButton(onPressed: busy ? null : _chat, child: Text(t('💬 Write the items first')))),
+              TextButton(onPressed: busy ? null : _cancel, child: Text(t('I don’t need it now'))),
+            ]),
+          ]),
+        );
+      }
       return _box(Icons.directions_walk, tr('{0} is coming', [first]), tr('About {0} min · watch the pin on the map. Pay the seller directly.', [mins]), kGText, kPillBg,
           TextButton(onPressed: busy ? null : _cancel, child: Text(t('I don’t need it now'))));
     }
@@ -148,6 +189,12 @@ class _CallThelaCardState extends State<CallThelaCard> {
         Padding(
           padding: EdgeInsets.only(bottom: 10),
           child: NoteBox(tr('{0} can’t come right now. Try again later, or call another thela nearby.', [first]), icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
+        ),
+      if (mine && status == 'unconfirmed')
+        Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: NoteBox(tr('You didn’t confirm in 3 minutes, so {0} was told not to come. Call again when you are ready.', [first]),
+              icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
         ),
       if (paused)
         NoteBox(tr('Calling thelas is paused until {0} because thelas came and found nobody {1} times.', [_date(blockedUntil), strikesMax]), icon: Icons.block)

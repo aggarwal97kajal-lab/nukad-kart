@@ -152,6 +152,8 @@ export async function chatRoute(req, env, path, m) {
     await env.DB.batch([
       env.DB.prepare("INSERT INTO chat_messages (id, chat_id, sender, text, created_at) VALUES (?, ?, 'c', ?, ?)").bind(crypto.randomUUID(), id, text, t),
       env.DB.prepare('UPDATE chats SET last_at = ?, customer_read_at = ? WHERE id = ?').bind(t, t, id),
+      // Writing to a thela that is on its way counts as "I'm coming out".
+      env.DB.prepare("UPDATE calls SET out_at = ? WHERE customer_id = ? AND thela_id = ? AND status = 'coming' AND out_at IS NULL").bind(t, uid, thelaId),
     ]);
     await broadcast(env, id, { type: 'message', from: 'customer', text, at: t });
     if (s.owner_id) await tellThelaChats(env, s);

@@ -51,7 +51,7 @@ Future<Uint8List> agreementPdf(AgreementData d) async {
         ? pw.SizedBox()
         : pw.Text('Nukad Kart · Vendor Agreement · Ref ${s['id']}', style: st(8, c: mute)),
     footer: (ctx) => pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-      pw.Text('Signed electronically in the Nukad Partner app · ${s['id']}', style: st(7.5, c: mute)),
+      pw.Text('Signed electronically in the Nukad Kart Partner app · ${s['id']}', style: st(7.5, c: mute)),
       pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}', style: st(7.5, c: mute)),
     ]),
     build: (ctx) => [

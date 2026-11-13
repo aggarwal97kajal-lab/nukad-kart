@@ -110,7 +110,7 @@ class _LiveSetupScreenState extends State<LiveSetupScreen> with WidgetsBindingOb
                 await ThelaLocation.askBattery();
               }),
               if (needAuto)
-                _row(autostartDone, t('Turn on Autostart'), t('Your phone has its own setting. Find Nukad Partner and turn it on, then come back.'),
+                _row(autostartDone, t('Turn on Autostart'), t('Your phone has its own setting. Find Nukad Kart Partner and turn it on, then come back.'),
                     t('Open'), () async {
                   await ThelaLocation.openAutostart();
                   if (mounted) setState(() => autostartDone = true);

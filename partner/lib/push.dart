@@ -138,11 +138,13 @@ const _channel = AndroidNotificationChannel('updates', 'Updates',
 const _calls = AndroidNotificationChannel('calls', 'Customers calling you',
     description: 'A customer asks your thela to come to their street', importance: Importance.high);
 
-// Shop: new order alarm. Uses the phone's alarm tone and alarm volume; repeats until answered, stopped or 5 minutes.
-final _orders = AndroidNotificationChannel('orders_alarm', 'New orders (alarm)',
-    description: 'Rings for up to 5 minutes until you accept or reject',
+// Shop: new order alarm. A Hindi voice — "नया ऑर्डर आया, अभी चेक करें" — at alarm volume, every 10 seconds
+// (the 10 s sound loops), until the order is opened / answered, stopped, or 3 minutes pass.
+// New channel id: Android never changes the sound of a channel that already exists on the phone.
+final _orders = AndroidNotificationChannel('orders_voice', 'New orders (Hindi voice)',
+    description: 'Says “नया ऑर्डर आया, अभी चेक करें” every 10 seconds for up to 3 minutes',
     importance: Importance.max,
-    sound: const UriAndroidNotificationSound('content://settings/system/alarm_alert'),
+    sound: const RawResourceAndroidNotificationSound('order_voice'),
     audioAttributesUsage: AudioAttributesUsage.alarm,
     enableVibration: true,
     vibrationPattern: Int64List.fromList([0, 800, 400, 800, 400, 800]));
@@ -155,7 +157,7 @@ Future<void> showOrderAlarm(Map<String, dynamic> d) async {
     await _local.show(
       orderNotifId(id),
       '${d['title'] ?? 'New order'}',
-      '${d['body'] ?? 'Open Nukad Partner to accept'}',
+      '${d['body'] ?? 'Open Nukad Kart Partner to accept'}',
       NotificationDetails(
         android: AndroidNotificationDetails(_orders.id, _orders.name,
             channelDescription: _orders.description,
@@ -165,7 +167,7 @@ Future<void> showOrderAlarm(Map<String, dynamic> d) async {
             sound: _orders.sound,
             audioAttributesUsage: AudioAttributesUsage.alarm,
             additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT: the sound repeats until it is dismissed
-            timeoutAfter: 300000,
+            timeoutAfter: 180000,
             autoCancel: true,
             actions: const [AndroidNotificationAction('stop', 'Stop ringing', cancelNotification: true)]),
       ),
@@ -215,6 +217,10 @@ Future<void> _initLocal() async {
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_orders);
+    // The old siren channel (before the Hindi voice).
+    await _local
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.deleteNotificationChannel('orders_alarm');
   } catch (_) {}
 }
 

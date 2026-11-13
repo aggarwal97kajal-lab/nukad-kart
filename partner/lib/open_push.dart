@@ -4,6 +4,8 @@ import 'push.dart';
 import 'rider_location.dart';
 import 'screens/chats.dart';
 import 'screens/orders.dart';
+import 'screens/pass.dart';
+import 'screens/report.dart';
 import 'screens/shell.dart';
 import 'session.dart';
 import 'ui.dart';
@@ -41,7 +43,13 @@ Future<void> openFromPush(BuildContext context) async {
       if (id.isNotEmpty && context.mounted) {
         await Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(id: id, address: '')));
       }
-    case 'chats' || 'calls' || 'call' || 'change' || 'location_stale' || 'test':
+    case 'pass':
+      shellTab.value = 0;
+      if (context.mounted) await Navigator.push(context, MaterialPageRoute(builder: (_) => const PassScreen()));
+    case 'report':
+      shellTab.value = 0;
+      if (context.mounted) await Navigator.push(context, MaterialPageRoute(builder: (_) => const WeekReportScreen()));
+    case 'chats' || 'calls' || 'calls_out' || 'call' || 'change' || 'location_stale' || 'test':
       shellTab.value = 0;
   }
 }

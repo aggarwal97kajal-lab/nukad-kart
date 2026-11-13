@@ -72,7 +72,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     }
     final thelaId = '${d['thelaId'] ?? ''}';
     if (thelaId.isEmpty) return;
-    if (!kThelas.any((x) => x.id == thelaId)) await LiveData.instance.loadFor(s.current.lat, s.current.lng, force: true);
+    if (!kThelas.any((x) => x.id == thelaId)) await LiveData.instance.loadFor(s.browse.lat, s.browse.lng, force: true);
     final th = kThelas.where((x) => x.id == thelaId).firstOrNull;
     if (th == null) {
       if (navKey.currentContext != null) showToast(navKey.currentContext!, 'This thela is not near you right now.');

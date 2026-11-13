@@ -2,7 +2,7 @@
 
 When the founder asks "aur kya kya karna hai app mein", read this file and remind him of every open item.
 
-## 1. Customer location follows the phone (asked 13 Nov 2026, "kuch time baad")
+## 1. Customer location follows the phone (asked 13 Nov 2026) — DONE 14 Nov 2026
 
 **Today:** the customer app shows shops and thelas within 500 m of the address the customer picked (saved address = `current`). If they travel, the list stays on the old address until they change it by hand.
 
@@ -19,10 +19,14 @@ When the founder asks "aur kya kya karna hai app mein", read this file and remin
 ## 2. From the founder pack (13 Nov 2026), see `founder/launch.md`
 
 - Play Store build + closed test (12 testers × 14 days)
-- Sunday report for sellers
+- ~~Sunday report for sellers~~ (done 14 Nov; guarantee dropped by founder)
 - New pass prices: remove Daily, fix Yearly (it currently costs more than 12 × Monthly), test ₹49/week
-- Pass-expiry reminder (1 day before)
-- Empty-map message: "Abhi koi thela live nahi, aate hi batayenge"
-- No-show fix: customer confirms "bahar aa raha hoon"
+- ~~Pass-expiry reminder (1 day before)~~ (done 14 Nov: evening before + last morning)
+- ~~Empty-map message~~ (done 14 Nov, with alert button)
+- ~~No-show fix: customer confirms "bahar aa raha hoon"~~ (done 14 Nov; chat to the thela also counts)
 - Merchant UPI QR on the pass screen (no gateway for now; add one at ~50 sellers)
 - Grievance officer name in the app (legal requirement)
+
+## 3. Decided 14 Nov 2026
+- Kirana trial stays **7 days**, documents before going live (1-month trial with documents later: dropped).
+- "Fewer than 20 calls → next month free" guarantee: dropped.

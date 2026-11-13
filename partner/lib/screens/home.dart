@@ -17,6 +17,7 @@ import 'agreement.dart';
 import 'delete.dart';
 import 'docs.dart';
 import 'register.dart';
+import 'report.dart';
 
 String dateText(int secs) {
   final d = DateTime.fromMillisecondsSinceEpoch(secs * 1000);
@@ -72,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final r = await api.call('POST', '/v1/partner/submit');
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
-      if (mounted) toast(context, tr('Sent. Nukad team will check again.'));
+      if (mounted) toast(context, tr('Sent. Nukad Kart team will check again.'));
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -88,8 +89,8 @@ class _HomeScreenState extends State<HomeScreen> {
       'closed_now' => (tr('Closed now'), tr('Outside your timings ({0} – {1}). You show again at opening time.', [s['opensAt'], s['closesAt']]), kAmb, kAmbBg),
       'missed_orders' => (tr('Offline for today'), tr('5 orders were missed today. Switch on to go live again.'), kAmb, kAmbBg),
       'no_agreement' => (tr('Agreement not signed'), tr('Sign the partner agreement to go live.'), kRed, kRedBg),
-      'not_verified' => (tr('Waiting for verification'), tr('Nukad team is verifying your details and documents. Your shop can go live after approval.'), kAmb, kAmbBg),
-      'rejected' => (tr('Changes needed'), tr('Nukad team asked for changes. Fix them below and send again.'), kRed, kRedBg),
+      'not_verified' => (tr('Waiting for verification'), tr('Nukad Kart team is verifying your details and documents. Your shop can go live after approval.'), kAmb, kAmbBg),
+      'rejected' => (tr('Changes needed'), tr('Nukad Kart team asked for changes. Fix them below and send again.'), kRed, kRedBg),
       _ => (tr('You are offline'), tr('Switch on to show your shop to customers.'), kInk, kSurf),
     };
   }
@@ -101,6 +102,15 @@ class _HomeScreenState extends State<HomeScreen> {
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
+  }
+
+  /// Documents still to upload: a live shop's missing ones, or the certificate a pending change needs.
+  List<String> _needDocs(Map<String, dynamic> s) {
+    final need = <String>{
+      ...(((session.change?['needsDocs']) as List?) ?? []).map((e) => '$e'),
+    };
+    if (s['status'] == 'active') need.addAll(((s['missingDocs'] as List?) ?? []).map((e) => '$e'));
+    return need.toList();
   }
 
   @override
@@ -172,6 +182,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ]),
               ),
+              if (_needDocs(s).isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Box(
+                  color: kAmbBg,
+                  border: kAmb,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(tr('Upload: {0}', [_needDocs(s).map((x) => docLabels[x]?.$1 ?? x).join(', ')]), style: tx(14, weight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    Text(tr('Nukad Kart team checks it with your change. Your shop stays live.'), style: tx(12.5, color: kMute)),
+                    const SizedBox(height: 8),
+                    Btn(tr('Upload document'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DocsScreen(pushed: true)))),
+                  ]),
+                ),
+              ],
               if (session.change != null) ...[
                 const SizedBox(height: 12),
                 Box(
@@ -179,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text(
                       session.change!['status'] == 'rejected'
                           ? tr('Your changes were not approved: {0}', [session.change!['note']])
-                          : t('Your new details are with the Nukad team. You stay live meanwhile.'),
+                          : t('Your new details are with the Nukad Kart team. You stay live meanwhile.'),
                       style: tx(12.5, weight: FontWeight.w700)),
                 ),
               ],
@@ -189,6 +213,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 const CallsCard(),
               ],
               if (s['kind'] == 'thela') const ChatsCard(),
+              if (s['status'] == 'active') ...[
+                const SizedBox(height: 12),
+                Box(
+                  child: InkWell(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WeekReportScreen())),
+                    child: Row(children: [
+                      Icon(Icons.insights_outlined, color: kAct, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(tr('This week’s report'), style: tx(15, weight: FontWeight.w800)),
+                          Text(tr('How many people saw you, called you and came back'), style: tx(12.5, color: kMute)),
+                        ]),
+                      ),
+                      Icon(Icons.chevron_right, color: kMute),
+                    ]),
+                  ),
+                ),
+              ],
               if (s['kind'] == 'thela' && session.selling > 0 && s['pricesConfirmed'] != s['today']) ...[
                 const SizedBox(height: 12),
                 Box(
@@ -215,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                          tr('Nukad team is verifying your shop. This usually takes less than a day. Pull down to check. ') +
+                          tr('Nukad Kart team is verifying your shop. This usually takes less than a day. Pull down to check. ') +
                               (session.trialAvailable
                                   ? t('Your 7-day free trial starts when you are approved.')
                                   : t('Free trial was already used on this number or phone.')),

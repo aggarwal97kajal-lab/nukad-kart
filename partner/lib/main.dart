@@ -81,7 +81,7 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
     ));
     return MaterialApp(
       navigatorKey: navKey,
-      title: tr('Nukad Partner'),
+      title: tr('Nukad Kart Partner'),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -161,7 +161,7 @@ class WelcomePrefsScreen extends StatelessWidget {
           const SizedBox(height: 20),
           Center(child: ClipRRect(borderRadius: BorderRadius.circular(28), child: Image.asset('assets/logo.png', width: 130))),
           const SizedBox(height: 14),
-          Center(child: Text(tr('Nukad Partner'), style: tx(24, weight: FontWeight.w800))),
+          Center(child: Text(tr('Nukad Kart Partner'), style: tx(24, weight: FontWeight.w800))),
           const SizedBox(height: 28),
           Text(tr('Choose language · भाषा चुनें'), style: tx(15, weight: FontWeight.w800)),
           const SizedBox(height: 10),
@@ -324,12 +324,14 @@ class _GateState extends State<Gate> {
     // DPDP: clear consent (18+, privacy notice) first; asked again when the notice changes.
     if (session.consentVersion != kPartnerConsentVersion) return const PartnerConsentScreen();
     if (session.staffInfo != null) return const StaffShell();
-    // Steps: phone OTP → business details → documents → agreement → waiting for Nukad team → home.
+    // Steps: phone OTP → business details → documents → agreement → waiting for Nukad Kart team → home.
     // Admin without a shop: straight to the admin screen.
     if (session.admin && session.store == null) return const AdminScreen(root: true);
     if (!session.phoneVerified) return const PhoneScreen();
     if (session.store == null) return const RegisterScreen();
-    if (session.store!['docsComplete'] != true) return const DocsScreen();
+    // A live shop is never stopped here: a missing document (e.g. FSSAI certificate for a newly added number)
+    // is asked for on the home screen instead.
+    if (session.store!['docsComplete'] != true && session.store!['status'] != 'active') return const DocsScreen();
     if (session.store!['agreementSigned'] != true) return const AgreementScreen();
     return const PartnerShell();
   }

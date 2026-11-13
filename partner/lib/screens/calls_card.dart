@@ -97,6 +97,12 @@ class _CallsCardState extends State<CallsCard> {
           decoration: BoxDecoration(color: kOkBg, borderRadius: BorderRadius.circular(16)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(tr('Going to {0} · {1}', [g['address'], _who(g)]), style: tx(14, weight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(
+                ((g['out'] as num?) ?? 0) > 0
+                    ? tr('✋ {0} said “I’m coming out”', [g['out']])
+                    : tr('Waiting for the customer to say “I’m coming out” (3 min). If not, the call is cancelled.'),
+                style: tx(12.5, color: ((g['out'] as num?) ?? 0) > 0 ? kAct : kMute, weight: FontWeight.w700)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(child: Btn(t('Reached, sold'), onTap: busy ? null : () => _post('/v1/partner/calls/done', g))),

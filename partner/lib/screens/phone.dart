@@ -143,7 +143,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                  tr('7-day free trial after Nukad team approves your shop. One trial per mobile number and one per phone.'),
+                  tr('7-day free trial after Nukad Kart team approves your shop. One trial per mobile number and one per phone.'),
                   style: tx(12.5)),
             ),
           ]),

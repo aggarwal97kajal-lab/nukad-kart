@@ -1042,7 +1042,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             '• Messages you exchange with a thela in chat. They are deleted after 24 hours. Phone numbers cannot be sent in chat.\n'
             '• “Call to my street” requests: the address you called the thela to, and whether the seller reported that nobody was there.\n'
             '• A notification token for this phone, to send order, thela and chat alerts.\n'
-            '• Your phone’s location, only when you tap “Use my location”.\n'
+            '• Your phone’s location, only while the app is open and only if you allow it: to show shops and thelas within 500 m of where you are now, and when you tap “Use my location”. It is sent with the nearby search and not saved on our server; it is never read in the background. Thela alerts stay tied to your chosen address.\n'
             '• Your orders, cart, wishlist, saved stores, ratings and complaints.\n'
             '• App settings such as language and theme, kept on your phone.\n'
             'Voice search is turned into text by your phone’s speech service; we do not record or keep the audio.'],

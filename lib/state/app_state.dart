@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/widgets.dart';
 import '../data/demo_data.dart';
@@ -272,8 +273,65 @@ class AppState extends ChangeNotifier {
   int currentIdx = -1;
   Address get current => (currentIdx >= 0 && currentIdx < addresses.length) ? addresses[currentIdx] : kGuestLocation;
   String get address => current.short;
-  /// The cart's shop is within 500 m of the chosen address (the nearby list is loaded for that address).
-  bool get serviceable => cartStoreId == null || kStores.any((x) => x.id == cartStoreId);
+  /// The cart's shop is within 500 m of the chosen (delivery) address.
+  bool get serviceable {
+    if (cartStoreId == null) return true;
+    final st = kStores.where((x) => x.id == cartStoreId);
+    if (st.isEmpty) return false;
+    final x = st.first;
+    if (x.lat == 0 && x.lng == 0) return true; // no map point known: in the list for this address
+    // Browsing near the phone: the shop must still be within 500 m of the delivery address.
+    return !browsingHere || distM(current.lat, current.lng, x.lat, x.lng) <= 500;
+  }
+
+  // ----- where the phone is now (read only while the app is open; never in the background) -----
+  /// The phone's spot when it is more than 300 m from the chosen address; null when it is near it.
+  Address? here;
+  /// Show sellers around the phone (true) or around the chosen address (false).
+  bool useHere = true;
+  bool get browsingHere => useHere && here != null;
+  /// Where the shop and thela lists are loaded for.
+  Address get browse => browsingHere ? here! : current;
+
+  static double distM(double aLat, double aLng, double bLat, double bLng) {
+    const r = 6371000.0;
+    final dLat = (bLat - aLat) * math.pi / 180, dLng = (bLng - aLng) * math.pi / 180;
+    final x = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(aLat * math.pi / 180) * math.cos(bLat * math.pi / 180) * math.sin(dLng / 2) * math.sin(dLng / 2);
+    return 2 * r * math.asin(math.sqrt(x));
+  }
+
+  bool _checkingHere = false;
+  /// Reads the phone's location once (app opened / back in front). Location off or not allowed: the chosen address stays.
+  Future<void> checkHere() async {
+    if (_checkingHere || addresses.isEmpty) return;
+    _checkingHere = true;
+    try {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
+      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return;
+      if (!await Geolocator.isLocationServiceEnabled()) return;
+      final p = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 10)));
+      final far = distM(p.latitude, p.longitude, current.lat, current.lng) > 300;
+      final was = here;
+      here = far
+          ? Address(area: 'Your current location', city: current.city, state: current.state, pin: '', label: 'Here', lat: p.latitude, lng: p.longitude)
+          : null;
+      // Back near home: start again from "show around the phone" for the next trip.
+      if (!far) useHere = true;
+      if ((was == null) != (here == null) || (here != null && was != null && distM(was.lat, was.lng, here!.lat, here!.lng) > 100)) notifyListeners();
+    } catch (_) {
+    } finally {
+      _checkingHere = false;
+    }
+  }
+
+  void setUseHere(bool v) {
+    if (useHere == v) return;
+    useHere = v;
+    notifyListeners();
+  }
   /// Order updates are always on (delivery code). The other two can be turned off; the server respects them.
   final Map<String, bool> notifPrefs = {
     'Thela LIVE near me': true,
@@ -309,11 +367,24 @@ class AppState extends ChangeNotifier {
     }
     if (name.isEmpty && a.name.isNotEmpty) name = a.name;
     if (phone.isEmpty && a.phone.isNotEmpty) phone = a.phone;
+    _pickedAddress(a);
     notifyListeners();
+  }
+
+  /// Picked an address by hand: near the phone → no "you are elsewhere" any more; far → show around that address.
+  void _pickedAddress(Address a) {
+    if (here == null) return;
+    if (distM(here!.lat, here!.lng, a.lat, a.lng) <= 300) {
+      here = null;
+      useHere = true;
+    } else {
+      useHere = false;
+    }
   }
 
   void useAddress(Address a) {
     currentIdx = addresses.indexOf(a);
+    _pickedAddress(a);
     notifyListeners();
   }
 

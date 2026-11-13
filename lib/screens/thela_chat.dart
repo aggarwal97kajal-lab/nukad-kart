@@ -98,7 +98,7 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
       if (scroll.hasClients) scroll.jumpTo(scroll.position.maxScrollExtent);
     });
     try {
-      final a = s.current;
+      final a = s.browse;
       _apply(await api.sendChat(s.apiToken, widget.thela.id, v, address: first ? a.short : null, lat: first ? a.lat : null, lng: first ? a.lng : null));
       first = false;
     } on ApiException catch (e) {

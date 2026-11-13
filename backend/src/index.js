@@ -17,11 +17,12 @@
 import { isAdmin, partnerRoute, offlineReason, staleThelas } from './partner.js';
 import { productOut } from './products.js';
 import { sendPushDetail } from './push.js';
-import { callRoute, tellExpiredCalls } from './calls.js';
+import { callRoute, tellExpiredCalls, dropUnconfirmed } from './calls.js';
 import { orderRoute, tellMissedOrders } from './orders.js';
 import { samePhoneOut } from './sessions.js';
 import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
 import { chatRoute, cleanChats, ChatRoom } from './chat.js';
+import { countView, passReminders, sundayReports, reportRoute } from './reminders.js';
 export { ChatRoom };
 
 export const RADIUS_MAX_M = 500;
@@ -240,6 +241,8 @@ async function route(req, env) {
   if (orders) return orders;
   const chat = await chatRoute(req, env, path, m);
   if (chat) return chat;
+  const rep = await reportRoute(req, env, path, m);
+  if (rep) return rep;
   const calls = await callRoute(req, env, path, m);
   if (calls) return calls;
   const partner = await partnerRoute(req, env, path, m);
@@ -429,6 +432,7 @@ async function route(req, env) {
   // What a shop / thela is selling now (in stock only). Short cache: prices change during the day.
   const sp = path.match(/^\/v1\/stores\/([\w-]+)\/products$/);
   if (sp && m === 'GET') {
+    await countView(env, sp[1]).catch(() => {});
     const hit = prodCache.get(sp[1]);
     if (hit && hit.at > Date.now() - (hit.thela ? 5_000 : 20_000)) return json(hit.body);
     const [st, pr] = await env.DB.batch([
@@ -498,6 +502,9 @@ export default {
   async scheduled(_ev, env, ectx) {
     ectx.waitUntil(staleThelas(env).catch((e) => console.error(e)));
     ectx.waitUntil(tellExpiredCalls(env).catch((e) => console.error(e)));
+    ectx.waitUntil(dropUnconfirmed(env).catch((e) => console.error(e)));
+    ectx.waitUntil(passReminders(env).catch((e) => console.error(e)));
+    ectx.waitUntil(sundayReports(env).catch((e) => console.error(e)));
     ectx.waitUntil(tellMissedOrders(env).catch((e) => console.error(e)));
     ectx.waitUntil(cleanChats(env).catch((e) => console.error(e)));
     ectx.waitUntil(cleanOld(env).catch((e) => console.error(e)));
@@ -512,12 +519,14 @@ export async function cleanOld(env) {
     env.DB.prepare('DELETE FROM auth_hits WHERE at < ?').bind(t - 86400),
     // "Call to my street": no-show strikes count for 30 days; keep 90 for disputes, then delete.
     env.DB.prepare('DELETE FROM calls WHERE created_at < ?').bind(t - 90 * 86400),
-    // Thela alert history is only for "not again within 2 hours / 3 a day".
+    // Thela alert history is only for "once a day per thela / 3 a day".
     env.DB.prepare('DELETE FROM thela_alerts WHERE at < ?').bind(t - 2 * 86400),
     // Delivery person's position is needed only while the order is out.
     env.DB.prepare("UPDATE orders SET rider_lat = NULL, rider_lng = NULL, rider_at = NULL WHERE rider_at IS NOT NULL AND status != 'out'"),
     // Phone tokens not refreshed for 6 months belong to phones no longer in use.
     env.DB.prepare('DELETE FROM push_tokens WHERE updated_at < ?').bind(t - 180 * 86400),
+    // View counts are only for the weekly report.
+    env.DB.prepare('DELETE FROM store_views WHERE day < ?').bind(new Date((t - 60 * 86400) * 1000).toISOString().slice(0, 10)),
   ]);
 }
 

@@ -98,7 +98,7 @@ class _ThelaView extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(18),
-                child: ThelaRealMap(thelaId: th.id, homeLat: AppScope.of(context).current.lat, homeLng: AppScope.of(context).current.lng),
+                child: ThelaRealMap(thelaId: th.id, homeLat: AppScope.of(context).browse.lat, homeLng: AppScope.of(context).browse.lng),
               ),
             ),
             Padding(

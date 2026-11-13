@@ -10,7 +10,7 @@ for perm in ["INTERNET", "CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATI
     tag = f'<uses-permission android:name="android.permission.{perm}"/>'
     if tag not in s:
         s = s.replace("<application", tag + "\n    <application", 1)
-s = re.sub(r'android:label="[^"]*"', 'android:label="Nukad Partner"', s, count=1)
+s = re.sub(r'android:label="[^"]*"', 'android:label="Nukad Kart Partner"', s, count=1)
 # UPI apps register "upi://pay" (scheme + host). Asking only for "upi" hides most of them on Android 11+,
 # so ask for both, and name the common UPI apps too.
 # Package names from Razorpay's list of UPI apps (docs: payments/payment-methods/upi/supported-apps),

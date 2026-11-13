@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
 import '../ui.dart';
+import 'admin_docs.dart';
 
 /// Admin: live shops / thelas asking to change name, address (map pin) or photo.
 /// Approve → applied, and the partner must sign the updated agreement before going live again.
@@ -82,6 +83,18 @@ class _ChangesReviewScreenState extends State<ChangesReviewScreen> {
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         _row(t('Name'), '${c['current']['name']}', '${c['next']['name']}'),
                         _row(t('Address'), '${c['current']['address']}', '${c['next']['address']}'),
+                        if (c['kind'] != 'thela') ...[
+                          _row('FSSAI', '${c['current']['fssai'] ?? ''}'.isEmpty ? '—' : '${c['current']['fssai']}', '${c['next']['fssai'] ?? ''}'.isEmpty ? '—' : '${c['next']['fssai']}'),
+                          _row('GSTIN', '${c['current']['gstin'] ?? ''}'.isEmpty ? '—' : '${c['current']['gstin']}', '${c['next']['gstin'] ?? ''}'.isEmpty ? '—' : '${c['next']['gstin']}'),
+                          _row('PAN', '${c['current']['pan'] ?? ''}'.isEmpty ? '—' : '${c['current']['pan']}', '${c['next']['pan'] ?? ''}'.isEmpty ? '—' : '${c['next']['pan']}'),
+                        ],
+                        Text(t('Documents'), style: tx(11.5, color: kMute, weight: FontWeight.w700)),
+                        const SizedBox(height: 4),
+                        AdminDocList(
+                          docs: ((c['docs'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList(),
+                          missing: ((c['missingDocs'] as List?) ?? []).map((e) => '$e').toList(),
+                        ),
+                        const SizedBox(height: 8),
                         if (c['hasPhoto'] == true) ...[
                           Text(t('New photo'), style: tx(11.5, color: kMute, weight: FontWeight.w700)),
                           const SizedBox(height: 4),
@@ -93,7 +106,7 @@ class _ChangesReviewScreenState extends State<ChangesReviewScreen> {
                           const SizedBox(height: 8),
                         ],
                         Row(children: [
-                          Expanded(child: Btn(t('Approve'), onTap: busy ? null : () => _decide(c, true))),
+                          Expanded(child: Btn(t('Approve'), onTap: busy || ((c['missingDocs'] as List?) ?? []).isNotEmpty ? null : () => _decide(c, true))),
                           const SizedBox(width: 10),
                           Expanded(child: Btn(t('Send back'), outline: true, color: kRed, onTap: busy ? null : () => _decide(c, false))),
                         ]),
@@ -132,8 +145,15 @@ Future<void> showAgreementVersions(BuildContext context, String storeId) async {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('${a['current'] == true ? t('Current') : t('Previous')} · v${a['version']} · ${a['signedDate']}', style: tx(13.5, weight: FontWeight.w800)),
               Text('${t('Signed by')} ${a['signerName']}', style: tx(12.5)),
-              for (final k in const ['name', 'address', 'phone'])
-                if (((a['snapshot'] as Map?)?[k] ?? '').toString().isNotEmpty) Text('${(a['snapshot'] as Map)[k]}', style: tx(12, color: kMute)),
+              for (final k in const ['storeName', 'address', 'phone', 'fssai'])
+                if ((((a['snapshot'] as Map?)?['vendor'] as Map?)?[k] ?? '').toString().isNotEmpty)
+                  Text('${((a['snapshot'] as Map)['vendor'] as Map)[k]}', style: tx(12, color: kMute)),
+              const SizedBox(height: 6),
+              OutlinedButton.icon(
+                onPressed: () => openAgreementVersionPdf(ctx, a),
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: Text(t('Open signed PDF')),
+              ),
             ]),
           ),
       ]),

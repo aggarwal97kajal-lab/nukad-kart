@@ -179,6 +179,22 @@ export function requiredDocs(s) {
   return ['pan', 'aadhaar', ...(s.gst_type && s.gst_type !== 'none' ? ['gst'] : []), ...(s.fssai ? ['fssai'] : [])];
 }
 
+/** Documents a pending change asks for (e.g. a new FSSAI number needs its certificate). */
+async function changeNeeds(env, s) {
+  const c = await env.DB.prepare("SELECT data FROM store_changes WHERE store_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1").bind(s.id).first();
+  if (!c) return [];
+  let d = {};
+  try { d = JSON.parse(c.data); } catch {}
+  const next = requiredDocs({ ...s, ...d });
+  return next.filter((t) => !requiredDocs(s).includes(t));
+}
+
+/** Types still missing for a pending change. */
+async function changeMissing(env, s, docs) {
+  const have = new Set(docs.map((d) => d.type));
+  return (await changeNeeds(env, s)).filter((t) => !have.has(t));
+}
+
 async function docList(env, s) {
   const { results } = await env.DB.prepare('SELECT id, type, mime, name, size, created_at FROM partner_docs WHERE store_id = ? AND done = 1 ORDER BY created_at').bind(s.id).all();
   return results.map(docOut);
@@ -195,7 +211,8 @@ function storeOutWith(s, docs) {
   const required = requiredDocs(s);
   const optional = s.kind === 'thela' ? []
     : DOC_TYPES.filter((t) => !required.includes(t) && (t !== 'gst' || (s.gst_type && s.gst_type !== 'none')));
-  return { ...publicStore(s), requiredDocs: required, optionalDocs: optional, docsComplete: required.every((t) => have.has(t)) };
+  return { ...publicStore(s), requiredDocs: required, optionalDocs: optional, docsComplete: required.every((t) => have.has(t)),
+    missingDocs: required.filter((t) => !have.has(t)) };
 }
 
 async function trialAvailable(env, phone, devHash) {
@@ -228,7 +245,7 @@ function publicStore(s, t = now()) {
     pricesConfirmed: s.prices_confirmed || '', today: istDate(t),
     pan: s.pan || '', aadhaarLast4: s.aadhaar_last4 || '', reviewNote: s.review_note || '', reviewedAt: s.reviewed_at || 0,
     addr: { shop: s.addr_shop || '', landmark: s.addr_landmark || '', area: s.addr_area || '', city: s.addr_city || '', state: s.addr_state || '', pin: s.addr_pin || '' },
-    missedToday: s.missed_date === istDate(t) ? s.missed_count : 0, hasPhoto: !!s.photo_at, createdAt: s.created_at,
+    missedToday: s.missed_date === istDate(t) ? s.missed_count : 0, hasPhoto: !!s.photo_at, photoAt: s.photo_at || 0, createdAt: s.created_at,
   };
 }
 
@@ -321,7 +338,8 @@ export async function partnerRoute(req, env, path, m) {
       .bind(s.id, now() - 7 * 86400).first() : null;
     return json({ selling, user: { email: u.email, name: u.name, phone: u.partner_phone || '', phoneVerified: !!u.partner_phone,
       trialAvailable: u.partner_trial_ok !== 0, consentVersion: u.consent_version || '' }, admin: await isAdmin(env, u.email), store: storeOutWith(s, docs),
-      payments: pays.map(payPublic), change: ch ? { status: ch.status, note: ch.note || '', createdAt: ch.created_at } : null });
+      payments: pays.map(payPublic), change: ch ? { status: ch.status, note: ch.note || '', createdAt: ch.created_at,
+        needsDocs: ch.status === 'pending' ? await changeMissing(env, s, docs) : [] } : null });
   }
 
   if (path === '/v1/partner/phone' && m === 'POST') {
@@ -361,7 +379,7 @@ export async function partnerRoute(req, env, path, m) {
     const lat = Number(b.lat), lng = Number(b.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'location_required');
     if (kind === 'shop' && (parseTime(b.opensAt) == null || parseTime(b.closesAt) == null)) throw new HttpError(400, 'timings_required');
-    const live = existing && existing.status === 'active'; // an approved shop: changes wait for the Nukad team
+    const live = existing && existing.status === 'active'; // an approved shop: changes wait for the Nukad Kart team
     if (live && existing.kind !== kind) throw new HttpError(409, 'kind_locked');
     const photoB64 = String(b.photo || '');
     if (!photoB64 && !existing) throw new HttpError(400, 'photo_required');
@@ -415,7 +433,9 @@ export async function partnerRoute(req, env, path, m) {
         stmts.push(env.DB.prepare('INSERT INTO store_changes (id, store_id, data, has_photo, created_at) VALUES (?, ?, ?, ?, ?)')
           .bind(cid, id, JSON.stringify(change), photoB64 ? 1 : 0, t));
       }
-      return json({ store: await writeAndRead(env, u.id, stmts), changeSent: differs });
+      const store = await writeAndRead(env, u.id, stmts);
+      const fresh = await env.DB.prepare('SELECT * FROM stores WHERE id = ?').bind(id).first();
+      return json({ store, changeSent: differs, needsDocs: differs ? await changeMissing(env, fresh, await docList(env, fresh)) : [] });
     }
     const cols = {
       name, kind, lat, lng, address, phone: u.partner_phone, phone_verified: 1, device_hash: u.partner_device_hash,
@@ -447,16 +467,20 @@ export async function partnerRoute(req, env, path, m) {
     const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
     const out = storeOutWith(s, docs);
-    return json({ docs, required: out.requiredDocs, optional: out.optionalDocs });
+    const extra = (await changeNeeds(env, s)).filter((t) => !out.requiredDocs.includes(t));
+    const locked = s.status === 'active' || s.status === 'review' ? docs.map((d) => d.type) : [];
+    return json({ docs, required: [...out.requiredDocs, ...extra], optional: out.optionalDocs.filter((t) => !extra.includes(t)), locked, live: s.status === 'active' });
   }
 
   if (path === '/v1/partner/docs' && m === 'POST') {
     const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
-    if (s.status === 'active' || s.status === 'review') throw new HttpError(409, 'docs_locked');
     const b = await body(req);
     const type = String(b.type || '');
     if (!DOC_TYPES.includes(type)) throw new HttpError(400, 'bad_doc_type');
+    // While Nukad Kart team checks (or after approval) the documents they saw stay as they are.
+    // A document the shop doesn't have yet (e.g. FSSAI certificate for a newly added FSSAI number) can still be added.
+    if ((s.status === 'active' || s.status === 'review') && docs.some((d) => d.type === type)) throw new HttpError(409, 'docs_locked');
     const mime = String(b.mime || '');
     if (!['image/jpeg', 'application/pdf'].includes(mime)) throw new HttpError(400, 'doc_must_be_jpg_or_pdf');
     const size = Number(b.size);
@@ -545,7 +569,7 @@ export async function partnerRoute(req, env, path, m) {
   }
 
   if (path === '/v1/partner/submit' && m === 'POST') {
-    // Send for Nukad team verification (needs all documents + the signed agreement).
+    // Send for Nukad Kart team verification (needs all documents + the signed agreement).
     const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
     await submitForReview(env, s, docs);
@@ -719,7 +743,7 @@ export async function partnerRoute(req, env, path, m) {
     const id = `AG-${istDate(t).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
     const snapshot = JSON.stringify({ party: await partySettings(env), vendor: vendorDetails(s, u) });
     const signedDate = istDate(t).split('-').reverse().join('/');
-    // Save, mark signed, send to "waiting for Nukad team", and read back: one round trip.
+    // Save, mark signed, send to "waiting for Nukad Kart team", and read back: one round trip.
     const store = await writeAndRead(env, u.id, [
       env.DB.prepare(`INSERT INTO agreements (id, store_id, owner_id, version, signer_name, signature, snapshot, signed_date, accepted_at, device, ip)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)`).bind(id, s.id, u.id, AGREEMENT_VERSION, name, sig, snapshot, signedDate, t,
@@ -796,12 +820,24 @@ export async function partnerRoute(req, env, path, m) {
     await admin(req, env);
     const { results } = await env.DB.prepare(`SELECT c.*, s.name AS cur_name, s.address AS cur_address, s.kind, s.lat AS cur_lat, s.lng AS cur_lng
       FROM store_changes c JOIN stores s ON s.id = c.store_id WHERE c.status = 'pending' ORDER BY c.created_at LIMIT 50`).all();
-    return json({ changes: results.map((c) => {
+    const ids = [...new Set(results.map((c) => c.store_id))];
+    const docRows = ids.length
+      ? (await env.DB.prepare(`SELECT id, store_id, type, mime, name, size, created_at FROM partner_docs WHERE done = 1 AND store_id IN (${ids.map(() => '?').join(',')})`)
+        .bind(...ids).all()).results
+      : [];
+    const out = [];
+    for (const c of results) {
       const d = JSON.parse(c.data);
       delete d._photo;
-      return { id: c.id, storeId: c.store_id, kind: c.kind, createdAt: c.created_at, hasPhoto: !!c.has_photo,
-        current: { name: c.cur_name, address: c.cur_address, lat: c.cur_lat, lng: c.cur_lng }, next: d };
-    }) });
+      const st = await env.DB.prepare('SELECT * FROM stores WHERE id = ?').bind(c.store_id).first();
+      const docs = docRows.filter((x) => x.store_id === c.store_id).map(docOut);
+      // The certificate behind a new FSSAI / GST number, shown next to it; approve waits until it is there.
+      const needs = st ? await changeNeeds(env, st) : [];
+      out.push({ id: c.id, storeId: c.store_id, kind: c.kind, createdAt: c.created_at, hasPhoto: !!c.has_photo,
+        current: { name: c.cur_name, address: c.cur_address, lat: c.cur_lat, lng: c.cur_lng, fssai: st?.fssai || '', gstin: st?.gstin || '', pan: st?.pan || '' },
+        next: d, docs, needsDocs: needs, missingDocs: needs.filter((t) => !docs.some((x) => x.type === t)) });
+    }
+    return json({ changes: out });
   }
   const chPhoto = path.match(/^\/v1\/admin\/changes\/(c_[\w-]+)\/photo$/);
   if (chPhoto && m === 'GET') {
@@ -823,8 +859,12 @@ export async function partnerRoute(req, env, path, m) {
     if (chDo[2] === 'reject') {
       const note = String((await body(req)).reason || '').slice(0, 300);
       await env.DB.prepare("UPDATE store_changes SET status = 'rejected', note = ?, reviewed_at = ?, reviewed_by = ? WHERE id = ?").bind(note, t, a.id, c.id).run();
-      if (s?.owner_id) await sendPush(env, s.owner_id, { title: 'Your changes were not approved', body: note || 'Open Nukad Partner to see why.', data: { type: 'change' } });
+      if (s?.owner_id) await sendPush(env, s.owner_id, { title: 'Your changes were not approved', body: note || 'Open Nukad Kart Partner to see why.', data: { type: 'change' } });
       return json({ ok: true });
+    }
+    if (s) {
+      const missing = await changeMissing(env, s, await docList(env, s));
+      if (missing.length) throw new HttpError(409, 'doc_needed');
     }
     const d = JSON.parse(c.data);
     const photo = d._photo;
@@ -848,12 +888,15 @@ export async function partnerRoute(req, env, path, m) {
   const agv = path.match(/^\/v1\/admin\/partners\/([\w-]+)\/agreements$/);
   if (agv && m === 'GET') {
     await admin(req, env);
-    const { results } = await env.DB.prepare('SELECT id, version, signer_name, snapshot, signed_date, accepted_at FROM agreements WHERE store_id = ? ORDER BY accepted_at DESC LIMIT 20')
+    const { results } = await env.DB.prepare('SELECT id, version, signer_name, signature, snapshot, signed_date, accepted_at FROM agreements WHERE store_id = ? ORDER BY accepted_at DESC LIMIT 20')
       .bind(agv[1]).all();
     return json({ agreements: results.map((r, i) => {
       let snap = {};
       try { snap = JSON.parse(r.snapshot || '{}'); } catch {}
-      return { id: r.id, version: r.version, signerName: r.signer_name, signedDate: r.signed_date, acceptedAt: r.accepted_at, current: i === 0, snapshot: snap };
+      // Everything the app needs to rebuild the signed PDF (same as the partner's own copy).
+      return { id: r.id, version: r.version, signerName: r.signer_name, signedDate: r.signed_date, acceptedAt: r.accepted_at, current: i === 0, snapshot: snap,
+        signed: { id: r.id, version: r.version, name: r.signer_name, date: r.signed_date, acceptedAt: r.accepted_at, signature: r.signature, vendor: snap.vendor || {} },
+        party: snap.party || {} };
     }) });
   }
 
@@ -954,7 +997,7 @@ export async function partnerRoute(req, env, path, m) {
     // Ring the partner's phone instead of making them pull to refresh.
     const pushed = await sendPush(env, s.owner_id, review[2] === 'approve'
       ? { title: 'Your shop is approved 🎉', body: trial ? 'Your 7-day free trial has started. Open the app and go LIVE.' : 'Open the app, buy a pass and go LIVE.', data: { type: 'review', status: 'active' } }
-      : { title: 'Changes needed for your shop', body: 'Nukad team asked for a change. Open the app to see what to fix.', data: { type: 'review', status: 'rejected' } });
+      : { title: 'Changes needed for your shop', body: 'Nukad Kart team asked for a change. Open the app to see what to fix.', data: { type: 'review', status: 'rejected' } });
     return json({ trial, pushed, store: await storeOut(env, await env.DB.prepare('SELECT * FROM stores WHERE id = ?').bind(s.id).first()) });
   }
 
@@ -1009,7 +1052,7 @@ export async function staleThelas(env) {
     if (r.owner_id) {
       await sendPush(env, r.owner_id, {
         title: 'Customers can’t see your thela',
-        body: 'Your location stopped for 10 minutes. Open Nukad Partner and check location is on.',
+        body: 'Your location stopped for 10 minutes. Open Nukad Kart Partner and check location is on.',
         data: { type: 'location_stale' },
       }).catch(() => {});
     }
@@ -1018,8 +1061,8 @@ export async function staleThelas(env) {
 }
 
 /**
- * "Raju Sabzi Wala is LIVE near you": customers whose address is within 500 m, at most once per thela every
- * 2 hours, at most 3 thela alerts a day per customer, and not at night (9 pm – 7 am IST).
+ * "Raju Sabzi Wala is LIVE near you": customers whose address is within 500 m. One street, one alert:
+ * at most once a day per thela, at most 3 thela alerts a day per customer, and not at night (9 pm – 7 am IST).
  */
 export async function alertNearby(env, s) {
   const t = now();
@@ -1030,7 +1073,7 @@ export async function alertNearby(env, s) {
     WHERE c.alerts = 1 AND c.lat BETWEEN ? AND ? AND c.lng BETWEEN ? AND ? AND c.user_id != ?
       AND NOT EXISTS (SELECT 1 FROM thela_alerts a WHERE a.user_id = c.user_id AND a.thela_id = ? AND a.at > ?)
       AND (SELECT COUNT(*) FROM thela_alerts a WHERE a.user_id = c.user_id AND a.at > ?) < 3
-    LIMIT 300`).bind(s.live_lat - d, s.live_lat + d, s.live_lng - dl, s.live_lng + dl, s.owner_id || '', s.id, t - 7200, t - 86400).all();
+    LIMIT 300`).bind(s.live_lat - d, s.live_lat + d, s.live_lng - dl, s.live_lng + dl, s.owner_id || '', s.id, t - 86400, t - 86400).all();
   const near = results.filter((c) => haversineM(c.lat, c.lng, s.live_lat, s.live_lng) <= 500);
   if (!near.length) return 0;
   await env.DB.batch(near.map((c) => env.DB.prepare('INSERT OR REPLACE INTO thela_alerts (user_id, thela_id, at) VALUES (?, ?, ?)').bind(c.user_id, s.id, t)));

@@ -5,11 +5,15 @@
 //   GET  /v1/partner/calls                              (thela) waiting calls, grouped by street (~100 m)
 //   POST /v1/partner/calls/answer { ids, coming }       (thela) "Coming" / "Can't come" for a group
 //   POST /v1/partner/calls/no-show { ids }              (thela) came, nobody there → strike for the customer
+//   POST /v1/me/calls/:id/out                           (customer) "I'm coming out" after the thela said Coming.
+// A "coming" call the customer doesn't confirm (button, or a chat message to the thela) in 3 minutes is dropped,
+// so the thela doesn't walk to an empty gate.
 import { HttpError, json, body, now, session, haversineM, RADIUS_MAX_M, THELA_STALE_S } from './index.js';
 import { ctx, offlineReason } from './partner.js';
 import { sendPush } from './push.js';
 
 export const CALL_WAIT_S = 180; // thela has 3 minutes to answer
+export const CONFIRM_S = 180; // customer has 3 minutes to say "I'm coming out"
 const GROUP_M = 100;
 const STRIKES = 3, STRIKE_DAYS = 30, BLOCK_DAYS = 7;
 
@@ -19,7 +23,8 @@ const first = (name) => String(name || '').split(/\s+/)[0] || 'The thela';
 function callOut(c, thela) {
   const t = now();
   return { id: c.id, thelaId: c.thela_id, thelaName: thela?.name || '', status: c.status, address: c.address,
-    createdAt: c.created_at, answeredAt: c.answered_at, waitLeft: c.status === 'waiting' ? Math.max(0, c.created_at + CALL_WAIT_S - t) : 0 };
+    createdAt: c.created_at, answeredAt: c.answered_at, waitLeft: c.status === 'waiting' ? Math.max(0, c.created_at + CALL_WAIT_S - t) : 0,
+    out: !!c.out_at, confirmLeft: c.status === 'coming' && !c.out_at ? Math.max(0, (c.answered_at || t) + CONFIRM_S - t) : 0 };
 }
 
 /**
@@ -58,8 +63,9 @@ export function groupCalls(calls, from) {
     if (g) {
       g.ids.push(c.id);
       g.count++;
+      if (c.out_at) g.out++;
     } else {
-      groups.push({ ids: [c.id], count: 1, lat: c.lat, lng: c.lng, address: c.address, since: c.created_at,
+      groups.push({ ids: [c.id], count: 1, out: c.out_at ? 1 : 0, lat: c.lat, lng: c.lng, address: c.address, since: c.created_at,
         distanceM: from ? Math.round(haversineM(from.lat, from.lng, c.lat, c.lng)) : null,
         waitLeft: Math.max(0, c.created_at + CALL_WAIT_S - now()) });
     }
@@ -103,6 +109,7 @@ export async function callRoute(req, env, path, m) {
   if (path === '/v1/me/calls/current' && m === 'GET') {
     const { uid } = await session(req, env);
     await expire(env, 'customer_id = ?', [uid]);
+    await dropUnconfirmed(env, 'c.customer_id = ?', [uid]);
     const t = now();
     const [cr, sr, ur] = await env.DB.batch([
       env.DB.prepare('SELECT c.*, s.name AS thela_name FROM calls c JOIN stores s ON s.id = c.thela_id WHERE c.customer_id = ? AND c.created_at > ? ORDER BY c.created_at DESC LIMIT 1').bind(uid, t - 3600),
@@ -126,10 +133,22 @@ export async function callRoute(req, env, path, m) {
     return json({ ok: true });
   }
 
+  const out = path.match(/^\/v1\/me\/calls\/([\w-]+)\/out$/);
+  if (out && m === 'POST') {
+    const { uid } = await session(req, env);
+    const c = await env.DB.prepare("UPDATE calls SET out_at = ? WHERE id = ? AND customer_id = ? AND status = 'coming' AND out_at IS NULL RETURNING thela_id, address")
+      .bind(now(), out[1], uid).first();
+    if (!c) throw new HttpError(409, 'call_not_coming');
+    const s = await env.DB.prepare('SELECT owner_id FROM stores WHERE id = ?').bind(c.thela_id).first();
+    if (s?.owner_id) await sendPush(env, s.owner_id, { title: '✋ Grahak bahar aa raha hai', body: `${c.address} · the customer is coming out to meet you.`, data: { type: 'calls_out' } });
+    return json({ ok: true });
+  }
+
   if (path === '/v1/partner/calls' && m === 'GET') {
     const { s } = await ctx(req, env);
     if (!s || s.kind !== 'thela') return json({ groups: [], coming: [] });
     await expire(env, 'thela_id = ?', [s.id]);
+    await dropUnconfirmed(env, 'c.thela_id = ?', [s.id]);
     const t = now();
     const { results } = await env.DB.prepare("SELECT * FROM calls WHERE thela_id = ? AND status IN ('waiting', 'coming') AND created_at > ? ORDER BY created_at")
       .bind(s.id, t - 3600).all();
@@ -202,6 +221,34 @@ export async function noShow(env, s, ids) {
     });
   }
   return { ok: true, reported: results.length };
+}
+
+/**
+ * "Coming" calls with no "I'm coming out" (button, or a chat message to this thela after it answered) within
+ * 3 minutes become "unconfirmed": the thela is told not to go. No strike for the customer.
+ */
+export async function dropUnconfirmed(env, where = '1 = 1', bind = []) {
+  const t = now();
+  const { results } = await env.DB.prepare(`SELECT c.id, c.customer_id, c.thela_id, c.address, c.answered_at FROM calls c
+    WHERE c.status = 'coming' AND c.out_at IS NULL AND c.answered_at < ? AND ${where}`).bind(t - CONFIRM_S, ...bind).all();
+  const dropped = [];
+  for (const c of results) {
+    const chat = await env.DB.prepare(`SELECT 1 AS y FROM chat_messages m JOIN chats h ON h.id = m.chat_id
+      WHERE h.thela_id = ? AND h.customer_id = ? AND m.sender = 'c' AND m.created_at >= ? LIMIT 1`).bind(c.thela_id, c.customer_id, c.answered_at - 600).first();
+    if (chat) {
+      // Wrote the items in chat: that counts as "coming out".
+      await env.DB.prepare('UPDATE calls SET out_at = ? WHERE id = ?').bind(t, c.id).run();
+      continue;
+    }
+    await env.DB.prepare("UPDATE calls SET status = 'unconfirmed' WHERE id = ? AND status = 'coming'").bind(c.id).run();
+    dropped.push(c);
+  }
+  for (const c of dropped) {
+    const s = await env.DB.prepare('SELECT name, owner_id FROM stores WHERE id = ?').bind(c.thela_id).first();
+    if (s?.owner_id) await sendPush(env, s.owner_id, { title: 'Mat jaiye: grahak ne confirm nahi kiya', body: `${c.address} · the customer didn't say they are coming out. The call is cancelled.`, data: { type: 'calls_out' } });
+    await sendPush(env, c.customer_id, { title: 'Call cancelled', body: `You didn't confirm in 3 minutes, so ${first(s?.name)} was told not to come. Call again when you are ready.`, data: { type: 'call', status: 'unconfirmed', thelaId: c.thela_id } });
+  }
+  return dropped.length;
 }
 
 /** Cron: tell customers whose call expired (the thela didn't answer in 3 minutes). */

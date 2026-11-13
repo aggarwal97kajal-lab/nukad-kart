@@ -16,7 +16,7 @@ const kPartnerTerms = [
   ['6. Staff', 'You may add up to 5 staff by mobile number. You are responsible for what your staff do in the app, including deliveries and money they collect. Remove staff who leave.'],
   ['7. Payments', 'Customers pay you directly, in cash or to your own UPI. Nukad Kart does not collect or hold order money and is not responsible for payment disputes between you and a customer.'],
   ['8. What is not allowed', 'Fake or expired items, selling above MRP, a photo or details that are not of your own shop or thela, abusing customers, misusing a customer’s address or number, and taking orders outside the app to avoid these terms. We may pause or remove accounts that do this.'],
-  ['9. Changing your details', 'A new name, address or shop photo is checked by the Nukad team. After approval, or after you change your mobile number, you must sign the updated agreement before going LIVE again. Earlier signed agreements are kept.'],
+  ['9. Changing your details', 'A new name, address or shop photo is checked by the Nukad Kart team. After approval, or after you change your mobile number, you must sign the updated agreement before going LIVE again. Earlier signed agreements are kept.'],
   ['10. Pausing, leaving and your data', 'You can go offline at any time and can delete your account from the app. Your documents, photos and products are then removed; the signed agreement, payment records and trial record are kept as the law requires.'],
   ['11. Complaints', 'Write to our Grievance Officer at $kGrievanceEmail. We acknowledge within 48 hours and aim to resolve within one month.'],
   ['12. Agreement', 'These terms apply together with the Vendor Partnership Agreement you sign in the app. If they differ, the signed agreement applies.'],

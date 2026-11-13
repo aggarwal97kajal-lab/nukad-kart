@@ -179,7 +179,7 @@ class _StoreScreenState extends State<StoreScreen> {
             child: Text(st.ratingCount > 0 ? '★ ${st.rating} (${st.ratingCount})' : 'New on Nukad Kart', style: body(13, color: kGText, weight: FontWeight.w800)),
           ),
         ]),
-        line(Icons.place_outlined, '${st.distanceM} m from ${s.current.label.toLowerCase() == 'home' ? 'your home' : s.current.label}'),
+        line(Icons.place_outlined, '${st.distanceM} m from ${s.browsingHere ? 'you' : s.current.label.toLowerCase() == 'home' ? 'your home' : s.current.label}'),
         line(Icons.schedule, st.isOpen ? '${st.hours} · Open now' : '${st.hours} · Closed, opens ${st.opensAt}'),
         line(Icons.storefront_outlined, st.address),
         SizedBox(height: 10),

@@ -6,7 +6,7 @@ import '../widgets/ui.dart';
 import 'account_pages.dart';
 
 /// Version of the privacy notice the person agrees to. Change it when the policy changes: everyone is asked again.
-const kConsentVersion = 'c-2026-11-13';
+const kConsentVersion = 'c-2026-11-14';
 
 /// DPDP: a clear "yes" (not "by continuing…"), only for people aged 18+, recorded on the server with the version.
 class ConsentScreen extends StatefulWidget {
