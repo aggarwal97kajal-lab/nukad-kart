@@ -11,6 +11,10 @@ import 'widgets/cart_widgets.dart';
 import 'state/thela_tracker.dart';
 import 'services/api.dart';
 import 'services/push.dart';
+import 'services/live_data.dart';
+import 'screens/thela_chat.dart';
+import 'screens/thela_screen.dart';
+import 'screens/order_screen.dart';
 import 'services/google_auth.dart';
 import 'screens/login_screen.dart';
 
@@ -50,10 +54,37 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
   String _applied = '';
   bool _ordersSynced = false;
 
+  /// Tapped a notification: open the screen it is about (order, thela, chat).
+  Future<void> _openPush() async {
+    final d = openedPush.value;
+    if (d == null) return;
+    await Future.delayed(const Duration(milliseconds: 300)); // let the app finish opening
+    final nav = navKey.currentState;
+    if (nav == null) return;
+    final s = AppScope.read(navKey.currentContext!);
+    final type = '${d['type'] ?? ''}';
+    if (type == 'order' && d['id'] != null) {
+      await s.syncOrders();
+      if (s.orders.any((o) => o.id == '${d['id']}')) nav.push(MaterialPageRoute(builder: (_) => OrderScreen(orderId: '${d['id']}')));
+      return;
+    }
+    final thelaId = '${d['thelaId'] ?? ''}';
+    if (thelaId.isEmpty) return;
+    if (!kThelas.any((x) => x.id == thelaId)) await LiveData.instance.loadFor(s.current.lat, s.current.lng, force: true);
+    final th = kThelas.where((x) => x.id == thelaId).firstOrNull;
+    if (th == null) {
+      if (navKey.currentContext != null) showToast(navKey.currentContext!, 'This thela is not near you right now.');
+      return;
+    }
+    nav.push(MaterialPageRoute(builder: (_) => ThelaScreen(thela: th)));
+    if (type == 'chat') nav.push(MaterialPageRoute(builder: (_) => ThelaChatScreen(thela: th)));
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    openedPush.addListener(_openPush);
     final s = AppScope.read(context);
     WidgetsBinding.instance.addPostFrameCallback((_) => Future.delayed(const Duration(seconds: 4), _checkSession));
     ThelaTracker.instance.onBackInArea = (thelaId) {

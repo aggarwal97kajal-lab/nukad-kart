@@ -25,6 +25,19 @@ Future<void> partnerBackgroundPush(RemoteMessage m) async {
   if (m.data['type'] == 'order_new') await showOrderAlarm(m.data);
   if (m.data['type'] == 'calls') await showCalls(m.data);
   if (m.data['type'] == 'chats') await showChats(m.data);
+  if (m.data['type'] == 'deliver') await showDeliver(m.data);
+}
+
+/// Staff: "Deliver #NK-… · collect ₹…" with a Start delivery button (opens the app and starts sharing location).
+Future<void> showDeliver(Map<String, dynamic> d) async {
+  final id = '${d['id'] ?? ''}';
+  try {
+    await _local.show(orderNotifId(id) + 1, '${d['title'] ?? 'New delivery'}', '${d['body'] ?? ''}',
+        NotificationDetails(android: AndroidNotificationDetails(_channel.id, _channel.name,
+            channelDescription: _channel.description, importance: Importance.high, priority: Priority.high,
+            actions: const [AndroidNotificationAction('start', 'Start delivery', showsUserInterface: true, cancelNotification: true)])),
+        payload: 'deliver:$id');
+  } catch (_) {}
 }
 
 /// Thela: ONE notification for all unread chat messages, replaced each time; count 0 removes it.
@@ -38,7 +51,8 @@ Future<void> showChats(Map<String, dynamic> d) async {
     await _local.show(7002, '${d['title'] ?? 'New message'}', '${d['body'] ?? ''}',
         NotificationDetails(android: AndroidNotificationDetails(_calls.id, _calls.name,
             channelDescription: _calls.description, importance: Importance.high, priority: Priority.high,
-            styleInformation: BigTextStyleInformation('${d['body'] ?? ''}'))));
+            styleInformation: BigTextStyleInformation('${d['body'] ?? ''}'))),
+        payload: 'chats');
   } catch (_) {}
 }
 
@@ -60,6 +74,7 @@ Future<void> showCalls(Map<String, dynamic> d) async {
         android: AndroidNotificationDetails(_calls.id, _calls.name,
             channelDescription: _calls.description, importance: Importance.high, priority: Priority.high, timeoutAfter: 180000, onlyAlertOnce: false),
       ),
+      payload: 'calls',
     );
   } catch (_) {}
 }
@@ -81,6 +96,8 @@ Future<void> setupPush(VoidCallback onUpdate) async {
           showCalls(m.data);
         } else if (m.data['type'] == 'chats') {
           showChats(m.data);
+        } else if (m.data['type'] == 'deliver') {
+          showDeliver(m.data);
         } else {
           _showLocal(m);
         }
@@ -88,9 +105,14 @@ Future<void> setupPush(VoidCallback onUpdate) async {
         onUpdate();
       });
       FirebaseMessaging.onMessageOpenedApp.listen((m) {
-        openedPush.value = '${m.data['type'] ?? ''}:${DateTime.now().millisecondsSinceEpoch}';
+        _opened(m.data);
         pushTick.value++;
       });
+      // Opened from a notification while the app was closed.
+      final first = await FirebaseMessaging.instance.getInitialMessage();
+      if (first != null) _opened(first.data);
+      final launch = await _local.getNotificationAppLaunchDetails();
+      if (launch?.didNotificationLaunchApp == true && launch!.notificationResponse != null) _tapped(launch.notificationResponse!);
       FirebaseMessaging.onMessageOpenedApp.listen((_) => onUpdate());
       FirebaseMessaging.instance.onTokenRefresh.listen(_send);
       _ready = true;
@@ -159,8 +181,23 @@ Future<void> stopOrderAlarm(String orderId) async {
   } catch (_) {}
 }
 
-/// "type:time" of the last notification the person tapped (e.g. order_new → open the Orders tab).
+/// "type|id|extra|time" of the last notification the person tapped; the shell opens the matching screen.
 final openedPush = ValueNotifier<String>('');
+
+void _opened(Map<String, dynamic> d) =>
+    openedPush.value = '${d['type'] ?? ''}|${d['id'] ?? d['chatId'] ?? ''}||${DateTime.now().millisecondsSinceEpoch}';
+
+void _tapped(NotificationResponse r) {
+  final p = r.payload ?? '';
+  final t = DateTime.now().millisecondsSinceEpoch;
+  if (p.startsWith('deliver:')) {
+    openedPush.value = 'deliver|${p.substring(8)}|${r.actionId == 'start' ? 'start' : ''}|$t';
+  } else if (p.startsWith('NK-')) {
+    openedPush.value = 'order_new|$p||$t';
+  } else if (p.isNotEmpty) {
+    openedPush.value = '$p|||$t';
+  }
+}
 
 /// Goes up on every push that arrives while the app is open, so screens can reload.
 final pushTick = ValueNotifier<int>(0);
@@ -168,9 +205,7 @@ final pushTick = ValueNotifier<int>(0);
 Future<void> _initLocal() async {
   try {
     await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')),
-        onDidReceiveNotificationResponse: (r) {
-      if ((r.payload ?? '').startsWith('NK-')) openedPush.value = 'order_new:${DateTime.now().millisecondsSinceEpoch}';
-    });
+        onDidReceiveNotificationResponse: _tapped);
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
@@ -197,6 +232,7 @@ void _showLocal(RemoteMessage m) {
             : AndroidNotificationDetails(_channel.id, _channel.name,
                 channelDescription: _channel.description, importance: Importance.high, priority: Priority.high),
       ),
+      payload: '${m.data['type'] ?? ''}',
     );
   } catch (_) {}
 }

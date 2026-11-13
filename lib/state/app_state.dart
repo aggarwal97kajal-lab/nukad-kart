@@ -788,6 +788,7 @@ class AppState extends ChangeNotifier {
   static OrderStatus _status(String s) => switch (s) {
         'placed' => OrderStatus.placed,
         'accepted' => OrderStatus.accepted,
+        'packed' => OrderStatus.packed,
         'out' => OrderStatus.outForDelivery,
         'delivered' => OrderStatus.delivered,
         'rejected' => OrderStatus.rejected,
@@ -838,6 +839,7 @@ class AppState extends ChangeNotifier {
     o.unavailable = [for (final l in raw) if (l['na'] == true) '${l['name']}'];
     for (final (k, v) in [
       (OrderStatus.accepted, j['acceptedAt']),
+      (OrderStatus.packed, j['packedAt'] ?? j['outAt']), // older orders had one "send out" step
       (OrderStatus.outForDelivery, j['outAt']),
       (OrderStatus.delivered, j['deliveredAt']),
       (o.status, o.isOpen ? null : j['closedAt']),
@@ -845,7 +847,7 @@ class AppState extends ChangeNotifier {
       final d = at(v);
       if (d != null) o.times[k] = d;
     }
-    if (before == OrderStatus.accepted && o.status == OrderStatus.outForDelivery) onOtp?.call(o);
+    if (before != OrderStatus.outForDelivery && before != null && o.status == OrderStatus.outForDelivery) onOtp?.call(o);
     return o;
   }
 

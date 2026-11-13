@@ -315,6 +315,15 @@ export async function orderRoute(req, env, path, m) {
       missedToday: s.missed_date === istDate() ? s.missed_count : 0, missedLimit: MISSED_LIMIT });
   }
 
+  const one = path.match(/^\/v1\/partner\/orders\/([\w-]+)$/);
+  if (one && m === 'GET') {
+    const o = await env.DB.prepare('SELECT * FROM orders WHERE id = ? AND store_id = ?').bind(one[1], s.id).first();
+    if (!o || (c.staff && !c.canOrders && o.staff_id !== c.staff.id)) throw new HttpError(404, 'not_found');
+    const staff = (await env.DB.prepare(`SELECT st.*, (SELECT COUNT(*) FROM orders o WHERE o.staff_id = st.id AND o.status IN ('packed','out')) AS busy
+      FROM staff st WHERE st.store_id = ? AND st.removed_at IS NULL`).bind(s.id).all()).results.map((x) => ({ ...staffOut(x), busy: x.busy > 0 }));
+    return json({ order: orderOut(o, false, s), staff: c.owner || c.canOrders ? staff : [] });
+  }
+
   const act = path.match(/^\/v1\/partner\/orders\/([\w-]+)\/(accept|reject|send|pack|out|deliver)$/);
   if (act && m === 'POST') {
     const [, id, what] = act;

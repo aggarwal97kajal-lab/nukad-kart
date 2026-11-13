@@ -5,6 +5,7 @@ import 'produce_picker.dart';
 import 'products.dart';
 import 'orders.dart';
 import '../push.dart';
+import '../open_push.dart';
 import '../session.dart';
 import '../thela_location.dart';
 
@@ -27,12 +28,11 @@ class _PartnerShellState extends State<PartnerShell> {
     session.addListener(_loc);
     _loc();
     openedPush.addListener(_opened);
+    if (openedPush.value.isNotEmpty) WidgetsBinding.instance.addPostFrameCallback((_) => _opened());
   }
 
   // Tapped a new-order notification: show the Orders tab.
-  void _opened() {
-    if (openedPush.value.startsWith('order_new') && session.store?['kind'] != 'thela') shellTab.value = 2;
-  }
+  void _opened() => openFromPush(context);
 
   void _loc() => ThelaLocation.instance.sync();
 

@@ -7,6 +7,8 @@ import '../rider_location.dart';
 import '../session.dart';
 import '../ui.dart';
 import 'product_form.dart' show money;
+import 'package:url_launcher/url_launcher.dart';
+import '../widgets/delivery_map.dart';
 
 /// Shop orders: New (rings, 5 min to answer) → Packing → On the way → Done.
 /// Delivery-only staff see only "On the way" orders given to them.
@@ -34,14 +36,20 @@ class _OrdersScreenState extends State<OrdersScreen> {
     pushTick.addListener(_load);
     _load();
     _t = Timer.periodic(const Duration(seconds: 15), (_) => _load());
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && orders.any((o) => o['status'] == 'placed')) setState(() {});
+    });
   }
 
   @override
   void dispose() {
     pushTick.removeListener(_load);
     _t?.cancel();
+    _tick?.cancel();
     super.dispose();
   }
+
+  Timer? _tick;
 
   Future<void> _load() async {
     try {
@@ -188,6 +196,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 String _statusText(Map<String, dynamic> o) => switch ('${o['status']}') {
       'placed' => t('New'),
       'accepted' => t('Packing'),
+      'packed' => t('Packed'),
       'out' => o['door'] == true ? t('On the way') : t('Ready for pickup'),
       'delivered' => t('Delivered'),
       'rejected' => t('Rejected'),
@@ -231,7 +240,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         toast(context, switch (what) {
           'accept' => t('Accepted. Pack it now.'),
           'reject' => t('Rejected. The customer is told.'),
-          'send' => o['status'] == 'cancelled' ? t('Nothing left to send: order cancelled.') : t('Sent. The customer has the delivery code.'),
+          'send' || 'pack' => o['status'] == 'cancelled' ? t('Nothing left to send: order cancelled.') : o['status'] == 'packed' ? t('Packed.') : t('Ready. The customer has the code.'),
+          'out' => t('Out for delivery. The customer sees you on the map.'),
           _ => tr('Delivered. Bill {0} is made.', [o['billNo']]),
         });
       }
@@ -303,15 +313,44 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         if (st == 'accepted' && canOrders) ...[
           if (o['door'] == true && widget.staff.isNotEmpty) ...[
             Text(t('Who delivers?'), style: tx(13, color: kMute, weight: FontWeight.w700)),
-            Wrap(spacing: 8, children: [
+            Wrap(spacing: 8, runSpacing: 6, children: [
               ChoiceChip(label: Text(t('Me')), selected: staffId == null, onSelected: (_) => setState(() => staffId = null)),
               for (final s in widget.staff)
-                ChoiceChip(label: Text('${s['name']}'), selected: staffId == s['id'], onSelected: (_) => setState(() => staffId = '${s['id']}')),
+                ChoiceChip(
+                  label: Text('${s['name']} · ${s['busy'] == true ? t('on a delivery') : t('free')}'),
+                  avatar: Icon(Icons.circle, size: 10, color: s['busy'] == true ? kAmb : kAct),
+                  selected: staffId == s['id'],
+                  onSelected: (_) => setState(() => staffId = '${s['id']}'),
+                ),
             ]),
             const SizedBox(height: 10),
           ],
-          Btn(busy ? '…' : (o['door'] == true ? t('Packed · send out') : t('Packed · ready for pickup')),
-              onTap: busy ? null : () => _do('send', {'na': na.toList(), if (staffId != null) 'staffId': staffId})),
+          Btn(busy ? '…' : (o['door'] == true ? t('Packed') : t('Packed · ready for pickup')),
+              onTap: busy ? null : () => _do('pack', {'na': na.toList(), if (staffId != null) 'staffId': staffId})),
+        ],
+        if (st == 'packed') ...[
+          if (_mine) ...[
+            Text(t('Leaving with the order? Tap below: the customer sees you on the map and gets the delivery code.'), style: tx(13, color: kMute)),
+            const SizedBox(height: 8),
+            Btn(busy ? '…' : t('Out for delivery'), onTap: busy ? null : _goOut),
+          ] else ...[
+            Box(color: kSurf, child: Text(tr('Waiting for {0} to tap “Out for delivery” on their phone.', [_who]), style: tx(13, weight: FontWeight.w700))),
+            const SizedBox(height: 8),
+            // Fallback if the staff forgets: moves the order on, but no scooter on the customer's map.
+            Btn(t('Mark out for delivery'), outline: true, onTap: busy ? null : () => _do('out')),
+          ],
+        ],
+        if (st == 'out' && o['door'] == true && o['lat'] != null) ...[
+          DeliveryMap(lat: (o['lat'] as num).toDouble(), lng: (o['lng'] as num).toDouble()),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(child: Btn(t('Navigate'), outline: true, onTap: () => launchUrl(Uri.parse('google.navigation:q=${o['lat']},${o['lng']}&mode=two'), mode: LaunchMode.externalApplication)
+                .catchError((_) => launchUrl(Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${o['lat']},${o['lng']}'), mode: LaunchMode.externalApplication)))),
+            const SizedBox(width: 10),
+            if ('${o['toPhone']}'.isNotEmpty)
+              Expanded(child: Btn(t('Call customer'), outline: true, onTap: () => launchUrl(Uri.parse('tel:+91${o['toPhone']}')))),
+          ]),
+          const SizedBox(height: 14),
         ],
         if (st == 'out') ...[
           Text(t('Ask the customer for the 4-digit code (it is in their app).'), style: tx(13, color: kMute)),
@@ -336,6 +375,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Box(color: kOkBg, child: Text(tr('Delivered · {0} · bill {1}', ['${o['payMode']}'.toUpperCase(), o['billNo']]), style: tx(13.5, weight: FontWeight.w700))),
       ]),
     );
+  }
+
+  /// The order is this phone's to deliver: the owner's own (no staff picked) or this staff member's.
+  bool get _mine => session.staffInfo == null ? o['staffId'] == null : o['staffId'] == session.staffInfo!['id'];
+
+  String get _who => widget.staff.where((s) => s['id'] == o['staffId']).map((s) => '${s['name']}').firstOrNull ?? t('the delivery person');
+
+  Future<void> _goOut() async {
+    await _do('out');
+    // This phone now shares its location until the order is delivered.
+    if (o['status'] == 'out' && o['door'] == true) RiderLocation.instance.sync(outDoorOrders: 1);
   }
 
   void _deliver(String pay) {

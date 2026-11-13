@@ -5,6 +5,8 @@ import '../otp.dart';
 import '../session.dart';
 import '../ui.dart';
 import 'orders.dart';
+import '../push.dart';
+import '../open_push.dart';
 
 /// Staff login: no Google, no Shop / Thela choice. The number must be added by a store owner,
 /// checked before the SMS is sent, then verified by the SMS code.
@@ -108,8 +110,28 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
 }
 
 /// What a staff member sees: orders / deliveries of their store, nothing else.
-class StaffShell extends StatelessWidget {
+class StaffShell extends StatefulWidget {
   const StaffShell({super.key});
+  @override
+  State<StaffShell> createState() => _StaffShellState();
+}
+
+class _StaffShellState extends State<StaffShell> {
+  @override
+  void initState() {
+    super.initState();
+    openedPush.addListener(_opened);
+    if (openedPush.value.isNotEmpty) WidgetsBinding.instance.addPostFrameCallback((_) => _opened());
+  }
+
+  @override
+  void dispose() {
+    openedPush.removeListener(_opened);
+    super.dispose();
+  }
+
+  void _opened() => openFromPush(context);
+
   @override
   Widget build(BuildContext context) {
     final st = session.staffInfo!;

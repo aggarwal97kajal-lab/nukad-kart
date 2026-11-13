@@ -13,7 +13,8 @@ class RiderMap extends StatefulWidget {
   final double homeLat, homeLng;
   final double? riderLat, riderLng;
   final String storeName;
-  const RiderMap({super.key, required this.homeLat, required this.homeLng, this.riderLat, this.riderLng, required this.storeName});
+  final double? shopLat, shopLng;
+  const RiderMap({super.key, required this.homeLat, required this.homeLng, this.riderLat, this.riderLng, required this.storeName, this.shopLat, this.shopLng});
   @override
   State<RiderMap> createState() => _RiderMapState();
 }
@@ -43,6 +44,9 @@ class _RiderMapState extends State<RiderMap> {
     await c.addFill(FillOptions(geometry: [ring], fillColor: '#F8CB46', fillOpacity: 0.14));
     await c.addLine(LineOptions(geometry: ring, lineColor: '#21331B', lineWidth: 1.6, lineOpacity: 0.8));
     await c.addCircle(CircleOptions(geometry: LatLng(widget.homeLat, widget.homeLng), circleRadius: 9, circleColor: '#21331B', circleStrokeColor: '#FFFFFF', circleStrokeWidth: 3));
+    if (widget.shopLat != null && widget.shopLat != 0) {
+      await c.addCircle(CircleOptions(geometry: LatLng(widget.shopLat!, widget.shopLng!), circleRadius: 8, circleColor: '#185FA5', circleStrokeColor: '#FFFFFF', circleStrokeWidth: 3));
+    }
     try {
       final b = await rootBundle.load('assets/images/markers/bike.png');
       await c.addImage('nk-bike', b.buffer.asUint8List());
@@ -103,7 +107,7 @@ class _RiderMapState extends State<RiderMap> {
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(color: Color(0xFF21331B), borderRadius: BorderRadius.circular(12)),
                   child: Text(
-                      d == null ? 'On the way · scooter shows once the delivery phone sends its location' : 'On the way · ${d.round()} m away · about ${(d / 250).ceil().clamp(1, 30)} min',
+                      d == null ? 'On the way from ${widget.storeName}' : 'On the way · ${d.round()} m away · about ${(d / 250).ceil().clamp(1, 30)} min',
                       maxLines: 2,
                       style: body(11.5, color: kBrand, weight: FontWeight.w800)),
                 ),

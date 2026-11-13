@@ -54,7 +54,8 @@ class _OrderScreenState extends State<OrderScreen> {
       appBar: simpleAppBar('Order #${o.id}', subtitle: st.name),
       body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
         if (o.remote && o.status == OrderStatus.outForDelivery && o.door)
-          RiderMap(homeLat: o.lat ?? s.current.lat, homeLng: o.lng ?? s.current.lng, riderLat: o.riderLat, riderLng: o.riderLng, storeName: st.name)
+          RiderMap(homeLat: o.lat ?? s.current.lat, homeLng: o.lng ?? s.current.lng, riderLat: o.riderLat, riderLng: o.riderLng, storeName: st.name,
+              shopLat: st.lat, shopLng: st.lng)
         else if (!o.remote && o.status == OrderStatus.outForDelivery && o.door && o.times[OrderStatus.outForDelivery] != null)
           LiveDeliveryMap(
             key: ValueKey('map-${o.id}'),

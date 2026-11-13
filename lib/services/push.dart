@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api.dart';
@@ -30,7 +32,8 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
         options: const FirebaseOptions(apiKey: _apiKey, appId: customerFirebaseAppId, messagingSenderId: _senderId, projectId: _projectId),
       );
       await FirebaseMessaging.instance.requestPermission();
-      await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')));
+      await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')),
+          onDidReceiveNotificationResponse: (r) => _tap(r.payload));
       await _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(_channel);
       // Android shows nothing for a push while the app is open, so show it ourselves.
       FirebaseMessaging.onMessage.listen((m) {
@@ -38,11 +41,20 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
         if (n != null) {
           _local.show(m.hashCode, n.title, n.body,
               NotificationDetails(android: AndroidNotificationDetails(_channel.id, _channel.name,
-                  channelDescription: _channel.description, importance: Importance.high, priority: Priority.high)));
+                  channelDescription: _channel.description, importance: Importance.high, priority: Priority.high)),
+              payload: jsonEncode(m.data));
         }
         onPush(n?.title ?? '', n?.body ?? '', m.data);
       });
-      FirebaseMessaging.onMessageOpenedApp.listen((m) => onPush(m.notification?.title ?? '', m.notification?.body ?? '', m.data));
+      FirebaseMessaging.onMessageOpenedApp.listen((m) {
+        onPush('', '', m.data);
+        openedPush.value = {...m.data, '_t': DateTime.now().millisecondsSinceEpoch};
+      });
+      // Opened from a notification while the app was closed.
+      final first = await FirebaseMessaging.instance.getInitialMessage();
+      if (first != null) openedPush.value = {...first.data, '_t': DateTime.now().millisecondsSinceEpoch};
+      final launch = await _local.getNotificationAppLaunchDetails();
+      if (launch?.didNotificationLaunchApp == true) _tap(launch!.notificationResponse?.payload);
       FirebaseMessaging.instance.onTokenRefresh.listen((t) => api.pushToken(_sentFor, t).catchError((_) {}));
       _ready = true;
     }
@@ -59,6 +71,16 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
     pushProblem = '$e';
     _sentFor = ''; // try again next time
   }
+}
+
+/// The notification the person tapped (its data); the app opens the matching screen.
+final openedPush = ValueNotifier<Map<String, dynamic>?>(null);
+
+void _tap(String? payload) {
+  if (payload == null || payload.isEmpty) return;
+  try {
+    openedPush.value = {...Map<String, dynamic>.from(jsonDecode(payload) as Map), '_t': DateTime.now().millisecondsSinceEpoch};
+  } catch (_) {}
 }
 
 /// Listeners for push data (e.g. "thela_coming"), set by screens that care.
