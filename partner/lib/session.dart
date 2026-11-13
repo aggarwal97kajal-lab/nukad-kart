@@ -159,6 +159,7 @@ class Session extends ChangeNotifier {
     email = '';
     store = null;
     staffInfo = null;
+    openedPush.value = ''; // a notification tapped under the old account must not open under the next one
     admin = false;
     payments = [];
     phone = '';

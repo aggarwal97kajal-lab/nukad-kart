@@ -58,6 +58,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
   Future<void> _openPush() async {
     final d = openedPush.value;
     if (d == null) return;
+    openedPush.value = null; // open it once only
     await Future.delayed(const Duration(milliseconds: 300)); // let the app finish opening
     final nav = navKey.currentState;
     if (nav == null) return;
