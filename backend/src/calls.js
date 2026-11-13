@@ -154,8 +154,8 @@ export async function callRoute(req, env, path, m) {
     await tellThela(env, s);
     for (const c of results) {
       await sendPush(env, c.customer_id, coming
-        ? { title: `${first(s.name)} is coming`, body: `${s.name} is on the way to ${c.address}. Pay the seller directly.`, data: { type: 'call', status: 'coming' } }
-        : { title: `${first(s.name)} can't come right now`, body: 'Try again later, or call another thela nearby.', data: { type: 'call', status: 'declined' } });
+        ? { title: `${first(s.name)} is coming`, body: `${s.name} is on the way to ${c.address}. Pay the seller directly.`, data: { type: 'call', status: 'coming', thelaId: s.id } }
+        : { title: `${first(s.name)} can't come right now`, body: 'Try again later, or call another thela nearby.', data: { type: 'call', status: 'declined', thelaId: s.id } });
     }
     return json({ ok: true, answered: results.length });
   }
@@ -198,7 +198,7 @@ export async function noShow(env, s, ids) {
     await sendPush(env, customer_id, {
       title: `${first(s.name)} came but couldn’t find you`,
       body: blocked ? `This happened ${r.n} times. Calling thelas is paused for ${BLOCK_DAYS} days.` : `This is ${r.n} of ${STRIKES}. At ${STRIKES}, calling thelas is paused for ${BLOCK_DAYS} days.`,
-      data: { type: 'call', status: 'no_show' },
+      data: { type: 'call', status: 'no_show', thelaId: s.id },
     });
   }
   return { ok: true, reported: results.length };
@@ -208,10 +208,10 @@ export async function noShow(env, s, ids) {
 export async function tellExpiredCalls(env) {
   const t = now();
   await expire(env, '1 = 1', []);
-  const { results } = await env.DB.prepare(`SELECT c.id, c.customer_id, s.name FROM calls c JOIN stores s ON s.id = c.thela_id
+  const { results } = await env.DB.prepare(`SELECT c.id, c.customer_id, c.thela_id, s.name FROM calls c JOIN stores s ON s.id = c.thela_id
     WHERE c.status = 'expired' AND c.told = 0 AND c.created_at > ? LIMIT 200`).bind(t - 3600).all();
   for (const c of results) {
     await env.DB.prepare('UPDATE calls SET told = 1 WHERE id = ?').bind(c.id).run();
-    await sendPush(env, c.customer_id, { title: `${first(c.name)} can't come right now`, body: 'No answer in 3 minutes. Try again later, or call another thela nearby.', data: { type: 'call', status: 'expired' } });
+    await sendPush(env, c.customer_id, { title: `${first(c.name)} can't come right now`, body: 'No answer in 3 minutes. Try again later, or call another thela nearby.', data: { type: 'call', status: 'expired', thelaId: c.thela_id } });
   }
 }

@@ -360,6 +360,17 @@ async function route(req, env) {
     return json({ ok: true });
   }
 
+  if (path === '/v1/me/spot' && m === 'POST') {
+    // The customer's chosen address (lat/lng only) for "a thela is LIVE near you" alerts.
+    const { uid } = await session(req, env);
+    const b = await body(req);
+    const lat = Number(b.lat), lng = Number(b.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'bad_location');
+    await env.DB.prepare('INSERT OR REPLACE INTO customer_spots (user_id, lat, lng, alerts, updated_at) VALUES (?, ?, ?, ?, ?)')
+      .bind(uid, lat, lng, b.thelaAlerts === false ? 0 : 1, now()).run();
+    return json({ ok: true });
+  }
+
   if (path === '/v1/me/push-test' && m === 'POST') {
     const { uid } = await session(req, env);
     return json(await sendPushDetail(env, uid, { title: 'Test from Nukad Kart', body: 'Notifications are working on this phone.', data: { type: 'test' } }));

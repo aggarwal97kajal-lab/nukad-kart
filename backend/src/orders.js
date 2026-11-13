@@ -20,7 +20,7 @@ import { sendPush } from './push.js';
 
 export const RING_S = 300; // the shop has 5 minutes to accept
 const FREE_DELIVERY_MIN = 199, DELIVERY_FEE = 20, MAX_LIVE = 2, MAX_STAFF = 5, MAX_OTP_TRIES = 5;
-const OPEN = ['placed', 'accepted', 'out'];
+const OPEN = ['placed', 'accepted', 'packed', 'out'];
 
 const rid = () => crypto.randomUUID();
 const orderNo = () => 'NK-' + String(Math.floor(100000 + Math.random() * 900000));
@@ -46,7 +46,7 @@ function orderOut(o, forCustomer, store) {
     itemsTotal: o.items_total, fee: o.fee, total: o.total, address: o.address, state: o.state, lat: o.lat, lng: o.lng,
     toName: o.to_name, toPhone: forCustomer ? o.to_phone : o.to_phone, buyerGstin: o.buyer_gstin, buyerBusiness: o.buyer_business,
     otp: forCustomer && o.status === 'out' ? o.otp : undefined, staffId: o.staff_id, payMode: o.pay_mode, billNo: o.bill_no || '',
-    reason: o.reason || '', createdAt: o.created_at, acceptedAt: o.accepted_at, outAt: o.out_at, deliveredAt: o.delivered_at, closedAt: o.closed_at,
+    reason: o.reason || '', createdAt: o.created_at, acceptedAt: o.accepted_at, packedAt: o.packed_at, outAt: o.out_at, deliveredAt: o.delivered_at, closedAt: o.closed_at,
     ringLeft: o.status === 'placed' ? Math.max(0, o.created_at + RING_S - now()) : 0,
     rider: o.status === 'out' && o.rider_at && now() - o.rider_at < 600 ? { lat: o.rider_lat, lng: o.rider_lng, ago: now() - o.rider_at } : null,
   };
@@ -125,7 +125,7 @@ export async function orderRoute(req, env, path, m) {
     const [sr, pr, lr, ur] = await env.DB.batch([
       env.DB.prepare('SELECT * FROM stores WHERE id = ? AND active = 1').bind(String(b.storeId || '')),
       env.DB.prepare(`SELECT * FROM products WHERE store_id = ? AND in_stock = 1 AND id IN (${baseIds.map(() => '?').join(',')})`).bind(String(b.storeId || ''), ...baseIds),
-      env.DB.prepare(`SELECT COUNT(*) AS n FROM orders WHERE customer_id = ? AND status IN ('placed','accepted','out')`).bind(uid),
+      env.DB.prepare(`SELECT COUNT(*) AS n FROM orders WHERE customer_id = ? AND status IN ('placed','accepted','packed','out')`).bind(uid),
       env.DB.prepare('SELECT id, deleted_at FROM users WHERE id = ?').bind(uid),
     ]);
     const s = sr.results[0];
@@ -295,30 +295,46 @@ export async function orderRoute(req, env, path, m) {
   if (path === '/v1/partner/orders' && m === 'GET') {
     if ((await expireOrders(env, s.id)).length) Object.assign(s, await env.DB.prepare('SELECT missed_date, missed_count FROM stores WHERE id = ?').bind(s.id).first());
     const tab = new URL(req.url).searchParams.get('tab') || 'new';
-    const where = { new: "status = 'placed'", packing: "status = 'accepted'", out: "status = 'out'", done: "status IN ('delivered','rejected','missed','cancelled')" }[tab];
+    const where = { new: "status = 'placed'", packing: "status IN ('accepted','packed')", out: "status = 'out'", done: "status IN ('delivered','rejected','missed','cancelled')" }[tab];
     if (!where) throw new HttpError(400, 'bad_tab');
     // Delivery-only staff see only orders given to them.
     const mineOnly = c.staff && !c.canOrders;
-    const { results } = await env.DB.prepare(`SELECT * FROM orders WHERE store_id = ? AND ${where} ${mineOnly ? 'AND staff_id = ?' : ''}
+    // Delivery-only staff: their packed orders show under "On the way" (ready to start) and out ones.
+    const whereMine = mineOnly && tab === 'out' ? "status IN ('packed','out')" : where;
+    const { results } = await env.DB.prepare(`SELECT * FROM orders WHERE store_id = ? AND ${whereMine} ${mineOnly ? 'AND staff_id = ?' : ''}
       AND created_at > ? ORDER BY created_at ${tab === 'done' ? 'DESC' : 'ASC'} LIMIT 50`).bind(s.id, ...(mineOnly ? [c.staff.id] : []), now() - 7 * 86400).all();
-    const counts = (await env.DB.prepare(`SELECT status, COUNT(*) AS n FROM orders WHERE store_id = ? AND status IN ('placed','accepted','out')
+    const counts = (await env.DB.prepare(`SELECT status, COUNT(*) AS n FROM orders WHERE store_id = ? AND status IN ('placed','accepted','packed','out')
       ${mineOnly ? 'AND staff_id = ?' : ''} GROUP BY status`).bind(s.id, ...(mineOnly ? [c.staff.id] : [])).all()).results;
+    // Staff chips show who is free: "Ramesh · on a delivery" (has a packed / out order), "Suresh · free".
     const staff = c.owner || c.canOrders
-      ? (await env.DB.prepare('SELECT * FROM staff WHERE store_id = ? AND removed_at IS NULL').bind(s.id).all()).results.map(staffOut) : [];
+      ? (await env.DB.prepare(`SELECT st.*, (SELECT COUNT(*) FROM orders o WHERE o.staff_id = st.id AND o.status IN ('packed','out')) AS busy
+          FROM staff st WHERE st.store_id = ? AND st.removed_at IS NULL`).bind(s.id).all()).results.map((x) => ({ ...staffOut(x), busy: x.busy > 0 })) : [];
     const mine = await env.DB.prepare(`SELECT COUNT(*) AS n FROM orders WHERE store_id = ? AND status = 'out' AND door = 1 AND ${c.staff ? 'staff_id = ?' : 'staff_id IS NULL'}`)
       .bind(s.id, ...(c.staff ? [c.staff.id] : [])).first();
     return json({ orders: results.map((o) => orderOut(o, false, s)), counts: Object.fromEntries(counts.map((x) => [x.status, x.n])), staff, myDoorOut: mine.n,
       missedToday: s.missed_date === istDate() ? s.missed_count : 0, missedLimit: MISSED_LIMIT });
   }
 
-  const act = path.match(/^\/v1\/partner\/orders\/([\w-]+)\/(accept|reject|send|deliver)$/);
+  const act = path.match(/^\/v1\/partner\/orders\/([\w-]+)\/(accept|reject|send|pack|out|deliver)$/);
   if (act && m === 'POST') {
     const [, id, what] = act;
     const b = await body(req);
     const o = await env.DB.prepare('SELECT * FROM orders WHERE id = ? AND store_id = ?').bind(id, s.id).first();
     if (!o) throw new HttpError(404, 'not_found');
     const t = now();
-    if (what !== 'deliver' && !c.canOrders) throw new HttpError(403, 'not_allowed');
+    if (what !== 'deliver' && what !== 'out' && !c.canOrders) throw new HttpError(403, 'not_allowed');
+    if (what === 'out') {
+      // The delivery person taps "Out for delivery" on their own phone (their location then goes to the customer).
+      if (o.status !== 'packed') throw new HttpError(409, o.status === 'out' ? 'already_out' : 'not_packed');
+      if (c.staff && !c.canOrders && o.staff_id !== c.staff.id) throw new HttpError(403, 'not_your_delivery');
+      const r = await env.DB.prepare("UPDATE orders SET status = 'out', out_at = ? WHERE id = ? AND status = 'packed' RETURNING *").bind(t, id).first();
+      await sendPush(env, o.customer_id, {
+        title: o.door ? `Order #${id} is on the way` : `Order #${id} is ready for pickup`,
+        body: `Your delivery code: ${o.otp}. Give it only after you get your items.`,
+        data: { type: 'order', id },
+      });
+      return json({ order: orderOut(r, false, s) });
+    }
     if (what === 'accept' || what === 'reject') {
       if (o.status !== 'placed' || o.created_at < t - RING_S) throw new HttpError(409, o.status === 'placed' ? 'too_late' : 'already_answered');
       const ok = what === 'accept';
@@ -329,7 +345,7 @@ export async function orderRoute(req, env, path, m) {
         : { title: `${s.name} couldn’t take your order`, body: `#${id} was not accepted${r.reason ? `: ${r.reason}` : ''}. Try another shop nearby.`, data: { type: 'order', id } });
       return json({ order: orderOut(r, false, s) });
     }
-    if (what === 'send') {
+    if (what === 'send' || what === 'pack') {
       if (o.status !== 'accepted') throw new HttpError(409, 'not_packing');
       const lines = JSON.parse(o.lines);
       const na = new Set((Array.isArray(b.na) ? b.na : []).map(Number));
@@ -346,9 +362,24 @@ export async function orderRoute(req, env, path, m) {
       let staffId = b.staffId ? String(b.staffId) : null;
       if (staffId && !(await env.DB.prepare('SELECT id FROM staff WHERE id = ? AND store_id = ? AND removed_at IS NULL').bind(staffId, s.id).first())) staffId = null;
       const otp = String(1000 + Math.floor(Math.random() * 9000));
-      const r = await env.DB.prepare(`UPDATE orders SET status = 'out', lines = ?, items_total = ?, fee = ?, total = ?, otp = ?, staff_id = ?, out_at = ?
-        WHERE id = ? AND status = 'accepted' RETURNING *`).bind(JSON.stringify(lines), itemsTotal, fee, itemsTotal + fee, otp, staffId, t, id).first();
+      const outNow = what === 'send' || !o.door; // pickup orders: packed = ready for pickup at once
+      const r = await env.DB.prepare(`UPDATE orders SET status = ?, lines = ?, items_total = ?, fee = ?, total = ?, otp = ?, staff_id = ?, packed_at = ?, out_at = ?
+        WHERE id = ? AND status = 'accepted' RETURNING *`).bind(outNow ? 'out' : 'packed', JSON.stringify(lines), itemsTotal, fee, itemsTotal + fee, otp, staffId, t, outNow ? t : null, id).first();
       const gone = lines.filter((l) => l.na);
+      if (!outNow) {
+        await sendPush(env, o.customer_id, {
+          title: `Order #${id} is packed`,
+          body: `${gone.length ? `${gone.map((l) => l.name).join(', ')} not available — new total ₹${itemsTotal + fee}. ` : ''}It leaves the shop soon.`,
+          data: { type: 'order', id },
+        });
+        if (staffId) {
+          const su = await env.DB.prepare('SELECT user_id FROM staff WHERE id = ?').bind(staffId).first();
+          // Data-only: the Partner app shows it with a "Start delivery" button.
+          if (su?.user_id) await sendPush(env, su.user_id, { title: '', body: '', dataOnly: true,
+            data: { type: 'deliver', id, title: `Deliver #${id} · collect ₹${itemsTotal + fee}`, body: o.address } });
+        }
+        return json({ order: orderOut(r, false, s) });
+      }
       await sendPush(env, o.customer_id, {
         title: o.door ? `Order #${id} is on the way` : `Order #${id} is ready for pickup`,
         body: `${gone.length ? `${gone.map((l) => l.name).join(', ')} not available — new total ₹${itemsTotal + fee}. ` : ''}Your delivery code: ${otp}. Give it only after you get your items.`,

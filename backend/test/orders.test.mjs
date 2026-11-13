@@ -136,3 +136,22 @@ test('live shop: details change waits for admin; approval asks to sign again', a
   // approve as if by admin (no admin account in tests): same SQL path is covered by the route below when admin
   DB.raw.prepare("UPDATE store_changes SET status = 'approved' WHERE id = ?").run(cid);
 });
+
+test('packed and out for delivery are two steps; staff shows busy', async () => {
+  const { DB, call } = await setup();
+  const st = (await call('POST', '/v1/partner/staff', { name: 'Ramesh', phone: '9123456789' }, 'owner')).json.staff;
+  DB.raw.prepare("INSERT INTO users (id, google_sub, email, name, app, created_at, updated_at) VALUES ('su', 'staff:x', '', 'Ramesh', 'staff', 1, 1)").run();
+  DB.raw.prepare("INSERT INTO sessions (id, user_id, created_at, last_seen) VALUES ('ssu', 'su', 1, 1)").run();
+  DB.raw.prepare('UPDATE staff SET user_id = ? WHERE id = ?').run('su', st.id);
+  const o = (await place(call, [{ id: 'atta', qty: 1 }])).json.order;
+  await call('POST', `/v1/partner/orders/${o.id}/accept`, {}, 'owner');
+  let r = await call('POST', `/v1/partner/orders/${o.id}/pack`, { staffId: st.id }, 'owner');
+  assert.equal(r.json.order.status, 'packed');
+  r = await call('GET', '/v1/partner/orders?tab=packing', null, 'owner');
+  assert.equal(r.json.staff[0].busy, true);
+  r = await call('GET', '/v1/partner/orders?tab=out', null, 'su', 'ssu');
+  assert.equal(r.json.orders[0].status, 'packed');
+  r = await call('POST', `/v1/partner/orders/${o.id}/out`, {}, 'su', 'ssu');
+  assert.equal(r.json.order.status, 'out');
+  assert.ok(r.json.order.packedAt && r.json.order.outAt);
+});

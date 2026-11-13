@@ -80,3 +80,17 @@ test('offline thela disappears at once, even when shops are cached; hand-added t
   const pr = await call('GET', '/v1/stores/th1/products');
   assert.deepEqual(pr.json.products.map((p) => p.id), ['p1']);
 });
+
+test('thela LIVE near you: customers within 500 m get one alert, not again for 2 hours', async () => {
+  const { DB, auth, call } = await setup();
+  const { alertNearby } = await import('../src/partner.js');
+  DB.raw.prepare("INSERT INTO customer_spots (user_id, lat, lng, alerts, updated_at) VALUES ('near', 28.7012, 77.1012, 1, 1), ('far', 28.75, 77.1, 1, 1), ('off', 28.7012, 77.1012, 0, 1)").run();
+  const s = { id: 'th1', name: 'Ramu Sabzi', owner_id: 'u1', live_lat: 28.7010, live_lng: 77.1010 };
+  const h = new Date((now() + 5.5 * 3600) * 1000).getUTCHours();
+  const n = await alertNearby({ DB }, s);
+  if (h >= 21 || h < 7) assert.equal(n, 0); else {
+    assert.equal(n, 1);
+    assert.equal(await alertNearby({ DB }, s), 0);
+  }
+  void auth; void call;
+});

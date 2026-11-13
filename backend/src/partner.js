@@ -657,7 +657,7 @@ export async function partnerRoute(req, env, path, m) {
     }
     // Going live again after the "5 missed orders" pause starts a fresh count for today. One round trip.
     const w = on ? env.DB.prepare('UPDATE stores SET live = 1, missed_count = 0 WHERE id = ?').bind(s.id)
-      : env.DB.prepare('UPDATE stores SET live = 0, live_lat = NULL, live_lng = NULL, live_at = NULL, moved_at = NULL WHERE id = ?').bind(s.id);
+      : env.DB.prepare('UPDATE stores SET live = 0, live_lat = NULL, live_lng = NULL, live_at = NULL, moved_at = NULL, alert_lat = NULL, alert_lng = NULL WHERE id = ?').bind(s.id);
     return json({ store: await writeAndRead(env, u.id, [w]) });
   }
 
@@ -677,6 +677,11 @@ export async function partnerRoute(req, env, path, m) {
     await env.DB.prepare(`UPDATE stores SET live_lat = ?, live_lng = ?, live_at = ?, moved_at = CASE WHEN ? THEN ? ELSE moved_at END,
         heading = COALESCE(?, heading), stale_pushed = 0 WHERE id = ?`)
       .bind(lat, lng, t, moved ? 1 : 0, t, moved ? heading : null, s.id).run();
+    // New area (first location after going LIVE, or 300 m from the last alert spot): tell customers within 500 m.
+    if (s.alert_lat == null || haversineM(s.alert_lat, s.alert_lng, lat, lng) >= 300) {
+      await env.DB.prepare('UPDATE stores SET alert_lat = ?, alert_lng = ? WHERE id = ?').bind(lat, lng, s.id).run();
+      await alertNearby(env, { ...s, live_lat: lat, live_lng: lng }).catch((e) => console.error(e));
+    }
     return json({ ok: true, live: true, fast });
   }
 
@@ -1006,4 +1011,29 @@ export async function staleThelas(env) {
     }
   }
   return results.length;
+}
+
+/**
+ * "Raju Sabzi Wala is LIVE near you": customers whose address is within 500 m, at most once per thela every
+ * 2 hours, at most 3 thela alerts a day per customer, and not at night (9 pm – 7 am IST).
+ */
+export async function alertNearby(env, s) {
+  const t = now();
+  const h = new Date((t + 5.5 * 3600) * 1000).getUTCHours();
+  if (h >= 21 || h < 7) return 0;
+  const d = 500 / 111000, dl = d / Math.max(Math.cos((s.live_lat * Math.PI) / 180), 0.2);
+  const { results } = await env.DB.prepare(`SELECT c.user_id, c.lat, c.lng FROM customer_spots c
+    WHERE c.alerts = 1 AND c.lat BETWEEN ? AND ? AND c.lng BETWEEN ? AND ? AND c.user_id != ?
+      AND NOT EXISTS (SELECT 1 FROM thela_alerts a WHERE a.user_id = c.user_id AND a.thela_id = ? AND a.at > ?)
+      AND (SELECT COUNT(*) FROM thela_alerts a WHERE a.user_id = c.user_id AND a.at > ?) < 3
+    LIMIT 300`).bind(s.live_lat - d, s.live_lat + d, s.live_lng - dl, s.live_lng + dl, s.owner_id || '', s.id, t - 7200, t - 86400).all();
+  const near = results.filter((c) => haversineM(c.lat, c.lng, s.live_lat, s.live_lng) <= 500);
+  if (!near.length) return 0;
+  await env.DB.batch(near.map((c) => env.DB.prepare('INSERT OR REPLACE INTO thela_alerts (user_id, thela_id, at) VALUES (?, ?, ?)').bind(c.user_id, s.id, t)));
+  for (const c of near) {
+    const m = Math.round(haversineM(c.lat, c.lng, s.live_lat, s.live_lng));
+    await sendPush(env, c.user_id, { title: `${s.name} is LIVE near you`, body: `${m} m from your address. See today's prices or call it to your street.`,
+      data: { type: 'thela_near', thelaId: s.id } });
+  }
+  return near.length;
 }
