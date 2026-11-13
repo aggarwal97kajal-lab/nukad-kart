@@ -11,6 +11,7 @@
 //   GET  /v1/admin/payments?status=CHECKING|ALL  (admin)
 //   POST /v1/admin/payments/:id/confirm          (admin)      money is in: pass starts
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
+import { rateLimit, clientIp, checkFields } from './guard.js';
 import { HttpError, json, body, now, verifySession, verifyMsg91, haversineM, THELA_STALE_S } from './index.js';
 import { sendPush, sendPushDetail, pushReady } from './push.js';
 import { productRoute, bulkUpsert } from './products.js';
@@ -327,7 +328,10 @@ export async function partnerRoute(req, env, path, m) {
     // Step 1: verified mobile number (MSG91 SMS code) + this phone's hardware id, for the one-trial rule.
     const { u, s } = await ctx(req, env);
     if (!env.MSG91_AUTHKEY) throw new HttpError(503, 'phone_check_not_configured');
+    await rateLimit(env, `pphone:${clientIp(req)}`, 10, 60);
+    await rateLimit(env, `pphoneu:${u.id}`, 5, 900);
     const b = await body(req);
+    checkFields('partner/phone', b, ['accessToken', 'phone']);
     const claimed = String(b.phone || '').replace(/\D/g, '').slice(-10);
     if (!/^[6-9]\d{9}$/.test(claimed)) throw new HttpError(400, 'bad_phone');
     const verified = await verifyMsg91(b.accessToken, env.MSG91_AUTHKEY);

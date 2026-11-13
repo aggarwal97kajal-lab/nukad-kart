@@ -157,7 +157,7 @@ Future<bool> googleSignInFlow(BuildContext context) async {
     if (!e.unavailable) {
       await googleAuth.signOut();
       if (context.mounted) {
-        showToast(context, e.code == 'email_used_by_partner' ? e.message : 'Sign-in was not accepted (${e.code}). Try again.');
+        showToast(context, const {'email_used_by_partner', 'slow_down'}.contains(e.code) ? e.message : 'Sign-in was not accepted (${e.code}). Try again.');
       }
       return false;
     }

@@ -389,6 +389,7 @@ const Map<String, String> hi = {
   'Who are you?': 'आप कौन हैं?',
   'Why are you leaving? (optional)': 'आप क्यों जा रहे हैं? (चाहें तो)',
   'Write a reason.': 'कारण लिखें।',
+  'Too many tries. Wait a minute and try again.': 'बहुत बार कोशिश हुई। एक मिनट रुककर फिर कोशिश करें।',
   'Wrong code. Check the SMS and try again.': 'ग़लत कोड। SMS देखकर फिर कोशिश करें।',
   'Yearly': 'साल का',
   'You are LIVE': 'आप लाइव हैं',

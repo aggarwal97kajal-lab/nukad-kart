@@ -190,7 +190,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
           if (!mounted) return;
           setState(() => _saving = false);
           showToast(context, e.message);
-          if (const {'phone_not_verified', 'phone_mismatch', 'phone_in_use'}.contains(e.code)) {
+          if (const {'phone_not_verified', 'phone_mismatch', 'phone_in_use', 'slow_down'}.contains(e.code)) {
             setState(() {
               _verifiedFor = null;
               _reqId = null;

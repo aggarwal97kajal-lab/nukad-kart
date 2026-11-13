@@ -51,6 +51,7 @@ class ApiError implements Exception {
         'docs_locked' => tr('Documents can’t be changed while Nukad team is checking them.'),
         'not_verified' => tr('Nukad team is still verifying your shop.'),
         'already_approved' => tr('Your shop is already approved. Contact support to change details.'),
+        'slow_down' => tr('Too many tries. Wait a minute and try again.'),
         'reason_required' => tr('Write a reason.'),
         'account_is_thela' => tr('This Google account is registered as a Thela. Choose Thela, or log in with another Google account.'),
         'account_is_shop' => tr('This Google account is registered as a Shop / Kirana. Choose Shop, or log in with another Google account.'),

@@ -258,7 +258,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         _checking = false;
         _err = e.unavailable && e.status != 0 ? 'Could not confirm the number right now. Try again later.' : e.message;
-        if (const {'phone_not_verified', 'phone_mismatch', 'phone_in_use'}.contains(e.code)) {
+        if (const {'phone_not_verified', 'phone_mismatch', 'phone_in_use', 'slow_down'}.contains(e.code)) {
           _reqId = null;
           code.clear();
         }

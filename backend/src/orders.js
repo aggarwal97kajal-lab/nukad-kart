@@ -18,6 +18,7 @@ import { HttpError, json, body, now, session, haversineM, verifyMsg91, signSessi
 import { ctx, offlineReason, istDate, MISSED_LIMIT } from './partner.js';
 import { sendPush } from './push.js';
 import { samePhoneOut } from './sessions.js';
+import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
 
 export const RING_S = 300; // the shop has 5 minutes to accept
 const FREE_DELIVERY_MIN = 199, DELIVERY_FEE = 20, MAX_LIVE = 2, MAX_STAFF = 5, MAX_OTP_TRIES = 5;
@@ -213,8 +214,11 @@ export async function orderRoute(req, env, path, m) {
 
   if (path === '/v1/staff/login' && m === 'POST') {
     if (!env.MSG91_AUTHKEY) throw new HttpError(503, 'phone_check_not_configured');
+    await rateLimit(env, `staff:${clientIp(req)}`, 10, 60);
     const b = await body(req);
+    checkFields('staff/login', b, ['phone', 'accessToken', 'device']);
     const p = phone10(b.phone);
+    await rateLimit(env, `staffp:${p}`, 5, 900);
     const verified = await verifyMsg91(b.accessToken, env.MSG91_AUTHKEY);
     // Strict: the SMS-verified number must be the staff number (no Google account behind a staff login).
     if (!verified || verified !== p) throw new HttpError(401, 'phone_mismatch');
@@ -230,7 +234,7 @@ export async function orderRoute(req, env, path, m) {
         env.DB.prepare('UPDATE staff SET user_id = ? WHERE id = ?').bind(uid, st.id),
       ]);
     }
-    const d = b.device || {};
+    const d = cleanDevice(b.device);
     const sid = rid();
     const dn = String(d.name || 'Partner app').slice(0, 60);
     const dp = String(d.platform || 'Android').slice(0, 30);

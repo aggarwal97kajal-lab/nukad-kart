@@ -20,6 +20,7 @@ import { sendPushDetail } from './push.js';
 import { callRoute, tellExpiredCalls } from './calls.js';
 import { orderRoute, tellMissedOrders } from './orders.js';
 import { samePhoneOut } from './sessions.js';
+import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
 import { chatRoute, cleanChats, ChatRoom } from './chat.js';
 export { ChatRoom };
 
@@ -254,7 +255,11 @@ async function route(req, env) {
   if (m === 'POST' && path === '/v1/auth/google') {
     const audiences = String(env.GOOGLE_CLIENT_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
     if (!audiences.length) throw new HttpError(503, 'google_not_configured');
-    const { idToken, device, app: appRaw } = await body(req);
+    await rateLimit(env, `google:${clientIp(req)}`, 10, 60);
+    const b = await body(req);
+    checkFields('auth/google', b, ['idToken', 'app', 'device']);
+    const { idToken, app: appRaw } = b;
+    const device = cleanDevice(b.device);
     const app = appRaw === 'partner' ? 'partner' : 'customer';
     const c = await verifyGoogleIdToken(idToken, audiences);
     const t = now();
@@ -298,7 +303,11 @@ async function route(req, env) {
   if (path === '/v1/me/phone' && m === 'POST') {
     const uid = await auth(req, env);
     if (!env.MSG91_AUTHKEY) throw new HttpError(503, 'phone_check_not_configured');
-    const { accessToken, phone } = await body(req);
+    await rateLimit(env, `phone:${clientIp(req)}`, 10, 60);
+    await rateLimit(env, `phoneu:${uid}`, 5, 900);
+    const pb = await body(req);
+    checkFields('me/phone', pb, ['accessToken', 'phone']);
+    const { accessToken, phone } = pb;
     const claimed = String(phone || '').replace(/\D/g, '').slice(-10);
     if (claimed.length !== 10) throw new HttpError(400, 'bad_phone');
     const verified = await verifyMsg91(accessToken, env.MSG91_AUTHKEY);
@@ -475,7 +484,12 @@ export default {
     try {
       return await route(req, env);
     } catch (e) {
-      if (e instanceof HttpError) return json({ error: e.code, detail: e.message !== e.code ? e.message : undefined }, e.status);
+      if (e instanceof HttpError) {
+        // Why a sign-in was refused (token issuer, SMS service message…) stays in the server log only.
+        if (e.status === 401 && e.message !== e.code) console.warn('auth_refused', e.code, e.message);
+        const detail = e.status !== 401 && e.message !== e.code ? e.message : undefined;
+        return json({ error: e.code, detail }, e.status);
+      }
       console.error(e);
       return json({ error: 'server_error' }, 500);
     }
@@ -494,6 +508,8 @@ export default {
 export async function cleanOld(env) {
   const t = now();
   await env.DB.batch([
+    // Rate limit counters are only needed for their window (at most 15 minutes).
+    env.DB.prepare('DELETE FROM auth_hits WHERE at < ?').bind(t - 86400),
     // "Call to my street": no-show strikes count for 30 days; keep 90 for disputes, then delete.
     env.DB.prepare('DELETE FROM calls WHERE created_at < ?').bind(t - 90 * 86400),
     // Thela alert history is only for "not again within 2 hours / 3 a day".
