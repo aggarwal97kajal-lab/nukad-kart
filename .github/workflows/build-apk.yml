@@ -34,6 +34,9 @@ jobs:
       - name: Microphone permission for voice search
         run: python3 tool/patch_manifest.py
 
+      - name: Phone id channel (one phone = one entry in Logged-in devices)
+        run: python3 tool/patch_activity.py
+
       - name: Keep map library classes in release build
         run: cp android_extra/proguard-rules.pro android/app/proguard-rules.pro
 

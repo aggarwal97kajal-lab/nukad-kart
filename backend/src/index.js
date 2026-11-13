@@ -19,6 +19,7 @@ import { productOut } from './products.js';
 import { sendPushDetail } from './push.js';
 import { callRoute, tellExpiredCalls } from './calls.js';
 import { orderRoute, tellMissedOrders } from './orders.js';
+import { samePhoneOut } from './sessions.js';
 import { chatRoute, cleanChats, ChatRoom } from './chat.js';
 export { ChatRoom };
 
@@ -281,14 +282,7 @@ async function route(req, env) {
     const devName = String(d.name || 'Unknown phone').slice(0, 60);
     const devPlatform = String(d.platform || '').slice(0, 40);
     const devId = String(d.id || '').slice(0, 64) || null;
-    if (devId) {
-      // Same phone logging in again: its old session is replaced, not listed twice.
-      // Older sessions made before phones sent an id are matched by model + Android version.
-      stmts.push(env.DB.prepare(
-        `UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL
-         AND (device_id = ? OR (device_id IS NULL AND device = ? AND platform = ?))`,
-      ).bind(t, user.id, devId, devName, devPlatform));
-    }
+    if (devId) stmts.push(samePhoneOut(env, t, user.id, devId, devName, devPlatform));
     stmts.push(env.DB.prepare(
       'INSERT INTO sessions (id, user_id, device, platform, city, created_at, last_seen, device_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     ).bind(sid, user.id, devName, devPlatform, String(req.cf?.city || '').slice(0, 60) || null, t, t, devId));
@@ -510,3 +504,4 @@ export async function cleanOld(env) {
     env.DB.prepare('DELETE FROM push_tokens WHERE updated_at < ?').bind(t - 180 * 86400),
   ]);
 }
+

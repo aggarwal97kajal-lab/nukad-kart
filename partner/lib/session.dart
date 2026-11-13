@@ -54,6 +54,12 @@ class Session extends ChangeNotifier {
     }
   }
 
+  /// Id sent with a login: the Android ID ("a-…"), so a reinstall does not add a second entry for the same phone.
+  Future<String> _loginId() async {
+    final hw = await deviceId();
+    return hw.isNotEmpty ? 'pa-$hw' : 'partner-${_p!.getString('installId')}';
+  }
+
   Future<void> _initGoogle() async {
     if (_googleReady) return;
     await GoogleSignIn.instance.initialize(serverClientId: googleWebClientId);
@@ -66,7 +72,7 @@ class Session extends ChangeNotifier {
     final r = await api.call('POST', '/v1/staff/login', {
       'phone': phone10,
       'accessToken': accessToken,
-      'device': {'name': 'Partner app (staff)', 'platform': 'Android', 'id': 'partner-${_p!.getString('installId')}'},
+      'device': {'name': 'Partner app (staff)', 'platform': 'Android', 'id': await _loginId()},
     });
     api.token = '${r['token']}';
     email = '';
@@ -92,7 +98,7 @@ class Session extends ChangeNotifier {
       r = await api.call('POST', '/v1/auth/google', {
       'app': 'partner',
       'idToken': idToken,
-      'device': {'name': 'Partner app', 'platform': 'Android', 'id': 'partner-${_p!.getString('installId')}'},
+      'device': {'name': 'Partner app', 'platform': 'Android', 'id': await _loginId()},
       });
     } on ApiError {
       // Let the person pick another Google account next time.

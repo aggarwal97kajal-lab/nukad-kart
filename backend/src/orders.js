@@ -17,6 +17,7 @@
 import { HttpError, json, body, now, session, haversineM, verifyMsg91, signSession, RADIUS_MAX_M } from './index.js';
 import { ctx, offlineReason, istDate, MISSED_LIMIT } from './partner.js';
 import { sendPush } from './push.js';
+import { samePhoneOut } from './sessions.js';
 
 export const RING_S = 300; // the shop has 5 minutes to accept
 const FREE_DELIVERY_MIN = 199, DELIVERY_FEE = 20, MAX_LIVE = 2, MAX_STAFF = 5, MAX_OTP_TRIES = 5;
@@ -231,8 +232,12 @@ export async function orderRoute(req, env, path, m) {
     }
     const d = b.device || {};
     const sid = rid();
-    await env.DB.prepare('INSERT INTO sessions (id, user_id, device, platform, city, created_at, last_seen, device_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(sid, uid, String(d.name || 'Partner app').slice(0, 60), String(d.platform || 'Android').slice(0, 30), null, t, t, String(d.id || '').slice(0, 80) || null).run();
+    const dn = String(d.name || 'Partner app').slice(0, 60);
+    const dp = String(d.platform || 'Android').slice(0, 30);
+    const di = String(d.id || '').slice(0, 80) || null;
+    const ins = env.DB.prepare('INSERT INTO sessions (id, user_id, device, platform, city, created_at, last_seen, device_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(sid, uid, dn, dp, null, t, t, di);
+    await env.DB.batch(di ? [samePhoneOut(env, t, uid, di, dn, dp), ins] : [ins]);
     return json({ token: await signSession(uid, env.SESSION_SECRET, 30, sid), staff: staffOut({ ...st, user_id: uid }) });
   }
 
