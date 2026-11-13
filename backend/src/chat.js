@@ -191,7 +191,7 @@ export async function chatRoute(req, env, path, m) {
     if (stmts.length) await env.DB.batch(stmts);
     for (const c of results) {
       await broadcast(env, c.id, { type: 'message', from: 'thela', text, at: t });
-      await sendPush(env, c.customer_id, { title: s.name, body: text, data: { type: 'chat', thelaId: s.id } });
+      await chatPush(env, c.customer_id, s, text);
     }
     await tellThelaChats(env, s);
     return json({ ok: true, sent: results.length });
@@ -229,7 +229,7 @@ export async function chatRoute(req, env, path, m) {
       env.DB.prepare('UPDATE chats SET last_at = ?, thela_read_at = ? WHERE id = ?').bind(t, t, chat.id),
     ]);
     await broadcast(env, chat.id, { type: 'message', from: 'thela', text, at: t });
-    await sendPush(env, chat.customer_id, { title: s.name, body: text, data: { type: 'chat', thelaId: s.id } });
+    await chatPush(env, chat.customer_id, s, text);
     return json({ messages: await messages(env, chat.id), blocked: null });
   }
   return null;
@@ -270,4 +270,11 @@ export async function tellThelaChats(env, s) {
       body: unread.slice(0, 3).map((r) => `${r.address ? `${r.address}: ` : ''}"${String(r.last || '').slice(0, 40)}"`).join(' · ') + (unread.length > 3 ? ` · +${unread.length - 3} more` : '') }
       : { type: 'chats', count: 0 },
   });
+}
+
+/** A thela's reply as a push, unless the customer turned chat notifications off. */
+async function chatPush(env, customerId, s, text) {
+  const p = await env.DB.prepare('SELECT chat_alerts FROM customer_spots WHERE user_id = ?').bind(customerId).first();
+  if (p && !p.chat_alerts) return;
+  await sendPush(env, customerId, { title: s.name, body: text, data: { type: 'chat', thelaId: s.id } });
 }

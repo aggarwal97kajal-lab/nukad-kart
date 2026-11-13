@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../services/api.dart';
 import '../services/push.dart';
@@ -113,9 +114,9 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
       await api.chatAction(s.apiToken, widget.thela.id, v, reason: v == 'report' ? 'Reported by customer' : '');
       if (mounted) {
         showToast(context, switch (v) {
-          'report' => 'Reported. Thanks — the chat is closed.',
-          'unblock' => 'Unblocked.',
-          _ => 'Blocked. They can’t message you.',
+          'report' => t('Reported. Thanks — the chat is closed.'),
+          'unblock' => t('Unblocked.'),
+          _ => t('Blocked. They can’t message you.'),
         });
       }
       _load();
@@ -134,26 +135,26 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
           PopupMenuButton<String>(
             onSelected: _menu,
             itemBuilder: (_) => [
-              if (blocked == 'customer') PopupMenuItem(value: 'unblock', child: Text('Unblock')) else PopupMenuItem(value: 'block', child: Text('Block')),
-              PopupMenuItem(value: 'report', child: Text('Report', style: TextStyle(color: kRed))),
+              if (blocked == 'customer') PopupMenuItem(value: 'unblock', child: Text(t('Unblock'))) else PopupMenuItem(value: 'block', child: Text(t('Block'))),
+              PopupMenuItem(value: 'report', child: Text(t('Report'), style: TextStyle(color: kRed))),
             ],
           ),
         ],
       ),
       body: !s.signedIn
-          ? Center(child: Text('Log in to chat with this thela.', style: body(14, color: kMute)))
+          ? Center(child: Text(t('Log in to chat with this thela.'), style: body(14, color: kMute)))
           : Column(children: [
               // Today's prices first: most questions ("matar hai?", "kitne ka?") are answered here.
               _Prices(thelaId: widget.thela.id),
               if (busy >= 2)
                 Padding(
                   padding: EdgeInsets.fromLTRB(12, 6, 12, 0),
-                  child: NoteBox('${widget.thela.name.split(' ').first} is answering $busy people. Replies may take a few minutes — or tap “Call to my street”.',
+                  child: NoteBox(tr('{0} is answering {1} people. Replies may take a few minutes — or tap “Call to my street”.', [widget.thela.name.split(' ').first, busy]),
                       icon: Icons.schedule, color: kAmb, bg: kAmbBg),
                 ),
               Padding(
                 padding: EdgeInsets.all(8),
-                child: Text('Chat clears after 24 hours · Phone numbers are hidden', style: body(11.5, color: kMute)),
+                child: Text(t('Chat clears after 24 hours · Phone numbers are hidden'), style: body(11.5, color: kMute)),
               ),
               Expanded(
                 child: ListView.builder(
@@ -180,10 +181,10 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
                   padding: EdgeInsets.all(14),
                   child: blocked == 'customer'
                       ? Row(children: [
-                          Expanded(child: Text('You blocked this chat.', style: body(13, color: kMute))),
-                          OutlinedButton(onPressed: () => _menu('unblock'), child: Text('Unblock')),
+                          Expanded(child: Text(t('You blocked this chat.'), style: body(13, color: kMute))),
+                          OutlinedButton(onPressed: () => _menu('unblock'), child: Text(t('Unblock'))),
                         ])
-                      : Text('This chat is closed.', style: body(13, color: kMute)),
+                      : Text(t('This chat is closed.'), style: body(13, color: kMute)),
                 )
               else
                 SafeArea(
@@ -199,7 +200,7 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
                           maxLines: 3,
                           decoration: InputDecoration(
                             counterText: '',
-                            hintText: 'Ask about items or price',
+                            hintText: t('Ask about items or price'),
                             filled: true,
                             fillColor: kCard,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -232,7 +233,7 @@ class _Prices extends StatelessWidget {
           color: kCard,
           padding: EdgeInsets.fromLTRB(12, 8, 0, 8),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Today’s prices · check before you ask', style: body(12, color: kMute, weight: FontWeight.w700)),
+            Text(t('Today’s prices · check before you ask'), style: body(12, color: kMute, weight: FontWeight.w700)),
             SizedBox(height: 6),
             SizedBox(
               height: 74,

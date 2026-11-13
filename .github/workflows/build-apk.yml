@@ -63,7 +63,7 @@ jobs:
         run: flutter test
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-name=0.9.${{ github.run_number }} --build-number=${{ github.run_number }} --dart-define=APP_VERSION=0.9.${{ github.run_number }}
 
       - name: Show signing certificate (must match Firebase SHA-1 93:52:A2:10…)
         run: |

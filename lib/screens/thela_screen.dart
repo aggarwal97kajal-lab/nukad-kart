@@ -104,14 +104,14 @@ class _ThelaView extends StatelessWidget {
             Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: switch (lv.status) {
-                ThelaStatus.standing => NoteBox('Standing here now. The pin moves when the thela moves.',
+                ThelaStatus.standing => NoteBox(t('Standing here now. The pin moves when the thela moves.'),
                     icon: Icons.check_circle_outline, color: kGText, bg: kPillBg),
-                ThelaStatus.moving => NoteBox('On the move. The pin updates every few seconds.',
+                ThelaStatus.moving => NoteBox(t('On the move. The pin updates every few seconds.'),
                     icon: Icons.directions_walk, color: kGText, bg: kPillBg),
-                ThelaStatus.wasHere => NoteBox('Location hasn’t updated for a few minutes. The thela may have moved on.',
+                ThelaStatus.wasHere => NoteBox(t('Location hasn’t updated for a few minutes. The thela may have moved on.'),
                     icon: Icons.history, color: kAmb, bg: kAmbBg),
                 ThelaStatus.notAvailable => NoteBox(
-                    'Not within 500 m right now. You’ll get a notification when it’s back near you.',
+                    t('Not within 500 m right now. You’ll get a notification when it’s back near you.'),
                     icon: Icons.notifications_none),
               },
             ),
@@ -125,13 +125,13 @@ class _ThelaView extends StatelessWidget {
                 SizedBox(height: 12),
                 CallThelaCard(thela: th, live: lv.status == ThelaStatus.standing || lv.status == ThelaStatus.moving),
                 SizedBox(height: 8),
-                PrimaryButton('Chat with ${th.name.split(' ').first}', outline: true,
+                PrimaryButton(tr('Chat with {0}', [th.name.split(' ').first]), outline: true,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ThelaChatScreen(thela: th)))),
                 SizedBox(height: 16),
                 Text(t('Today’s prices'), style: head(16)),
                 SizedBox(height: 8),
                 if (th.items.isEmpty)
-                  Text('This thela hasn’t added today’s prices yet.', style: body(13, color: kMute))
+                  Text(t('This thela hasn’t added today’s prices yet.'), style: body(13, color: kMute))
                 else
                   CardBox(
                     padding: EdgeInsets.symmetric(horizontal: 14, vertical: 2),
@@ -157,8 +157,7 @@ class _ThelaView extends StatelessWidget {
                   ),
                 SizedBox(height: 12),
                 NoteBox(
-                  'No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukad Kart. '
-                  'Phone numbers are never shared.',
+                  t('No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukad Kart. Phone numbers are never shared.'),
                   color: kBlu,
                   bg: kBluBg,
                 ),

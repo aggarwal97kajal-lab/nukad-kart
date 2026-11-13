@@ -5,6 +5,7 @@ import 'live_setup.dart';
 import 'calls_card.dart';
 import 'chats.dart';
 import 'staff.dart';
+import 'legal.dart';
 import 'phone.dart';
 import '../thela_location.dart';
 import '../api.dart';
@@ -123,6 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'out') session.signOut();
+                if (v == 'terms') Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen.terms()));
+                if (v == 'privacy') Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen.privacy()));
                 if (v == 'staff') Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffScreen()));
                 if (v == 'details') Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
                 if (v == 'number') Navigator.push(context, MaterialPageRoute(builder: (_) => const PhoneScreen(change: true)));
@@ -136,6 +139,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 PopupMenuItem(value: 'number', child: Text(tr('Change mobile number'))),
                 if (s['kind'] != 'thela') PopupMenuItem(value: 'staff', child: Text(tr('Staff'))),
                 PopupMenuItem(value: 'agreement', child: Text(tr('Partner agreement'))),
+                PopupMenuItem(value: 'terms', child: Text(tr('Partner terms'))),
+                PopupMenuItem(value: 'privacy', child: Text(tr('Privacy Policy'))),
                 PopupMenuItem(value: 'out', child: Text(tr('Log out'))),
                 PopupMenuItem(value: 'delete', child: Text(tr('Delete account'), style: TextStyle(color: kRed))),
               ],

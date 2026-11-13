@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../services/api.dart';
 import '../services/push.dart';
@@ -64,7 +65,7 @@ class _CallThelaCardState extends State<CallThelaCard> {
   Future<void> _call() async {
     final s = AppScope.read(context);
     if (!s.signedIn || s.apiToken.isEmpty) {
-      showToast(context, 'Log in to call a thela to your street.');
+      showToast(context, t('Log in to call a thela to your street.'));
       return;
     }
     final a = s.current;
@@ -74,14 +75,14 @@ class _CallThelaCardState extends State<CallThelaCard> {
       builder: (ctx) => Padding(
         padding: EdgeInsets.fromLTRB(18, 18, 18, 24),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Call ${widget.thela.name} to your street?', style: head(17)),
+          Text(tr('Call {0} to your street?', [widget.thela.name]), style: head(17)),
           SizedBox(height: 8),
           Row(children: [Icon(Icons.location_on_outlined, color: kMute, size: 18), SizedBox(width: 6), Expanded(child: Text(a.short, style: body(14, weight: FontWeight.w700)))]),
           SizedBox(height: 8),
-          Text('The thela sees this address, not your name or number. It has 3 minutes to answer. Pay the seller in person.',
+          Text(t('The thela sees this address, not your name or number. It has 3 minutes to answer. Pay the seller in person.'),
               style: body(12.5, color: kMute)),
           SizedBox(height: 14),
-          PrimaryButton('Call to my street', onTap: () => Navigator.pop(ctx, true)),
+          PrimaryButton(t('Call to my street'), onTap: () => Navigator.pop(ctx, true)),
         ]),
       ),
     );
@@ -117,17 +118,17 @@ class _CallThelaCardState extends State<CallThelaCard> {
     if (mine && status == 'waiting') {
       final left = ((c['waitLeft'] as num?) ?? 0).toInt() - DateTime.now().difference(_waitingSince).inSeconds;
       return _box(
-        Icons.hourglass_top, 'Waiting for $first…',
-        'Sent to ${c['address']}. ${left > 0 ? '${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')} left to answer.' : 'Checking…'}',
+        Icons.hourglass_top, tr('Waiting for {0}…', [first]),
+        '${tr('Sent to {0}.', [c['address']])} ${left > 0 ? tr('{0} left to answer.', ['${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')}']) : t('Checking…')}',
         kAmb, kAmbBg,
-        TextButton(onPressed: busy ? null : _cancel, child: Text('Cancel')),
+        TextButton(onPressed: busy ? null : _cancel, child: Text(t('Cancel'))),
       );
     }
     if (mine && status == 'coming') {
       final d = widget.thela.distanceM;
       final mins = (d / 60).ceil().clamp(1, 30);
-      return _box(Icons.directions_walk, '$first is coming', 'About $mins min · watch the pin on the map. Pay the seller directly.', kGText, kPillBg,
-          TextButton(onPressed: busy ? null : _cancel, child: Text('I don’t need it now')));
+      return _box(Icons.directions_walk, tr('{0} is coming', [first]), tr('About {0} min · watch the pin on the map. Pay the seller directly.', [mins]), kGText, kPillBg,
+          TextButton(onPressed: busy ? null : _cancel, child: Text(t('I don’t need it now'))));
     }
     final failed = mine && (status == 'declined' || status == 'expired');
     final paused = blockedUntil * 1000 > DateTime.now().millisecondsSinceEpoch;
@@ -137,8 +138,8 @@ class _CallThelaCardState extends State<CallThelaCard> {
           padding: EdgeInsets.only(bottom: 10),
           child: NoteBox(
               paused
-                  ? '$first came but couldn’t find you. This happened $strikes times, so calling thelas is paused for 7 days.'
-                  : '$first came but couldn’t find you. This is $strikes of $strikesMax — at $strikesMax, calling thelas is paused for 7 days.',
+                  ? tr('{0} came but couldn’t find you. This happened {1} times, so calling thelas is paused for 7 days.', [first, strikes])
+                  : tr('{0} came but couldn’t find you. This is {1} of {2} — at {2}, calling thelas is paused for 7 days.', [first, strikes, strikesMax]),
               icon: Icons.report_gmailerrorred,
               color: kRed,
               bg: kRedBg),
@@ -146,14 +147,14 @@ class _CallThelaCardState extends State<CallThelaCard> {
       if (failed)
         Padding(
           padding: EdgeInsets.only(bottom: 10),
-          child: NoteBox('$first can’t come right now. Try again later, or call another thela nearby.', icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
+          child: NoteBox(tr('{0} can’t come right now. Try again later, or call another thela nearby.', [first]), icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
         ),
       if (paused)
-        NoteBox('Calling thelas is paused until ${_date(blockedUntil)} because thelas came and found nobody $strikesMax times.', icon: Icons.block)
+        NoteBox(tr('Calling thelas is paused until {0} because thelas came and found nobody {1} times.', [_date(blockedUntil), strikesMax]), icon: Icons.block)
       else if (widget.live)
-        PrimaryButton(busy ? 'Calling…' : 'Call to my street', onTap: busy ? null : _call)
+        PrimaryButton(busy ? t('Calling…') : t('Call to my street'), onTap: busy ? null : _call)
       else
-        NoteBox('You can call this thela when it is LIVE near you.', icon: Icons.info_outline),
+        NoteBox(t('You can call this thela when it is LIVE near you.'), icon: Icons.info_outline),
     ]);
   }
 

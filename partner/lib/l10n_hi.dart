@@ -785,4 +785,9 @@ const Map<String, String> hi = {
   'Out for delivery. The customer sees you on the map.': 'डिलीवरी के लिए निकले। ग्राहक आपको नक्शे पर देख रहा है।',
   'Sharing your location with the customer': 'आपकी लोकेशन ग्राहक को दिख रही है',
   'Map not available': 'नक्शा उपलब्ध नहीं',
+  'By continuing you agree to the ': 'आगे बढ़कर आप सहमत होते हैं: ',
+  ' and ': ' और ',
+  'Nukad Kart Partner Terms': 'Nukad Kart पार्टनर शर्तें',
+  'Privacy Policy': 'प्राइवेसी पॉलिसी',
+  'Partner terms': 'पार्टनर शर्तें',
 };

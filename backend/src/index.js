@@ -366,8 +366,8 @@ async function route(req, env) {
     const b = await body(req);
     const lat = Number(b.lat), lng = Number(b.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'bad_location');
-    await env.DB.prepare('INSERT OR REPLACE INTO customer_spots (user_id, lat, lng, alerts, updated_at) VALUES (?, ?, ?, ?, ?)')
-      .bind(uid, lat, lng, b.thelaAlerts === false ? 0 : 1, now()).run();
+    await env.DB.prepare('INSERT OR REPLACE INTO customer_spots (user_id, lat, lng, alerts, chat_alerts, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(uid, lat, lng, b.thelaAlerts === false ? 0 : 1, b.chatAlerts === false ? 0 : 1, now()).run();
     return json({ ok: true });
   }
 

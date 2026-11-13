@@ -119,7 +119,7 @@ class AccountTab extends StatelessWidget {
               _Row(icon: Icons.logout, title: t('Log out'), onTap: () => _logout(context)),
             ]),
           const SizedBox(height: 12),
-          Text('Nukad Kart · v0.8', style: body(11.5, color: kMute)),
+          Text('Nukad Kart · v${const String.fromEnvironment('APP_VERSION', defaultValue: 'dev')}', style: body(11.5, color: kMute)),
         ]),
       ),
     ]);
@@ -162,15 +162,15 @@ class AccountTab extends StatelessWidget {
 
 /// Sends a test push to this phone and says exactly what happened (to find why notifications don't arrive).
 Future<void> _testPush(BuildContext context, AppState s) async {
-  showToast(context, 'Sending a test…');
+  showToast(context, t('Sending a test…'));
   String text;
   try {
     await setupPush(s.apiToken, (_, __, ___) {}, force: true);
     final r = await api.pushTest(s.apiToken);
     final errs = ((r['errors'] as List?) ?? []).join('\n');
     text = (r['sent'] ?? 0) > 0
-        ? 'Sent to ${r['sent']} of ${r['phones']} phones. It should appear in a few seconds.'
-        : 'Not sent. $errs';
+        ? tr('Sent to {0} of {1} phones. It should appear in a few seconds.', [r['sent'], r['phones']])
+        : '${t('Not sent.')} $errs';
   } on ApiException catch (e) {
     text = e.message;
   }
@@ -179,7 +179,7 @@ Future<void> _testPush(BuildContext context, AppState s) async {
   await showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text('Test notification'),
+      title: Text(t('Test notification')),
       content: SelectableText(text),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('OK'))],
     ),

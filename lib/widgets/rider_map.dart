@@ -107,7 +107,7 @@ class _RiderMapState extends State<RiderMap> {
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(color: Color(0xFF21331B), borderRadius: BorderRadius.circular(12)),
                   child: Text(
-                      d == null ? 'On the way from ${widget.storeName}' : 'On the way · ${d.round()} m away · about ${(d / 250).ceil().clamp(1, 30)} min',
+                      d == null ? tr('On the way from {0}', [widget.storeName]) : tr('On the way · {0} m away · about {1} min', [d.round(), (d / 250).ceil().clamp(1, 30)]),
                       maxLines: 2,
                       style: body(11.5, color: kBrand, weight: FontWeight.w800)),
                 ),

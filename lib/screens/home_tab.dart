@@ -53,7 +53,7 @@ class _HomeTabState extends State<HomeTab> {
     _at = key;
     WidgetsBinding.instance.addPostFrameCallback((_) => LiveData.instance.loadFor(s.current.lat, s.current.lng));
     // "A thela is LIVE near you" alerts are for this address.
-    if (s.signedIn && s.apiToken.isNotEmpty) api.spot(s.apiToken, s.current.lat, s.current.lng, true).catchError((_) {});
+    s.sendSpot();
   }
 
   Future<void> _pull(AppState s) => LiveData.instance.loadFor(s.current.lat, s.current.lng, force: true);

@@ -70,7 +70,7 @@ class _OrderScreenState extends State<OrderScreen> {
           _hero(o),
         if (o.unavailable.isNotEmpty) ...[
           SizedBox(height: 12),
-          NoteBox('${st.name} didn’t have ${o.unavailable.join(', ')}. Removed from your order — new total ${rupees(o.payable)}.',
+          NoteBox(tr('{0} didn’t have {1}. Removed from your order — new total {2}.', [st.name, o.unavailable.join(', '), rupees(o.payable)]),
               icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
         ],
         if (o.otp != null && o.isOpen) ...[

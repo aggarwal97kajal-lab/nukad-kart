@@ -489,7 +489,7 @@ class BookmarksScreen extends StatelessWidget {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(st.name, style: head(15)),
-                    Text('${st.distanceM} m · ★ ${st.rating}', style: body(12, color: kMute)),
+                    Text('${st.distanceM} m · ${st.ratingText}', style: body(12, color: kMute)),
                   ]),
                 ),
                 IconButton(onPressed: () => s.toggleBookmark(st.id), icon: Icon(Icons.bookmark, color: kG)),
@@ -677,16 +677,26 @@ class NotificationPrefsScreen extends StatelessWidget {
       CardBox(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: Column(children: [
-          for (final e in s.notifPrefs.entries)
-            SwitchListTile(
-              value: e.value,
-              title: Text(e.key, style: body(14.5, weight: FontWeight.w600)),
-              onChanged: (v) => s.setNotif(e.key, v),
-            ),
+          SwitchListTile(
+            value: true,
+            onChanged: null,
+            title: Text(t('Order updates'), style: body(14.5, weight: FontWeight.w600)),
+            subtitle: Text(t('Always on (needed for the delivery code)'), style: body(12, color: kMute)),
+          ),
+          SwitchListTile(
+            value: s.thelaAlerts,
+            onChanged: (v) => s.setNotif('Thela LIVE near me', v),
+            title: Text(t('Thela LIVE near me'), style: body(14.5, weight: FontWeight.w600)),
+            subtitle: Text(t('At most 3 a day · never 9 pm – 7 am'), style: body(12, color: kMute)),
+          ),
+          SwitchListTile(
+            value: s.chatAlerts,
+            onChanged: (v) => s.setNotif('Chat messages', v),
+            title: Text(t('Chat messages'), style: body(14.5, weight: FontWeight.w600)),
+            subtitle: Text(t('Replies from thelas'), style: body(12, color: kMute)),
+          ),
         ]),
       ),
-      const SizedBox(height: 10),
-      Text('Order updates can’t be fully turned off while an order is open.', style: body(12, color: kMute)),
     ]);
   }
 }
@@ -702,8 +712,8 @@ class FaqScreen extends StatelessWidget {
     ['How do I delete my account?', 'Account → Account privacy → Request to delete account. Pick a reason and confirm. Your profile, number and addresses are deleted from our servers; order and complaint records are kept as the law requires.'],
     ['What if the store doesn’t accept?', 'If the store doesn’t accept within 5 minutes, the order is cancelled automatically. It is not counted against you.'],
     ['Can I order from two shops together?', 'No. One cart holds items from one shop. Adding from another shop asks you to start a new cart.'],
-    ['Why does a thela show “Moving away” or “Not available”?', 'Thelas move. “Here now” means the seller is inside 500 m of your address and you can see them on the map. “Moving away” means they are past 400 m and getting further. “Not available” means they left your 500 m; the map stops and you get a notification when they come back. Their location is shown only while they are Live.'],
-    ['How do I order from a thela?', 'Open Moving sellers, then call or WhatsApp the seller and pay in person. You can also request them for tomorrow.'],
+    ['What do “LIVE · Standing here”, “LIVE · Moving” and “Was here” mean?', 'Thelas move. “LIVE” means the seller’s phone sent its location in the last few minutes. “Was here 5 min ago” means it has not updated for a while. After 10 minutes without location the thela is hidden. Their location is shown only while they are Live.'],
+    ['How do I buy from a thela?', 'Open Moving sellers, pick a thela and see today’s prices. Tap “Call to my street” to ask it to come to your address, or chat with the seller. You pay the seller in person. Phone numbers are never shared.'],
     ['Who gives refunds?', 'The store. Nukad Kart passes your complaint to the store and records it, and can suspend stores at fault.'],
     ['Why was my account blocked?', '3 orders not taken (or cancelled after the store accepted) in 90 days block ordering. You can appeal to the grievance officer.'],
   ];
@@ -990,6 +1000,10 @@ class TermsScreen extends StatelessWidget {
     ['Payment', 'You pay the store or seller directly at delivery or pickup — cash or their UPI. Nukad Kart does not collect payment and gives no refunds; any refund comes from the store. A ₹20 delivery fee below ₹199 is charged by the store.'],
     ['Orders and cancelling', 'A store has 5 minutes to accept, otherwise the order is cancelled. You can cancel while the order is Placed or Accepted. Cancelling after the store accepted, or not taking an order, counts towards the limit: 3 in 90 days blocks ordering on your Google account, phone and number.'],
     ['Moving sellers (thelas) and location', 'A thela seller sets a default address once, using the address form and the map. That address is never shown to customers. While the seller has turned on “Live” in the Partner app, their phone shares its current location with Nukad Kart, and customers within 500 m see where the thela is right now on a map. When the seller turns Live off, or moves outside a customer’s 500 m, the location is no longer shown to that customer. Customers must not use a seller’s location for anything other than buying from them.'],
+    ['Call to my street and chat',
+        'You can ask a LIVE thela within 500 m to come to your address, one thela at a time. The seller has 3 minutes to answer. There is no cart or in-app payment for thelas: you buy and pay the seller in person. If sellers report 3 times in 30 days that they came and nobody was there, calling thelas is paused for 7 days. Chat is text only, phone numbers cannot be sent, and messages are deleted after 24 hours. Either side can block or report; 3 reports can pause chat for 7 days.'],
+    ['Delivery code and missing items',
+        'When your order is packed you get a 4-digit delivery code. Give it only after you receive your items. If the store does not have an item, it is removed and your total goes down; you can cancel until the order is packed.'],
     ['Seller obligations', 'Stores must upload a real photo of their own shop taken in the app at the shop’s location. A false photo or details can lead to suspension. Sellers set their own prices, which must not exceed MRP.'],
     ['Complaints', 'Report a problem from the order screen. We pass it to the store or seller, keep a record and may suspend those at fault. Our grievance officer acknowledges within 48 hours and resolves within one month.'],
     ['Your account', 'You can request to delete your account from Account privacy. Order and complaint records are kept as the law requires.'],
@@ -997,7 +1011,7 @@ class TermsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Page(title: 'Terms & conditions', children: [
-      Text('Last updated: 12 November 2026', style: body(12, color: kMute)),
+      Text('Last updated: 13 November 2026 · Draft for legal review', style: body(12, color: kMute)),
       const SizedBox(height: 10),
       for (final sct in sections)
         Padding(
@@ -1024,7 +1038,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
     ['What we collect',
         '• From your Google account: your name and email address.\n'
             '• Your mobile number, which we confirm with a one-time SMS code.\n'
-            '• Your delivery addresses and the map pin you set for each one.\n'
+            '• Your delivery addresses and the map pin you set for each one. The map point of the address you have chosen is kept on our server to show shops within 500 m and to tell you when a thela is LIVE near you.\n'
+            '• Messages you exchange with a thela in chat. They are deleted after 24 hours. Phone numbers cannot be sent in chat.\n'
+            '• “Call to my street” requests: the address you called the thela to, and whether the seller reported that nobody was there.\n'
+            '• A notification token for this phone, to send order, thela and chat alerts.\n'
             '• Your phone’s location, only when you tap “Use my location”.\n'
             '• Your orders, cart, wishlist, saved stores, ratings and complaints.\n'
             '• App settings such as language and theme, kept on your phone.\n'
@@ -1032,13 +1049,18 @@ class PrivacyPolicyScreen extends StatelessWidget {
     ['Why we use it',
         'To create your account, show stores and thelas near your address, send your order to the store and get it delivered, prevent misuse (for example the cancellation limit), handle complaints, and meet legal duties. We do not sell your data and do not use it for advertising.'],
     ['Who we share it with',
-        '• The store or thela you order from gets your name, mobile number, delivery address and order items, only to fulfil that order.\n'
+        '• The store you order from, and the delivery person it sends, get your name, mobile number, delivery address and order items, only to fulfil that order.\n'
+            '• A thela you call to your street or chat with sees only the address text you sent and your messages — never your name or number.\n'
             '• Service providers who run parts of the app for us: Google (sign-in and notifications), Cloudflare (our servers and database), MSG91 (SMS codes) and Ola Maps (maps and address search). They may use the data only to provide their service to us.\n'
             '• Government authorities when the law requires it.'],
-    ['Thela sellers’ location',
-        'A thela seller’s live location is shared with nearby customers only while the seller has turned on “Live” in the Partner app. Their saved default address is never shown to customers.'],
+    ['Sellers’ and delivery location',
+        'A thela seller’s live location is shared with nearby customers only while the seller has turned on “Live” in the Partner app, and is removed when they go offline. A delivery person’s location is shown to you only while your order is out for delivery.'],
+    ['Chat and reports',
+        'Chat messages are deleted from our servers after 24 hours. If you or the seller report a chat, our team may look at it to act on the report. Repeated reports can pause chat on an account.'],
+    ['Notifications',
+        'Order updates are always sent because they carry your delivery code. You can turn off “Thela LIVE near me” and chat alerts in Account → Notification preferences. Thela alerts are limited to 3 a day and are not sent between 9 pm and 7 am.'],
     ['Where and how long we keep it',
-        'Your data is stored on Cloudflare’s servers, which may be outside India, and sent over encrypted connections. We keep your profile and addresses until you delete your account. Order and complaint records are kept for as long as the law requires, even after you delete your account.'],
+        'Your data is stored on Cloudflare’s servers, which may be outside India, and sent over encrypted connections. We keep your profile and addresses until you delete your account. Chat messages are kept for 24 hours; a thela’s live location only while it is LIVE. Order and complaint records are kept for as long as the law requires, even after you delete your account.'],
     ['Your rights',
         '• See and correct your details: Account → Edit profile and Address book.\n'
             '• Delete your account: Account → Account privacy → Request to delete account. Your name, number and addresses are removed from our servers and this phone.\n'
@@ -1056,7 +1078,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       if (grievanceOfficerEmail.isNotEmpty) grievanceOfficerEmail,
     ].join(' · ');
     return _Page(title: t('Privacy policy'), children: [
-      Text('Last updated: 12 November 2026', style: body(12, color: kMute)),
+      Text('Last updated: 13 November 2026 · Draft for legal review', style: body(12, color: kMute)),
       const SizedBox(height: 10),
       for (final sct in sections)
         Padding(

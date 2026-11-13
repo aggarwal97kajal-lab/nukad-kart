@@ -1,14 +1,15 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 import '../state/thela_tracker.dart';
 import 'ui.dart';
 import 'map_markers.dart';
 
 String thelaStatusLabel(ThelaStatus s, [int seenAgo = 0]) => switch (s) {
-      ThelaStatus.standing => '● LIVE · Standing here',
-      ThelaStatus.moving => '➜ LIVE · Moving',
-      ThelaStatus.wasHere => 'Was here ${(seenAgo / 60).round().clamp(3, 10)} min ago',
-      ThelaStatus.notAvailable => 'Not nearby now',
+      ThelaStatus.standing => '● ${t('LIVE · Standing here')}',
+      ThelaStatus.moving => '➜ ${t('LIVE · Moving')}',
+      ThelaStatus.wasHere => tr('Was here {0} min ago', [(seenAgo / 60).round().clamp(3, 10)]),
+      ThelaStatus.notAvailable => t('Not nearby now'),
     };
 
 Widget thelaStatusPill(ThelaStatus s, [int seenAgo = 0]) => switch (s) {
@@ -23,10 +24,10 @@ String thelaStatusLine(ThelaLive t) {
   final m = hh.minute.toString().padLeft(2, '0');
   final h = hh.hourOfPeriod == 0 ? 12 : hh.hourOfPeriod;
   return switch (t.status) {
-    ThelaStatus.standing => '${t.d.round()} m away · on the map',
-    ThelaStatus.moving => '${t.d.round()} m away · moving',
-    ThelaStatus.wasHere => '${t.d.round()} m away when last seen',
-    ThelaStatus.notAvailable => 'Last seen $h:$m ${hh.period == DayPeriod.am ? 'am' : 'pm'}',
+    ThelaStatus.standing => tr('{0} m away · on the map', [t.d.round()]),
+    ThelaStatus.moving => tr('{0} m away · moving', [t.d.round()]),
+    ThelaStatus.wasHere => tr('{0} m away when last seen', [t.d.round()]),
+    ThelaStatus.notAvailable => tr('Last seen {0}', ['$h:$m ${hh.period == DayPeriod.am ? 'am' : 'pm'}']),
   };
 }
 
@@ -51,9 +52,9 @@ class ThelaLiveMap extends StatelessWidget {
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               CircleAvatar(radius: 30, backgroundColor: kCard, child: Icon(Icons.location_off_outlined, color: kMute, size: 28)),
               SizedBox(height: 10),
-              Text('Location hidden', style: head(18)),
+              Text(t('Location hidden'), style: head(18)),
               SizedBox(height: 4),
-              Text('This thela is not within 500 m right now, or its location stopped for 10 minutes.',
+              Text(t('This thela is not within 500 m right now, or its location stopped for 10 minutes.'),
                   textAlign: TextAlign.center, style: body(13, color: kMute)),
             ]),
           );

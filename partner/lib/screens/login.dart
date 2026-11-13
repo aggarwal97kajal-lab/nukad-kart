@@ -3,6 +3,7 @@ import '../api.dart';
 import '../session.dart';
 import '../prefs.dart';
 import '../ui.dart';
+import 'legal.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -65,10 +66,24 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Text(t('By continuing you agree to the Nukad Kart partner terms.'), style: tx(11.5, color: const Color(0xFF21331B))),
+            Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
+              Text(t('By continuing you agree to the '), style: tx(12, color: const Color(0xFF21331B))),
+              _link(context, t('Nukad Kart Partner Terms'), const LegalScreen.terms()),
+              Text(t(' and '), style: tx(12, color: const Color(0xFF21331B))),
+              _link(context, t('Privacy Policy'), const LegalScreen.privacy()),
+            ]),
           ]),
         ),
       ),
     );
   }
 }
+
+Widget _link(BuildContext context, String text, Widget page) => InkWell(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => page)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Text(text,
+            style: tx(12, color: const Color(0xFF21331B), weight: FontWeight.w800).copyWith(decoration: TextDecoration.underline)),
+      ),
+    );

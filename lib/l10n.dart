@@ -5,9 +5,18 @@ String gLang = 'en';
 
 String t(String en) {
   if (gLang == 'en') return en;
-  final m = _tr[en];
+  final m = _tr[en] ?? _tr2[en];
   if (m == null) return en;
   return m[gLang] ?? en;
+}
+
+/// Translation with values: tr('{0} m away', [120]).
+String tr(String en, List<Object?> args) {
+  var s = t(en);
+  for (var i = 0; i < args.length; i++) {
+    s = s.replaceAll('{$i}', '${args[i]}');
+  }
+  return s;
 }
 
 const Map<String, Map<String, String>> _tr = {
@@ -140,4 +149,71 @@ const Map<String, Map<String, String>> _tr = {
     'hg': 'Har jagah se log out, is phone se bhi'
   },
   'Cancel': {'hi': 'रद्द करें', 'hg': 'Cancel'},
+};
+
+/// Newer screens: thela page, call to my street, chat, delivery, notification settings.
+const Map<String, Map<String, String>> _tr2 = {
+  'Log in to call a thela to your street.': {'hi': 'ठेले को अपनी गली में बुलाने के लिए लॉगिन करें।', 'hg': 'Thele ko apni gali mein bulane ke liye login karein.'},
+  'Call {0} to your street?': {'hi': '{0} को अपनी गली में बुलाएँ?', 'hg': '{0} ko apni gali mein bulayein?'},
+  'The thela sees this address, not your name or number. It has 3 minutes to answer. Pay the seller in person.': {'hi': 'ठेले वाले को यह पता दिखेगा, आपका नाम या नंबर नहीं। उसके पास जवाब देने के लिए 3 मिनट हैं। पैसे सीधे ठेले वाले को दें।', 'hg': 'Thele wale ko ye address dikhega, aapka naam ya number nahi. Uske paas jawab ke liye 3 minute hain. Paise seedhe thele wale ko dein.'},
+  'Call to my street': {'hi': 'मेरी गली में बुलाएँ', 'hg': 'Meri gali mein bulayein'},
+  'Waiting for {0}…': {'hi': '{0} के जवाब का इंतज़ार…', 'hg': '{0} ke jawab ka intezaar…'},
+  'Sent to {0}.': {'hi': '{0} पर भेजा गया।', 'hg': '{0} pe bheja gaya.'},
+  '{0} left to answer.': {'hi': 'जवाब के लिए {0} बाकी।', 'hg': 'Jawab ke liye {0} baaki.'},
+  'Checking…': {'hi': 'देख रहे हैं…', 'hg': 'Dekh rahe hain…'},
+  'Cancel': {'hi': 'रद्द करें', 'hg': 'Cancel karein'},
+  '{0} is coming': {'hi': '{0} आ रहे हैं', 'hg': '{0} aa rahe hain'},
+  'About {0} min · watch the pin on the map. Pay the seller directly.': {'hi': 'लगभग {0} मिनट · नक्शे पर पिन देखें। पैसे सीधे ठेले वाले को दें।', 'hg': 'Lagbhag {0} min · map pe pin dekhein. Paise seedhe thele wale ko dein.'},
+  'I don’t need it now': {'hi': 'अब ज़रूरत नहीं', 'hg': 'Ab zaroorat nahi'},
+  '{0} came but couldn’t find you. This happened {1} times, so calling thelas is paused for 7 days.': {'hi': '{0} आए पर आप नहीं मिले। ऐसा {1} बार हुआ, इसलिए ठेला बुलाना 7 दिन के लिए बंद है।', 'hg': '{0} aaye par aap nahi mile. Aisa {1} baar hua, isliye thela bulana 7 din ke liye band hai.'},
+  '{0} came but couldn’t find you. This is {1} of {2} — at {2}, calling thelas is paused for 7 days.': {'hi': '{0} आए पर आप नहीं मिले। यह {2} में से {1} है — {2} होने पर ठेला बुलाना 7 दिन के लिए बंद हो जाएगा।', 'hg': '{0} aaye par aap nahi mile. Ye {2} mein se {1} hai — {2} hone pe thela bulana 7 din band ho jayega.'},
+  '{0} can’t come right now. Try again later, or call another thela nearby.': {'hi': '{0} अभी नहीं आ सकते। बाद में कोशिश करें, या पास का कोई और ठेला बुलाएँ।', 'hg': '{0} abhi nahi aa sakte. Baad mein try karein, ya paas ka koi aur thela bulayein.'},
+  'Calling thelas is paused until {0} because thelas came and found nobody {1} times.': {'hi': 'ठेला बुलाना {0} तक बंद है, क्योंकि ठेले वाले {1} बार आए और कोई नहीं मिला।', 'hg': 'Thela bulana {0} tak band hai, kyunki thele wale {1} baar aaye aur koi nahi mila.'},
+  'Calling…': {'hi': 'बुला रहे हैं…', 'hg': 'Bula rahe hain…'},
+  'You can call this thela when it is LIVE near you.': {'hi': 'जब यह ठेला आपके पास LIVE हो, तब आप इसे बुला सकते हैं।', 'hg': 'Jab ye thela aapke paas LIVE ho, tab aap ise bula sakte hain.'},
+  'Standing here now. The pin moves when the thela moves.': {'hi': 'अभी यहीं खड़ा है। ठेला चलेगा तो पिन भी चलेगा।', 'hg': 'Abhi yahin khada hai. Thela chalega to pin bhi chalega.'},
+  'On the move. The pin updates every few seconds.': {'hi': 'चल रहा है। पिन हर कुछ सेकंड में बदलता है।', 'hg': 'Chal raha hai. Pin har kuch second mein update hota hai.'},
+  'Location hasn’t updated for a few minutes. The thela may have moved on.': {'hi': 'कुछ मिनट से लोकेशन नहीं आई। ठेला आगे बढ़ गया हो सकता है।', 'hg': 'Kuch minute se location nahi aayi. Thela aage badh gaya ho sakta hai.'},
+  'Not within 500 m right now. You’ll get a notification when it’s back near you.': {'hi': 'अभी 500 मीटर के अंदर नहीं है। पास आने पर आपको सूचना मिलेगी।', 'hg': 'Abhi 500 m ke andar nahi hai. Paas aane pe aapko notification milegi.'},
+  'Chat with {0}': {'hi': '{0} से चैट करें', 'hg': '{0} se chat karein'},
+  'This thela hasn’t added today’s prices yet.': {'hi': 'इस ठेले ने आज के भाव अभी नहीं डाले।', 'hg': 'Is thele ne aaj ke bhav abhi nahi daale.'},
+  'No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukad Kart. Phone numbers are never shared.': {'hi': 'ठेले के लिए कार्ट नहीं है। उसे अपनी गली में बुलाएँ, फिर सामान लें और पैसे सीधे ठेले वाले को दें — नुक्कड़ कार्ट के ज़रिए नहीं। फ़ोन नंबर कभी नहीं दिखाए जाते।', 'hg': 'Thele ke liye cart nahi hai. Use apni gali mein bulayein, phir saman lein aur paise seedhe thele wale ko dein — Nukad Kart ke zariye nahi. Phone number kabhi share nahi hote.'},
+  'Reported. Thanks — the chat is closed.': {'hi': 'रिपोर्ट हो गई। धन्यवाद — चैट बंद कर दी गई।', 'hg': 'Report ho gayi. Shukriya — chat band kar di gayi.'},
+  'Unblocked.': {'hi': 'अनब्लॉक कर दिया।', 'hg': 'Unblock kar diya.'},
+  'Blocked. They can’t message you.': {'hi': 'ब्लॉक कर दिया। वे आपको संदेश नहीं भेज सकते।', 'hg': 'Block kar diya. Wo aapko message nahi bhej sakte.'},
+  'Unblock': {'hi': 'अनब्लॉक', 'hg': 'Unblock'},
+  'Block': {'hi': 'ब्लॉक', 'hg': 'Block'},
+  'Report': {'hi': 'रिपोर्ट', 'hg': 'Report'},
+  'Log in to chat with this thela.': {'hi': 'इस ठेले से चैट करने के लिए लॉगिन करें।', 'hg': 'Is thele se chat karne ke liye login karein.'},
+  '{0} is answering {1} people. Replies may take a few minutes — or tap “Call to my street”.': {'hi': '{0} अभी {1} लोगों को जवाब दे रहे हैं। जवाब में कुछ मिनट लग सकते हैं — या “मेरी गली में बुलाएँ” दबाएँ।', 'hg': '{0} abhi {1} logon ko jawab de rahe hain. Jawab mein kuch minute lag sakte hain — ya “Meri gali mein bulayein” dabayein.'},
+  'Chat clears after 24 hours · Phone numbers are hidden': {'hi': 'चैट 24 घंटे बाद मिट जाती है · फ़ोन नंबर छिपे रहते हैं', 'hg': 'Chat 24 ghante baad mit jaati hai · Phone number chhupe rehte hain'},
+  'You blocked this chat.': {'hi': 'आपने यह चैट ब्लॉक की है।', 'hg': 'Aapne ye chat block ki hai.'},
+  'This chat is closed.': {'hi': 'यह चैट बंद है।', 'hg': 'Ye chat band hai.'},
+  'Today’s prices · check before you ask': {'hi': 'आज के भाव · पूछने से पहले देख लें', 'hg': 'Aaj ke bhav · poochne se pehle dekh lein'},
+  'Ask about items or price': {'hi': 'सामान या भाव के बारे में पूछें', 'hg': 'Saman ya bhav ke baare mein poochein'},
+  'LIVE · Standing here': {'hi': 'LIVE · यहीं खड़ा है', 'hg': 'LIVE · Yahin khada hai'},
+  'LIVE · Moving': {'hi': 'LIVE · चल रहा है', 'hg': 'LIVE · Chal raha hai'},
+  'Was here {0} min ago': {'hi': '{0} मिनट पहले यहाँ था', 'hg': '{0} min pehle yahan tha'},
+  'Not nearby now': {'hi': 'अभी पास में नहीं', 'hg': 'Abhi paas mein nahi'},
+  '{0} m away · on the map': {'hi': '{0} मीटर दूर · नक्शे पर', 'hg': '{0} m door · map pe'},
+  '{0} m away · moving': {'hi': '{0} मीटर दूर · चल रहा है', 'hg': '{0} m door · chal raha hai'},
+  '{0} m away when last seen': {'hi': 'आख़िरी बार {0} मीटर दूर दिखा', 'hg': 'Aakhri baar {0} m door dikha'},
+  'Last seen {0}': {'hi': 'आख़िरी बार {0} पर दिखा', 'hg': 'Aakhri baar {0} pe dikha'},
+  'Location hidden': {'hi': 'लोकेशन छिपी है', 'hg': 'Location chhupi hai'},
+  'This thela is not within 500 m right now, or its location stopped for 10 minutes.': {'hi': 'यह ठेला अभी 500 मीटर के अंदर नहीं है, या 10 मिनट से इसकी लोकेशन नहीं आई।', 'hg': 'Ye thela abhi 500 m ke andar nahi hai, ya 10 minute se iski location nahi aayi.'},
+  'On the way from {0}': {'hi': '{0} से निकल चुका है', 'hg': '{0} se nikal chuka hai'},
+  'On the way · {0} m away · about {1} min': {'hi': 'रास्ते में · {0} मीटर दूर · लगभग {1} मिनट', 'hg': 'Raste mein · {0} m door · lagbhag {1} min'},
+  'Sending a test…': {'hi': 'टेस्ट भेज रहे हैं…', 'hg': 'Test bhej rahe hain…'},
+  'Sent to {0} of {1} phones. It should appear in a few seconds.': {'hi': '{1} में से {0} फ़ोन पर भेजा। कुछ सेकंड में दिखना चाहिए।', 'hg': '{1} mein se {0} phone pe bheja. Kuch second mein dikhna chahiye.'},
+  'Not sent.': {'hi': 'नहीं भेजा गया।', 'hg': 'Nahi bheja gaya.'},
+  'Test notification': {'hi': 'टेस्ट सूचना', 'hg': 'Test notification'},
+  '{0} didn’t have {1}. Removed from your order — new total {2}.': {'hi': '{0} के पास {1} नहीं था। ऑर्डर से हटा दिया — नया कुल {2}।', 'hg': '{0} ke paas {1} nahi tha. Order se hata diya — naya total {2}.'},
+  'Order updates': {'hi': 'ऑर्डर की जानकारी', 'hg': 'Order updates'},
+  'Always on (needed for the delivery code)': {'hi': 'हमेशा चालू (डिलीवरी कोड के लिए ज़रूरी)', 'hg': 'Hamesha on (delivery code ke liye zaroori)'},
+  'Thela LIVE near me': {'hi': 'मेरे पास ठेला LIVE', 'hg': 'Mere paas thela LIVE'},
+  'At most 3 a day · never 9 pm – 7 am': {'hi': 'दिन में ज़्यादा से ज़्यादा 3 · रात 9 से सुबह 7 नहीं', 'hg': 'Din mein max 3 · raat 9 se subah 7 nahi'},
+  'Chat messages': {'hi': 'चैट संदेश', 'hg': 'Chat messages'},
+  'Replies from thelas': {'hi': 'ठेले वालों के जवाब', 'hg': 'Thele walon ke jawab'},
+  'Live thelas within 500 m. Pay the seller in person.': {'hi': '500 मीटर के अंदर LIVE ठेले। पैसे सीधे ठेले वाले को दें।', 'hg': '500 m ke andar LIVE thele. Paise seedhe thele wale ko dein.'},
+  'Packed': {'hi': 'पैक हो गया', 'hg': 'Pack ho gaya'},
 };

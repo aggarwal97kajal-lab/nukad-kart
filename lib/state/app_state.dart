@@ -274,12 +274,19 @@ class AppState extends ChangeNotifier {
   String get address => current.short;
   /// The cart's shop is within 500 m of the chosen address (the nearby list is loaded for that address).
   bool get serviceable => cartStoreId == null || kStores.any((x) => x.id == cartStoreId);
+  /// Order updates are always on (delivery code). The other two can be turned off; the server respects them.
   final Map<String, bool> notifPrefs = {
-    'Order updates': true,
-    'Thela replies': true,
-    'Offers from nearby shops': false,
-    'Festival specials': true,
+    'Thela LIVE near me': true,
+    'Chat messages': true,
   };
+  bool get thelaAlerts => notifPrefs['Thela LIVE near me'] != false;
+  bool get chatAlerts => notifPrefs['Chat messages'] != false;
+
+  /// Tells the server where thela alerts are wanted (the chosen address) and which alerts are on.
+  void sendSpot() {
+    if (!signedIn || apiToken.isEmpty) return;
+    api.spot(apiToken, current.lat, current.lng, thelaAlerts, chatAlerts).catchError((_) {});
+  }
 
   void toggleWishlist(String productId) {
     wishlist.contains(productId) ? wishlist.remove(productId) : wishlist.add(productId);
@@ -321,6 +328,8 @@ class AppState extends ChangeNotifier {
   void setNotif(String k, bool v) {
     notifPrefs[k] = v;
     notifyListeners();
+    _save();
+    sendSpot();
   }
 
   // ----- user -----
@@ -460,6 +469,7 @@ class AppState extends ChangeNotifier {
         'orderRatings': orderRatings.map((k, v) => MapEntry(k, v.toJson())),
         'billSeq': billSeq,
         'b2b': [savedGstin, savedBusiness],
+        'notif': [thelaAlerts, chatAlerts],
       };
 
   void _readProfile(Map<String, dynamic> p) {
@@ -479,7 +489,13 @@ class AppState extends ChangeNotifier {
         } catch (_) {
           return null;
         }
-      }).whereType<Order>());
+        // Only real orders: demo orders from older versions of the app are dropped.
+      }).whereType<Order>().where((o) => o.remote));
+    final nf = (p['notif'] as List?) ?? const [];
+    if (nf.length == 2) {
+      notifPrefs['Thela LIVE near me'] = nf[0] != false;
+      notifPrefs['Chat messages'] = nf[1] != false;
+    }
     for (final o in orders) {
       final n = int.tryParse(o.id.replaceFirst('NK-', '')) ?? 0;
       if (n > _orderSeq) _orderSeq = n;
