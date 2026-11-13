@@ -29,7 +29,8 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
       await Firebase.initializeApp(
         options: const FirebaseOptions(apiKey: _apiKey, appId: customerFirebaseAppId, messagingSenderId: _senderId, projectId: _projectId),
       );
-      await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')));
+      await FirebaseMessaging.instance.requestPermission();
+      await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')));
       await _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(_channel);
       // Android shows nothing for a push while the app is open, so show it ourselves.
       FirebaseMessaging.onMessage.listen((m) {

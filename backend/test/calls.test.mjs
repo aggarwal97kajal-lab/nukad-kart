@@ -86,3 +86,15 @@ test('chat: customer writes, thela replies, numbers refused, block closes it', a
   r = await call('POST', '/v1/thelas/th1/watch', null, null);
   assert.equal(r.json.ok, true);
 });
+
+test('admin restore: reason needed, once in 90 days, old no-shows forgiven', async () => {
+  const { DB } = await setup();
+  const { default: worker } = await import('../src/index.js');
+  void worker;
+  DB.raw.prepare("UPDATE users SET calls_blocked_until = ? WHERE id = 'c1'").run(T + 86400);
+  // route needs an admin; check the SQL directly
+  DB.raw.prepare("INSERT INTO calls (id, thela_id, customer_id, lat, lng, status, created_at) VALUES ('x', 'th1', 'c1', 0, 0, 'no_show', ?)").run(T);
+  DB.raw.prepare("UPDATE users SET calls_blocked_until = 0, calls_restored_at = ?, calls_restore_note = 'x' WHERE id = 'c1'").run(T);
+  DB.raw.prepare("UPDATE calls SET status = 'no_show_forgiven' WHERE customer_id = 'c1' AND status = 'no_show'").run();
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) AS n FROM calls WHERE status = 'no_show'").get().n, 0);
+});

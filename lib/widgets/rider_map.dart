@@ -33,6 +33,15 @@ class _RiderMapState extends State<RiderMap> {
   Future<void> _onStyle() async {
     final c = _c;
     if (c == null) return;
+    // 500 m around the customer's door, same as on the thela map.
+    final ring = <LatLng>[];
+    final dLat = 500 / 111320.0, dLng = 500 / (111320.0 * math.cos(widget.homeLat * math.pi / 180));
+    for (var i = 0; i <= 64; i++) {
+      final a = 2 * math.pi * i / 64;
+      ring.add(LatLng(widget.homeLat + dLat * math.sin(a), widget.homeLng + dLng * math.cos(a)));
+    }
+    await c.addFill(FillOptions(geometry: [ring], fillColor: '#F8CB46', fillOpacity: 0.14));
+    await c.addLine(LineOptions(geometry: ring, lineColor: '#21331B', lineWidth: 1.6, lineOpacity: 0.8));
     await c.addCircle(CircleOptions(geometry: LatLng(widget.homeLat, widget.homeLng), circleRadius: 9, circleColor: '#21331B', circleStrokeColor: '#FFFFFF', circleStrokeWidth: 3));
     try {
       final b = await rootBundle.load('assets/images/markers/bike.png');
@@ -66,7 +75,7 @@ class _RiderMapState extends State<RiderMap> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: SizedBox(
-        height: 260,
+        height: 280,
         child: FutureBuilder<String>(
           future: _style,
           builder: (context, snap) {
@@ -88,12 +97,14 @@ class _RiderMapState extends State<RiderMap> {
               ),
               Positioned(
                 left: 10,
+                right: 10,
                 bottom: 10,
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(color: Color(0xFF21331B), borderRadius: BorderRadius.circular(12)),
                   child: Text(
-                      d == null ? 'On the way · map shows when the delivery phone shares location' : 'On the way · ${d.round()} m away · about ${(d / 250).ceil().clamp(1, 30)} min',
+                      d == null ? 'On the way · scooter shows once the delivery phone sends its location' : 'On the way · ${d.round()} m away · about ${(d / 250).ceil().clamp(1, 30)} min',
+                      maxLines: 2,
                       style: body(11.5, color: kBrand, weight: FontWeight.w800)),
                 ),
               ),

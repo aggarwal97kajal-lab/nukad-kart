@@ -63,7 +63,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
           stopOrderAlarm('${o['id']}');
         }
       }
-      RiderLocation.instance.sync(outDoorOrders: tab == 'out' ? orders.where((o) => o['door'] == true).length : null);
+      // This phone shares its location while it has a door order out (the customer sees the scooter).
+      RiderLocation.instance.sync(outDoorOrders: (r['myDoorOut'] as num?)?.toInt());
     } on ApiError catch (e) {
       if (mounted) {
         setState(() => _loading = false);

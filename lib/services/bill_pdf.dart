@@ -27,6 +27,7 @@ Bill billFor(Order o) {
     customerState: o.toState,
     buyerGstin: o.buyerGstin,
     buyerBusiness: o.buyerBusiness,
+    payMode: o.payMode,
   );
 }
 
@@ -248,7 +249,8 @@ Future<Uint8List> billPdf(Bill b) async {
         child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
           pw.Expanded(
               child: pw.Text('Amount in words: ${amountInWords(b.total)}', style: pw.TextStyle(font: bold, fontSize: 8.5))),
-          pw.Text('Paid at delivery', style: const pw.TextStyle(fontSize: 8.5)),
+          pw.Text(switch (b.payMode) { 'upi' => 'Paid at delivery · UPI', 'cash' => 'Paid at delivery · Cash', _ => 'Paid at delivery' },
+              style: pw.TextStyle(font: bold, fontSize: 8.5)),
         ]),
       ),
       pw.SizedBox(height: 6),

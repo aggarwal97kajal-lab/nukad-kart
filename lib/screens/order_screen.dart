@@ -95,7 +95,7 @@ class _OrderScreenState extends State<OrderScreen> {
         SizedBox(height: 12),
         NoteBox(
           o.status == OrderStatus.delivered
-              ? 'Paid ${rupees(o.payable)} to the store at delivery${o.fee > 0 ? ' (incl. ₹${o.fee} delivery fee)' : ''}.'
+              ? 'Paid ${rupees(o.payable)} to the store at delivery${o.payMode.isEmpty ? '' : ' by ${o.payMode == 'upi' ? 'UPI' : 'cash'}'}${o.fee > 0 ? ' (incl. ₹${o.fee} delivery fee)' : ''}.'
               : 'Keep ${rupees(o.payable)} ready — cash or scan the store’s UPI QR at your door'
                   '${o.fee > 0 ? ' (incl. ₹${o.fee} delivery fee)' : ''}.',
           icon: Icons.currency_rupee,

@@ -140,3 +140,91 @@ Future<void> showAgreementVersions(BuildContext context, String storeId) async {
     ),
   );
 }
+
+/// Admin: customers paused from "Call to my street" after 3 no-shows. Can be given back once in 90 days, with a reason.
+class CallBlocksScreen extends StatefulWidget {
+  const CallBlocksScreen({super.key});
+  @override
+  State<CallBlocksScreen> createState() => _CallBlocksScreenState();
+}
+
+class _CallBlocksScreenState extends State<CallBlocksScreen> {
+  List<Map<String, dynamic>> users = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final r = await api.call('GET', '/v1/admin/call-blocks');
+      users = ((r['users'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    if (mounted) setState(() => loading = false);
+  }
+
+  Future<void> _restore(Map<String, dynamic> u) async {
+    final ctl = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t('Give calling back?')),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(t('Only once in 90 days per customer. Their old no-shows stop counting.'), style: tx(12.5, color: kMute)),
+          const SizedBox(height: 8),
+          TextField(controller: ctl, maxLines: 2, decoration: field(t('Reason (at least 10 letters)'))),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx, ctl.text.trim()), child: Text(t('Give back')))],
+      ),
+    );
+    if (reason == null) return;
+    try {
+      await api.call('POST', '/v1/admin/call-blocks/${u['id']}/restore', {'reason': reason});
+      if (mounted) toast(context, t('Done. The customer is told.'));
+      _load();
+    } on ApiError catch (e) {
+      if (mounted) {
+        toast(context, switch (e.code) {
+          'reason_needed' => t('Write a reason of at least 10 letters.'),
+          'restored_recently' => t('Already given back in the last 90 days.'),
+          _ => e.message,
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: bar(t('Paused from calling thelas')),
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : users.isEmpty
+              ? Center(child: Text(t('Nobody is paused.'), style: tx(14, color: kMute)))
+              : ListView(padding: const EdgeInsets.all(16), children: [
+                  for (final u in users)
+                    Box(
+                      child: Row(children: [
+                        Expanded(
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text('${u['name']}'.isEmpty ? '${u['email']}' : '${u['name']}', style: tx(14, weight: FontWeight.w800)),
+                            Text('${u['phone']}'.isEmpty ? '${u['email']}' : '+91 ${u['phone']}', style: tx(12, color: kMute)),
+                            Text(tr('{0} no-shows · paused till {1}', [u['strikes'], DateTime.fromMillisecondsSinceEpoch((u['until'] as num).toInt() * 1000).toString().substring(0, 10)]),
+                                style: tx(12, color: kMute)),
+                          ]),
+                        ),
+                        if (u['canRestore'] == true)
+                          OutlinedButton(onPressed: () => _restore(u), child: Text(t('Give back')))
+                        else
+                          Text(t('Given back < 90 days'), style: tx(11.5, color: kMute)),
+                      ]),
+                    ),
+                ]),
+    );
+  }
+}

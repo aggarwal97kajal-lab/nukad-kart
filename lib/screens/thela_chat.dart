@@ -24,6 +24,7 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
   Timer? _t;
   LiveSocket? _live;
   String? chatId;
+  AppLifecycleListener? _life;
   late final void Function(Map<String, dynamic>) _onPush = (d) {
     if (d['type'] == 'chat') _load();
   };
@@ -33,7 +34,11 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
     super.initState();
     pushListeners.add(_onPush);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
-    _t = Timer.periodic(const Duration(seconds: 15), (_) => _load());
+    _t = Timer.periodic(const Duration(seconds: 5), (_) => _load());
+    _life = AppLifecycleListener(onResume: () {
+      _load();
+      _live?.reconnect();
+    });
   }
 
   @override
@@ -41,6 +46,7 @@ class _ThelaChatScreenState extends State<ThelaChatScreen> {
     pushListeners.remove(_onPush);
     _t?.cancel();
     _live?.close();
+    _life?.dispose();
     text.dispose();
     scroll.dispose();
     super.dispose();

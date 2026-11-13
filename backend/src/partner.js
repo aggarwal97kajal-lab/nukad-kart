@@ -848,6 +848,35 @@ export async function partnerRoute(req, env, path, m) {
     }) });
   }
 
+  // Admin: customers paused from "Call to my street" (3 no-shows), and giving it back.
+  if (path === '/v1/admin/call-blocks' && m === 'GET') {
+    await admin(req, env);
+    const t = now();
+    const { results } = await env.DB.prepare(`SELECT u.id, u.name, u.email, u.phone, u.calls_blocked_until, u.calls_restored_at,
+      (SELECT COUNT(*) FROM calls c WHERE c.customer_id = u.id AND c.status = 'no_show' AND c.created_at > ?) AS strikes
+      FROM users u WHERE u.calls_blocked_until > ? ORDER BY u.calls_blocked_until LIMIT 100`).bind(t - 30 * 86400, t).all();
+    return json({ users: results.map((u) => ({ id: u.id, name: u.name || '', phone: u.phone || '', email: u.email || '', until: u.calls_blocked_until,
+      strikes: u.strikes, restoredAt: u.calls_restored_at || 0, canRestore: !u.calls_restored_at || u.calls_restored_at < t - 90 * 86400 })) });
+  }
+  const cbr = path.match(/^\/v1\/admin\/call-blocks\/([\w-]+)\/restore$/);
+  if (cbr && m === 'POST') {
+    await admin(req, env);
+    const reason = String((await body(req)).reason || '').trim();
+    // Conditions: a written reason, and at most once in 90 days per customer.
+    if (reason.length < 10) throw new HttpError(400, 'reason_needed');
+    const t = now();
+    const u = await env.DB.prepare('SELECT id, calls_blocked_until, calls_restored_at FROM users WHERE id = ?').bind(cbr[1]).first();
+    if (!u || u.calls_blocked_until <= t) throw new HttpError(404, 'not_paused');
+    if (u.calls_restored_at && u.calls_restored_at > t - 90 * 86400) throw new HttpError(409, 'restored_recently');
+    await env.DB.batch([
+      env.DB.prepare('UPDATE users SET calls_blocked_until = 0, calls_restored_at = ?, calls_restore_note = ? WHERE id = ?').bind(t, reason.slice(0, 300), u.id),
+      // The old no-shows no longer count, or the next one would pause them again at once.
+      env.DB.prepare("UPDATE calls SET status = 'no_show_forgiven' WHERE customer_id = ? AND status = 'no_show'").bind(u.id),
+    ]);
+    await sendPush(env, u.id, { title: 'Call to my street is back', body: 'You can call thelas again. Please be there when they come.', data: { type: 'call' } });
+    return json({ ok: true });
+  }
+
   // Admin: upload products for a shop (Excel rows, same format as the shop's own upload).
   const adBulk = path.match(/^\/v1\/admin\/stores\/([\w-]+)\/products\/bulk$/);
   if (adBulk && m === 'POST') {

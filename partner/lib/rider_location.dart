@@ -41,11 +41,17 @@ class RiderLocation {
           ),
         ),
       ).listen((pos) {
-        api.call('POST', '/v1/partner/rider', {'lat': pos.latitude, 'lng': pos.longitude}).catchError((_) => <String, dynamic>{});
+        _send(pos);
       }, onError: (_) {});
+      // First position at once (the stream waits for 25 m of movement).
+      Geolocator.getCurrentPosition().then(_send).catchError((_) {});
     } finally {
       _starting = false;
     }
+  }
+
+  void _send(Position pos) {
+    api.call('POST', '/v1/partner/rider', {'lat': pos.latitude, 'lng': pos.longitude}).catchError((_) => <String, dynamic>{});
   }
 
   Future<void> stop() async {

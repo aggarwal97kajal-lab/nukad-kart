@@ -305,7 +305,9 @@ export async function orderRoute(req, env, path, m) {
       ${mineOnly ? 'AND staff_id = ?' : ''} GROUP BY status`).bind(s.id, ...(mineOnly ? [c.staff.id] : [])).all()).results;
     const staff = c.owner || c.canOrders
       ? (await env.DB.prepare('SELECT * FROM staff WHERE store_id = ? AND removed_at IS NULL').bind(s.id).all()).results.map(staffOut) : [];
-    return json({ orders: results.map((o) => orderOut(o, false, s)), counts: Object.fromEntries(counts.map((x) => [x.status, x.n])), staff,
+    const mine = await env.DB.prepare(`SELECT COUNT(*) AS n FROM orders WHERE store_id = ? AND status = 'out' AND door = 1 AND ${c.staff ? 'staff_id = ?' : 'staff_id IS NULL'}`)
+      .bind(s.id, ...(c.staff ? [c.staff.id] : [])).first();
+    return json({ orders: results.map((o) => orderOut(o, false, s)), counts: Object.fromEntries(counts.map((x) => [x.status, x.n])), staff, myDoorOut: mine.n,
       missedToday: s.missed_date === istDate() ? s.missed_count : 0, missedLimit: MISSED_LIMIT });
   }
 

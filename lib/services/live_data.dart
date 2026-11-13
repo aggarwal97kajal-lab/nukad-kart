@@ -68,7 +68,9 @@ class LiveData extends ChangeNotifier {
     final every = _watching > 0 ? const Duration(seconds: 5) : _fast > 0 ? const Duration(seconds: 10) : const Duration(seconds: 60);
     if (!force && DateTime.now().difference(_lastPoll) < every - const Duration(seconds: 1)) return;
     _lastPoll = DateTime.now();
-    _refresh(products: DateTime.now().difference(_productsAt) > const Duration(minutes: 2));
+    // A thela's page is open: its items and prices refresh with every check (it changes them during the day).
+    final every2 = _watching > 0 ? Duration.zero : _fast > 0 ? const Duration(seconds: 30) : const Duration(minutes: 2);
+    _refresh(products: DateTime.now().difference(_productsAt) >= every2);
   }
 
   void stopPolling() {

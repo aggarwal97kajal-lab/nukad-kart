@@ -20,8 +20,11 @@ class Bill {
   final String customerName, customerPhone, customerAddress, placeOfSupply;
   final String buyerGstin, buyerBusiness;
   final bool chargesGst, interState;
+  /// How the customer paid at delivery: 'cash' or 'upi' (chosen by the delivery person), '' if not known.
+  final String payMode;
   final List<BillLine> lines;
   const Bill({
+    this.payMode = '',
     required this.store,
     required this.number,
     required this.orderId,
@@ -81,6 +84,7 @@ Bill buildBill({
   required String customerState,
   String buyerGstin = '',
   String buyerBusiness = '',
+  String payMode = '',
 }) {
   final gst = store.gst == BillGst.regular;
   final inter = gst && customerState.isNotEmpty && customerState != store.stateName;
@@ -105,6 +109,7 @@ Bill buildBill({
 
   final code = kGstStateCodes[customerState];
   return Bill(
+    payMode: payMode,
     store: store,
     number: number,
     orderId: orderId,

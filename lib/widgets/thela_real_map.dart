@@ -24,7 +24,6 @@ class ThelaRealMap extends StatefulWidget {
 class _ThelaRealMapState extends State<ThelaRealMap> {
   late final Future<String> _style = OlaMaps.style(dark: gDark, lang: gLang);
   MapLibreMapController? _c;
-  Circle? _halo;
   Symbol? _thela;
   bool _icon = false;
   int _anim = 0;
@@ -85,9 +84,7 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
     if (p == null) {
       if (_thela != null) {
         await c.removeSymbol(_thela!);
-        await c.removeCircle(_halo!);
         _thela = null;
-        _halo = null;
       }
       return;
     }
@@ -96,10 +93,9 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
     final st = ThelaTracker.instance.of(widget.thelaId).status;
     final col = st == ThelaStatus.wasHere ? '#8A4B00' : '#3B6D11';
     if (_thela == null) {
-      _halo = await c.addCircle(CircleOptions(geometry: at, circleRadius: 34, circleColor: col, circleOpacity: 0.22));
       _thela = await c.addSymbol(_icon
           ? SymbolOptions(geometry: at, iconImage: 'nk-thela', iconSize: 0.45, iconAnchor: 'bottom')
-          : SymbolOptions(geometry: at, textField: '🛒', textSize: 22));
+          : SymbolOptions(geometry: at, textField: '🛒', textSize: 22, textColor: col));
       // Fit home and thela on screen, but never closer than street level (they can be 1 m apart).
       const pad = 0.0012; // ~130 m
       final sw = LatLng(math.min(at.latitude, widget.homeLat) - pad, math.min(at.longitude, widget.homeLng) - pad);
@@ -115,7 +111,6 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
         if (mine != _anim || !mounted) return;
         final f = i / steps;
         final g = LatLng(from.$1 + (p.$1 - from.$1) * f, from.$2 + (p.$2 - from.$2) * f);
-        await c.updateCircle(_halo!, CircleOptions(geometry: g, circleColor: col));
         await c.updateSymbol(_thela!, SymbolOptions(geometry: g));
         await Future.delayed(const Duration(milliseconds: 250));
       }

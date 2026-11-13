@@ -56,6 +56,8 @@ class Order {
   bool remote = false;
   double? lat, lng, riderLat, riderLng;
   String storeName = '';
+  /// 'cash' / 'upi' as the delivery person marked it.
+  String payMode = '';
   /// Items the shop didn't have (removed from the bill).
   List<String> unavailable = [];
 
@@ -820,6 +822,7 @@ class AppState extends ChangeNotifier {
     o.fee = (j['fee'] as num?)?.toInt() ?? 0;
     o.otp = j['otp'] as String?;
     o.billNo = '${j['billNo'] ?? ''}';
+    o.payMode = '${j['payMode'] ?? ''}';
     o.storeName = '${j['storeName'] ?? ''}';
     o.toName = '${j['toName'] ?? ''}';
     o.toPhone = '${j['toPhone'] ?? ''}';

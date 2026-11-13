@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'api.dart';
 
@@ -10,6 +11,8 @@ class LiveSocket {
   WebSocketChannel? _ch;
   Timer? _ping, _retry;
   bool _closed = false;
+  /// For a small "live" dot: true while the live connection is open.
+  final connected = ValueNotifier<bool>(false);
 
   LiveSocket(this.chatId, this.onMessage) {
     _connect();
@@ -23,6 +26,7 @@ class LiveSocket {
       _ch!.stream.listen((m) {
         if (m != 'pong') onMessage();
       }, onDone: _again, onError: (_) => _again(), cancelOnError: true);
+      _ch!.ready.then((_) => connected.value = true).catchError((_) => connected.value = false);
       _ping?.cancel();
       _ping = Timer.periodic(const Duration(seconds: 25), (_) {
         try {
@@ -35,10 +39,22 @@ class LiveSocket {
   }
 
   void _again() {
+    connected.value = false;
     _ping?.cancel();
     if (_closed) return;
     _retry?.cancel();
     _retry = Timer(const Duration(seconds: 3), _connect);
+  }
+
+  /// App came back to the screen: the old connection may be silently dead, so open a fresh one.
+  void reconnect() {
+    if (_closed) return;
+    _ping?.cancel();
+    _retry?.cancel();
+    try {
+      _ch?.sink.close();
+    } catch (_) {}
+    _connect();
   }
 
   void close() {

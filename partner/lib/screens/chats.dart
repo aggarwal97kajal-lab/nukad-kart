@@ -80,6 +80,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final scroll = ScrollController();
   Timer? _t;
   LiveSocket? _live;
+  AppLifecycleListener? _life;
 
   static const quick = ['Haan hai', 'Khatam ho gaya', '5 min mein aata hoon', 'Aaj nahi aaunga'];
 
@@ -88,12 +89,17 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _load();
     _live = LiveSocket(widget.id, _load); // new messages arrive at once
-    _t = Timer.periodic(const Duration(seconds: 15), (_) => _load());
+    _t = Timer.periodic(const Duration(seconds: 5), (_) => _load());
+    _life = AppLifecycleListener(onResume: () {
+      _load();
+      _live?.reconnect();
+    });
   }
 
   @override
   void dispose() {
     _live?.close();
+    _life?.dispose();
     _t?.cancel();
     scroll.dispose();
     text.dispose();

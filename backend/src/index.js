@@ -398,7 +398,7 @@ async function route(req, env) {
   const sp = path.match(/^\/v1\/stores\/([\w-]+)\/products$/);
   if (sp && m === 'GET') {
     const hit = prodCache.get(sp[1]);
-    if (hit && hit.at > Date.now() - 20_000) return json(hit.body);
+    if (hit && hit.at > Date.now() - (hit.thela ? 5_000 : 20_000)) return json(hit.body);
     const [st, pr] = await env.DB.batch([
       env.DB.prepare('SELECT * FROM stores WHERE id = ? AND active = 1').bind(sp[1]),
       // A thela sells only items from the app's photo list (aloo, pyaz…); older hand-added items stay hidden.
@@ -409,7 +409,7 @@ async function route(req, env) {
     if (!s || s.demo || offlineReason(s, now()) != null) throw new HttpError(404, 'not_available');
     const out = { storeId: s.id, products: pr.results.map(productOut) };
     if (prodCache.size > 500) prodCache.clear();
-    prodCache.set(sp[1], { at: Date.now(), body: out });
+    prodCache.set(sp[1], { at: Date.now(), body: out, thela: s.kind === 'thela' });
     return json(out);
   }
 

@@ -252,6 +252,8 @@ class _AdminScreenState extends State<AdminScreen> {
                 Btn(tr('Partners to verify'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen()))),
                 const SizedBox(height: 8),
                 Btn(tr('Detail changes to check'), outline: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangesReviewScreen()))),
+                const SizedBox(height: 8),
+                Btn(tr('Paused from calling thelas'), outline: true, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CallBlocksScreen()))),
                 const SizedBox(height: 10),
                 _healthCard(),
                 const SizedBox(height: 18),
