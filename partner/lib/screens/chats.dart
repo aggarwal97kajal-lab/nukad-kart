@@ -5,15 +5,23 @@ import '../push.dart';
 import '../ui.dart';
 import '../live_socket.dart';
 
-/// Thela Home: messages from customers (newest first). Tap to answer with one tap or by typing.
+/// One-tap answers (also inside a chat). Kept general: an item answer must be given per chat.
+const kQuickReplies = ['Haan hai', 'Khatam ho gaya', '5 min mein aata hoon', 'Aaj nahi aaunga'];
+/// "Reply to all": only general answers, never about one item (it would be wrong for some customers).
+const kReplyAll = ['10 min mein aata hoon', 'Aaj ke bhav app mein dekhein', 'Abhi raste mein hoon', 'Aaj band hai'];
+
+/// Thela Home: messages from customers. Waiting for an answer first, nearest first; one-tap answers in the list.
 class ChatsCard extends StatefulWidget {
-  const ChatsCard({super.key});
+  final bool full; // the "See all" screen
+  const ChatsCard({super.key, this.full = false});
   @override
   State<ChatsCard> createState() => _ChatsCardState();
 }
 
 class _ChatsCardState extends State<ChatsCard> {
   List<Map<String, dynamic>> chats = [];
+  int waiting = 0;
+  bool busy = false;
   Timer? _t;
 
   @override
@@ -21,7 +29,7 @@ class _ChatsCardState extends State<ChatsCard> {
     super.initState();
     pushTick.addListener(_load);
     _load();
-    _t = Timer.periodic(const Duration(seconds: 20), (_) => _load());
+    _t = Timer.periodic(const Duration(seconds: 10), (_) => _load());
   }
 
   @override
@@ -34,34 +42,129 @@ class _ChatsCardState extends State<ChatsCard> {
   Future<void> _load() async {
     try {
       final r = await api.call('GET', '/v1/partner/chats');
-      if (mounted) setState(() => chats = ((r['chats'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList());
+      if (!mounted) return;
+      setState(() {
+        chats = ((r['chats'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        waiting = (r['waiting'] as num?)?.toInt() ?? 0;
+      });
     } catch (_) {}
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (chats.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Box(
+  Future<void> _quick(Map<String, dynamic> c, String text) async {
+    setState(() => busy = true);
+    try {
+      await api.call('POST', '/v1/partner/chats/${c['id']}', {'text': text});
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    await _load();
+    if (mounted) setState(() => busy = false);
+  }
+
+  Future<void> _replyAll() async {
+    final text = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: kCard,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(tr('Reply to {0} customers', [waiting]), style: tx(16, weight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(t('Each chat gets its own copy; customers can’t see each other. Answer item questions in each chat.'), style: tx(12, color: kMute)),
+            const SizedBox(height: 12),
+            for (final q in kReplyAll)
+              Padding(padding: const EdgeInsets.only(bottom: 8), child: Btn(q, outline: true, onTap: () => Navigator.pop(ctx, q))),
+          ]),
+        ),
+      ),
+    );
+    if (text == null) return;
+    setState(() => busy = true);
+    try {
+      final r = await api.call('POST', '/v1/partner/chats/reply-all', {'text': text});
+      if (mounted) toast(context, tr('Sent to {0} customers.', [r['sent']]));
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    await _load();
+    if (mounted) setState(() => busy = false);
+  }
+
+  Future<void> _open(Map<String, dynamic> c) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(id: '${c['id']}', address: '${c['address']}')));
+    _load();
+  }
+
+  Widget _row(Map<String, dynamic> c) {
+    final w = c['waiting'] == true;
+    final n = (c['unreadCount'] as num?)?.toInt() ?? 0;
+    final where = '${c['address']}'.isEmpty ? t('Customer') : '${c['address']}';
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: kLine))),
+      child: Opacity(
+        opacity: w ? 1 : 0.6,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(t('Messages'), style: tx(15, weight: FontWeight.w800)),
-          for (final c in chats.take(5))
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.chat_bubble_outline, color: c['unread'] == true ? kAmb : kMute),
-              title: Text('${c['lastText']}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: tx(14, weight: c['unread'] == true ? FontWeight.w800 : FontWeight.w500)),
-              subtitle: Text('${c['address']}'.isEmpty ? t('Customer') : '${c['address']}', maxLines: 1, overflow: TextOverflow.ellipsis),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () async {
-                await Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(id: '${c['id']}', address: '${c['address']}')));
-                _load();
-              },
+          InkWell(
+            onTap: () => _open(c),
+            child: Row(children: [
+              Expanded(
+                child: Text('$where${c['distanceM'] == null ? '' : ' · ${c['distanceM']} m'}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: tx(13.5, weight: FontWeight.w800)),
+              ),
+              if (n > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                  decoration: BoxDecoration(color: kAmb, borderRadius: BorderRadius.circular(9)),
+                  child: Text('$n', style: tx(11, color: Colors.white, weight: FontWeight.w800)),
+                ),
+            ]),
+          ),
+          Text(c['lastFrom'] == 'thela' ? '${t('You')}: "${c['lastText']}"' : '"${c['lastText']}"',
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: tx(12.5, color: kMute)),
+          if (w)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Wrap(spacing: 6, runSpacing: 6, children: [
+                for (final q in kQuickReplies.take(3))
+                  ActionChip(label: Text(q, style: tx(12)), onPressed: busy ? null : () => _quick(c, q)),
+                ActionChip(label: Text(t('Open'), style: tx(12, weight: FontWeight.w800)), onPressed: () => _open(c)),
+              ]),
             ),
         ]),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (chats.isEmpty && !widget.full) return const SizedBox.shrink();
+    final shown = widget.full ? chats : chats.take(4).toList();
+    final unread = chats.where((c) => c['unread'] == true).length;
+    final body = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Text(t('Messages'), style: tx(15, weight: FontWeight.w800)),
+        if (unread > 0) ...[
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(color: kAct, borderRadius: BorderRadius.circular(10)),
+            child: Text(tr('{0} unread', [unread]), style: tx(11, color: kOnAct, weight: FontWeight.w800)),
+          ),
+        ],
+        const Spacer(),
+        if (waiting > 1) TextButton(onPressed: busy ? null : _replyAll, child: Text(t('Reply to all'))),
+      ]),
+      if (chats.isEmpty) Padding(padding: const EdgeInsets.all(20), child: Text(t('No messages in the last 24 hours.'), style: tx(13, color: kMute))),
+      for (final c in shown) _row(c),
+      if (!widget.full && chats.length > shown.length)
+        TextButton(
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: bar(t('Messages')), body: ListView(padding: const EdgeInsets.all(16), children: const [ChatsCard(full: true)])))),
+          child: Text(tr('See all {0} chats', [chats.length])),
+        ),
+    ]);
+    return Padding(padding: EdgeInsets.only(top: widget.full ? 0 : 12), child: widget.full ? body : Box(child: body));
   }
 }
 
@@ -82,7 +185,7 @@ class _ChatScreenState extends State<ChatScreen> {
   LiveSocket? _live;
   AppLifecycleListener? _life;
 
-  static const quick = ['Haan hai', 'Khatam ho gaya', '5 min mein aata hoon', 'Aaj nahi aaunga'];
+  static const quick = kQuickReplies;
 
   @override
   void initState() {

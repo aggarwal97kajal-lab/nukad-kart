@@ -98,3 +98,19 @@ test('admin restore: reason needed, once in 90 days, old no-shows forgiven', asy
   DB.raw.prepare("UPDATE calls SET status = 'no_show_forgiven' WHERE customer_id = 'c1' AND status = 'no_show'").run();
   assert.equal(DB.raw.prepare("SELECT COUNT(*) AS n FROM calls WHERE status = 'no_show'").get().n, 0);
 });
+
+test('chat inbox: waiting first, reply to all, busy count for customers', async () => {
+  const { call } = await setup();
+  await call('POST', '/v1/me/chats/th1', { text: 'matar hai?', address: 'Gali 4', lat: 28.7005, lng: 77.1 }, 'c1');
+  await call('POST', '/v1/me/chats/th1', { text: 'kitni der?', address: 'Gali 9', lat: 28.704, lng: 77.1 }, 'c2');
+  let r = await call('GET', '/v1/partner/chats', null, 'owner');
+  assert.equal(r.json.waiting, 2);
+  assert.equal(r.json.chats[0].address, 'Gali 4'); // nearest first
+  assert.equal(r.json.chats[0].unreadCount, 1);
+  r = await call('GET', '/v1/me/chats/th1', null, 'c1');
+  assert.equal(r.json.busy, 1);
+  r = await call('POST', '/v1/partner/chats/reply-all', { text: '10 min mein aata hoon' }, 'owner');
+  assert.equal(r.json.sent, 2);
+  r = await call('GET', '/v1/partner/chats', null, 'owner');
+  assert.equal(r.json.waiting, 0);
+});

@@ -24,6 +24,22 @@ Future<void> partnerBackgroundPush(RemoteMessage m) async {
   await _initLocal();
   if (m.data['type'] == 'order_new') await showOrderAlarm(m.data);
   if (m.data['type'] == 'calls') await showCalls(m.data);
+  if (m.data['type'] == 'chats') await showChats(m.data);
+}
+
+/// Thela: ONE notification for all unread chat messages, replaced each time; count 0 removes it.
+Future<void> showChats(Map<String, dynamic> d) async {
+  try {
+    final n = int.tryParse('${d['count'] ?? 0}') ?? 0;
+    if (n <= 0) {
+      await _local.cancel(7002);
+      return;
+    }
+    await _local.show(7002, '${d['title'] ?? 'New message'}', '${d['body'] ?? ''}',
+        NotificationDetails(android: AndroidNotificationDetails(_calls.id, _calls.name,
+            channelDescription: _calls.description, importance: Importance.high, priority: Priority.high,
+            styleInformation: BigTextStyleInformation('${d['body'] ?? ''}'))));
+  } catch (_) {}
 }
 
 const _callsNotifId = 7001;
@@ -63,6 +79,8 @@ Future<void> setupPush(VoidCallback onUpdate) async {
           showOrderAlarm(m.data);
         } else if (m.data['type'] == 'calls') {
           showCalls(m.data);
+        } else if (m.data['type'] == 'chats') {
+          showChats(m.data);
         } else {
           _showLocal(m);
         }

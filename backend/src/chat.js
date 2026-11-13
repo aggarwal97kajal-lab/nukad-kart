@@ -6,7 +6,7 @@
 //   GET  /v1/partner/chats/:id                 (thela) messages
 //   POST /v1/partner/chats/:id { text }  ·  /block  ·  /report { reason }
 //   POST /v1/thelas/:id/watch                  (anyone) someone is looking at this thela: faster location for 30 s
-import { HttpError, json, body, now, session } from './index.js';
+import { HttpError, json, body, now, session, haversineM } from './index.js';
 import { ctx } from './partner.js';
 import { sendPush } from './push.js';
 
@@ -114,9 +114,9 @@ export async function chatRoute(req, env, path, m) {
     const thelaId = mc[1];
     const chat = await env.DB.prepare('SELECT * FROM chats WHERE thela_id = ? AND customer_id = ?').bind(thelaId, uid).first();
     if (m === 'GET' && !mc[2]) {
-      if (!chat) return json({ chatId: null, messages: [], blocked: null });
+      if (!chat) return json({ chatId: null, messages: [], blocked: null, busy: await busyCount(env, thelaId, null) });
       await env.DB.prepare('UPDATE chats SET customer_read_at = ? WHERE id = ?').bind(now(), chat.id).run();
-      return json({ chatId: chat.id, messages: await messages(env, chat.id), blocked: chat.blocked_by });
+      return json({ chatId: chat.id, messages: await messages(env, chat.id), blocked: chat.blocked_by, busy: await busyCount(env, thelaId, chat.id) });
     }
     if (m !== 'POST') throw new HttpError(405, 'method');
     const s = await env.DB.prepare("SELECT id, name, owner_id FROM stores WHERE id = ? AND kind = 'thela'").bind(thelaId).first();
@@ -154,19 +154,47 @@ export async function chatRoute(req, env, path, m) {
       env.DB.prepare('UPDATE chats SET last_at = ?, customer_read_at = ? WHERE id = ?').bind(t, t, id),
     ]);
     await broadcast(env, id, { type: 'message', from: 'customer', text, at: t });
-    if (s.owner_id) {
-      const addr = b.address || chat?.address || '';
-      await sendPush(env, s.owner_id, { title: `Message${addr ? ` · ${addr}` : ''}`, body: text, data: { type: 'chat', chatId: id }, channel: 'calls' });
-    }
-    return json({ chatId: id, messages: await messages(env, id), blocked: null });
+    if (s.owner_id) await tellThelaChats(env, s);
+    return json({ chatId: id, messages: await messages(env, id), blocked: null, busy: await busyCount(env, thelaId, id) });
   }
 
   if (path === '/v1/partner/chats' && m === 'GET') {
     const { s } = await ctx(req, env);
     if (!s || s.kind !== 'thela') return json({ chats: [] });
-    const { results } = await env.DB.prepare(`SELECT c.*, (SELECT text FROM chat_messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_text
-      FROM chats c WHERE c.thela_id = ? AND c.last_at > ? ORDER BY c.last_at DESC LIMIT 50`).bind(s.id, now() - CHAT_KEEP_S).all();
-    return json({ chats: results.map((c) => ({ id: c.id, address: c.address, lastText: c.last_text || '', lastAt: c.last_at, unread: c.last_at > c.thela_read_at, blocked: c.blocked_by })) });
+    const { results } = await env.DB.prepare(`SELECT c.*,
+        (SELECT text FROM chat_messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_text,
+        (SELECT sender FROM chat_messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_from,
+        (SELECT COUNT(*) FROM chat_messages WHERE chat_id = c.id AND sender = 'c' AND created_at > c.thela_read_at) AS unread_n
+      FROM chats c WHERE c.thela_id = ? AND c.last_at > ? LIMIT 100`).bind(s.id, now() - CHAT_KEEP_S).all();
+    const from = s.live_lat == null ? null : { lat: s.live_lat, lng: s.live_lng };
+    const out = results.map((c) => ({ id: c.id, address: c.address, lastText: c.last_text || '', lastFrom: c.last_from === 't' ? 'thela' : 'customer',
+      lastAt: c.last_at, unread: c.unread_n > 0, unreadCount: c.unread_n, waiting: c.last_from === 'c' && !c.blocked_by, blocked: c.blocked_by,
+      distanceM: from && c.lat != null ? Math.round(haversineM(from.lat, from.lng, c.lat, c.lng)) : null }));
+    // Waiting for an answer first, nearest first; then the rest, newest first.
+    out.sort((a, b) => (b.waiting - a.waiting) || (a.waiting ? (a.distanceM ?? 1e9) - (b.distanceM ?? 1e9) : b.lastAt - a.lastAt));
+    return json({ chats: out, waiting: out.filter((c) => c.waiting).length });
+  }
+
+  // Thela: one general answer to everyone waiting ("10 min mein aata hoon"). Each chat gets its own copy.
+  if (path === '/v1/partner/chats/reply-all' && m === 'POST') {
+    const { s } = await ctx(req, env);
+    if (!s || s.kind !== 'thela') throw new HttpError(400, 'thela_only');
+    const text = clean((await body(req)).text);
+    const t = now();
+    const { results } = await env.DB.prepare(`SELECT c.id, c.customer_id FROM chats c WHERE c.thela_id = ? AND c.blocked_by IS NULL AND c.last_at > ?
+      AND (SELECT sender FROM chat_messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) = 'c' LIMIT 50`).bind(s.id, t - CHAT_KEEP_S).all();
+    const stmts = [];
+    for (const c of results) {
+      stmts.push(env.DB.prepare("INSERT INTO chat_messages (id, chat_id, sender, text, created_at) VALUES (?, ?, 't', ?, ?)").bind(crypto.randomUUID(), c.id, text, t));
+      stmts.push(env.DB.prepare('UPDATE chats SET last_at = ?, thela_read_at = ? WHERE id = ?').bind(t, t, c.id));
+    }
+    if (stmts.length) await env.DB.batch(stmts);
+    for (const c of results) {
+      await broadcast(env, c.id, { type: 'message', from: 'thela', text, at: t });
+      await sendPush(env, c.customer_id, { title: s.name, body: text, data: { type: 'chat', thelaId: s.id } });
+    }
+    await tellThelaChats(env, s);
+    return json({ ok: true, sent: results.length });
   }
 
   const pc = path.match(/^\/v1\/partner\/chats\/([\w-]+)(?:\/(block|unblock|report))?$/);
@@ -176,7 +204,10 @@ export async function chatRoute(req, env, path, m) {
     const chat = await env.DB.prepare('SELECT * FROM chats WHERE id = ? AND thela_id = ?').bind(pc[1], s.id).first();
     if (!chat) throw new HttpError(404, 'not_found');
     if (m === 'GET' && !pc[2]) {
-      await env.DB.prepare('UPDATE chats SET thela_read_at = ? WHERE id = ?').bind(now(), chat.id).run();
+      if (chat.last_at > chat.thela_read_at) {
+        await env.DB.prepare('UPDATE chats SET thela_read_at = ? WHERE id = ?').bind(now(), chat.id).run();
+        await tellThelaChats(env, s);
+      }
       return json({ messages: await messages(env, chat.id), blocked: chat.blocked_by, address: chat.address });
     }
     if (m !== 'POST') throw new HttpError(405, 'method');
@@ -211,4 +242,32 @@ export async function cleanChats(env) {
     env.DB.prepare('DELETE FROM chat_messages WHERE created_at < ?').bind(t),
     env.DB.prepare('DELETE FROM chats WHERE last_at < ?').bind(t),
   ]);
+}
+
+/** How many other customers are waiting for this thela's reply (shown to a customer as "Raju is answering 6 people"). */
+async function busyCount(env, thelaId, exceptChat) {
+  const r = await env.DB.prepare(`SELECT COUNT(*) AS n FROM chats c WHERE c.thela_id = ? AND c.id != ? AND c.blocked_by IS NULL AND c.last_at > ?
+    AND (SELECT sender FROM chat_messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1) = 'c'`).bind(thelaId, exceptChat || '', now() - 3600).first();
+  return r?.n || 0;
+}
+
+/**
+ * The thela gets ONE notification for all unread messages ("12 new messages from 7 customers"), sent data-only so
+ * the Partner app replaces it each time (and removes it when everything is read).
+ */
+export async function tellThelaChats(env, s) {
+  if (!s.owner_id) return;
+  const { results } = await env.DB.prepare(`SELECT c.address, (SELECT COUNT(*) FROM chat_messages WHERE chat_id = c.id AND sender = 'c' AND created_at > c.thela_read_at) AS n,
+      (SELECT text FROM chat_messages WHERE chat_id = c.id AND sender = 'c' ORDER BY created_at DESC LIMIT 1) AS last
+    FROM chats c WHERE c.thela_id = ? AND c.blocked_by IS NULL AND c.last_at > ? AND c.last_at > c.thela_read_at ORDER BY c.last_at DESC LIMIT 20`)
+    .bind(s.id, now() - CHAT_KEEP_S).all();
+  const unread = results.filter((r) => r.n > 0);
+  const msgs = unread.reduce((a, r) => a + r.n, 0);
+  await sendPush(env, s.owner_id, {
+    title: '', body: '', dataOnly: true,
+    data: msgs ? { type: 'chats', count: msgs,
+      title: unread.length > 1 ? `${msgs} new messages from ${unread.length} customers` : `${msgs > 1 ? `${msgs} new messages` : 'New message'}${unread[0].address ? ` · ${unread[0].address}` : ''}`,
+      body: unread.slice(0, 3).map((r) => `${r.address ? `${r.address}: ` : ''}"${String(r.last || '').slice(0, 40)}"`).join(' · ') + (unread.length > 3 ? ` · +${unread.length - 3} more` : '') }
+      : { type: 'chats', count: 0 },
+  });
 }

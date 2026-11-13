@@ -762,4 +762,12 @@ const Map<String, String> hi = {
   'Nobody is paused.': 'कोई रोका नहीं गया।',
   '{0} no-shows · paused till {1}': '{0} बार नहीं मिले · {1} तक रोक',
   'Given back < 90 days': '90 दिन में वापस दी जा चुकी',
+  'Reply to {0} customers': '{0} ग्राहकों को जवाब',
+  'Each chat gets its own copy; customers can’t see each other. Answer item questions in each chat.': 'हर चैट में अलग से जाएगा; ग्राहक एक-दूसरे को नहीं देख सकते। सामान वाले सवालों का जवाब हर चैट में अलग दें।',
+  'Sent to {0} customers.': '{0} ग्राहकों को भेजा।',
+  'You': 'आप',
+  '{0} unread': '{0} नए',
+  'Reply to all': 'सबको जवाब',
+  'No messages in the last 24 hours.': 'पिछले 24 घंटे में कोई संदेश नहीं।',
+  'See all {0} chats': 'सभी {0} चैट देखें',
 };
