@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../l10n.dart';
+import '../l10n.dart' as l10n;
 import '../state/thela_tracker.dart';
 import 'ui.dart';
 import 'map_markers.dart';
@@ -52,9 +53,9 @@ class ThelaLiveMap extends StatelessWidget {
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               CircleAvatar(radius: 30, backgroundColor: kCard, child: Icon(Icons.location_off_outlined, color: kMute, size: 28)),
               SizedBox(height: 10),
-              Text(t('Location hidden'), style: head(18)),
+              Text(l10n.t('Location hidden'), style: head(18)),
               SizedBox(height: 4),
-              Text(t('This thela is not within 500 m right now, or its location stopped for 10 minutes.'),
+              Text(l10n.t('This thela is not within 500 m right now, or its location stopped for 10 minutes.'),
                   textAlign: TextAlign.center, style: body(13, color: kMute)),
             ]),
           );
