@@ -790,4 +790,10 @@ const Map<String, String> hi = {
   'Nukad Kart Partner Terms': 'Nukad Kart पार्टनर शर्तें',
   'Privacy Policy': 'प्राइवेसी पॉलिसी',
   'Partner terms': 'पार्टनर शर्तें',
+  'Before you start': 'शुरू करने से पहले',
+  'Nukad Kart keeps your account and business details, KYC documents, products, orders and signed agreements. For thelas, your location while LIVE; for deliveries, the delivery phone’s location while an order is out. Chats are deleted after 24 hours.': 'Nukad Kart आपके अकाउंट और बिज़नेस की जानकारी, KYC कागज़, सामान, ऑर्डर और साइन किए एग्रीमेंट रखता है। ठेले के लिए LIVE रहते समय आपकी लोकेशन; डिलीवरी में ऑर्डर बाहर रहने तक डिलीवरी फ़ोन की लोकेशन। चैट 24 घंटे बाद मिट जाती है।',
+  'I am 18 years or older': 'मेरी उम्र 18 साल या उससे ज़्यादा है',
+  'I have read the Privacy Policy and Partner Terms and agree': 'मैंने प्राइवेसी पॉलिसी और पार्टनर शर्तें पढ़ ली हैं और मैं सहमत हूँ',
+  'Agree and continue': 'सहमत हूँ, आगे बढ़ें',
+  'Not now (log out)': 'अभी नहीं (लॉग आउट)',
 };

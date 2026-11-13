@@ -358,8 +358,17 @@ class AppState extends ChangeNotifier {
   }
 
   /// Fills name, number and addresses from the server (e.g. after reinstalling the app).
+  /// Privacy notice version this person agreed to (with "I am 18+"). Empty = not yet.
+  String consentVersion = '';
+  void setConsent(String v) {
+    consentVersion = v;
+    _save();
+    notifyListeners();
+  }
+
   void applyServerProfile(Map<String, dynamic> data) {
     final u = Map<String, dynamic>.from((data['user'] as Map?) ?? {});
+    if ('${u['consentVersion'] ?? ''}'.isNotEmpty) consentVersion = '${u['consentVersion']}';
     if ('${u['name'] ?? ''}'.trim().isNotEmpty) name = '${u['name']}';
     if ('${u['phone'] ?? ''}'.length == 10) phone = '${u['phone']}';
     if (u['phoneVerified'] == true) phoneVerified = true;
@@ -470,6 +479,7 @@ class AppState extends ChangeNotifier {
         'billSeq': billSeq,
         'b2b': [savedGstin, savedBusiness],
         'notif': [thelaAlerts, chatAlerts],
+        'consent': consentVersion,
       };
 
   void _readProfile(Map<String, dynamic> p) {
@@ -491,6 +501,7 @@ class AppState extends ChangeNotifier {
         }
         // Only real orders: demo orders from older versions of the app are dropped.
       }).whereType<Order>().where((o) => o.remote));
+    consentVersion = '${p['consent'] ?? ''}';
     final nf = (p['notif'] as List?) ?? const [];
     if (nf.length == 2) {
       notifPrefs['Thela LIVE near me'] = nf[0] != false;

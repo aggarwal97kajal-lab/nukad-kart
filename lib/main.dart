@@ -17,6 +17,7 @@ import 'screens/thela_screen.dart';
 import 'screens/order_screen.dart';
 import 'services/google_auth.dart';
 import 'screens/login_screen.dart';
+import 'screens/consent_screen.dart';
 
 final navKey = GlobalKey<NavigatorState>();
 final messengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -148,10 +149,23 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
   }
 
   /// If this phone was logged out from another phone (Logged-in devices), sign out here too.
+  bool _askingConsent = false;
+
   Future<void> _checkSession() async {
     if (!mounted) return;
     final s = AppScope.read(context);
     if (!s.signedIn || s.apiToken.isEmpty) return;
+    if (s.consentVersion != kConsentVersion && !_askingConsent && navKey.currentState != null) {
+      _askingConsent = true;
+      final ok = await navKey.currentState!.push<bool>(MaterialPageRoute(builder: (_) => const ConsentScreen()));
+      _askingConsent = false;
+      if (ok != true) {
+        s.signOut();
+        await googleAuth.signOut();
+        navKey.currentState?.pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (_) => false);
+        return;
+      }
+    }
     if (DateTime.now().difference(_lastCheck) < const Duration(minutes: 1)) return;
     _lastCheck = DateTime.now();
     try {

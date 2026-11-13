@@ -8,6 +8,7 @@ import 'screens/login.dart';
 import 'screens/register.dart';
 import 'screens/shell.dart';
 import 'screens/staff.dart';
+import 'screens/legal.dart';
 import 'screens/agreement.dart';
 import 'screens/docs.dart';
 import 'screens/phone.dart';
@@ -320,6 +321,8 @@ class _GateState extends State<Gate> {
       );
     }
     // Shop staff: only orders / deliveries.
+    // DPDP: clear consent (18+, privacy notice) first; asked again when the notice changes.
+    if (session.consentVersion != kPartnerConsentVersion) return const PartnerConsentScreen();
     if (session.staffInfo != null) return const StaffShell();
     // Steps: phone OTP → business details → documents → agreement → waiting for Nukad team → home.
     // Admin without a shop: straight to the admin screen.

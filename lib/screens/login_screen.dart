@@ -5,6 +5,7 @@ import '../widgets/ui.dart';
 import 'personal_details_screen.dart';
 import 'home_shell.dart';
 import 'account_pages.dart';
+import 'consent_screen.dart';
 import '../services/api.dart';
 import '../services/google_auth.dart';
 import '../services/device_name.dart';
@@ -169,6 +170,16 @@ Future<bool> googleSignInFlow(BuildContext context) async {
     if (s.name.isEmpty && g.name.isNotEmpty) s.name = g.name;
     s.applyServerProfile(server);
     known = s.profileComplete;
+    // DPDP: clear consent (18+, privacy notice) before using the app; asked again when the notice changes.
+    if (s.consentVersion != kConsentVersion) {
+      final ok = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => const ConsentScreen()));
+      if (ok != true) {
+        s.signOut();
+        await googleAuth.signOut();
+        return false;
+      }
+      if (!context.mounted) return false;
+    }
   } else if (s.name.isEmpty && g.name.isNotEmpty) {
     s.name = g.name;
   }

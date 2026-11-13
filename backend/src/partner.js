@@ -319,7 +319,7 @@ export async function partnerRoute(req, env, path, m) {
     const ch = s ? await env.DB.prepare("SELECT status, note, created_at, reviewed_at FROM store_changes WHERE store_id = ? AND status IN ('pending','rejected') AND created_at > ? ORDER BY created_at DESC LIMIT 1")
       .bind(s.id, now() - 7 * 86400).first() : null;
     return json({ selling, user: { email: u.email, name: u.name, phone: u.partner_phone || '', phoneVerified: !!u.partner_phone,
-      trialAvailable: u.partner_trial_ok !== 0 }, admin: await isAdmin(env, u.email), store: storeOutWith(s, docs),
+      trialAvailable: u.partner_trial_ok !== 0, consentVersion: u.consent_version || '' }, admin: await isAdmin(env, u.email), store: storeOutWith(s, docs),
       payments: pays.map(payPublic), change: ch ? { status: ch.status, note: ch.note || '', createdAt: ch.created_at } : null });
   }
 

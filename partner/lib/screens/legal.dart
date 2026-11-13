@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../api.dart';
+import '../session.dart';
 import '../ui.dart';
 
 // Draft texts: to be reviewed by a lawyer before public launch.
@@ -53,6 +55,62 @@ class LegalScreen extends StatelessWidget {
               ]),
             ),
           ),
+      ]),
+    );
+  }
+}
+
+const kPartnerConsentVersion = 'p-2026-11-13';
+
+/// DPDP: a clear "yes" from partners and staff (18+, privacy notice), recorded on the server with the version.
+class PartnerConsentScreen extends StatefulWidget {
+  const PartnerConsentScreen({super.key});
+  @override
+  State<PartnerConsentScreen> createState() => _PartnerConsentScreenState();
+}
+
+class _PartnerConsentScreenState extends State<PartnerConsentScreen> {
+  bool age = false, agree = false, busy = false;
+
+  Future<void> _go() async {
+    setState(() => busy = true);
+    try {
+      await api.call('POST', '/v1/me/consent', {'age18': true, 'agree': true, 'version': kPartnerConsentVersion});
+      await session.refresh();
+      return;
+    } on ApiError catch (e) {
+      if (mounted) toast(context, e.message);
+    }
+    if (mounted) setState(() => busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: bar(t('Before you start')),
+      body: ListView(padding: const EdgeInsets.all(18), children: [
+        Text(t('Nukad Kart keeps your account and business details, KYC documents, products, orders and signed agreements. For thelas, your location while LIVE; for deliveries, the delivery phone’s location while an order is out. Chats are deleted after 24 hours.'),
+            style: tx(13.5)),
+        const SizedBox(height: 8),
+        Wrap(spacing: 8, children: [
+          TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen.privacy())), child: Text(t('Privacy Policy'))),
+          TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen.terms())), child: Text(t('Partner terms'))),
+        ]),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: age,
+          onChanged: (v) => setState(() => age = v == true),
+          title: Text(t('I am 18 years or older'), style: tx(14.5, weight: FontWeight.w800)),
+        ),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          value: agree,
+          onChanged: (v) => setState(() => agree = v == true),
+          title: Text(t('I have read the Privacy Policy and Partner Terms and agree'), style: tx(14)),
+        ),
+        const SizedBox(height: 12),
+        Btn(busy ? '…' : t('Agree and continue'), onTap: age && agree && !busy ? _go : null),
+        TextButton(onPressed: () => session.signOut(), child: Text(t('Not now (log out)'))),
       ]),
     );
   }

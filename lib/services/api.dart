@@ -115,6 +115,8 @@ class Api {
 
   Future<void> spot(String token, double lat, double lng, bool thelaAlerts, bool chatAlerts) =>
       _call('POST', '/v1/me/spot', token: token, body: {'lat': lat, 'lng': lng, 'thelaAlerts': thelaAlerts, 'chatAlerts': chatAlerts});
+  Future<void> consent(String token, String version) =>
+      _call('POST', '/v1/me/consent', token: token, body: {'age18': true, 'agree': true, 'version': version});
   Future<Map<String, dynamic>> pushTest(String token) => _call('POST', '/v1/me/push-test', token: token);
 
   // ----- Chat with a thela -----

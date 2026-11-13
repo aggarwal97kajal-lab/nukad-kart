@@ -94,3 +94,14 @@ test('thela LIVE near you: customers within 500 m get one alert, not again for 2
   }
   void auth; void call;
 });
+
+test('consent needs both 18+ and agree; cleanup runs', async () => {
+  const { DB, auth, call } = await setup();
+  let r = await call('POST', '/v1/me/consent', { age18: true, agree: false, version: 'p1' }, auth);
+  assert.equal(r.json.error, 'consent_needed');
+  r = await call('POST', '/v1/me/consent', { age18: true, agree: true, version: 'p1' }, auth);
+  assert.equal(r.json.consentVersion, 'p1');
+  const { cleanOld } = await import('../src/index.js');
+  await cleanOld({ DB });
+  assert.equal(DB.raw.prepare('SELECT consent_version FROM users WHERE id = ?').get('u1').consent_version, 'p1');
+});

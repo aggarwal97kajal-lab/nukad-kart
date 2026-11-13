@@ -108,7 +108,7 @@ export async function staffMe(env, u) {
   const st = await env.DB.prepare('SELECT * FROM staff WHERE user_id = ? AND removed_at IS NULL').bind(u.id).first();
   if (!st) throw new HttpError(401, 'not_signed_in');
   const s = await env.DB.prepare('SELECT id, name, kind, status FROM stores WHERE id = ?').bind(st.store_id).first();
-  return { staff: { ...staffOut(st), storeId: s?.id, storeName: s?.name || '', storeKind: s?.kind || 'shop' } };
+  return { staff: { ...staffOut(st), storeId: s?.id, storeName: s?.name || '', storeKind: s?.kind || 'shop' }, user: { consentVersion: u.consent_version || '' } };
 }
 
 export async function orderRoute(req, env, path, m) {

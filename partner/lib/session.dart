@@ -18,6 +18,7 @@ class Session extends ChangeNotifier {
   bool phoneVerified = false, trialAvailable = true;
   int selling = 0; // products switched on (thela: items selling today)
   Map<String, dynamic>? staffInfo;
+  String consentVersion = ''; // privacy notice version agreed to (with "I am 18+")
   Map<String, dynamic>? change; // latest asked change of name / address / photo (pending or rejected) // logged in as shop staff (not owner): name, storeName, canOrders
   bool _googleReady = false;
   String? _hw;
@@ -131,6 +132,7 @@ class Session extends ChangeNotifier {
 
   void _apply(Map<String, dynamic> r) {
     change = r['change'] == null ? null : Map<String, dynamic>.from(r['change'] as Map);
+    consentVersion = '${(r['user'] as Map?)?['consentVersion'] ?? ''}';
     staffInfo = r['staff'] == null ? null : Map<String, dynamic>.from(r['staff'] as Map);
     admin = r['admin'] == true;
     selling = (r['selling'] as num?)?.toInt() ?? 0;

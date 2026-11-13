@@ -141,7 +141,7 @@ export async function verifyMsg91(accessToken, authkey, fetchImpl = fetch) {
 
 // ---------- data ----------
 function publicUser(u) {
-  return { id: u.id, email: u.email, name: u.name, phone: u.phone, phoneVerified: !!u.phone_verified };
+  return { id: u.id, email: u.email, name: u.name, phone: u.phone, phoneVerified: !!u.phone_verified, consentVersion: u.consent_version || '' };
 }
 
 async function profile(db, uid) {
@@ -333,6 +333,17 @@ async function route(req, env) {
     return json(await profile(env.DB, uid));
   }
 
+  // DPDP consent: "I am 18 or older" + "I agree to the privacy notice", with the notice version and time.
+  if (path === '/v1/me/consent' && m === 'POST') {
+    const { uid } = await session(req, env);
+    const b = await body(req);
+    if (b.age18 !== true || b.agree !== true) throw new HttpError(400, 'consent_needed');
+    const v = String(b.version || '').slice(0, 20);
+    if (!v) throw new HttpError(400, 'consent_needed');
+    await env.DB.prepare('UPDATE users SET consent_version = ?, consent_at = ? WHERE id = ?').bind(v, now(), uid).run();
+    return json({ ok: true, consentVersion: v });
+  }
+
   if (path === '/v1/me/delete' && m === 'POST') {
     const uid = await auth(req, env);
     const b = await body(req);
@@ -342,6 +353,13 @@ async function route(req, env) {
         .bind(crypto.randomUUID(), uid, String(b.reason || '').slice(0, 200), String(b.feedback || '').slice(0, 1000), t),
       env.DB.prepare('DELETE FROM addresses WHERE user_id = ?').bind(uid),
       env.DB.prepare('UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL').bind(t, uid),
+      // Everything else that points to this person: location for thela alerts, phone tokens, chats, call addresses.
+      env.DB.prepare('DELETE FROM push_tokens WHERE user_id = ?').bind(uid),
+      env.DB.prepare('DELETE FROM customer_spots WHERE user_id = ?').bind(uid),
+      env.DB.prepare('DELETE FROM thela_alerts WHERE user_id = ?').bind(uid),
+      env.DB.prepare('DELETE FROM chat_messages WHERE chat_id IN (SELECT id FROM chats WHERE customer_id = ?)').bind(uid),
+      env.DB.prepare('DELETE FROM chats WHERE customer_id = ?').bind(uid),
+      env.DB.prepare("UPDATE calls SET address = '', lat = 0, lng = 0 WHERE customer_id = ?").bind(uid),
       // Keep only the row id (orders and complaints will point to it); personal details are wiped.
       env.DB.prepare(
         "UPDATE users SET google_sub = 'deleted:' || id, email = '', name = NULL, phone = NULL, phone_verified = 0, deleted_at = ?, updated_at = ? WHERE id = ?",
@@ -474,5 +492,21 @@ export default {
     ectx.waitUntil(tellExpiredCalls(env).catch((e) => console.error(e)));
     ectx.waitUntil(tellMissedOrders(env).catch((e) => console.error(e)));
     ectx.waitUntil(cleanChats(env).catch((e) => console.error(e)));
+    ectx.waitUntil(cleanOld(env).catch((e) => console.error(e)));
   },
 };
+
+/** Keep data only as long as it is needed (DPDP: erase when the purpose is over). Runs with the 5-minute cron. */
+export async function cleanOld(env) {
+  const t = now();
+  await env.DB.batch([
+    // "Call to my street": no-show strikes count for 30 days; keep 90 for disputes, then delete.
+    env.DB.prepare('DELETE FROM calls WHERE created_at < ?').bind(t - 90 * 86400),
+    // Thela alert history is only for "not again within 2 hours / 3 a day".
+    env.DB.prepare('DELETE FROM thela_alerts WHERE at < ?').bind(t - 2 * 86400),
+    // Delivery person's position is needed only while the order is out.
+    env.DB.prepare("UPDATE orders SET rider_lat = NULL, rider_lng = NULL, rider_at = NULL WHERE rider_at IS NOT NULL AND status != 'out'"),
+    // Phone tokens not refreshed for 6 months belong to phones no longer in use.
+    env.DB.prepare('DELETE FROM push_tokens WHERE updated_at < ?').bind(t - 180 * 86400),
+  ]);
+}
