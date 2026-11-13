@@ -329,9 +329,11 @@ class _GateState extends State<Gate> {
     if (session.admin && session.store == null) return const AdminScreen(root: true);
     if (!session.phoneVerified) return const PhoneScreen();
     if (session.store == null) return const RegisterScreen();
-    // A live shop is never stopped here: a missing document (e.g. FSSAI certificate for a newly added number)
-    // is asked for on the home screen instead.
-    if (session.store!['docsComplete'] != true && session.store!['status'] != 'active') return const DocsScreen();
+    // A live shop with a signed agreement is never stopped here: a missing document (e.g. FSSAI certificate for a
+    // newly added number) is asked for on the home screen. Before signing again, the missing one is added first.
+    if (session.store!['docsComplete'] != true && (session.store!['status'] != 'active' || session.store!['agreementSigned'] != true)) {
+      return const DocsScreen();
+    }
     if (session.store!['agreementSigned'] != true) return const AgreementScreen();
     return const PartnerShell();
   }
