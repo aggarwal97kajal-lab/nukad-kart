@@ -30,19 +30,21 @@ class ProductScreen extends StatelessWidget {
       ]),
       bottomNavigationBar: CartBar(),
       body: ListView(children: [
-        Container(
-          height: 240,
-          color: kCream,
-          alignment: Alignment.center,
-          child: ProductPic(product.emoji, size: 200),
-        ),
+        _Gallery(product),
         Padding(
           padding: EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(product.sub.toUpperCase(), style: body(11.5, color: kMute, weight: FontWeight.w800)),
+            Row(children: [
+              if (product.veg.isNotEmpty) ...[_VegMark(product.veg == 'veg'), SizedBox(width: 6)],
+              Expanded(child: Text(product.sub.toUpperCase(), style: body(11.5, color: kMute, weight: FontWeight.w800))),
+            ]),
             SizedBox(height: 4),
             Text(product.name, style: head(21)),
             Text('${product.size} · MRP ${rupees(product.mrp)}', style: body(13, color: kMute)),
+            if (lowest != null) ...[
+              SizedBox(height: 6),
+              Text(tr('From {0} near you', [rupees(lowest)]), style: body(15, weight: FontWeight.w800)),
+            ],
             SizedBox(height: 16),
             Text(t('Sold near you'), style: head(16)),
             SizedBox(height: 8),
@@ -56,11 +58,42 @@ class ProductScreen extends StatelessWidget {
             SizedBox(height: 10),
             Text('Only stores within 500 m are shown. Prices are set by each store and include GST.',
                 style: body(11.5, color: kMute)),
+            if (_hasDetails) ...[
+              SizedBox(height: 18),
+              Text(t('Product details'), style: head(16)),
+              SizedBox(height: 8),
+              CardBox(
+                padding: EdgeInsets.all(14),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  if (product.desc.isNotEmpty) Text(product.desc, style: body(13.5)),
+                  for (final (k, v) in [
+                    (t('Brand'), product.brand),
+                    (t('Size'), product.size),
+                    (t('Type'), product.veg == 'veg' ? t('Veg') : product.veg == 'nonveg' ? t('Non-veg') : ''),
+                    (t('Ingredients'), product.ingredients),
+                    (t('Best before'), product.shelf),
+                  ])
+                    if (v.isNotEmpty)
+                      Padding(
+                        padding: EdgeInsets.only(top: 10),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(k, style: body(11.5, color: kMute, weight: FontWeight.w800)),
+                          SizedBox(height: 2),
+                          Text(v, style: body(13.5)),
+                        ]),
+                      ),
+                ]),
+              ),
+              SizedBox(height: 6),
+              Text(t('Details are added by the shop.'), style: body(11, color: kMute)),
+            ],
           ]),
         ),
       ]),
     );
   }
+
+  bool get _hasDetails => [product.desc, product.brand, product.veg, product.ingredients, product.shelf].any((x) => x.isNotEmpty);
 
   Widget _row(BuildContext context, AppState s, Listing l, bool best, bool last) {
     final st = storeById(l.storeId);
@@ -110,6 +143,94 @@ class ProductScreen extends StatelessWidget {
                 onRemove: () => s.remove(product.id),
               ),
       ]),
+    );
+  }
+}
+
+/// Big photos you swipe (up to 5), with dots; tap to open full screen and pinch to zoom.
+class _Gallery extends StatefulWidget {
+  final Product product;
+  const _Gallery(this.product);
+  @override
+  State<_Gallery> createState() => _GalleryState();
+}
+
+class _GalleryState extends State<_Gallery> {
+  int i = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final pics = widget.product.photos.isNotEmpty ? widget.product.photos : [widget.product.emoji];
+    return Container(
+      height: 320,
+      color: kCream,
+      child: Stack(children: [
+        PageView.builder(
+          itemCount: pics.length,
+          onPageChanged: (v) => setState(() => i = v),
+          itemBuilder: (context, n) => GestureDetector(
+            onTap: isPicture(pics[n]) ? () => _full(context, pics, n) : null,
+            child: Center(child: Padding(padding: EdgeInsets.all(16), child: ProductPic(pics[n], size: 280))),
+          ),
+        ),
+        if (pics.length > 1)
+          Positioned(
+            bottom: 10,
+            left: 0,
+            right: 0,
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              for (var n = 0; n < pics.length; n++)
+                AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  margin: EdgeInsets.symmetric(horizontal: 3),
+                  width: n == i ? 18 : 7,
+                  height: 7,
+                  decoration: BoxDecoration(color: n == i ? kInk : kMute.withAlpha(90), borderRadius: BorderRadius.circular(4)),
+                ),
+            ]),
+          ),
+      ]),
+    );
+  }
+
+  void _full(BuildContext context, List<String> pics, int start) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white),
+          body: PageView.builder(
+            controller: PageController(initialPage: start),
+            itemCount: pics.length,
+            itemBuilder: (_, n) => InteractiveViewer(
+              maxScale: 4,
+              child: Center(
+                child: pics[n].startsWith('http')
+                    ? Image.network(pics[n], fit: BoxFit.contain)
+                    : Image.asset(pics[n], fit: BoxFit.contain),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The FSSAI veg / non-veg square.
+class _VegMark extends StatelessWidget {
+  final bool veg;
+  const _VegMark(this.veg);
+  @override
+  Widget build(BuildContext context) {
+    final c = veg ? Color(0xFF1B8A3C) : Color(0xFF9B2B1E);
+    return Container(
+      width: 16,
+      height: 16,
+      decoration: BoxDecoration(border: Border.all(color: c, width: 1.6), borderRadius: BorderRadius.circular(3)),
+      alignment: Alignment.center,
+      child: Container(width: 7, height: 7, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
     );
   }
 }

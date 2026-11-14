@@ -105,3 +105,28 @@ test('consent needs both 18+ and agree; cleanup runs', async () => {
   await cleanOld({ DB });
   assert.equal(DB.raw.prepare('SELECT consent_version FROM users WHERE id = ?').get('u1').consent_version, 'p1');
 });
+
+test('aaj ke daam: 3 thelas + 2 kiranas, cheapest marked, prices older than 2 days left out', async () => {
+  const { makeDb } = await import('./d1shim.mjs');
+  const { todayPrices } = await import('../src/index.js');
+  const DB = makeDb();
+  const t = 1_800_000_000;
+  const ins = (table, row) => DB.raw.prepare(`INSERT INTO ${table} (${Object.keys(row)}) VALUES (${Object.keys(row).map(() => '?')})`).run(...Object.values(row));
+  for (const [id, kind, conf] of [['t1', 'thela', null], ['t2', 'thela', null], ['k1', 'shop', null]]) {
+    ins('stores', { id, name: id, kind, lat: 0, lng: 0, status: 'active', live: 1, pass_until: t + 9e5, active: 1, demo: 0, created_at: t, prices_confirmed: conf });
+  }
+  const pr = (id, store, key, price, at) => ins('products', { id, store_id: store, kind: 'loose', name: key, unit: 'kg', options: '[1000]', category: 'Vegetables',
+    price, gst: 0, in_stock: 1, produce_key: key, created_at: at, updated_at: at });
+  pr('a1', 't1', 'tamatar', 40, t - 3600);
+  pr('a2', 't2', 'tamatar', 35, t - 3600);
+  pr('a3', 'k1', 'tamatar', 30, t - 5 * 86400); // stale: left out
+  pr('a4', 't1', 'aloo', 25, t - 100);
+  const stores = [{ id: 't1', name: 't1', kind: 'thela', distanceM: 50 }, { id: 't2', name: 't2', kind: 'thela', distanceM: 90 }, { id: 'k1', name: 'k1', kind: 'shop', distanceM: 120 }];
+  const r = await todayPrices({ DB }, stores, t);
+  assert.equal(r.sellers.length, 3);
+  assert.deepEqual(r.items.map((i) => i.key), ['aloo', 'tamatar']);
+  const tom = r.items.find((i) => i.key === 'tamatar');
+  assert.deepEqual(tom.prices, { t1: 40, t2: 35 });
+  assert.deepEqual(tom.best, ['t2']);
+  assert.deepEqual(r.items[0].best, []); // only one seller: nothing to compare
+});

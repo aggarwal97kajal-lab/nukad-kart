@@ -207,10 +207,18 @@ class LiveData extends ChangeNotifier {
   static List<(Product, int)> _shopProducts(Map<String, dynamic> p) {
     final id = '${p['id']}', name = '${p['name']}', cat = '${p['category']}', pic = _photo(p);
     final price = (p['price'] as num).toDouble();
+    final photos = [for (final x in (p['photos'] as List? ?? [])) '$apiBase${(x as Map)['url']}'];
+    String f(String k) => '${p[k] ?? ''}';
     if (p['kind'] != 'loose') {
       final mrp = ((p['mrp'] as num?) ?? price).round();
       final brand = '${p['brand'] ?? ''}';
-      return [(Product(id, brand.isNotEmpty && !name.toLowerCase().contains(brand.toLowerCase()) ? '$brand $name' : name, '${p['size']}', pic, cat, mrp), price.round())];
+      return [
+        (
+          Product(id, brand.isNotEmpty && !name.toLowerCase().contains(brand.toLowerCase()) ? '$brand $name' : name, '${p['size']}', pic, cat, mrp,
+              photos: photos, brand: brand, desc: f('desc'), veg: f('veg'), ingredients: f('ingredients'), shelf: f('shelf')),
+          price.round()
+        )
+      ];
     }
     final unit = '${p['unit'] ?? 'kg'}';
     final opts = ((p['options'] as List?) ?? const [1]).map((e) => (e as num).toInt());
@@ -219,7 +227,11 @@ class LiveData extends ChangeNotifier {
         () {
           final v = unit == 'kg' || unit == 'litre' ? price * n / 1000 : price * n;
           final pr = v.round();
-          return (Product('${id}_$n', name, _size(unit, n), pic, cat, pr), pr);
+          return (
+            Product('${id}_$n', name, _size(unit, n), pic, cat, pr,
+                photos: photos, brand: f('brand'), desc: f('desc'), veg: f('veg'), ingredients: f('ingredients'), shelf: f('shelf')),
+            pr
+          );
         }(),
     ];
   }

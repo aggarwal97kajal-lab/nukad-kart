@@ -89,7 +89,12 @@ class Product {
   final String emoji;
   final String sub;
   final int mrp;
-  const Product(this.id, this.name, this.size, this.emoji, this.sub, this.mrp);
+
+  /// Product page: up to 5 photos (server URLs) and the shop's optional details.
+  final List<String> photos;
+  final String brand, desc, veg, ingredients, shelf;
+  const Product(this.id, this.name, this.size, this.emoji, this.sub, this.mrp,
+      {this.photos = const [], this.brand = '', this.desc = '', this.veg = '', this.ingredients = '', this.shelf = ''});
 
   /// HSN code and GST % used on GST bills. The shop sets these in the Partner app;
   /// the demo uses a typical value for the category.

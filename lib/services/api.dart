@@ -109,6 +109,10 @@ class Api {
   Future<Map<String, dynamic>> nearbyStores(double lat, double lng) =>
       _call('GET', '/v1/stores/nearby?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}');
 
+  /// "Aaj ke daam": vegetable / fruit prices at the nearest 3 thelas + 2 kiranas.
+  Future<Map<String, dynamic>> todayPrices(double lat, double lng) =>
+      _call('GET', '/v1/prices/today?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}');
+
   Future<void> pushToken(String token, String fcm) => _call('POST', '/v1/me/push-token', token: token, body: {'token': fcm});
 
   // ----- Shop orders -----

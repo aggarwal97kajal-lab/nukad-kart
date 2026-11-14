@@ -231,6 +231,75 @@ async function nearbyRows(env, lat, lng) {
   return [...sh.results, ...th.results];
 }
 
+/** Stores a customer here can see now (shops: pass, switched on, timings; thelas: fresh live location), nearest first. */
+async function visibleNearby(env, lat, lng, radius) {
+  const results = await nearbyRows(env, lat, lng);
+  // Partner shops show only with an active pass, switched on, within their timings
+  // (after closing time they drop off the map) and not paused for missed orders.
+  const t = now();
+  return results
+    // Closed for the night still shows (dimmed, "Opens 8 am", no ordering); other reasons hide the shop.
+    .filter((s) => !s.demo && [null, s.kind === 'thela' ? null : 'closed_now'].includes(offlineReason(s, t)))
+    .filter((s) => s.kind !== 'thela' || (s.live_at && t - s.live_at <= THELA_STALE_S))
+    .map((s) => {
+      const thela = s.kind === 'thela';
+      const sLat = thela ? s.live_lat : s.lat, sLng = thela ? s.live_lng : s.lng;
+      return {
+        id: s.id, name: s.name, kind: s.kind, lat: sLat, lng: sLng, address: thela ? '' : s.address,
+        // A thela's number is never shared; customers reach it through the app.
+        phone: thela ? '' : s.phone,
+        opensAt: s.opens_at, closesAt: s.closes_at, door: !!s.door_delivery, pickup: !!s.pickup,
+        gstType: s.gst_type || 'none', fssai: s.fssai || '', photo: s.photo_at ? `/v1/stores/${s.id}/photo` : null,
+        distanceM: Math.round(haversineM(lat, lng, sLat, sLng)),
+        open: offlineReason(s, t) == null,
+        ...(thela ? { seenAgo: t - s.live_at, moving: !!s.moved_at && t - s.moved_at <= THELA_MOVING_S, heading: s.heading } : {}),
+      };
+    })
+    .filter((s) => s.distanceM <= radius)
+    .sort((a, b) => a.distanceM - b.distanceM);
+}
+
+/** Most bought first: these rows lead the "Aaj ke daam" table when sellers have them. */
+const STAPLES = ['aloo', 'pyaz', 'tamatar', 'hari_mirch', 'adrak', 'lehsun', 'dhaniya', 'nimbu', 'kela', 'seb'];
+const PRICE_FRESH_S = 2 * 86400;
+
+/**
+ * "Aaj ke daam": vegetable / fruit prices at the 3 nearest thelas and 2 nearest kiranas, one row per item,
+ * the cheapest marked. A price counts only if the seller changed it or tapped "same prices as yesterday"
+ * in the last 2 days; older prices are left out (shown as "—").
+ */
+export async function todayPrices(env, stores, t = now()) {
+  const sellers = [...stores.filter((s) => s.kind === 'thela').slice(0, 3), ...stores.filter((s) => s.kind !== 'thela').slice(0, 2)];
+  if (!sellers.length) return { sellers: [], items: [] };
+  const ids = sellers.map((s) => s.id);
+  const { results } = await env.DB.prepare(`SELECT p.store_id, p.produce_key, p.name, p.unit, p.price, p.updated_at, s.prices_confirmed
+    FROM products p JOIN stores s ON s.id = p.store_id
+    WHERE p.store_id IN (${ids.map(() => '?').join(',')}) AND p.in_stock = 1 AND p.kind = 'loose' AND p.produce_key IS NOT NULL
+    AND p.category IN ('Vegetables', 'Fruits') LIMIT 2000`).bind(...ids).all();
+  const today = (x) => new Date((x + 5.5 * 3600) * 1000).toISOString().slice(0, 10);
+  const freshDays = new Set([today(t), today(t - 86400), today(t - 2 * 86400)]);
+  const rows = new Map();
+  for (const p of results) {
+    const fresh = t - p.updated_at <= PRICE_FRESH_S || freshDays.has(p.prices_confirmed || '');
+    if (!fresh) continue;
+    const k = `${p.produce_key}|${p.unit || 'kg'}`;
+    const r = rows.get(k) || { key: p.produce_key, name: p.name, unit: p.unit || 'kg', prices: {} };
+    r.prices[p.store_id] = p.price;
+    rows.set(k, r);
+  }
+  const rank = (r) => { const i = STAPLES.indexOf(r.key); return i < 0 ? 99 : i; };
+  const items = [...rows.values()]
+    .map((r) => {
+      const vals = Object.values(r.prices);
+      const min = Math.min(...vals);
+      return { ...r, best: vals.length > 1 ? Object.keys(r.prices).filter((id) => r.prices[id] === min) : [] };
+    })
+    .sort((a, b) => Object.keys(b.prices).length - Object.keys(a.prices).length || rank(a) - rank(b) || a.name.localeCompare(b.name))
+    .slice(0, 15)
+    .sort((a, b) => rank(a) - rank(b) || Object.keys(b.prices).length - Object.keys(a.prices).length);
+  return { sellers: sellers.map((s) => ({ id: s.id, name: s.name, kind: s.kind, distanceM: s.distanceM })), items, freshDays: 2 };
+}
+
 // ---------- routes ----------
 async function route(req, env, ectx) {
   const url = new URL(req.url);
@@ -453,31 +522,14 @@ async function route(req, env, ectx) {
     const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'));
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
     const radius = Math.min(Number(url.searchParams.get('radius')) || RADIUS_MAX_M, RADIUS_MAX_M);
-    const results = await nearbyRows(env, lat, lng);
-    // Partner shops show only with an active pass, switched on, within their timings
-    // (after closing time they drop off the map) and not paused for missed orders.
-    const t = now();
-    const stores = results
-      // Closed for the night still shows (dimmed, "Opens 8 am", no ordering); other reasons hide the shop.
-      .filter((s) => !s.demo && [null, s.kind === 'thela' ? null : 'closed_now'].includes(offlineReason(s, t)))
-      .filter((s) => s.kind !== 'thela' || (s.live_at && t - s.live_at <= THELA_STALE_S))
-      .map((s) => {
-        const thela = s.kind === 'thela';
-        const sLat = thela ? s.live_lat : s.lat, sLng = thela ? s.live_lng : s.lng;
-        return {
-          id: s.id, name: s.name, kind: s.kind, lat: sLat, lng: sLng, address: thela ? '' : s.address,
-          // A thela's number is never shared; customers reach it through the app.
-          phone: thela ? '' : s.phone,
-          opensAt: s.opens_at, closesAt: s.closes_at, door: !!s.door_delivery, pickup: !!s.pickup,
-          gstType: s.gst_type || 'none', fssai: s.fssai || '', photo: s.photo_at ? `/v1/stores/${s.id}/photo` : null,
-          distanceM: Math.round(haversineM(lat, lng, sLat, sLng)),
-          open: offlineReason(s, t) == null,
-          ...(thela ? { seenAgo: t - s.live_at, moving: !!s.moved_at && t - s.moved_at <= THELA_MOVING_S, heading: s.heading } : {}),
-        };
-      })
-      .filter((s) => s.distanceM <= radius)
-      .sort((a, b) => a.distanceM - b.distanceM);
+    const stores = await visibleNearby(env, lat, lng, radius);
     return json({ radius, count: stores.length, stores });
+  }
+
+  if (path === '/v1/prices/today' && m === 'GET') {
+    const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
+    return json(await todayPrices(env, await visibleNearby(env, lat, lng, RADIUS_MAX_M)));
   }
 
   throw new HttpError(404, 'not_found');

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'product_screen.dart';
 import '../l10n.dart';
 import '../data/demo_data.dart';
 import '../state/app_state.dart';
@@ -277,7 +278,12 @@ class _StoreScreenState extends State<StoreScreen> {
       padding: EdgeInsets.all(10),
       decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kLine)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        out ? Opacity(opacity: 0.5, child: IgnorePointer(child: info)) : info,
+        // Tap the picture / name: the big product page (photos, description, prices nearby).
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductScreen(product: p))),
+          child: out ? Opacity(opacity: 0.5, child: info) : info,
+        ),
         Spacer(),
         if (out)
           Center(

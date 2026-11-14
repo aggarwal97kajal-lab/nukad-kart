@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanProduct, guessCategory } from '../src/products.js';
+import { cleanProduct, guessCategory, productOut } from '../src/products.js';
 
 const shop = { kind: 'shop', fssai: '12345678901234' };
 const base = { name: 'Parle-G Gold', size: '250 g', category: 'Bakery & biscuits', mrp: 30, price: 28 };
@@ -40,4 +40,14 @@ test('thela produce from the photo list', () => {
   const b = cleanProduct({ kind: 'loose', name: 'Dhaniya', category: 'Vegetables', unit: 'bunch', options: [1, 2], price: 10, produceKey: 'dhaniya' }, { kind: 'thela' });
   assert.equal(b.unit, 'bunch');
   assert.throws(() => cleanProduct({ kind: 'loose', name: 'Aloo', category: 'Hair', unit: 'kg', options: [1000], price: 30, produceKey: 'aloo' }, { kind: 'thela' }), /bad_category/);
+});
+
+test('product page details and photo list', () => {
+  const v = cleanProduct({ name: 'Amul Butter', category: 'Dairy, bread & eggs', price: 58, mrp: 60, size: '100 g', desc: 'Pasteurised butter', veg: 'veg', shelf: '6 months' }, { kind: 'shop', fssai: '1' });
+  assert.deepEqual(JSON.parse(v.details), { desc: 'Pasteurised butter', veg: 'veg', ingredients: '', shelf: '6 months' });
+  assert.equal(cleanProduct({ name: 'Atta', category: 'Atta, rice & dal', price: 50, mrp: 60, size: '1 kg' }, { kind: 'shop', fssai: '1' }).details, null);
+  const out = productOut({ id: 'pr_1', name: 'x', photo: 'own', photo_slots: '[2,1]', details: v.details, updated_at: 5 });
+  assert.deepEqual(out.photos.map((p) => p.slot), [0, 2, 1]);
+  assert.equal(out.photos[1].url, '/v1/products/pr_1/photo?slot=2&v=5');
+  assert.equal(out.veg, 'veg');
 });

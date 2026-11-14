@@ -72,6 +72,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   bool inStock = true, countStock = false, _saving = false;
   int stock = 0;
   File? ownPhoto;
+  // More photos (slots 1–4; the main photo is slot 0): new ones to upload, saved ones to remove.
+  final Map<int, File> morePhotos = {};
+  final Set<int> removeSlots = {};
+  Map<int, String> savedSlots = {};
+  // Optional details shown on the customer's product page.
+  final brandC = TextEditingController();
+  final desc = TextEditingController();
+  final ingredients = TextEditingController();
+  final shelf = TextEditingController();
+  String veg = '';
 
   Map<String, dynamic>? get p => widget.product;
 
@@ -99,6 +109,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       countStock = e['stock'] != null;
       stock = (e['stock'] as num?)?.toInt() ?? 0;
       credit = '${e['photoCredit'] ?? ''}';
+      for (final x in (e['photos'] as List? ?? [])) {
+        final m = Map<String, dynamic>.from(x as Map);
+        final n = (m['slot'] as num).toInt();
+        if (n > 0) savedSlots[n] = '${m['url']}';
+      }
+      desc.text = '${e['desc'] ?? ''}';
+      ingredients.text = '${e['ingredients'] ?? ''}';
+      shelf.text = '${e['shelf'] ?? ''}';
+      veg = '${e['veg'] ?? ''}';
     } else if (l != null) {
       name.text = l.name;
       category = l.cat;
@@ -117,6 +136,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       if (category.isNotEmpty) _catDefaults();
     }
     if (loose && sizes.isEmpty) sizes = {...kUnitSizes[unit]!.take(3)};
+    brandC.text = brand;
   }
 
   String _num(dynamic v) {
@@ -133,7 +153,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   @override
   void dispose() {
-    for (final c in [name, size, mrp, price, hsn, sizeNum]) {
+    for (final c in [name, size, mrp, price, hsn, sizeNum, brandC, desc, ingredients, shelf]) {
       c.dispose();
     }
     super.dispose();
@@ -174,6 +194,37 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     if (x != null) setState(() => ownPhoto = File(x.path));
   }
 
+  /// One of the 4 more photos: camera or gallery, or remove the one there.
+  Future<void> _morePhoto(int slot) async {
+    final has = morePhotos.containsKey(slot) || (savedSlots.containsKey(slot) && !removeSlots.contains(slot));
+    final pick = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: kCard,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(leading: const Icon(Icons.photo_camera_outlined), title: Text(t('Take photo')), onTap: () => Navigator.pop(ctx, 'camera')),
+          ListTile(leading: const Icon(Icons.image_outlined), title: Text(t('Choose from gallery')), onTap: () => Navigator.pop(ctx, 'gallery')),
+          if (has) ListTile(leading: Icon(Icons.delete_outline, color: kRed), title: Text(t('Remove photo')), onTap: () => Navigator.pop(ctx, 'remove')),
+        ]),
+      ),
+    );
+    if (pick == null) return;
+    if (pick == 'remove') {
+      setState(() {
+        morePhotos.remove(slot);
+        if (savedSlots.containsKey(slot)) removeSlots.add(slot);
+      });
+      return;
+    }
+    final x = await ImagePicker().pickImage(source: pick == 'camera' ? ImageSource.camera : ImageSource.gallery, maxWidth: 1200, imageQuality: 75);
+    if (x != null) {
+      setState(() {
+        morePhotos[slot] = File(x.path);
+        removeSlots.remove(slot);
+      });
+    }
+  }
+
   Future<void> _save() async {
     final pr = _perKg(double.tryParse(price.text.trim()));
     final m = double.tryParse(mrp.text.trim());
@@ -195,7 +246,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         if (p != null) 'id': p!['id'],
         'kind': loose ? 'loose' : 'packed',
         'name': name.text.trim(),
-        'brand': brand,
+        'brand': brandC.text.trim(),
+        'desc': desc.text.trim(),
+        'veg': veg,
+        'ingredients': ingredients.text.trim(),
+        'shelf': shelf.text.trim(),
         'size': loose ? '' : size.text.trim(),
         'unit': loose ? unit : null,
         'options': loose ? (sizes.toList()..sort()) : null,
@@ -212,6 +267,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       var saved = Map<String, dynamic>.from(r['product'] as Map);
       if (ownPhoto != null) {
         final u = await api.putBytes('/v1/partner/products/${saved['id']}/photo', await ownPhoto!.readAsBytes());
+        saved = Map<String, dynamic>.from(u['product'] as Map);
+      }
+      for (final e in morePhotos.entries) {
+        final u = await api.putBytes('/v1/partner/products/${saved['id']}/photo?slot=${e.key}', await e.value.readAsBytes());
+        saved = Map<String, dynamic>.from(u['product'] as Map);
+      }
+      for (final n in removeSlots) {
+        final u = await api.call('DELETE', '/v1/partner/products/${saved['id']}/photo?slot=$n');
         saved = Map<String, dynamic>.from(u['product'] as Map);
       }
       if (!mounted) return;
@@ -276,6 +339,84 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     ]);
   }
 
+  /// Slots 1–4: more photos customers can swipe through (back of the pack, ingredients, inside…).
+  Widget _morePhotos() {
+    Widget slot(int n) {
+      final f = morePhotos[n];
+      final url = removeSlots.contains(n) ? null : savedSlots[n];
+      final Widget inside = f != null
+          ? Image.file(f, fit: BoxFit.cover)
+          : url != null
+              ? Image.network('$apiBase$url', fit: BoxFit.cover)
+              : Icon(Icons.add_a_photo_outlined, color: kMute);
+      return Expanded(
+        child: Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: InkWell(
+              onTap: () => _morePhoto(n),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(color: kSurf, borderRadius: BorderRadius.circular(12), border: Border.all(color: kLine)),
+                child: inside,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _label(t('More photos (up to 4, optional)')),
+      Row(children: [for (var n = 1; n <= 4; n++) slot(n)]),
+      Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(t('Back of the pack, ingredients, inside view. Customers swipe through them.'), style: tx(11.5, color: kMute)),
+      ),
+    ]);
+  }
+
+  /// Optional details for the customer's product page.
+  Widget _details() {
+    final food = catByName(category)?.food == true;
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      initiallyExpanded: desc.text.isNotEmpty || ingredients.text.isNotEmpty || shelf.text.isNotEmpty || veg.isNotEmpty,
+      title: Text(t('Product details (optional)'), style: tx(15, weight: FontWeight.w800)),
+      subtitle: Text(t('Shown to customers on the product page'), style: tx(11.5, color: kMute)),
+      children: [
+        TextField(controller: brandC, textCapitalization: TextCapitalization.words, decoration: field('Amul', label: t('Brand'))),
+        const SizedBox(height: 10),
+        TextField(
+            controller: desc,
+            maxLines: 4,
+            minLines: 2,
+            maxLength: 600,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: field(t('What it is, how to use it…'), label: t('Description'))),
+        if (food) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(spacing: 8, children: [
+              ChoiceChip(label: Text(t('Veg')), selected: veg == 'veg', onSelected: (v) => setState(() => veg = v ? 'veg' : '')),
+              ChoiceChip(label: Text(t('Non-veg')), selected: veg == 'nonveg', onSelected: (v) => setState(() => veg = v ? 'nonveg' : '')),
+            ]),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+              controller: ingredients,
+              maxLines: 3,
+              minLines: 1,
+              maxLength: 400,
+              decoration: field(t('Wheat flour, sugar, edible oil…'), label: t('Ingredients'))),
+        ],
+        TextField(controller: shelf, maxLength: 60, decoration: field(t('e.g. 6 months from packing'), label: t('Best before / shelf life'))),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pr = _perKg(double.tryParse(price.text.trim()));
@@ -285,6 +426,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       appBar: bar(p != null ? t('Edit product') : (loose ? t('Loose item') : t('Add product'))),
       body: ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 30), children: [
         _photo(),
+        if (!loose || category != 'Vegetables' && category != 'Fruits') _morePhotos(),
         _label(t('Name')),
         TextField(controller: name, textCapitalization: TextCapitalization.words, decoration: field(loose ? 'Toor Dal' : 'Parle-G Gold Biscuits')),
         if (barcode.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text(tr('Barcode {0}', [barcode]), style: tx(11.5, color: kMute))),
@@ -442,6 +584,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               ]),
           ]),
         ),
+        const SizedBox(height: 6),
+        _details(),
         const SizedBox(height: 18),
         Btn(_saving ? t('Saving…') : t('Save'), onTap: _saving ? null : _save),
         if (p != null) ...[

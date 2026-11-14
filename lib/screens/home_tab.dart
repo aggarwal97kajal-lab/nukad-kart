@@ -15,6 +15,7 @@ import '../widgets/thela_live.dart';
 import '../state/thela_tracker.dart';
 import '../services/live_data.dart';
 import '../services/api.dart';
+import '../widgets/today_prices.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -424,6 +425,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
       Text(t('Live thelas within 500 m. Pay the seller in person.'),
           style: body(12.5, color: kMute)),
       SizedBox(height: 12),
+      TodayPricesTile(lat: AppScope.of(context).browse.lat, lng: AppScope.of(context).browse.lng),
+      SizedBox(height: 10),
       for (final th in kThelas) ...[
         ListenableBuilder(
           listenable: ThelaTracker.instance,

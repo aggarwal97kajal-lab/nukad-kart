@@ -3,9 +3,10 @@
 //   POST   /v1/partner/products                                 (auth) add or update { id?, ... }
 //   PATCH  /v1/partner/products/:id/stock { inStock, stock }    (auth) the quick switch / + −
 //   DELETE /v1/partner/products/:id                             (auth)
-//   PUT    /v1/partner/products/:id/photo   (raw JPEG)          (auth) own photo
+//   PUT    /v1/partner/products/:id/photo?slot=0..4 (raw JPEG)  (auth) own photo; slot 0 = main, 1–4 = more photos
+//   DELETE /v1/partner/products/:id/photo?slot=1..4             (auth) remove one of the more photos
 //   GET    /v1/partner/barcode/:code                            (auth) name/photo from Open Food Facts (cached)
-//   GET    /v1/products/:id/photo                                      product photo
+//   GET    /v1/products/:id/photo?slot=                               product photo
 import { HttpError, json, body, now } from './index.js';
 
 export const CATEGORIES = {
@@ -78,14 +79,33 @@ export function cleanProduct(b, store) {
   const produceKey = String(b.produceKey || '').trim();
   if (produceKey && !/^[a-z0-9_]{2,40}$/.test(produceKey)) throw new HttpError(400, 'bad_produce');
   if (produceKey && !['Vegetables', 'Fruits'].includes(category)) throw new HttpError(400, 'bad_category');
+  // Optional details for the product page.
+  const veg = ['veg', 'nonveg'].includes(b.veg) ? b.veg : '';
+  const det = { desc: str('desc', 600), veg, ingredients: str('ingredients', 400), shelf: str('shelf', 60) };
+  const details = Object.values(det).some(Boolean) ? JSON.stringify(det) : null;
   return { kind, name, brand: str('brand', 60), size, unit, options: options ? JSON.stringify(options) : null, barcode, category,
-    mrp, price, gst, hsn, stock, in_stock: inStock ? 1 : 0, produce_key: produceKey || null };
+    mrp, price, gst, hsn, stock, in_stock: inStock ? 1 : 0, produce_key: produceKey || null, details };
+}
+
+function slotsOf(p) {
+  try {
+    return (JSON.parse(p.photo_slots || '[]') || []).filter((n) => n >= 1 && n <= 4);
+  } catch {
+    return [];
+  }
 }
 
 export function productOut(p) {
+  let det = {};
+  try { det = JSON.parse(p.details || '{}') || {}; } catch {}
+  const v = `v=${p.updated_at}`;
   return { id: p.id, kind: p.kind, name: p.name, brand: p.brand || '', size: p.size || '', unit: p.unit, options: p.options ? JSON.parse(p.options) : [],
     barcode: p.barcode || '', produceKey: p.produce_key || '', category: p.category, mrp: p.mrp, price: p.price, gst: p.gst, hsn: p.hsn || '', stock: p.stock,
     inStock: !!p.in_stock, photo: p.photo ? `/v1/products/${p.id}/photo?v=${p.updated_at}` : null, photoCredit: p.photo_credit || '',
+    // Main photo first, then up to 4 more; slot numbers so the partner app can replace / remove one.
+    photos: [...(p.photo ? [{ slot: 0, url: `/v1/products/${p.id}/photo?${v}` }] : []),
+      ...slotsOf(p).map((n) => ({ slot: n, url: `/v1/products/${p.id}/photo?slot=${n}&${v}` }))],
+    desc: det.desc || '', veg: det.veg || '', ingredients: det.ingredients || '', shelf: det.shelf || '',
     updatedAt: p.updated_at };
 }
 
@@ -127,15 +147,16 @@ async function lookupOff(code) {
   return { found: false };
 }
 
-async function savePhoto(env, id, bytes) {
+async function savePhoto(env, id, bytes, slot = 0) {
   if (!env.FILES) throw new HttpError(503, 'files_off');
-  await env.FILES.put(`products/${id}.jpg`, bytes, { httpMetadata: { contentType: 'image/jpeg' } });
+  await env.FILES.put(slot ? `products/${id}_${slot}.jpg` : `products/${id}.jpg`, bytes, { httpMetadata: { contentType: 'image/jpeg' } });
 }
 
 export async function productRoute(req, env, path, m, ctx) {
   const photo = path.match(/^\/v1\/products\/([\w-]+)\/photo$/);
   if (photo && m === 'GET') {
-    const o = env.FILES && (await env.FILES.get(`products/${photo[1]}.jpg`));
+    const slot = Number(new URL(req.url).searchParams.get('slot') || 0);
+    const o = env.FILES && (await env.FILES.get(slot >= 1 && slot <= 4 ? `products/${photo[1]}_${slot}.jpg` : `products/${photo[1]}.jpg`));
     if (!o) throw new HttpError(404, 'no_photo');
     return new Response(o.body, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=604800' } });
   }
@@ -265,20 +286,35 @@ export async function productRoute(req, env, path, m, ctx) {
       if (!r.results[0]) throw new HttpError(404, 'no_product');
       return json({ product: productOut(r.results[0]) });
     }
-    if (one[2] === '/photo' && m === 'PUT') {
-      const own = await env.DB.prepare('SELECT id FROM products WHERE id = ? AND store_id = ?').bind(id, s.id).first();
+    const slot = Math.floor(Number(new URL(req.url).searchParams.get('slot') || 0));
+    if (one[2] === '/photo' && (m === 'PUT' || m === 'DELETE')) {
+      if (!(slot >= 0 && slot <= 4) || (m === 'DELETE' && slot === 0)) throw new HttpError(400, 'bad_slot');
+      const own = await env.DB.prepare('SELECT id, photo_slots FROM products WHERE id = ? AND store_id = ?').bind(id, s.id).first();
       if (!own) throw new HttpError(404, 'no_product');
+      const slots = new Set(slotsOf(own));
+      if (m === 'DELETE') {
+        if (env.FILES) await env.FILES.delete(`products/${id}_${slot}.jpg`);
+        slots.delete(slot);
+        await env.DB.prepare('UPDATE products SET photo_slots = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify([...slots].sort()), now(), id).run();
+        const p = await env.DB.prepare('SELECT * FROM products WHERE id = ?').bind(id).first();
+        return json({ product: productOut(p) });
+      }
       const buf = new Uint8Array(await req.arrayBuffer());
       if (!buf.length || buf.length > 1_500_000) throw new HttpError(413, 'photo_too_big');
       if (!(buf[0] === 0xff && buf[1] === 0xd8)) throw new HttpError(400, 'photo_must_be_jpeg');
-      await savePhoto(env, id, buf);
-      await env.DB.prepare("UPDATE products SET photo = 'own', photo_credit = NULL, updated_at = ? WHERE id = ?").bind(now(), id).run();
+      await savePhoto(env, id, buf, slot);
+      if (slot) {
+        slots.add(slot);
+        await env.DB.prepare('UPDATE products SET photo_slots = ?, updated_at = ? WHERE id = ?').bind(JSON.stringify([...slots].sort()), now(), id).run();
+      } else {
+        await env.DB.prepare("UPDATE products SET photo = 'own', photo_credit = NULL, updated_at = ? WHERE id = ?").bind(now(), id).run();
+      }
       const p = await env.DB.prepare('SELECT * FROM products WHERE id = ?').bind(id).first();
       return json({ product: productOut(p) });
     }
     if (!one[2] && m === 'DELETE') {
       await env.DB.prepare('DELETE FROM products WHERE id = ? AND store_id = ?').bind(id, s.id).run();
-      if (env.FILES) await env.FILES.delete(`products/${id}.jpg`);
+      if (env.FILES) await env.FILES.delete([`products/${id}.jpg`, ...[1, 2, 3, 4].map((n) => `products/${id}_${n}.jpg`)]);
       return json({ ok: true });
     }
   }
@@ -309,6 +345,7 @@ export async function bulkUpsert(env, s, rows) {
       return;
     }
     if (v.produce_key) v.produce_key = null;
+    if (!v.details) delete v.details; // Excel has no description columns: keep what the shop typed in the app
     const k = key(v.name, v.size, v.unit, v.kind);
     let id = (v.barcode && byCode.get(v.barcode)) || byName.get(k);
     const cols = { ...v, updated_at: t };
