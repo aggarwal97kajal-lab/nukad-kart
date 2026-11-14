@@ -337,10 +337,19 @@ class _GateState extends State<Gate> {
     if (session.store == null) return const RegisterScreen();
     // A live shop with a signed agreement is never stopped here: a missing document (e.g. FSSAI certificate for a
     // newly added number) is asked for on the home screen. Before signing again, the missing one is added first.
-    if (session.store!['docsComplete'] != true && (session.store!['status'] != 'active' || session.store!['agreementSigned'] != true)) {
+    final st = session.store!;
+    if (st['kind'] != 'thela') {
+      // Kirana: FSSAI certificate → sent to the Nukad Kart team → 7-day trial. PAN, Aadhaar and the agreement are
+      // asked on the home screen and before the first pass. A shop with everything but a new agreement signs it here.
+      if (st['status'] != 'active') return st['startComplete'] == true && st['status'] != 'pending' ? const PartnerShell() : const DocsScreen();
+      final readyToSign = st['docsComplete'] == true && '${st['pan'] ?? ''}'.isNotEmpty && '${st['aadhaarLast4'] ?? ''}'.isNotEmpty;
+      if (st['agreementSigned'] != true && st['trial'] != true && readyToSign) return const AgreementScreen();
+      return const PartnerShell();
+    }
+    if (st['docsComplete'] != true && (st['status'] != 'active' || st['agreementSigned'] != true)) {
       return const DocsScreen();
     }
-    if (session.store!['agreementSigned'] != true) return const AgreementScreen();
+    if (st['agreementSigned'] != true) return const AgreementScreen();
     return const PartnerShell();
   }
 }

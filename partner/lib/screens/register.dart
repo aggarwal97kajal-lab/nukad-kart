@@ -205,11 +205,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       toast(context, kind == 'shop' ? tr('Take a photo of the shop front.') : tr('Add a photo of your thela.'));
       return;
     }
-    if (kind == 'shop' && !RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$').hasMatch(pan.text.trim().toUpperCase())) {
+    // Kirana: the 7-day trial needs only FSSAI + shop photo; PAN and Aadhaar come before the first pass.
+    final wasActive = session.store?['status'] == 'active';
+    if (kind == 'shop' && !wasActive && fssai.text.trim().length != 14) {
+      toast(context, tr('Enter your 14-digit FSSAI number.'));
+      return;
+    }
+    if (kind == 'shop' && pan.text.trim().isNotEmpty && !RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$').hasMatch(pan.text.trim().toUpperCase())) {
       toast(context, tr('Enter a valid PAN (example: ABCDE1234F).'));
       return;
     }
-    if (aadhaar4.text.length != 4) {
+    if ((kind == 'thela' || aadhaar4.text.isNotEmpty) && aadhaar4.text.length != 4) {
       toast(context, tr('Enter the last 4 digits of Aadhaar.'));
       return;
     }
@@ -486,14 +492,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               title: Text(tr('Customer can pick up at the shop'), style: tx(14))),
         ],
         if (kind == 'shop') ...[
-        _label(tr('PAN (required)')),
+        _label(tr('PAN · needed before your first pass (you can add it later)')),
         TextField(
             controller: pan,
             textCapitalization: TextCapitalization.characters,
             inputFormatters: [LengthLimitingTextInputFormatter(10)],
             decoration: field('ABCDE1234F')),
         ],
-        _label(tr('Aadhaar · last 4 digits only (required)')),
+        _label(kind == 'shop' ? tr('Aadhaar · last 4 digits · needed before your first pass') : tr('Aadhaar · last 4 digits only (required)')),
         TextField(
             controller: aadhaar4,
             keyboardType: TextInputType.number,
@@ -502,17 +508,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 4),
         Text(tr('We never ask for the full Aadhaar number.'), style: tx(11.5, color: kMute)),
         if (kind == 'shop') ...[
-        _label(tr('FSSAI registration number (to sell food)')),
+        _label(session.store?['status'] == 'active' ? tr('FSSAI registration number (to sell food)') : tr('FSSAI registration number (required for the free trial)')),
         TextField(
             controller: fssai,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
-            decoration: field(tr('14 digits · leave empty if you don’t have one'))),
+            decoration: field(tr('14 digits'))),
         const SizedBox(height: 8),
         Box(
           color: kSurf,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr('No FSSAI number? You can start with non-food items. Food categories open when you add it.'),
+            Text(tr('Start your 7-day free trial with just FSSAI and a shop photo. PAN, Aadhaar and the agreement are needed only when you buy a pass.'),
                 style: tx(12.5)),
             const SizedBox(height: 6),
             GestureDetector(

@@ -209,7 +209,7 @@ class _PartnerReviewScreenState extends State<PartnerReviewScreen> {
             style: tx(11.5, color: kMute)),
         const SizedBox(height: 16),
         if (p['status'] == 'review' || p['status'] == 'rejected' || p['status'] == 'pending') ...[
-          Btn(_busy ? tr('Saving…') : tr('Approve · shop can go live'), onTap: _busy || p['agreementSigned'] != true ? null : () => _decide(true)),
+          Btn(_busy ? tr('Saving…') : tr('Approve · shop can go live'), onTap: _busy || (p['agreementSigned'] != true && p['kind'] == 'thela') ? null : () => _decide(true)),
           const SizedBox(height: 8),
           Btn(tr('Ask for changes'), outline: true, color: kRed, onTap: _busy ? null : () => _decide(false)),
         ] else if (p['status'] == 'active')

@@ -204,7 +204,7 @@ const nearCache = new Map();
 const prodCache = new Map();
 
 const NEAR_COLS = `id, name, kind, lat, lng, address, phone, opens_at, closes_at, door_delivery, pickup, demo, status, live,
-  pass_until, missed_date, missed_count, photo_at, gst_type, fssai, agreement_version, live_lat, live_lng, live_at, moved_at, heading`;
+  pass_until, trial_until, missed_date, missed_count, photo_at, gst_type, fssai, agreement_version, live_lat, live_lng, live_at, moved_at, heading`;
 
 /** Shops (cached 20 s per ~1 km cell) + thelas (always fresh: they move and go offline any moment). */
 async function nearbyRows(env, lat, lng) {

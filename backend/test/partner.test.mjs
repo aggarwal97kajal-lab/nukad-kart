@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTime, openAt, extendPass, offlineReason, istDate, MISSED_LIMIT, distanceM, requiredDocs } from '../src/partner.js';
+import { parseTime, openAt, extendPass, offlineReason, istDate, MISSED_LIMIT, distanceM, requiredDocs, startDocs } from '../src/partner.js';
 
 // 12 Nov 2026, 15:00 IST = 09:30 UTC
 const at = (h, m = 0) => Math.floor(Date.UTC(2026, 10, 12, h, m) / 1000) - 5.5 * 3600;
@@ -57,4 +57,15 @@ test('documents a shop must upload', () => {
   assert.deepEqual(requiredDocs({ gst_type: 'none', fssai: '' }), ['pan', 'aadhaar']);
   assert.deepEqual(requiredDocs({ gst_type: 'regular', fssai: '12345678901234' }), ['pan', 'aadhaar', 'gst', 'fssai']);
   assert.deepEqual(requiredDocs({ kind: 'thela', gst_type: 'none', fssai: '' }), ['aadhaar']);
+});
+
+test('kirana trial: FSSAI to start, agreement + PAN/Aadhaar with the first pass', () => {
+  const t = at(15);
+  assert.deepEqual(startDocs({ kind: 'shop' }), ['fssai']);
+  assert.deepEqual(startDocs({ kind: 'thela' }), ['aadhaar']);
+  const trial = { kind: 'shop', agreement_version: null, status: 'active', pass_until: t + 86400, trial_until: t + 86400, live: 1, opens_at: '8 am', closes_at: '10 pm' };
+  assert.equal(offlineReason(trial, t), null); // live in the trial without the agreement
+  assert.equal(offlineReason({ ...trial, status: 'pending' }, t), 'not_verified');
+  assert.equal(offlineReason({ ...trial, trial_until: t - 86400 }, t), 'no_agreement'); // paid pass: agreement needed
+  assert.equal(offlineReason({ ...trial, kind: 'thela' }, t), 'no_agreement'); // thela signs before approval
 });

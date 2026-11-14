@@ -48,6 +48,8 @@ class ApiError implements Exception {
         'doc_too_big' => tr('File is bigger than 2 MB. Take a smaller photo or compress the PDF.'),
         'doc_must_be_jpg_or_pdf' => tr('Only JPG photos or PDF files can be uploaded.'),
         'docs_missing' => tr('Upload all required documents first.'),
+        'pass_docs_needed' => tr('Before the first pass: add PAN, Aadhaar, their documents and sign the agreement (see the home screen).'),
+        'pan_aadhaar_needed' => tr('Add your PAN and Aadhaar (last 4) in My details first.'),
         'docs_locked' => tr('This document is already with Nukad Kart team and can’t be changed now.'),
         'not_verified' => tr('Nukad Kart team is still verifying your shop.'),
         'already_approved' => tr('Your shop is already approved. Contact support to change details.'),

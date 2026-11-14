@@ -74,10 +74,16 @@ export function extendPass(passUntil, days, t = now()) {
 }
 
 /** Why a shop is not visible to customers right now, or null when it is. */
+/** In the free trial right now (no paid pass yet). */
+export function inTrial(s, t = now()) {
+  return !!s.trial_until && s.trial_until >= (s.pass_until || 0) && s.pass_until > t;
+}
+
 export function offlineReason(s, t = now()) {
   if (s.status === 'blocked') return 'blocked';
   if (s.status === 'deleted') return 'deleted';
-  if (!s.agreement_version) return 'no_agreement';
+  // Kirana: the 7-day trial runs without the agreement (signed with the first pass); thela signs before approval.
+  if (!s.agreement_version && !(s.kind !== 'thela' && (s.status !== 'active' || inTrial(s, t)))) return 'no_agreement';
   if (s.status === 'rejected') return 'rejected';
   if (s.status === 'pending' || s.status === 'review') return 'not_verified';
   if (!(s.pass_until > t)) return 'no_pass';
@@ -173,7 +179,12 @@ async function myStore(env, uid) {
   return env.DB.prepare('SELECT * FROM stores WHERE owner_id = ? ORDER BY created_at DESC LIMIT 1').bind(uid).first();
 }
 
-/** Documents this shop must upload: PAN and Aadhaar always; GST / FSSAI when it has them. */
+/** Documents to start: kirana = FSSAI certificate only (7-day trial); thela = Aadhaar. */
+export function startDocs(s) {
+  return s.kind === 'thela' ? ['aadhaar'] : ['fssai'];
+}
+
+/** Documents for a pass (and the agreement): PAN and Aadhaar always; GST / FSSAI when it has them. */
 export function requiredDocs(s) {
   if (s.kind === 'thela') return ['aadhaar'];
   return ['pan', 'aadhaar', ...(s.gst_type && s.gst_type !== 'none' ? ['gst'] : []), ...(s.fssai ? ['fssai'] : [])];
@@ -211,8 +222,16 @@ function storeOutWith(s, docs) {
   const required = requiredDocs(s);
   const optional = s.kind === 'thela' ? []
     : DOC_TYPES.filter((t) => !required.includes(t) && (t !== 'gst' || (s.gst_type && s.gst_type !== 'none')));
-  return { ...publicStore(s), requiredDocs: required, optionalDocs: optional, docsComplete: required.every((t) => have.has(t)),
-    missingDocs: required.filter((t) => !have.has(t)) };
+  const start = startDocs(s);
+  const docsComplete = required.every((t) => have.has(t));
+  const shop = s.kind !== 'thela';
+  return { ...publicStore(s), requiredDocs: required, optionalDocs: optional, docsComplete,
+    missingDocs: required.filter((t) => !have.has(t)),
+    startDocs: start, startComplete: start.every((t) => have.has(t)),
+    // Before the first pass: a kirana still has to add PAN / Aadhaar (numbers + documents) and sign the agreement.
+    passMissing: shop ? [...(!s.pan ? ['pan_no'] : []), ...(!s.aadhaar_last4 ? ['aadhaar_no'] : []), ...required.filter((t) => !have.has(t)),
+      ...(s.agreement_version !== AGREEMENT_VERSION ? ['agreement'] : [])] : [],
+  };
 }
 
 async function trialAvailable(env, phone, devHash) {
@@ -224,8 +243,13 @@ async function trialAvailable(env, phone, devHash) {
 
 async function submitForReview(env, s, docs) {
   const out = await storeOut(env, s, docs);
-  if (!out.docsComplete) throw new HttpError(400, 'docs_missing');
-  if (s.agreement_version !== AGREEMENT_VERSION) throw new HttpError(403, 'agreement_needed');
+  // Kirana: FSSAI + shop photo start the trial; PAN, Aadhaar and the agreement come with the first pass.
+  if (s.kind !== 'thela') {
+    if (!out.startComplete) throw new HttpError(400, 'docs_missing');
+  } else {
+    if (!out.docsComplete) throw new HttpError(400, 'docs_missing');
+    if (s.agreement_version !== AGREEMENT_VERSION) throw new HttpError(403, 'agreement_needed');
+  }
   if (s.status === 'pending' || s.status === 'rejected') {
     await env.DB.prepare("UPDATE stores SET status = 'review', review_note = NULL WHERE id = ?").bind(s.id).run();
   }
@@ -389,16 +413,19 @@ export async function partnerRoute(req, env, path, m) {
       if (!(bytes[0] === 0xff && bytes[1] === 0xd8)) throw new HttpError(400, 'photo_must_be_jpeg');
     }
     // Thela: only Aadhaar (last 4). Shop: PAN too, and GST / FSSAI when it has them.
+    // Shop: PAN and Aadhaar may wait until the first pass (the trial needs only FSSAI); checked when given.
     const pan = kind === 'shop' ? str('pan', 10).toUpperCase() : '';
-    if (kind === 'shop' && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) throw new HttpError(400, 'bad_pan');
+    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) throw new HttpError(400, 'bad_pan');
     const aadhaar4 = str('aadhaarLast4', 4);
-    if (!/^\d{4}$/.test(aadhaar4)) throw new HttpError(400, 'bad_aadhaar');
+    if ((kind === 'thela' || aadhaar4) && !/^\d{4}$/.test(aadhaar4)) throw new HttpError(400, 'bad_aadhaar');
     const gstType = kind === 'shop' && ['none', 'regular', 'composition'].includes(b.gstType) ? b.gstType : 'none';
     const gstin = gstType === 'none' ? '' : str('gstin', 15).toUpperCase();
     if (gstType !== 'none' && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) throw new HttpError(400, 'bad_gstin');
+    if (gstType !== 'none' && !pan) throw new HttpError(400, 'bad_pan');
     if (gstType !== 'none' && gstin.slice(2, 12) !== pan) throw new HttpError(400, 'gstin_pan_mismatch');
     const fssai = kind === 'shop' ? str('fssai', 14).replace(/\D/g, '') : '';
-    if (fssai && fssai.length !== 14) throw new HttpError(400, 'bad_fssai');
+    // New kirana: FSSAI is the one number the trial needs (shops approved before this keep working without it).
+    if (((kind === 'shop' && existing?.status !== 'active') || fssai) && fssai.length !== 14) throw new HttpError(400, 'bad_fssai');
     // Address: shop no. and landmark are typed; area, city, state and PIN come from the map pin.
     const a = (k, max = 120) => String((b.addr || {})[k] ?? '').trim().slice(0, max);
     const addr = { shop: a('shop', 80), landmark: a('landmark', 80), area: a('area'), city: a('city', 60), state: a('state', 60), pin: a('pin', 6) };
@@ -420,9 +447,14 @@ export async function partnerRoute(req, env, path, m) {
       // Timings and delivery options change at once; name, address, map pin, photo, PAN/GST/FSSAI wait for approval.
       const quick = { opens_at: kind === 'shop' ? str('opensAt', 10) : '', closes_at: kind === 'shop' ? str('closesAt', 10) : '',
         door_delivery: b.door === false ? 0 : 1, pickup: b.pickup === false ? 0 : 1 };
+      // PAN / Aadhaar given for the first time (kirana after the trial): saved at once, checked with the documents.
+      if (!existing.pan && pan) quick.pan = pan;
+      if (!existing.aadhaar_last4 && aadhaar4) quick.aadhaar_last4 = aadhaar4;
       const change = { name, lat, lng, address, fssai, gst_type: gstType, gstin, pan, aadhaar_last4: aadhaar4,
         addr_shop: addr.shop, addr_landmark: addr.landmark, addr_area: addr.area, addr_city: addr.city, addr_state: addr.state, addr_pin: addr.pin,
         ...(photoB64 ? { photo_lat: kind === 'shop' ? pLat : null, photo_lng: kind === 'shop' ? pLng : null, photo_at: Number(b.photoAt) || t } : {}) };
+      if (quick.pan) delete change.pan;
+      if (quick.aadhaar_last4) delete change.aadhaar_last4;
       const differs = Object.entries(change).some(([k, v]) => String(existing[k] ?? '') !== String(v ?? '')) || !!photoB64;
       const stmts = [env.DB.prepare(`UPDATE stores SET ${Object.keys(quick).map((k) => `${k} = ?`).join(', ')} WHERE id = ?`).bind(...Object.values(quick), id)];
       if (differs) {
@@ -467,9 +499,12 @@ export async function partnerRoute(req, env, path, m) {
     const { u, s, docs } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
     const out = storeOutWith(s, docs);
-    const extra = (await changeNeeds(env, s)).filter((t) => !out.requiredDocs.includes(t));
+    // Kirana before approval: only the trial's documents are required; the rest can be added now or before the pass.
+    const req0 = s.kind !== 'thela' && s.status !== 'active' ? out.startDocs : out.requiredDocs;
+    const opt0 = s.kind === 'thela' ? [] : DOC_TYPES.filter((t) => !req0.includes(t) && (t !== 'gst' || (s.gst_type && s.gst_type !== 'none')));
+    const extra = (await changeNeeds(env, s)).filter((t) => !req0.includes(t));
     const locked = s.status === 'active' || s.status === 'review' ? docs.map((d) => d.type) : [];
-    return json({ docs, required: [...out.requiredDocs, ...extra], optional: out.optionalDocs.filter((t) => !extra.includes(t)), locked, live: s.status === 'active' });
+    return json({ docs, required: [...req0, ...extra], optional: opt0.filter((t) => !extra.includes(t)), locked, live: s.status === 'active' });
   }
 
   if (path === '/v1/partner/docs' && m === 'POST') {
@@ -619,6 +654,8 @@ export async function partnerRoute(req, env, path, m) {
     if (!upi.upiId && b.demo !== true) throw new HttpError(503, 'upi_not_set');
     const plan = PLANS[b.plan];
     if (!plan) throw new HttpError(400, 'bad_plan');
+    // First pass after the trial: PAN, Aadhaar (numbers + documents) and the signed agreement first.
+    if (s.kind !== 'thela' && storeOutWith(s, docs).passMissing.length) throw new HttpError(409, 'pass_docs_needed');
     const key = String(b.key || '').slice(0, 64);
     if (key.length < 16) throw new HttpError(400, 'bad_key');
     const same = await env.DB.prepare('SELECT * FROM pass_payments WHERE idem_key = ?').bind(key).first();
@@ -679,7 +716,7 @@ export async function partnerRoute(req, env, path, m) {
     const { on } = await body(req);
     if (on) {
       if (s.status === 'blocked') throw new HttpError(403, 'blocked');
-      if (s.agreement_version !== AGREEMENT_VERSION) throw new HttpError(403, 'agreement_needed');
+      if (s.agreement_version !== AGREEMENT_VERSION && !(s.kind !== 'thela' && inTrial(s))) throw new HttpError(403, 'agreement_needed');
       if (s.status !== 'active') throw new HttpError(403, 'not_verified');
       if (!(s.pass_until > now())) throw new HttpError(402, 'no_pass');
     }
@@ -732,6 +769,7 @@ export async function partnerRoute(req, env, path, m) {
     const b = await body(req);
     if (b.version !== AGREEMENT_VERSION) throw new HttpError(409, 'agreement_changed');
     if (b.agree !== true || b.authorised !== true) throw new HttpError(400, 'agree_required');
+    if (s.kind !== 'thela' && (!s.pan || !s.aadhaar_last4)) throw new HttpError(400, 'pan_aadhaar_needed');
     if (!storeOutWith(s, docs).docsComplete) throw new HttpError(400, 'docs_missing');
     const name = String(b.name || '').trim().slice(0, 80);
     if (name.length < 3) throw new HttpError(400, 'signer_name_required');

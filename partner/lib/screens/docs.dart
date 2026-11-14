@@ -248,7 +248,9 @@ class _DocsScreenState extends State<DocsScreen> {
                   Icon(Icons.info_outline, color: kAct, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                      child: Text(tr('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukad Kart team checks them before your shop goes live.'),
+                      child: Text(session.store?['kind'] != 'thela' && !live
+                              ? tr('JPG photo or PDF only · max 2 MB per file. For the 7-day free trial only the FSSAI certificate is needed; PAN and Aadhaar can be added now or before your first pass.')
+                              : tr('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukad Kart team checks them before your shop goes live.'),
                           style: tx(12.5, weight: FontWeight.w600))),
                 ]),
               ),
@@ -270,6 +272,16 @@ class _DocsScreenState extends State<DocsScreen> {
                 onTap: busy || missing > 0
                     ? null
                     : () async {
+                        // Kirana before approval: FSSAI is in, send it to the Nukad Kart team (trial starts on approval).
+                        final st = session.store;
+                        if (!live && st != null && st['kind'] != 'thela' && (st['status'] == 'pending' || st['status'] == 'rejected')) {
+                          try {
+                            await api.call('POST', '/v1/partner/submit');
+                          } on ApiError catch (e) {
+                            if (context.mounted) toast(context, e.message);
+                            return;
+                          }
+                        }
                         await session.refresh();
                         if (widget.pushed && context.mounted) Navigator.pop(context);
                       },

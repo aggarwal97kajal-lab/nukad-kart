@@ -187,7 +187,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ]),
               ),
-              if (_needDocs(s).isNotEmpty) ...[
+              if (s['status'] == 'active' && ((s['passMissing'] as List?) ?? []).isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _PassReady(s),
+              ],
+              if (_needDocs(s).isNotEmpty && ((s['passMissing'] as List?) ?? []).isEmpty) ...[
                 const SizedBox(height: 12),
                 Box(
                   color: kAmbBg,
@@ -413,6 +417,50 @@ class _LocationStatusState extends State<_LocationStatus> {
           Expanded(child: Text(text, style: tx(12, color: ok ? kMute : kAmb, weight: FontWeight.w600))),
         ]);
       },
+    );
+  }
+}
+
+/// Kirana in the free trial: what is still needed before the first pass (PAN, Aadhaar, their documents, agreement).
+class _PassReady extends StatelessWidget {
+  final Map<String, dynamic> s;
+  const _PassReady(this.s);
+
+  @override
+  Widget build(BuildContext context) {
+    final miss = ((s['passMissing'] as List?) ?? []).map((e) => '$e').toSet();
+    final numbers = miss.contains('pan_no') || miss.contains('aadhaar_no');
+    final docs = miss.where((x) => !x.endsWith('_no') && x != 'agreement').toList();
+    final sign = miss.contains('agreement');
+    Widget step(bool todo, String text, String btn, VoidCallback go) => Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(children: [
+            Icon(todo ? Icons.radio_button_unchecked : Icons.check_circle, color: todo ? kMute : kAct, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(text, style: tx(13.5, weight: FontWeight.w700))),
+            if (todo) TextButton(onPressed: go, child: Text(btn)),
+          ]),
+        );
+    return Box(
+      color: s['trial'] == true ? kAmbBg : kRedBg,
+      border: s['trial'] == true ? kAmb : kRed,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(s['trial'] == true ? tr('Before your trial ends') : tr('To buy a pass'), style: tx(15, weight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(tr('PAN, Aadhaar and the signed agreement are needed for a pass. Do it now so you stay LIVE without a break.'),
+            style: tx(12.5, color: kMute)),
+        step(numbers, tr('PAN and Aadhaar (last 4) numbers'), tr('Add'),
+            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()))),
+        step(docs.isNotEmpty, docs.isEmpty ? tr('Documents uploaded') : tr('Upload: {0}', [docs.map((x) => docLabels[x]?.$1 ?? x).join(', ')]), tr('Upload'),
+            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DocsScreen(pushed: true)))),
+        step(sign, tr('Sign the partner agreement'), tr('Sign'), () {
+          if (numbers || docs.isNotEmpty) {
+            toast(context, tr('Add PAN, Aadhaar and the documents first.'));
+            return;
+          }
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AgreementScreen()));
+        }),
+      ]),
     );
   }
 }
