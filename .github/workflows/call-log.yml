@@ -1,0 +1,26 @@
+name: Call log (debug)
+
+# Read-only: the last in-app calls (ids, roles, status, times). No names, numbers or audio exist to show.
+on:
+  workflow_dispatch:
+
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Last calls
+        run: |
+          id=$($WRANGLER d1 list --json | jq -r '.[] | select(.name=="nukad-kart-db-apac") | .uuid')
+          sed -i "s/__D1_ID__/$id/" wrangler.toml
+          $WRANGLER d1 execute nukad-kart-db-apac --remote --json --command "SELECT id, kind, ref, caller_label, callee_label, status, datetime(created_at, 'unixepoch', '+330 minutes') AS at_ist, answered_at - created_at AS answer_s, ended_at - created_at AS end_s, (caller_id = callee_id) AS same_user FROM voice_calls ORDER BY created_at DESC LIMIT 15" | jq -c '.[0].results[]'
