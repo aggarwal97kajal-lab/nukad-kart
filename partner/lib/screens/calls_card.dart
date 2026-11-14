@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../push.dart';
 import '../ui.dart';
+import '../voice/start.dart';
 
 /// Thela Home: customers calling you to their street, grouped by street (~100 m).
 /// "Coming" / "Can't come" answers everyone on that street at once. 3 minutes to answer.
@@ -61,6 +62,27 @@ class _CallsCardState extends State<CallsCard> {
   String _who(Map<String, dynamic> g) => (g['count'] as num) > 1 ? tr('{0} people', [g['count']]) : t('1 customer');
 
   @override
+  Future<void> _callOne(Map<String, dynamic> g) async {
+    final ids = ((g['ids'] as List?) ?? []).map((e) => '$e').toList();
+    if (ids.isEmpty) return;
+    var id = ids.first;
+    if (ids.length > 1) {
+      final pick = await showModalBottomSheet<String>(
+        context: context,
+        backgroundColor: kCard,
+        builder: (ctx) => SafeArea(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            for (final (i, x) in ids.indexed)
+              ListTile(leading: const Icon(Icons.call), title: Text(tr('Customer {0}', [i + 1])), onTap: () => Navigator.pop(ctx, x)),
+          ]),
+        ),
+      );
+      if (pick == null) return;
+      id = pick;
+    }
+    if (mounted) await callCustomer(context, 'thela', id);
+  }
+
   Widget build(BuildContext context) {
     if (waiting.isEmpty && coming.isEmpty) return const SizedBox.shrink();
     final since = DateTime.now().difference(_at).inSeconds;
@@ -103,6 +125,9 @@ class _CallsCardState extends State<CallsCard> {
                     ? tr('✋ {0} said “I’m coming out”', [g['out']])
                     : tr('Waiting for the customer to say “I’m coming out” (3 min). If not, the call is cancelled.'),
                 style: tx(12.5, color: ((g['out'] as num?) ?? 0) > 0 ? kAct : kMute, weight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            // Call the customer in the app (number hidden). Several customers on one street: pick one.
+            Btn('📞 ${t('Call customer (number hidden)')}', outline: true, onTap: () => _callOne(g)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(child: Btn(t('Reached, sold'), onTap: busy ? null : () => _post('/v1/partner/calls/done', g))),

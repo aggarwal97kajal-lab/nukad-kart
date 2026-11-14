@@ -10,6 +10,10 @@ perms = [
     '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>',
     '<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>',
     '<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>',
+    # In-app calls (numbers hidden): microphone routing and the ringing screen over the lock screen.
+    '<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>',
+    '<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>',
+    '<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>',
 ]
 for perm in perms:
     if perm not in s:

@@ -23,6 +23,7 @@ dependencies:
   file_saver: ^0.7.0
   archive: ^4.0.2
   web_socket_channel: ^3.0.0
+  flutter_webrtc: '>=0.12.0 <2.0.0'
   open_filex: ^4.7.0
   path_provider: ^2.1.5
   firebase_core: ^4.0.0

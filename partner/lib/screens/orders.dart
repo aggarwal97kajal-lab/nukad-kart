@@ -9,6 +9,7 @@ import '../ui.dart';
 import 'product_form.dart' show money;
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/delivery_map.dart';
+import '../voice/start.dart';
 
 /// Shop orders: New (rings, 5 min to answer) → Packing → On the way → Done.
 /// Delivery-only staff see only "On the way" orders given to them.
@@ -306,6 +307,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Text(money(total + fee), style: tx(18, weight: FontWeight.w800)),
         ]),
         const SizedBox(height: 16),
+        // In-app call, numbers hidden: from accepting until 30 minutes after delivery.
+        if (['accepted', 'packed', 'out'].contains(st) ||
+            (st == 'delivered' && DateTime.now().millisecondsSinceEpoch ~/ 1000 - ((o['deliveredAt'] as num?) ?? 0) <= 1800)) ...[
+          Btn('📞 ${t('Call customer (number hidden)')}', outline: true, onTap: () => callCustomer(context, 'order', '${o['id']}')),
+          const SizedBox(height: 8),
+        ],
         if (st == 'placed' && canOrders) ...[
           Btn(busy ? '…' : t('Accept'), onTap: busy ? null : () => _do('accept')),
           const SizedBox(height: 8),

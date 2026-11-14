@@ -9,6 +9,7 @@ import 'screens/report.dart';
 import 'screens/shell.dart';
 import 'session.dart';
 import 'ui.dart';
+import 'voice/voice_call.dart';
 
 /// Tapped a notification: open the screen it is about.
 Future<void> openFromPush(BuildContext context) async {
@@ -19,6 +20,21 @@ Future<void> openFromPush(BuildContext context) async {
   final type = parts[0], id = parts[1], extra = parts.length > 2 ? parts[2] : '';
   final shop = session.store?['kind'] != 'thela' && session.staffInfo == null;
   switch (type) {
+    case 'voice':
+      if (currentVoiceCall.value?.id == id) return; // already on screen
+      final call = VoiceCall(base: apiBase, token: () => api.token);
+      if (extra == 'decline') {
+        await cancelVoiceRing(id);
+        try {
+          await call.load(id);
+          await call.decline();
+        } catch (_) {}
+        return;
+      }
+      if (context.mounted) {
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => VoiceCallScreen(
+            call: call, lang: gLang, incomingId: id, autoAnswer: extra == 'answer', stopRing: () => cancelVoiceRing(id))));
+      }
     case 'order_new' || 'order' || 'deliver':
       if (shop) shellTab.value = 2;
       if (id.isEmpty || session.store?['kind'] == 'thela') return; // thelas have no shop orders

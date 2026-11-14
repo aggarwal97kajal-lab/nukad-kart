@@ -887,4 +887,6 @@ const Map<String, String> hi = {
   'Wheat flour, sugar, edible oil…': 'गेहूँ का आटा, चीनी, खाने का तेल…',
   'e.g. 6 months from packing': 'जैसे पैकिंग से 6 महीने',
   'Best before / shelf life': 'इस्तेमाल की आख़िरी अवधि',
+  'Call customer (number hidden)': 'ग्राहक को कॉल करें (नंबर छिपा)',
+  'Customer {0}': 'ग्राहक {0}',
 };

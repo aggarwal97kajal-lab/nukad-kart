@@ -85,6 +85,18 @@ jobs:
             echo "::warning::FCM_SERVICE_ACCOUNT secret not set: push notifications are off."
           fi
 
+      - name: Call relay key (Cloudflare TURN, only if CF_TURN_KEY_ID / CF_TURN_TOKEN are set in GitHub)
+        env:
+          CF_TURN_KEY_ID: ${{ secrets.CF_TURN_KEY_ID }}
+          CF_TURN_TOKEN: ${{ secrets.CF_TURN_TOKEN }}
+        run: |
+          if [ -n "$CF_TURN_KEY_ID" ] && [ -n "$CF_TURN_TOKEN" ]; then
+            printf '%s' "$CF_TURN_KEY_ID" | $WRANGLER secret put CF_TURN_KEY_ID
+            printf '%s' "$CF_TURN_TOKEN" | $WRANGLER secret put CF_TURN_TOKEN
+          else
+            echo "::warning::CF_TURN_KEY_ID / CF_TURN_TOKEN not set: in-app calls use STUN only (some mobile networks may not connect)."
+          fi
+
       - name: Create session secret once
         run: |
           if ! $WRANGLER secret list --format json | jq -e '.[] | select(.name=="SESSION_SECRET")' >/dev/null; then

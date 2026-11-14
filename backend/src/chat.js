@@ -44,11 +44,25 @@ export class ChatRoom {
     if (req.headers.get('upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 });
     const pair = new WebSocketPair();
     this.state.acceptWebSocket(pair[1]); // hibernates while idle: no cost between messages
+    // Voice call room: the two phones' connection messages (offer / answer / ice / bye) go to the other phone.
+    const voice = req.headers.get('x-voice');
+    if (voice) {
+      pair[1].serializeAttachment({ voice });
+      for (const ws of this.state.getWebSockets()) {
+        if (ws !== pair[1]) try { ws.send(JSON.stringify({ type: 'joined', who: voice })); } catch {}
+      }
+    }
     return new Response(null, { status: 101, webSocket: pair[0] });
   }
 
   webSocketMessage(ws, msg) {
-    if (msg === 'ping') ws.send('pong');
+    if (msg === 'ping') return ws.send('pong');
+    const me = ws.deserializeAttachment?.();
+    // Only voice rooms pass client messages on; in chat rooms only the server speaks.
+    if (!me?.voice || typeof msg !== 'string' || msg.length > 20000) return;
+    for (const o of this.state.getWebSockets()) {
+      if (o !== ws) try { o.send(msg); } catch {}
+    }
   }
 
   webSocketClose(ws, code) {

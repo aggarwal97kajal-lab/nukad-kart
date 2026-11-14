@@ -6,7 +6,9 @@ s = m.read_text()
 # FOREGROUND_SERVICE_LOCATION + WAKE_LOCK: a thela's location keeps going with the screen off (ongoing notification).
 # REQUEST_IGNORE_BATTERY_OPTIMIZATIONS: one tap "Allow" so the phone does not stop it.
 for perm in ["INTERNET", "CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "POST_NOTIFICATIONS",
-             "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_LOCATION", "WAKE_LOCK", "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"]:
+             "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_LOCATION", "WAKE_LOCK", "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+             # In-app calls with customers (numbers hidden).
+             "RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS", "USE_FULL_SCREEN_INTENT", "ACCESS_NETWORK_STATE"]:
     tag = f'<uses-permission android:name="android.permission.{perm}"/>'
     if tag not in s:
         s = s.replace("<application", tag + "\n    <application", 1)

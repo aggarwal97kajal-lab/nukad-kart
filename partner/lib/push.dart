@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
+import 'voice/voice_call.dart';
 
 /// Firebase app id of the Partner app (com.nukadkart.partner), from its google-services.json
 /// ("mobilesdk_app_id"). Empty = push notifications are off in this build.
@@ -28,6 +29,64 @@ Future<void> partnerBackgroundPush(RemoteMessage m) async {
   if (m.data['type'] == 'calls') await showCalls(m.data);
   if (m.data['type'] == 'chats') await showChats(m.data);
   if (m.data['type'] == 'deliver') await showDeliver(m.data);
+  if (m.data['type'] == 'voice_call') await showVoiceRing(m.data);
+  if (m.data['type'] == 'voice_end') await stopVoiceRing('${m.data['id'] ?? ''}');
+}
+
+// In-app call from a customer: rings with the phone's ringtone until answered, declined or 40 s pass.
+final _voice = AndroidNotificationChannel('voice_calls', 'Calls from customers',
+    description: 'A customer calls you in the app (your number stays hidden)',
+    importance: Importance.max,
+    sound: const UriAndroidNotificationSound('content://settings/system/ringtone'),
+    audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
+    enableVibration: true,
+    vibrationPattern: Int64List.fromList([0, 1000, 800, 1000, 800, 1000]));
+
+int voiceNotifId(String id) => 900000 + (id.hashCode & 0xffff);
+
+Future<void> showVoiceRing(Map<String, dynamic> d) async {
+  final id = '${d['id'] ?? ''}';
+  if (id.isEmpty) return;
+  try {
+    await _local.show(
+      voiceNotifId(id),
+      '📞 ${d['from'] ?? 'Customer'}',
+      '${d['title'] ?? ''} · Nukad Kart call',
+      NotificationDetails(
+        android: AndroidNotificationDetails(_voice.id, _voice.name,
+            channelDescription: _voice.description,
+            importance: Importance.max,
+            priority: Priority.max,
+            category: AndroidNotificationCategory.call,
+            fullScreenIntent: true,
+            sound: _voice.sound,
+            audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
+            additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT
+            timeoutAfter: 40000,
+            ongoing: true,
+            autoCancel: false,
+            actions: const [
+              AndroidNotificationAction('decline', 'Decline', showsUserInterface: true, cancelNotification: true),
+              AndroidNotificationAction('answer', 'Answer', showsUserInterface: true, cancelNotification: true),
+            ]),
+      ),
+      payload: 'voice:$id',
+    );
+  } catch (_) {}
+}
+
+/// Stop the ringing only (answered / declined on the call screen).
+Future<void> cancelVoiceRing(String id) async {
+  try {
+    await _local.cancel(voiceNotifId(id));
+  } catch (_) {}
+}
+
+/// The caller hung up before an answer: stop ringing and close the screen.
+Future<void> stopVoiceRing(String id) async {
+  await cancelVoiceRing(id);
+  final c = currentVoiceCall.value;
+  if (c != null && c.id == id) c.remoteEnded();
 }
 
 /// Staff: "Deliver #NK-… · collect ₹…" with a Start delivery button (opens the app and starts sharing location).
@@ -100,6 +159,12 @@ Future<void> setupPush(VoidCallback onUpdate) async {
           showChats(m.data);
         } else if (m.data['type'] == 'deliver') {
           showDeliver(m.data);
+        } else if (m.data['type'] == 'voice_call') {
+          // App open: go straight to the ringing call screen (the notification rings too).
+          showVoiceRing(m.data);
+          openedPush.value = 'voice|${m.data['id']}||${DateTime.now().millisecondsSinceEpoch}';
+        } else if (m.data['type'] == 'voice_end') {
+          stopVoiceRing('${m.data['id'] ?? ''}');
         } else {
           _showLocal(m);
         }
@@ -286,6 +351,10 @@ void _opened(Map<String, dynamic> d) =>
 void _tapped(NotificationResponse r) {
   final p = r.payload ?? '';
   if (p == 'TEST') return;
+  if (p.startsWith('voice:')) {
+    openedPush.value = 'voice|${p.substring(6)}|${r.actionId ?? ''}|${DateTime.now().millisecondsSinceEpoch}';
+    return;
+  }
   if (r.actionId == 'stop') {
     _ringing.remove(p);
     return;
@@ -319,6 +388,9 @@ Future<void> _initLocal() async {
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_ordersBell);
+    await _local
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_voice);
     // Old order channels (siren, then the voice at alarm volume).
     for (final old in ['orders_alarm', 'orders_voice']) {
       await _local

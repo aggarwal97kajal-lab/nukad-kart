@@ -277,4 +277,7 @@ const Map<String, Map<String, String>> _tr2 = {
   'pc': {'hi': 'पीस', 'hg': 'pc'},
   'dozen': {'hi': 'दर्जन', 'hg': 'darjan'},
   'bunch': {'hi': 'गुच्छा', 'hg': 'guchha'},
+  'Call delivery partner': {'hi': 'डिलीवरी पार्टनर को कॉल करें', 'hg': 'Delivery partner ko call karo'},
+  'Your number stays hidden. Not recorded.': {'hi': 'आपका नंबर छिपा रहता है। रिकॉर्ड नहीं होती।', 'hg': 'Aapka number chhupa rehta hai. Record nahi hoti.'},
+  'Call {0}': {'hi': '{0} को कॉल करें', 'hg': '{0} ko call karo'},
 };

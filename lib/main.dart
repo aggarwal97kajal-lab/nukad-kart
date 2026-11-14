@@ -1,3 +1,5 @@
+import 'voice/voice_call.dart';
+import 'config/keys.dart';
 import 'package:flutter/material.dart';
 import 'widgets/map_markers.dart';
 import 'services/cart_reminder.dart';
@@ -65,6 +67,23 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     if (nav == null) return;
     final s = AppScope.read(navKey.currentContext!);
     final type = '${d['type'] ?? ''}';
+    if (type == 'voice') {
+      final id = '${d['id']}';
+      if (currentVoiceCall.value?.id == id) return;
+      final call = VoiceCall(base: apiBase, token: () => s.apiToken);
+      if (d['action'] == 'decline') {
+        await cancelVoiceRing(id);
+        try {
+          await call.load(id);
+          await call.decline();
+        } catch (_) {}
+        return;
+      }
+      nav.push(MaterialPageRoute(
+          builder: (_) => VoiceCallScreen(
+              call: call, lang: gLang, incomingId: id, autoAnswer: d['action'] == 'answer', stopRing: () => cancelVoiceRing(id))));
+      return;
+    }
     if (type == 'order' && d['id'] != null) {
       await s.syncOrders();
       if (s.orders.any((o) => o.id == '${d['id']}')) nav.push(MaterialPageRoute(builder: (_) => OrderScreen(orderId: '${d['id']}')));

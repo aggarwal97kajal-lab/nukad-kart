@@ -7,6 +7,7 @@ import '../services/push.dart';
 import '../state/app_state.dart';
 import 'ui.dart';
 import '../screens/thela_chat.dart';
+import '../voice/start.dart';
 
 /// "Call to my street": ask a LIVE thela to come to the customer's address. No cart, no numbers.
 class CallThelaCard extends StatefulWidget {
@@ -161,6 +162,8 @@ class _CallThelaCardState extends State<CallThelaCard> {
             SizedBox(height: 10),
             PrimaryButton(busy ? t('Sending…') : t('✋ Yes, I’m coming out'), onTap: busy ? null : _out),
             SizedBox(height: 6),
+            TextButton.icon(
+                onPressed: () => callInApp(context, 'thela', '${call?['id']}'), icon: Icon(Icons.call, size: 18), label: Text(tr('Call {0}', [first]))),
             Row(children: [
               Expanded(child: TextButton(onPressed: busy ? null : _chat, child: Text(t('💬 Write the items first')))),
               TextButton(onPressed: busy ? null : _cancel, child: Text(t('I don’t need it now'))),
@@ -168,8 +171,19 @@ class _CallThelaCardState extends State<CallThelaCard> {
           ]),
         );
       }
-      return _box(Icons.directions_walk, tr('{0} is coming', [first]), tr('About {0} min · watch the pin on the map. Pay the seller directly.', [mins]), kGText, kPillBg,
-          TextButton(onPressed: busy ? null : _cancel, child: Text(t('I don’t need it now'))));
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _box(Icons.directions_walk, tr('{0} is coming', [first]), tr('About {0} min · watch the pin on the map. Pay the seller directly.', [mins]), kGText, kPillBg,
+            TextButton(onPressed: busy ? null : _cancel, child: Text(t('I don’t need it now')))),
+        SizedBox(height: 8),
+        // Call the thela in the app (numbers hidden) while it is coming.
+        OutlinedButton.icon(
+          onPressed: () => callInApp(context, 'thela', '${call?['id']}'),
+          icon: Icon(Icons.call, color: kG),
+          label: Text(tr('Call {0}', [first]), style: body(14, color: kG, weight: FontWeight.w800)),
+          style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(44), side: BorderSide(color: kG, width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+        ),
+      ]);
     }
     final failed = mine && (status == 'declined' || status == 'expired');
     final paused = blockedUntil * 1000 > DateTime.now().millisecondsSinceEpoch;

@@ -10,6 +10,7 @@ import '../widgets/rider_map.dart';
 import 'rating_sheet.dart';
 import '../widgets/bill_card.dart';
 import 'report_screen.dart';
+import '../voice/start.dart';
 
 class OrderScreen extends StatefulWidget {
   final String orderId;
@@ -72,6 +73,23 @@ class _OrderScreenState extends State<OrderScreen> {
           SizedBox(height: 12),
           NoteBox(tr('{0} didn’t have {1}. Removed from your order — new total {2}.', [st.name, o.unavailable.join(', '), rupees(o.payable)]),
               icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
+        ],
+        // In-app call to the delivery partner (numbers hidden): from accepting until 30 minutes after delivery.
+        if (o.remote &&
+            ([OrderStatus.accepted, OrderStatus.packed, OrderStatus.outForDelivery].contains(o.status) ||
+                (o.status == OrderStatus.delivered &&
+                    o.times[OrderStatus.delivered] != null &&
+                    DateTime.now().difference(o.times[OrderStatus.delivered]!).inMinutes < 30))) ...[
+          SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => callInApp(context, 'order', o.id),
+            icon: Icon(Icons.call, color: kG),
+            label: Text(t('Call delivery partner'), style: body(14.5, color: kG, weight: FontWeight.w800)),
+            style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kG, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          ),
+          SizedBox(height: 4),
+          Text(t('Your number stays hidden. Not recorded.'), textAlign: TextAlign.center, style: body(11.5, color: kMute)),
         ],
         if (o.otp != null && o.isOpen) ...[
           SizedBox(height: 12),
