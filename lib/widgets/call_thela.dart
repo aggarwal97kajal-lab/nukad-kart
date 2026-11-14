@@ -163,7 +163,7 @@ class _CallThelaCardState extends State<CallThelaCard> {
             PrimaryButton(busy ? t('Sending…') : t('✋ Yes, I’m coming out'), onTap: busy ? null : _out),
             SizedBox(height: 6),
             TextButton.icon(
-                onPressed: () => callInApp(context, 'thela', '${call?['id']}'), icon: Icon(Icons.call, size: 18), label: Text(tr('Call {0}', [first]))),
+                onPressed: () => callInApp(context, 'thela', '${call?['id']}', label: widget.thela.name), icon: Icon(Icons.call, size: 18), label: Text(tr('Call {0}', [first]))),
             Row(children: [
               Expanded(child: TextButton(onPressed: busy ? null : _chat, child: Text(t('💬 Write the items first')))),
               TextButton(onPressed: busy ? null : _cancel, child: Text(t('I don’t need it now'))),
@@ -177,7 +177,7 @@ class _CallThelaCardState extends State<CallThelaCard> {
         SizedBox(height: 8),
         // Call the thela in the app (numbers hidden) while it is coming.
         OutlinedButton.icon(
-          onPressed: () => callInApp(context, 'thela', '${call?['id']}'),
+          onPressed: () => callInApp(context, 'thela', '${call?['id']}', label: widget.thela.name),
           icon: Icon(Icons.call, color: kG),
           label: Text(tr('Call {0}', [first]), style: body(14, color: kG, weight: FontWeight.w800)),
           style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(44), side: BorderSide(color: kG, width: 1.5),

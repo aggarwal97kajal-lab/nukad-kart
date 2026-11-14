@@ -173,8 +173,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           SizedBox(width: 10),
           Expanded(child: _field('Mobile', phone, hint: '10 digits', digits: 10)),
         ]),
-        SizedBox(height: 12),
-        NoteBox('Nukad Kart is live in Rohini, Delhi (pin codes 110085, 110086 and 110089). More areas are coming soon.'),
         if (widget.onboarding) ...[
           SizedBox(height: 10),
           CardBox(

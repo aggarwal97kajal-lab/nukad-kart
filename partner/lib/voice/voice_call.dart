@@ -87,9 +87,9 @@ enum VoiceState { idle, calling, incoming, connecting, connected, ended }
 class VoiceCall extends ChangeNotifier {
   final String base; // https://…
   final String Function() token;
-  VoiceCall({required this.base, required this.token});
+  VoiceCall({required this.base, required this.token, this.other = ''});
 
-  String id = '', other = '', title = '';
+  String id = '', other, title = '';
   bool outgoing = false, muted = false, speaker = false;
   VoiceState state = VoiceState.idle;
   String endReason = ''; // '', 'missed', 'declined'
@@ -150,8 +150,18 @@ class VoiceCall extends ChangeNotifier {
 
   /// Call the other side of an order (kind 'order', ref = order id) or a street call (kind 'thela', ref = call id).
   Future<void> start(String kind, String ref) async {
-    _take(await _post('/v1/voice/start', {'kind': kind, 'ref': ref}));
+    outgoing = true;
     state = VoiceState.calling;
+    notifyListeners();
+    final r = await _post('/v1/voice/start', {'kind': kind, 'ref': ref});
+    _take(r);
+    // "End" pressed while the server was still ringing the other phone: stop that ring too.
+    if (_closed) {
+      try {
+        await _post('/v1/voice/$id/end', {});
+      } catch (_) {}
+      return;
+    }
     notifyListeners();
     try {
       await _media();
@@ -460,7 +470,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
     switch (c.state) {
       case VoiceState.idle:
       case VoiceState.calling:
-        return w('Calling…');
+        return c.id.isEmpty ? w('Calling…') : w('Ringing…');
       case VoiceState.incoming:
         return w('Incoming call');
       case VoiceState.connecting:

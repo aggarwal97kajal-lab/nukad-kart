@@ -9,7 +9,7 @@ Future<void> callCustomer(BuildContext context, String kind, String ref) {
   return Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => VoiceCallScreen(call: VoiceCall(base: apiBase, token: () => api.token), lang: gLang, startKind: kind, startRef: ref),
+      builder: (_) => VoiceCallScreen(call: VoiceCall(base: apiBase, token: () => api.token, other: 'Customer'), lang: gLang, startKind: kind, startRef: ref),
     ),
   );
 }

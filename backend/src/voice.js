@@ -161,11 +161,14 @@ export async function voiceRoute(req, env, path, m) {
     const calleeLabel = isCustomer ? p.sellerLabel : p.customerLabel;
     await env.DB.prepare(`INSERT INTO voice_calls (id, kind, ref, caller_id, callee_id, caller_label, callee_label, title, status, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ringing', ?)`).bind(id, kind, ref, uid, callee, callerLabel, calleeLabel, p.title, t).run();
-    // Data-only, high priority: the app rings with Answer / Decline.
-    await sendPush(env, callee, { title: '', body: '', dataOnly: true,
-      data: { type: 'voice_call', id, from: callerLabel, title: p.title, kind, ref } }).catch(() => {});
-    const c = await env.DB.prepare('SELECT * FROM voice_calls WHERE id = ?').bind(id).first();
-    return json({ call: callOut(c, uid), ice: await iceServers(env), left: lim.left });
+    // Data-only, high priority: the app rings with Answer / Decline. Ring and relay keys at the same time (faster start).
+    const [, ice, c] = await Promise.all([
+      sendPush(env, callee, { title: '', body: '', dataOnly: true,
+        data: { type: 'voice_call', id, from: callerLabel, title: p.title, kind, ref } }).catch(() => {}),
+      iceServers(env),
+      env.DB.prepare('SELECT * FROM voice_calls WHERE id = ?').bind(id).first(),
+    ]);
+    return json({ call: callOut(c, uid), ice, left: lim.left });
   }
 
   const one = path.match(/^\/v1\/voice\/([\w-]+)(?:\/(answer|decline|end))?$/);

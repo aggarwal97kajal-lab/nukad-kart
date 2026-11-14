@@ -64,9 +64,9 @@ class _RiderMapState extends State<RiderMap> {
   /// A round pin with an emoji and a name tag under it ("🏠 Ghar", "🏪 Dukaan"), drawn on the phone so it
   /// does not depend on the map's fonts.
   static Future<Uint8List> _pin(String emoji, String label, Color bg) async {
-    const w = 200.0, h = 150.0;
+    const w = 200.0, h = 150.0, k = 3.0; // drawn 3× (map images are in screen pixels)
     final rec = ui.PictureRecorder();
-    final cv = Canvas(rec);
+    final cv = Canvas(rec)..scale(k);
     final circle = Offset(w / 2, 46);
     cv.drawCircle(circle.translate(0, 2), 40, Paint()..color = const Color(0x33000000));
     cv.drawCircle(circle, 40, Paint()..color = Colors.white);
@@ -80,7 +80,7 @@ class _RiderMapState extends State<RiderMap> {
     final tag = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w / 2, 116), width: t.width + 24, height: t.height + 10), const Radius.circular(14));
     cv.drawRRect(tag, Paint()..color = const Color(0xFF21331B));
     t.paint(cv, Offset(w / 2 - t.width / 2, 116 - t.height / 2));
-    final img = await rec.endRecording().toImage(w.toInt(), h.toInt());
+    final img = await rec.endRecording().toImage((w * k).toInt(), (h * k).toInt());
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
     return png!.buffer.asUint8List();
   }
@@ -89,6 +89,11 @@ class _RiderMapState extends State<RiderMap> {
     final c = _c;
     if (c == null) return;
     final home = LatLng(widget.homeLat, widget.homeLng);
+    // Pins and the scooter can sit close together: show all of them (by default the map hides overlapping ones).
+    try {
+      await c.setSymbolIconAllowOverlap(true);
+      await c.setSymbolIconIgnorePlacement(true);
+    } catch (_) {}
     try {
       await c.addImage('nk-home', await _pin('🏠', t('Your home'), const Color(0xFF2E7D32)));
       if (_hasShop) await c.addImage('nk-shop', await _pin('🏪', t('The shop'), const Color(0xFF185FA5)));
@@ -107,8 +112,8 @@ class _RiderMapState extends State<RiderMap> {
       _ahead = await c.addLine(LineOptions(geometry: _route, lineColor: '#21331B', lineWidth: 5, lineOpacity: 0.95));
     }
     if (_icon) {
-      if (_hasShop) await c.addSymbol(SymbolOptions(geometry: LatLng(widget.shopLat!, widget.shopLng!), iconImage: 'nk-shop', iconSize: 0.42, iconAnchor: 'center'));
-      await c.addSymbol(SymbolOptions(geometry: home, iconImage: 'nk-home', iconSize: 0.42, iconAnchor: 'center'));
+      if (_hasShop) await c.addSymbol(SymbolOptions(geometry: LatLng(widget.shopLat!, widget.shopLng!), iconImage: 'nk-shop', iconSize: 0.5, iconAnchor: 'center'));
+      await c.addSymbol(SymbolOptions(geometry: home, iconImage: 'nk-home', iconSize: 0.5, iconAnchor: 'center'));
     } else {
       await c.addCircle(CircleOptions(geometry: home, circleRadius: 9, circleColor: '#2E7D32', circleStrokeColor: '#FFFFFF', circleStrokeWidth: 3));
     }
@@ -159,8 +164,10 @@ class _RiderMapState extends State<RiderMap> {
 
   Future<void> _move() async {
     final c = _c;
-    if (!_ready || c == null || widget.riderLat == null) return;
-    final raw = LatLng(widget.riderLat!, widget.riderLng!);
+    if (!_ready || c == null) return;
+    // No location from the delivery phone yet: the Nukad Kart scooter waits at the shop.
+    if (widget.riderLat == null && !_hasShop) return;
+    final raw = widget.riderLat == null ? LatLng(widget.shopLat!, widget.shopLng!) : LatLng(widget.riderLat!, widget.riderLng!);
     final snap = _snap(raw);
     final to = snap?.$1 ?? raw;
     if (_ahead != null && snap != null) {
@@ -169,7 +176,7 @@ class _RiderMapState extends State<RiderMap> {
     if (_rider == null) {
       _shown = to;
       _rider = await c.addSymbol(_icon
-          ? SymbolOptions(geometry: to, iconImage: 'nk-bike', iconSize: 0.45, iconAnchor: 'bottom')
+          ? SymbolOptions(geometry: to, iconImage: 'nk-bike', iconSize: 0.42, iconAnchor: 'bottom')
           : SymbolOptions(geometry: to, textField: '🛵', textSize: 24));
       await _fit();
       return;
