@@ -325,7 +325,10 @@ async function route(req, env, ectx) {
     const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM stores WHERE active = 1').all();
     // Call relay check (no secrets shown): 'turn' = works; 'turn_error_404' = key id wrong, 401/403 = token wrong.
     const calls = url.searchParams.get('calls') === '1' ? await turnStatus(env) : (env.CF_TURN_KEY_ID ? 'turn_set' : 'stun_only');
-    return json({ ok: true, service: 'nukad-kart-api', calls, stores: r.results[0].n, time: new Date().toISOString(),
+    // Shape of the TURN secrets only (length + kind of characters), never the values.
+    const shape = (v) => { const x = String(v || '').trim(); return x ? `${x.length}:${/^[0-9a-f]+$/.test(x) ? 'hex' : /^[\w-]+$/.test(x) ? 'word' : 'other'}${/\s/.test(String(v)) ? ':space' : ''}` : 'empty'; };
+    const turnShape = url.searchParams.get('calls') === '1' ? { keyId: shape(env.CF_TURN_KEY_ID), token: shape(env.CF_TURN_TOKEN) } : undefined;
+    return json({ ok: true, service: 'nukad-kart-api', calls, turnShape, stores: r.results[0].n, time: new Date().toISOString(),
       worker: req.cf?.colo || '', db: r.meta?.served_by_region || r.meta?.served_by || '', dbMs: Date.now() - t0 });
   }
 
