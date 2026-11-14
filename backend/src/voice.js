@@ -64,14 +64,30 @@ export async function checkLimits(env, kind, ref, t = now()) {
   return { connected, left: MAX_CONNECTED - connected };
 }
 
+/** Health check: does Cloudflare accept the TURN key? 'turn', or 'turn_error_<status>' (404 = key id wrong, 401/403 = token wrong). */
+export async function turnStatus(env) {
+  if (!env.CF_TURN_KEY_ID || !env.CF_TURN_TOKEN) return 'stun_only';
+  try {
+    const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${env.CF_TURN_KEY_ID.trim()}/credentials/generate-ice-servers`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${env.CF_TURN_TOKEN.trim()}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ ttl: 60 }),
+    });
+    if (!r.ok) return `turn_error_${r.status}`;
+    return JSON.stringify(await r.json()).includes('turn:') ? 'turn' : 'turn_error_no_turn';
+  } catch {
+    return 'turn_error_network';
+  }
+}
+
 /** Short-lived TURN credentials from Cloudflare (secrets CF_TURN_KEY_ID / CF_TURN_TOKEN); STUN only without them. */
 export async function iceServers(env) {
   const stun = { urls: ['stun:stun.cloudflare.com:3478'] };
   if (!env.CF_TURN_KEY_ID || !env.CF_TURN_TOKEN) return [stun];
   try {
-    const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${env.CF_TURN_KEY_ID}/credentials/generate-ice-servers`, {
+    const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${env.CF_TURN_KEY_ID.trim()}/credentials/generate-ice-servers`, {
       method: 'POST',
-      headers: { authorization: `Bearer ${env.CF_TURN_TOKEN}`, 'content-type': 'application/json' },
+      headers: { authorization: `Bearer ${env.CF_TURN_TOKEN.trim()}`, 'content-type': 'application/json' },
       body: JSON.stringify({ ttl: 3600 }),
     });
     if (!r.ok) return [stun];
