@@ -90,8 +90,8 @@ class _RiderMapState extends State<RiderMap> {
     if (c == null) return;
     final home = LatLng(widget.homeLat, widget.homeLng);
     try {
-      await c.addImage('nk-home', await _pin('🏠', tr('Your home'), const Color(0xFF2E7D32)));
-      if (_hasShop) await c.addImage('nk-shop', await _pin('🏪', tr('The shop'), const Color(0xFF185FA5)));
+      await c.addImage('nk-home', await _pin('🏠', t('Your home'), const Color(0xFF2E7D32)));
+      if (_hasShop) await c.addImage('nk-shop', await _pin('🏪', t('The shop'), const Color(0xFF185FA5)));
       final b = await rootBundle.load('assets/images/markers/bike.png');
       await c.addImage('nk-bike', b.buffer.asUint8List());
       _icon = true;
@@ -225,7 +225,7 @@ class _RiderMapState extends State<RiderMap> {
                   shape: const CircleBorder(),
                   elevation: 2,
                   child: IconButton(
-                    tooltip: tr('Recentre'),
+                    tooltip: t('Recentre'),
                     icon: Icon(Icons.center_focus_strong, color: kInk, size: 22),
                     onPressed: () {
                       HapticFeedback.selectionClick();
