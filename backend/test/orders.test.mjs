@@ -155,3 +155,15 @@ test('packed and out for delivery are two steps; staff shows busy', async () => 
   assert.equal(r.json.order.status, 'out');
   assert.ok(r.json.order.packedAt && r.json.order.outAt);
 });
+
+test('same checkout key three times (double tap / retry) makes one order', async () => {
+  const { call } = await setup();
+  const key = 'chk-1234567890abcdef';
+  const rs = await Promise.all([1, 2, 3].map(() => place(call, [{ id: 'atta', qty: 1 }], { key })));
+  for (const r of rs) assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.equal(new Set(rs.map((r) => r.json.order.id)).size, 1);
+  const r = await call('GET', '/v1/me/orders', null, 'cust');
+  assert.equal(r.json.orders.length, 1);
+  const r2 = await place(call, [{ id: 'atta', qty: 1 }], { key: 'chk-another-checkout-1' });
+  assert.notEqual(r2.json.order.id, rs[0].json.order.id);
+});

@@ -232,12 +232,12 @@ async function nearbyRows(env, lat, lng) {
 }
 
 // ---------- routes ----------
-async function route(req, env) {
+async function route(req, env, ectx) {
   const url = new URL(req.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const m = req.method;
 
-  const orders = await orderRoute(req, env, path, m);
+  const orders = await orderRoute(req, env, path, m, ectx);
   if (orders) return orders;
   const chat = await chatRoute(req, env, path, m);
   if (chat) return chat;
@@ -484,9 +484,9 @@ async function route(req, env) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ectx) {
     try {
-      return await route(req, env);
+      return await route(req, env, ectx);
     } catch (e) {
       if (e instanceof HttpError) {
         // Why a sign-in was refused (token issuer, SMS service message…) stays in the server log only.

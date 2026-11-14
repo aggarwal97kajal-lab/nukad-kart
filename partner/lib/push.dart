@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 
 /// Firebase app id of the Partner app (com.nukadkart.partner), from its google-services.json
@@ -138,37 +140,75 @@ const _channel = AndroidNotificationChannel('updates', 'Updates',
 const _calls = AndroidNotificationChannel('calls', 'Customers calling you',
     description: 'A customer asks your thela to come to their street', importance: Importance.high);
 
-// Shop: new order alarm. A Hindi voice — "नया ऑर्डर आया, अभी चेक करें" — at alarm volume, every 10 seconds
-// (the 10 s sound loops), until the order is opened / answered, stopped, or 3 minutes pass.
-// New channel id: Android never changes the sound of a channel that already exists on the phone.
-final _orders = AndroidNotificationChannel('orders_voice', 'New orders (Hindi voice)',
-    description: 'Says “नया ऑर्डर आया, अभी चेक करें” every 10 seconds for up to 3 minutes',
+// Shop: new order ring. Plays as a normal notification sound (phone's notification volume, not the alarm),
+// and repeats (FLAG_INSISTENT; the voice file is 10 s) until the order is accepted / rejected or the 5-minute
+// window ends. Two sounds, chosen in Settings: the Hindi voice "नया ऑर्डर आया, अभी चेक करें", or the phone's bell.
+// New channel ids: Android never changes the sound or audio usage of a channel that already exists on the phone.
+final _ordersVoice = AndroidNotificationChannel('orders_voice2', 'New orders (Hindi voice)',
+    description: 'Says “नया ऑर्डर आया, अभी चेक करें” every 10 seconds until you accept',
     importance: Importance.max,
     sound: const RawResourceAndroidNotificationSound('order_voice'),
-    audioAttributesUsage: AudioAttributesUsage.alarm,
+    audioAttributesUsage: AudioAttributesUsage.notification,
+    enableVibration: true,
+    vibrationPattern: Int64List.fromList([0, 800, 400, 800, 400, 800]));
+final _ordersBell = AndroidNotificationChannel('orders_bell', 'New orders (bell)',
+    description: 'The phone\'s notification sound, repeating until you accept',
+    importance: Importance.max,
+    audioAttributesUsage: AudioAttributesUsage.notification,
     enableVibration: true,
     vibrationPattern: Int64List.fromList([0, 800, 400, 800, 400, 800]));
 
+/// 'voice' (Hindi awaaz, default) or 'bell' (sirf ghanti). Saved on the phone; read fresh because a
+/// background push runs in its own isolate.
+Future<String> orderSound() async {
+  try {
+    final p = await SharedPreferences.getInstance();
+    await p.reload();
+    return p.getString('order_sound') ?? 'voice';
+  } catch (_) {
+    return 'voice';
+  }
+}
+
 int orderNotifId(String orderId) => int.tryParse(orderId.replaceAll(RegExp(r'\D'), '')) ?? orderId.hashCode;
+
+/// Title/body of each order that is ringing, so the in-app ringer can show it again.
+final _ringing = <String, (String, String)>{};
+Timer? _ringTimer;
+
+/// True while the app is on screen (main.dart sets it from the app lifecycle).
+bool partnerAppOpen = false;
 
 Future<void> showOrderAlarm(Map<String, dynamic> d) async {
   final id = '${d['id'] ?? ''}';
+  if (id.isEmpty) return;
+  final title = '${d['title'] ?? 'New order'}';
+  final body = '${d['body'] ?? 'Open Nukad Kart Partner to accept'}';
+  _ringing[id] = (title, body);
+  await _ring(id, title, body);
+  _startRinger();
+}
+
+Future<void> _ring(String id, String title, String body) async {
+  final ch = await orderSound() == 'bell' ? _ordersBell : _ordersVoice;
   try {
     await _local.show(
       orderNotifId(id),
-      '${d['title'] ?? 'New order'}',
-      '${d['body'] ?? 'Open Nukad Kart Partner to accept'}',
+      title,
+      body,
       NotificationDetails(
-        android: AndroidNotificationDetails(_orders.id, _orders.name,
-            channelDescription: _orders.description,
+        android: AndroidNotificationDetails(ch.id, ch.name,
+            channelDescription: ch.description,
             importance: Importance.max,
             priority: Priority.max,
-            category: AndroidNotificationCategory.alarm,
-            sound: _orders.sound,
-            audioAttributesUsage: AudioAttributesUsage.alarm,
-            additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT: the sound repeats until it is dismissed
-            timeoutAfter: 180000,
-            autoCancel: true,
+            category: AndroidNotificationCategory.call,
+            sound: ch.sound,
+            playSound: true,
+            audioAttributesUsage: AudioAttributesUsage.notification,
+            additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT: the sound repeats until it is removed
+            timeoutAfter: 300000, // the shop's 5-minute window
+            ongoing: true, // a swipe does not silence an order; accept / reject / Stop does
+            autoCancel: false,
             actions: const [AndroidNotificationAction('stop', 'Stop ringing', cancelNotification: true)]),
       ),
       payload: id,
@@ -176,11 +216,65 @@ Future<void> showOrderAlarm(Map<String, dynamic> d) async {
   } catch (_) {}
 }
 
-/// Accepted / rejected / missed: stop the ringing for that order.
+/// While the app is open, check every 10 seconds: an order that is still new but whose notification is gone
+/// (opened from the notification, or the shade was pulled) rings again. Orders that are no longer new stop.
+void _startRinger() {
+  _ringTimer ??= Timer.periodic(const Duration(seconds: 10), (_) => _tick());
+}
+
+bool _ticking = false;
+Future<void> _tick() async {
+  if (_ringing.isEmpty) {
+    _ringTimer?.cancel();
+    _ringTimer = null;
+    return;
+  }
+  if (!partnerAppOpen || _ticking) return;
+  _ticking = true;
+  try {
+    final r = await api.call('GET', '/v1/partner/orders?tab=new');
+    final still = <String>{for (final o in (r['orders'] as List? ?? [])) '${(o as Map)['id']}'};
+    for (final id in _ringing.keys.toList()) {
+      if (!still.contains(id)) await stopOrderAlarm(id);
+    }
+    final active = await _local
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            ?.getActiveNotifications() ??
+        const <ActiveNotification>[];
+    final shown = {for (final a in active) a.id};
+    for (final e in _ringing.entries.toList()) {
+      if (!shown.contains(orderNotifId(e.key))) await _ring(e.key, e.value.$1, e.value.$2);
+    }
+  } catch (_) {
+  } finally {
+    _ticking = false;
+  }
+}
+
+/// The New tab loaded: every order there keeps ringing until it is answered (also after the app was
+/// opened from a closed state, when the background ring did not reach this isolate).
+void ringNewOrders(List<Map<String, dynamic>> orders) {
+  for (final o in orders) {
+    final id = '${o['id']}';
+    if (o['status'] == 'placed' && !_ringing.containsKey(id)) {
+      _ringing[id] = ('New order ${o['id']}', 'Open Nukad Kart Partner to accept');
+    }
+  }
+  if (_ringing.isNotEmpty) _startRinger();
+}
+
+/// Accepted / rejected / missed / Stop pressed: stop the ringing for that order.
 Future<void> stopOrderAlarm(String orderId) async {
+  _ringing.remove(orderId);
   try {
     await _local.cancel(orderNotifId(orderId));
   } catch (_) {}
+}
+
+/// Play the chosen order sound once, from Settings ("Test").
+Future<void> testOrderSound() async {
+  await _ring('TEST', 'Test: new order', 'This is how a new order sounds');
+  Timer(const Duration(seconds: 12), () => _local.cancel(orderNotifId('TEST')));
 }
 
 /// "type|id|extra|time" of the last notification the person tapped; the shell opens the matching screen.
@@ -191,6 +285,11 @@ void _opened(Map<String, dynamic> d) =>
 
 void _tapped(NotificationResponse r) {
   final p = r.payload ?? '';
+  if (p == 'TEST') return;
+  if (r.actionId == 'stop') {
+    _ringing.remove(p);
+    return;
+  }
   final t = DateTime.now().millisecondsSinceEpoch;
   if (p.startsWith('deliver:')) {
     openedPush.value = 'deliver|${p.substring(8)}|${r.actionId == 'start' ? 'start' : ''}|$t';
@@ -216,11 +315,16 @@ Future<void> _initLocal() async {
         ?.createNotificationChannel(_calls);
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_orders);
-    // The old siren channel (before the Hindi voice).
+        ?.createNotificationChannel(_ordersVoice);
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.deleteNotificationChannel('orders_alarm');
+        ?.createNotificationChannel(_ordersBell);
+    // Old order channels (siren, then the voice at alarm volume).
+    for (final old in ['orders_alarm', 'orders_voice']) {
+      await _local
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.deleteNotificationChannel(old);
+    }
   } catch (_) {}
 }
 

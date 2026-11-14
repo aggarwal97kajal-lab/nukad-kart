@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../l10n.dart';
 
 // ---------- Brand colours: "Golden Corner" (brand guidelines, direction 02) ----------
 // Brand #F8CB46 · Surface #FFF8DE · Ink #21331B · Action #315426.
 // gDark is set by the root widget from the Appearance setting.
 bool gDark = false;
+
+/// A light buzz on every button press (taps with no handler stay silent).
+VoidCallback? buzz(VoidCallback? f) => f == null
+    ? null
+    : () {
+        HapticFeedback.lightImpact();
+        f();
+      };
 Color _p(int light, int dark) => Color(gDark ? dark : light);
 
 const kBrand = Color(0xFFF8CB46); // golden yellow
@@ -84,7 +93,7 @@ class PrimaryButton extends StatelessWidget {
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
+          onTap: buzz(onTap),
           child: Center(
             child: Text(text,
                 style: head(15.5, color: outline ? color : kOnG, weight: FontWeight.w700)),
@@ -202,7 +211,7 @@ class QtyStepper extends StatelessWidget {
             side: BorderSide(color: kG, width: 1.5),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
           ),
-          onPressed: onAdd,
+          onPressed: buzz(onAdd),
           child: Text(t('ADD'), style: body(13, color: kG, weight: FontWeight.w700)),
         ),
       );
@@ -213,12 +222,12 @@ class QtyStepper extends StatelessWidget {
       decoration: BoxDecoration(color: kG, borderRadius: BorderRadius.circular(9)),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         InkWell(
-            onTap: onRemove,
+            onTap: buzz(onRemove),
             child: SizedBox(
                 width: 28, height: 34, child: Icon(Icons.remove, color: kOnG, size: 18))),
         Text('$qty', style: body(14, color: kOnG, weight: FontWeight.w700)),
         InkWell(
-            onTap: onAdd,
+            onTap: buzz(onAdd),
             child: SizedBox(
                 width: 28, height: 34, child: Icon(Icons.add, color: kOnG, size: 18))),
       ]),

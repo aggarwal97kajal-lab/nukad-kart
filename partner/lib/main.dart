@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'api.dart';
 import 'session.dart';
 import 'prefs.dart';
+import 'push.dart';
 import 'ui.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
@@ -37,6 +38,7 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    partnerAppOpen = true;
     prefs.addListener(_changed);
   }
 
@@ -51,6 +53,10 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
 
   @override
   void didChangePlatformBrightness() => setState(() {});
+
+  // The in-app order ringer works only while the app is on screen (closed: the notification itself rings).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState s) => partnerAppOpen = s == AppLifecycleState.resumed;
 
   /// Colours and words are read when a screen builds, so after a theme/language change every open screen is rebuilt.
   void _rebuildAll() {

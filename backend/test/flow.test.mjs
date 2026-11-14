@@ -75,3 +75,23 @@ test('weekly report counts views, calls and new customers', async () => {
   assert.equal(r.newCustomers, 1);
   assert.equal(r.streets[0].address, 'Gali 4');
 });
+
+test('report periods: month totals, missed orders, top items and a day-by-day chart', async () => {
+  const { DB, env, ins } = await setup();
+  const lines = JSON.stringify([{ pid: 'p1', name: 'Amul Milk', size: '500 ml', qty: 3, price: 30 }, { pid: 'p2', name: 'Bread', qty: 1, price: 40 }]);
+  ins('orders', { id: 'NK-R1', store_id: 'sh1', customer_id: 'c1', status: 'delivered', items_total: 130, total: 130, lines, created_at: T - 200 });
+  ins('orders', { id: 'NK-R2', store_id: 'sh1', customer_id: 'c2', status: 'missed', items_total: 50, total: 50, lines: '[]', created_at: T - 300 });
+  const s = DB.raw.prepare('SELECT * FROM stores WHERE id = ?').get('sh1');
+  for (const p of ['week', 'month']) {
+    const r = await weekReport(env, s, T, p);
+    assert.equal(r.orders, 1);
+    assert.equal(r.sales, 130);
+    assert.equal(r.missed, 1);
+    assert.equal(r.top[0].name, 'Amul Milk · 500 ml');
+    assert.equal(r.top[0].qty, 3);
+    assert.equal(r.days.at(-1).sales, 130);
+  }
+  const last = await weekReport(env, s, T, 'last');
+  assert.equal(last.orders, 0);
+  assert.ok(last.days.length >= 28);
+});

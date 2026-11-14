@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../widgets/live_order_bar.dart';
 import '../l10n.dart';
 import '../widgets/ui.dart';
@@ -42,7 +43,10 @@ class _HomeShellState extends State<HomeShell> {
           child: NavigationBar(
             selectedIndex: index,
             height: 66,
-            onDestinationSelected: (i) => setState(() => index = i),
+            onDestinationSelected: (i) {
+              HapticFeedback.selectionClick();
+              setState(() => index = i);
+            },
             destinations: [
               NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: kG), label: t('Home')),
               NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view, color: kG), label: t('Categories')),

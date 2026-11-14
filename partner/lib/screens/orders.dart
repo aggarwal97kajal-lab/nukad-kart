@@ -65,7 +65,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
         _loading = false;
         _at = DateTime.now();
       });
-      // Orders that are no longer new: stop their ringing.
+      // New orders keep ringing (also with the app open) until answered; others stop.
+      if (tab == 'new' && !deliveryOnly) ringNewOrders(orders);
       if (tab != 'new') {
         for (final o in orders) {
           stopOrderAlarm('${o['id']}');

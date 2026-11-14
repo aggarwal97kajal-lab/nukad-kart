@@ -855,10 +855,40 @@ class AppState extends ChangeNotifier {
   Timer? _orderPoll;
 
   /// Sends the cart to the shop. The shop has 5 minutes to accept.
+  // One checkout = one order: the same key goes with every try of the same cart, so a double tap or a retry
+  // after a slow network returns the first order instead of making another.
+  String? _checkoutKey;
+  String _checkoutSig = '';
+  bool placing = false;
+
+  String _keyFor(bool door) {
+    final sig = '$_sig|$door';
+    if (_checkoutKey == null || sig != _checkoutSig) {
+      final r = math.Random.secure();
+      _checkoutKey = 'c${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}${List.generate(12, (_) => r.nextInt(36).toRadixString(36)).join()}';
+      _checkoutSig = sig;
+    }
+    return _checkoutKey!;
+  }
+
   Future<Order> placeOrderOnline({required bool door, String gstin = '', String business = ''}) async {
+    if (placing) throw StateError('already_placing');
     if (!canPlaceAnotherOrder) throw StateError('Only $maxLiveOrders live orders at a time');
+    placing = true;
+    notifyListeners();
+    try {
+      return await _placeOrderOnline(door: door, gstin: gstin, business: business);
+    } finally {
+      placing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Order> _placeOrderOnline({required bool door, required String gstin, required String business}) async {
     final a = current;
+    final key = _keyFor(door);
     final r = await api.placeOrder(apiToken, {
+      'key': key,
       'storeId': cartStoreId,
       'door': door,
       'items': [for (final e in cart.entries) {'id': e.key, 'qty': e.value}],
@@ -878,6 +908,7 @@ class AppState extends ChangeNotifier {
     final o = _fromServer(Map<String, dynamic>.from(r['order'] as Map));
     cart.clear();
     cartStoreId = null;
+    _checkoutKey = null;
     notifyListeners();
     _pollOrders();
     return o;

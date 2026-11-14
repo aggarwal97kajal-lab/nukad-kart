@@ -30,3 +30,8 @@ When the founder asks "aur kya kya karna hai app mein", read this file and remin
 ## 3. Decided 14 Nov 2026
 - Kirana trial stays **7 days**, documents before going live (1-month trial with documents later: dropped).
 - "Fewer than 20 calls → next month free" guarantee: dropped.
+
+## 4. Number-hidden call: decided 15 Nov 2026
+- Customer's phone shows "Delivery partner", never the staff member's name.
+- Only connected calls count toward the 10-per-order limit; missed calls don't count (1-minute limit still applies).
+- Thela: same as kirana — call + chat, same limits.

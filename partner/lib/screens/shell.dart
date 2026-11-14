@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../ui.dart';
 import 'home.dart';
 import 'produce_picker.dart';
@@ -60,7 +61,10 @@ class _PartnerShellState extends State<PartnerShell> {
         selectedIndex: thela && tab > 1 ? 0 : tab,
         backgroundColor: kCard,
         indicatorColor: kOkBg,
-        onDestinationSelected: (i) => shellTab.value = i,
+        onDestinationSelected: (i) {
+          HapticFeedback.selectionClick();
+          shellTab.value = i;
+        },
         destinations: [
           NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: t('Home')),
           NavigationDestination(icon: const Icon(Icons.inventory_2_outlined), selectedIcon: const Icon(Icons.inventory_2), label: t('Products')),

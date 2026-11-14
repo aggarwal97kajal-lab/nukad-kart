@@ -16,7 +16,7 @@
 //   POST /v1/staff/login { phone, accessToken, device }
 import { HttpError, json, body, now, session, haversineM, verifyMsg91, signSession, RADIUS_MAX_M } from './index.js';
 import { ctx, offlineReason, istDate, MISSED_LIMIT } from './partner.js';
-import { sendPush } from './push.js';
+import { sendPush, sendPushDetail } from './push.js';
 import { samePhoneOut } from './sessions.js';
 import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
 
@@ -92,13 +92,31 @@ async function shopCtx(req, env) {
   throw new HttpError(400, 'register_first');
 }
 
-async function ringShop(env, s, o) {
-  // Data-only + high priority: the Partner app shows a ringing notification that repeats for up to 5 minutes.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Data-only + high priority: the Partner app rings until the order is answered. A shop that never hears about an
+ * order loses it, so each phone is tried up to 3 times (0 s, 2 s, 6 s) when the push service fails.
+ */
+export async function ringShop(env, s, o, waits = [0, 2000, 4000]) {
   const data = { type: 'order_new', id: o.id, title: `New order ₹${o.total} · ${o.items} items`, body: `${o.door ? 'Door delivery' : 'Pickup'} · ${o.address}`.slice(0, 120) };
   const staff = (await env.DB.prepare('SELECT user_id FROM staff WHERE store_id = ? AND can_orders = 1 AND removed_at IS NULL AND user_id IS NOT NULL').bind(s.id).all()).results;
-  for (const uid of [s.owner_id, ...staff.map((x) => x.user_id)].filter(Boolean)) {
-    await sendPush(env, uid, { title: data.title, body: data.body, data, channel: 'orders', dataOnly: true });
-  }
+  const users = [s.owner_id, ...staff.map((x) => x.user_id)].filter(Boolean);
+  await Promise.all(users.map(async (uid) => {
+    for (const w of waits) {
+      if (w) await sleep(w);
+      const r = await sendPushDetail(env, uid, { title: data.title, body: data.body, data, channel: 'orders', dataOnly: true });
+      if (r.sent > 0 || !r.phones) return; // delivered, or no phone to try
+    }
+    console.warn('ring_failed', o.id, uid);
+  }));
+}
+
+/** Run after the response is sent (the customer doesn't wait for push delivery). */
+function later(ectx, p) {
+  const safe = p.catch((e) => console.error(e));
+  if (ectx?.waitUntil) ectx.waitUntil(safe);
+  else return safe;
 }
 
 export function staffOut(st) {
@@ -113,7 +131,7 @@ export async function staffMe(env, u) {
   return { staff: { ...staffOut(st), storeId: s?.id, storeName: s?.name || '', storeKind: s?.kind || 'shop' }, user: { consentVersion: u.consent_version || '' } };
 }
 
-export async function orderRoute(req, env, path, m) {
+export async function orderRoute(req, env, path, m, ectx) {
   // ---------- customer ----------
   if (path === '/v1/orders' && m === 'POST') {
     const { uid } = await session(req, env);
@@ -123,6 +141,15 @@ export async function orderRoute(req, env, path, m) {
       .filter((x) => x.id && x.qty > 0 && x.qty <= 50);
     if (!items.length) throw new HttpError(400, 'empty_cart');
     const door = b.door !== false;
+    // One tap = one order: the app sends the same key for every retry of the same checkout.
+    const key = /^[\w-]{8,64}$/.test(String(b.key || '')) ? String(b.key) : null;
+    if (key) {
+      const prev = await env.DB.prepare('SELECT * FROM orders WHERE customer_id = ? AND client_key = ?').bind(uid, key).first();
+      if (prev) {
+        const ps = await env.DB.prepare('SELECT * FROM stores WHERE id = ?').bind(prev.store_id).first();
+        return json({ order: orderOut(prev, true, ps), skipped: 0, repeat: true });
+      }
+    }
     const baseIds = [...new Set(items.map((x) => x.id.replace(/_\d+$/, '')))];
     const [sr, pr, lr, ur] = await env.DB.batch([
       env.DB.prepare('SELECT * FROM stores WHERE id = ? AND active = 1').bind(String(b.storeId || '')),
@@ -166,18 +193,23 @@ export async function orderRoute(req, env, path, m) {
     const o = { id: orderNo(), store_id: s.id, customer_id: uid, door: door ? 1 : 0, lines: JSON.stringify(lines), items_total: itemsTotal, fee,
       total: itemsTotal + fee, address: door ? str('address', 240) : 'Pickup from the shop', state: str('state', 40), lat: door ? lat : null, lng: door ? lng : null,
       to_name: str('name', 80), to_phone: phone10(b.phone), buyer_gstin: /^[0-9A-Z]{15}$/.test(gstin) ? gstin : '', buyer_business: gstin ? str('business', 100) : '',
-      created_at: t };
+      created_at: t, client_key: key };
     const keys = Object.keys(o);
     for (let i = 0; i < 3; i++) {
       try {
         await env.DB.prepare(`INSERT INTO orders (${keys}) VALUES (${keys.map(() => '?')})`).bind(...Object.values(o)).run();
         break;
       } catch (e) {
+        if (key && /client_key/i.test(String(e.message))) {
+          // Two taps raced: the other one made the order.
+          const prev = await env.DB.prepare('SELECT * FROM orders WHERE customer_id = ? AND client_key = ?').bind(uid, key).first();
+          if (prev) return json({ order: orderOut(prev, true, s), skipped: 0, repeat: true });
+        }
         if (i === 2 || !/UNIQUE|PRIMARY/i.test(String(e.message))) throw e;
         o.id = orderNo();
       }
     }
-    await ringShop(env, s, { id: o.id, total: o.total, items: lines.reduce((a, l) => a + l.qty, 0), door, address: o.address });
+    await later(ectx, ringShop(env, s, { id: o.id, total: o.total, items: lines.reduce((a, l) => a + l.qty, 0), door, address: o.address }));
     const row = await env.DB.prepare('SELECT * FROM orders WHERE id = ?').bind(o.id).first();
     return json({ order: orderOut(row, true, s), skipped: items.length - lines.length });
   }

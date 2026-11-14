@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'prefs.dart';
 export 'l10n.dart';
 
@@ -69,7 +70,10 @@ class Btn extends StatelessWidget {
         height: 52,
         child: outline
             ? OutlinedButton(
-                onPressed: onTap,
+                onPressed: onTap == null ? null : () {
+                  HapticFeedback.lightImpact();
+                  onTap!();
+                },
                 style: OutlinedButton.styleFrom(
                     foregroundColor: color,
                     side: BorderSide(color: color, width: 1.5),
@@ -77,7 +81,10 @@ class Btn extends StatelessWidget {
                 child: Text(text, style: tx(15.5, color: color, weight: FontWeight.w700)),
               )
             : FilledButton(
-                onPressed: onTap,
+                onPressed: onTap == null ? null : () {
+                  HapticFeedback.lightImpact();
+                  onTap!();
+                },
                 style: FilledButton.styleFrom(
                     backgroundColor: color,
                     disabledBackgroundColor: kLine,

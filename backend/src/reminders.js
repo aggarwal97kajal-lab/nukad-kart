@@ -1,5 +1,6 @@
 // Seller reminders and the Sunday report.
-//   GET /v1/partner/report        (shop / thela) last 7 days: views, calls, chats, orders, new customers, busiest streets
+//   GET /v1/partner/report?period=week|month|last   (shop / thela) last 7 days / this month / last month: views, calls,
+//       chats, orders, sales, new customers, missed orders, busiest streets, top items and a day-by-day chart
 // Cron (every 5 min): pass ends tomorrow (7–10 pm IST) and pass ends today (9 am – 12 pm IST) pushes,
 // and the Sunday report push (Sunday from 9 am IST), each once.
 import { HttpError, json, now } from './index.js';
@@ -50,36 +51,79 @@ export async function passReminders(env, t = now()) {
   return sent;
 }
 
-/** The last 7 days for one shop / thela. */
-export async function weekReport(env, s, t = now()) {
-  const from = t - 7 * 86400;
-  const fromDay = istDate(from + 86400);
-  const [v, calls, chats, orders, newc, streets] = await env.DB.batch([
-    env.DB.prepare('SELECT COALESCE(SUM(n), 0) AS n FROM store_views WHERE store_id = ? AND day >= ?').bind(s.id, fromDay),
+/** Start (unix s) of the IST calendar month containing t, moved by `back` months. */
+function istMonthStart(t, back = 0) {
+  const d = new Date((t + IST) * 1000);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - back, 1) / 1000 - IST;
+}
+
+/** [from, to) for a report period: 'week' = last 7 days, 'month' = this month so far, 'last' = last month. */
+export function periodRange(period, t = now()) {
+  if (period === 'month') return [istMonthStart(t), t];
+  if (period === 'last') return [istMonthStart(t, 1), istMonthStart(t)];
+  return [t - 7 * 86400, t];
+}
+
+/** The last 7 days (or another period) for one shop / thela. */
+export async function weekReport(env, s, t = now(), period = 'week') {
+  const [from, to] = periodRange(period, t);
+  const fromDay = istDate(period === 'week' ? from + 86400 : from);
+  const toDay = istDate(to - 1);
+  const [v, calls, chats, orders, newc, streets, missed, daily, vdaily, lines] = await env.DB.batch([
+    env.DB.prepare('SELECT COALESCE(SUM(n), 0) AS n FROM store_views WHERE store_id = ? AND day >= ? AND day <= ?').bind(s.id, fromDay, toDay),
     env.DB.prepare(`SELECT COUNT(*) AS n, SUM(CASE WHEN status IN ('coming','done') OR out_at IS NOT NULL THEN 1 ELSE 0 END) AS went
-      FROM calls WHERE thela_id = ? AND created_at > ?`).bind(s.id, from),
-    env.DB.prepare('SELECT COUNT(*) AS n FROM chats WHERE thela_id = ? AND created_at > ?').bind(s.id, from),
-    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(total), 0) AS amount FROM orders WHERE store_id = ? AND status = 'delivered' AND created_at > ?").bind(s.id, from),
-    // Customers who reached this seller this week through the app and never before.
+      FROM calls WHERE thela_id = ? AND created_at > ? AND created_at <= ?`).bind(s.id, from, to),
+    env.DB.prepare('SELECT COUNT(*) AS n FROM chats WHERE thela_id = ? AND created_at > ? AND created_at <= ?').bind(s.id, from, to),
+    env.DB.prepare("SELECT COUNT(*) AS n, COALESCE(SUM(total), 0) AS amount FROM orders WHERE store_id = ? AND status = 'delivered' AND created_at > ? AND created_at <= ?").bind(s.id, from, to),
+    // Customers who reached this seller in the period through the app and never before.
     env.DB.prepare(`SELECT COUNT(*) AS n FROM (
-        SELECT customer_id FROM calls WHERE thela_id = ?1 AND created_at > ?2
-        UNION SELECT customer_id FROM chats WHERE thela_id = ?1 AND created_at > ?2
-        UNION SELECT customer_id FROM orders WHERE store_id = ?1 AND created_at > ?2
+        SELECT customer_id FROM calls WHERE thela_id = ?1 AND created_at > ?2 AND created_at <= ?3
+        UNION SELECT customer_id FROM chats WHERE thela_id = ?1 AND created_at > ?2 AND created_at <= ?3
+        UNION SELECT customer_id FROM orders WHERE store_id = ?1 AND created_at > ?2 AND created_at <= ?3
       ) w WHERE w.customer_id NOT IN (
         SELECT customer_id FROM calls WHERE thela_id = ?1 AND created_at <= ?2
         UNION SELECT customer_id FROM chats WHERE thela_id = ?1 AND created_at <= ?2
-        UNION SELECT customer_id FROM orders WHERE store_id = ?1 AND created_at <= ?2)`).bind(s.id, from),
-    env.DB.prepare(`SELECT address, COUNT(*) AS n FROM calls WHERE thela_id = ? AND created_at > ? GROUP BY address ORDER BY n DESC LIMIT 3`).bind(s.id, from),
+        UNION SELECT customer_id FROM orders WHERE store_id = ?1 AND created_at <= ?2)`).bind(s.id, from, to),
+    env.DB.prepare(`SELECT address, COUNT(*) AS n FROM calls WHERE thela_id = ? AND created_at > ? AND created_at <= ? GROUP BY address ORDER BY n DESC LIMIT 3`).bind(s.id, from, to),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM orders WHERE store_id = ? AND status = 'missed' AND created_at > ? AND created_at <= ?").bind(s.id, from, to),
+    // Day by day: delivered orders + sales (shop), calls (thela).
+    env.DB.prepare(`SELECT date(created_at + 19800, 'unixepoch') AS day, COUNT(*) AS n, COALESCE(SUM(total), 0) AS amount FROM orders
+      WHERE store_id = ? AND status = 'delivered' AND created_at > ? AND created_at <= ? GROUP BY day`).bind(s.id, from, to),
+    env.DB.prepare(`SELECT date(created_at + 19800, 'unixepoch') AS day, COUNT(*) AS n FROM calls
+      WHERE thela_id = ? AND created_at > ? AND created_at <= ? GROUP BY day`).bind(s.id, from, to),
+    env.DB.prepare(`SELECT lines FROM orders WHERE store_id = ? AND status = 'delivered' AND created_at > ? AND created_at <= ? LIMIT 2000`).bind(s.id, from, to),
   ]);
   const one = (r) => r.results[0] || {};
+  const byDay = new Map(daily.results.map((r) => [r.day, r]));
+  const callDay = new Map(vdaily.results.map((r) => [r.day, r.n]));
+  const days = [];
+  for (let d = fromDay; d <= toDay && days.length < 31; d = istDate(Date.parse(d + 'T12:00:00+05:30') / 1000 + 86400)) {
+    days.push({ day: d, orders: byDay.get(d)?.n || 0, sales: byDay.get(d)?.amount || 0, calls: callDay.get(d) || 0 });
+  }
+  const items = new Map();
+  for (const r of lines.results) {
+    let l = [];
+    try { l = JSON.parse(r.lines); } catch { /* skip */ }
+    for (const x of l) {
+      if (x.na) continue;
+      const k = `${x.name}${x.size ? ' · ' + x.size : ''}`;
+      const it = items.get(k) || { name: k, qty: 0, amount: 0 };
+      it.qty += x.qty || 0;
+      it.amount += (x.qty || 0) * (x.price || 0);
+      items.set(k, it);
+    }
+  }
+  const top = [...items.values()].sort((a, b) => b.qty - a.qty || b.amount - a.amount).slice(0, 5);
   return {
-    from: istDate(from + 86400), to: istDate(t), kind: s.kind, name: s.name,
+    period, from: fromDay, to: toDay, kind: s.kind, name: s.name,
     views: one(v).n || 0,
     calls: one(calls).n || 0, went: one(calls).went || 0,
     chats: one(chats).n || 0,
     orders: one(orders).n || 0, sales: one(orders).amount || 0,
+    missed: one(missed).n || 0,
     newCustomers: one(newc).n || 0,
     streets: streets.results.map((r) => ({ address: r.address, count: r.n })),
+    days, top,
   };
 }
 
@@ -108,7 +152,8 @@ export async function reportRoute(req, env, path, m) {
   if (path === '/v1/partner/report' && m === 'GET') {
     const { s } = await ctx(req, env);
     if (!s) throw new HttpError(400, 'register_first');
-    return json({ report: await weekReport(env, s) });
+    const p = new URL(req.url).searchParams.get('period');
+    return json({ report: await weekReport(env, s, now(), ['week', 'month', 'last'].includes(p) ? p : 'week') });
   }
   return null;
 }

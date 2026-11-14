@@ -18,6 +18,7 @@ import 'delete.dart';
 import 'docs.dart';
 import 'register.dart';
 import 'report.dart';
+import 'order_sound.dart';
 
 String dateText(int secs) {
   final d = DateTime.fromMillisecondsSinceEpoch(secs * 1000);
@@ -134,6 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<String>(
               onSelected: (v) {
                 if (v == 'out') session.signOut();
+                if (v == 'report') Navigator.push(context, MaterialPageRoute(builder: (_) => const WeekReportScreen()));
+                if (v == 'sound') showOrderSoundSheet(context);
                 if (v == 'terms') Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen.terms()));
                 if (v == 'privacy') Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen.privacy()));
                 if (v == 'staff') Navigator.push(context, MaterialPageRoute(builder: (_) => const StaffScreen()));
@@ -145,6 +148,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
               itemBuilder: (_) => [
+                PopupMenuItem(value: 'report', child: Text(tr('Reports'))),
+                if (s['kind'] != 'thela') PopupMenuItem(value: 'sound', child: Text(tr('New order sound'))),
                 PopupMenuItem(value: 'details', child: Text(tr('My details'))),
                 PopupMenuItem(value: 'number', child: Text(tr('Change mobile number'))),
                 if (s['kind'] != 'thela') PopupMenuItem(value: 'staff', child: Text(tr('Staff'))),

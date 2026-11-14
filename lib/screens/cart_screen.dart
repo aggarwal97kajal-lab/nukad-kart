@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/gstin.dart';
 import '../l10n.dart';
 import '../data/demo_data.dart';
@@ -200,7 +201,7 @@ class _CartScreenState extends State<CartScreen> {
           padding: EdgeInsets.fromLTRB(16, 10, 16, 12),
           decoration: BoxDecoration(color: kCard, border: Border(top: BorderSide(color: kLine))),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            PrimaryButton('Place order · ${rupees(pay)}', onTap: () => _place(context, s)),
+            PrimaryButton(s.placing ? t('Placing your order…') : 'Place order · ${rupees(pay)}', onTap: s.placing ? null : () => _place(context, s)),
             SizedBox(height: 6),
             Text(t('The store has 5 minutes to accept'), style: body(11, color: kMute)),
           ]),
@@ -210,6 +211,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _place(BuildContext context, AppState s) async {
+    if (s.placing) return;
     if (!s.signedIn) {
       final ok = await requireLogin(context);
       if (!ok || !context.mounted) return;
@@ -268,6 +270,9 @@ class _CartScreenState extends State<CartScreen> {
     } on ApiException catch (e) {
       if (context.mounted) showToast(context, e.message);
       return;
+    } on StateError catch (e) {
+      if (e.message != 'already_placing' && context.mounted) showToast(context, e.message);
+      return; // already_placing: a tap while the first one is still being placed
     }
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => OrderScreen(orderId: o.id)));
