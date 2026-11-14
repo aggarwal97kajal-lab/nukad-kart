@@ -209,7 +209,7 @@ const _calls = AndroidNotificationChannel('calls', 'Customers calling you',
 // and repeats (FLAG_INSISTENT; the voice file is 10 s) until the order is accepted / rejected or the 5-minute
 // window ends. Two sounds, chosen in Settings: the Hindi voice "नया ऑर्डर आया, अभी चेक करें", or the phone's bell.
 // New channel ids: Android never changes the sound or audio usage of a channel that already exists on the phone.
-final _ordersVoice = AndroidNotificationChannel('orders_voice2', 'New orders (Hindi voice)',
+final _ordersVoice = AndroidNotificationChannel('orders_voice3', 'New orders (Hindi voice)',
     description: 'Says “नया ऑर्डर आया, अभी चेक करें” every 10 seconds until you accept',
     importance: Importance.max,
     sound: const RawResourceAndroidNotificationSound('order_voice'),
@@ -392,7 +392,7 @@ Future<void> _initLocal() async {
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_voice);
     // Old order channels (siren, then the voice at alarm volume).
-    for (final old in ['orders_alarm', 'orders_voice']) {
+    for (final old in ['orders_alarm', 'orders_voice', 'orders_voice2']) {
       await _local
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.deleteNotificationChannel(old);

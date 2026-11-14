@@ -9,13 +9,20 @@ os.makedirs(OUT_DIR, exist_ok=True)
 tmp = tempfile.mkdtemp()
 src = os.path.join(tmp, 'voice.mp3')
 
+# The owner's chosen recording (ElevenLabs), if it is in the repo; else a voice made here.
+own = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'order_voice.mp3')
 made = False
-try:
+if os.path.exists(own) and os.path.getsize(own) > 1000:
+    src = own
+    made = True
+    print('voice: own recording', own)
+if not made:
+  try:
     from gtts import gTTS
     gTTS(TEXT, lang='hi').save(src)
     made = os.path.getsize(src) > 1000
     print('voice: gTTS')
-except Exception as e:  # noqa: BLE001
+  except Exception as e:  # noqa: BLE001
     print('gTTS failed:', e)
 if not made:
     src = os.path.join(tmp, 'voice.wav')
