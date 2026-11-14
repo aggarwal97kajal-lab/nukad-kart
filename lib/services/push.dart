@@ -18,10 +18,9 @@ const _channel = AndroidNotificationChannel('updates', 'Updates',
     description: 'Thela coming, order updates and messages', importance: Importance.high);
 
 // A shop's delivery partner or a thela calls in the app: rings with the phone's ringtone (40 s).
-final _voice = AndroidNotificationChannel('voice_calls', 'Calls from shops and thelas',
+final _voice = AndroidNotificationChannel('voice_calls2', 'Calls from shops and thelas',
     description: 'Your delivery partner or a thela calls you in the app (numbers stay hidden)',
     importance: Importance.max,
-    sound: const UriAndroidNotificationSound('content://settings/system/ringtone'),
     audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
     enableVibration: true,
     vibrationPattern: Int64List.fromList([0, 1000, 800, 1000, 800, 1000]));
@@ -33,7 +32,10 @@ Future<void> _initLocal() async {
       onDidReceiveNotificationResponse: _tapResponse);
   final a = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
   await a?.createNotificationChannel(_channel);
-  await a?.createNotificationChannel(_voice);
+  // A phone that refuses the call channel must still get every other notification.
+  try {
+    await a?.createNotificationChannel(_voice);
+  } catch (_) {}
 }
 
 Future<void> showVoiceRing(Map<String, dynamic> d) async {
@@ -51,7 +53,6 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
             priority: Priority.max,
             category: AndroidNotificationCategory.call,
             fullScreenIntent: true,
-            sound: _voice.sound,
             audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
             additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT
             timeoutAfter: 40000,
@@ -111,7 +112,9 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
         options: const FirebaseOptions(apiKey: _apiKey, appId: customerFirebaseAppId, messagingSenderId: _senderId, projectId: _projectId),
       );
       await FirebaseMessaging.instance.requestPermission();
-      await _initLocal();
+      try {
+        await _initLocal();
+      } catch (_) {}
       FirebaseMessaging.onBackgroundMessage(customerBackgroundPush);
       // Android shows nothing for a push while the app is open, so show it ourselves.
       FirebaseMessaging.onMessage.listen((m) {

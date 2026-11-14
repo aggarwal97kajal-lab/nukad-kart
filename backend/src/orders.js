@@ -80,7 +80,7 @@ export async function tellMissedOrders(env) {
 }
 
 /** Who is calling from the Partner app: the owner (all rights) or a staff member (limited). */
-async function shopCtx(req, env) {
+export async function shopCtx(req, env) {
   const { u, s } = await ctx(req, env);
   if (s) return { u, s, owner: true, canOrders: true, staff: null };
   if (u.app === 'staff') {

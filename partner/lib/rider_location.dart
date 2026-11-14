@@ -29,8 +29,8 @@ class RiderLocation {
       if (p != LocationPermission.whileInUse && p != LocationPermission.always) return;
       _sub = Geolocator.getPositionStream(
         locationSettings: AndroidSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 25,
+          accuracy: LocationAccuracy.best,
+          distanceFilter: 10,
           intervalDuration: const Duration(seconds: 10),
           foregroundNotificationConfig: const ForegroundNotificationConfig(
             notificationTitle: 'Delivering an order',
@@ -43,14 +43,18 @@ class RiderLocation {
       ).listen((pos) {
         _send(pos);
       }, onError: (_) {});
-      // First position at once (the stream waits for 25 m of movement).
-      Geolocator.getCurrentPosition().then(_send).catchError((_) {});
+      // First position at once, from GPS (not the rough network position that can be 500 m off).
+      Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.best, timeLimit: Duration(seconds: 20)))
+          .then(_send)
+          .catchError((_) {});
     } finally {
       _starting = false;
     }
   }
 
   void _send(Position pos) {
+    // A rough fix (wifi / tower, 100 m+ off) would put the scooter in the wrong street: wait for GPS.
+    if (pos.accuracy > 60) return;
     api.call('POST', '/v1/partner/rider', {'lat': pos.latitude, 'lng': pos.longitude}).catchError((_) => <String, dynamic>{});
   }
 

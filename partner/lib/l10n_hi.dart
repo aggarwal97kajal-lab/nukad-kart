@@ -889,4 +889,8 @@ const Map<String, String> hi = {
   'Best before / shelf life': 'इस्तेमाल की आख़िरी अवधि',
   'Call customer (number hidden)': 'ग्राहक को कॉल करें (नंबर छिपा)',
   'Customer {0}': 'ग्राहक {0}',
+  'Wrong code. Ask the customer for the 4-digit code in their app.': 'गलत कोड। ग्राहक से उनके ऐप में दिखा 4 अंकों का कोड पूछें।',
+  'Wrong code 5 times. Call the customer in the app and ask again, or contact Nukad Kart.': '5 बार गलत कोड। ऐप से ग्राहक को कॉल करके फिर पूछें, या Nukad Kart से संपर्क करें।',
+  'Call': 'कॉल',
+  'Chat': 'चैट',
 };

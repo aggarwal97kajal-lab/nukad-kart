@@ -10,6 +10,7 @@ import 'screens/shell.dart';
 import 'session.dart';
 import 'ui.dart';
 import 'voice/voice_call.dart';
+import 'voice/start.dart';
 
 /// Tapped a notification: open the screen it is about.
 Future<void> openFromPush(BuildContext context) async {
@@ -20,6 +21,8 @@ Future<void> openFromPush(BuildContext context) async {
   final type = parts[0], id = parts[1], extra = parts.length > 2 ? parts[2] : '';
   final shop = session.store?['kind'] != 'thela' && session.staffInfo == null;
   switch (type) {
+    case 'order_chat':
+      if (id.isNotEmpty && context.mounted) await openOrderChat(context, id);
     case 'voice':
       if (currentVoiceCall.value?.id == id) return; // already on screen
       final call = VoiceCall(base: apiBase, token: () => api.token);

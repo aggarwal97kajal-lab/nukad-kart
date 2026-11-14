@@ -127,7 +127,7 @@ class _CallsCardState extends State<CallsCard> {
                 style: tx(12.5, color: ((g['out'] as num?) ?? 0) > 0 ? kAct : kMute, weight: FontWeight.w700)),
             const SizedBox(height: 8),
             // Call the customer in the app (number hidden). Several customers on one street: pick one.
-            Btn('📞 ${t('Call customer (number hidden)')}', outline: true, onTap: () => _callOne(g)),
+            Btn('📞 ${t('Call customer')}', outline: true, onTap: () => _callOne(g)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(child: Btn(t('Reached, sold'), onTap: busy ? null : () => _post('/v1/partner/calls/done', g))),

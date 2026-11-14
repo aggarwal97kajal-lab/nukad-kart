@@ -84,3 +84,35 @@ test('thela: only while coming to the street', async () => {
   r = await call('POST', `/v1/voice/${r.json.call.id}/decline`, {}, 'other');
   assert.equal(r.json.call.status, 'declined');
 });
+
+test('order chat: customer ↔ delivery partner, no numbers, closed 30 min after delivery', async () => {
+  const { DB, call } = await setup();
+  DB.raw.prepare("UPDATE users SET app = 'staff' WHERE id = 'rider'").run();
+  DB.raw.prepare("UPDATE orders SET staff_id = 'st1' WHERE id = 'NK-1'").run();
+  let r = await call('POST', '/v1/me/orders/NK-1/chat', { text: 'Gate 2 par aana' }, 'cust');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  r = await call('POST', '/v1/me/orders/NK-1/chat', { text: 'call me 98765 43210' }, 'cust');
+  assert.equal(r.json.error, 'no_numbers');
+  r = await call('GET', '/v1/partner/orders/NK-1/chat', null, 'rider');
+  assert.equal(r.json.messages.length, 1);
+  assert.equal(r.json.messages[0].mine, false);
+  r = await call('POST', '/v1/partner/orders/NK-1/chat', { text: 'Aa raha hoon' }, 'rider');
+  r = await call('GET', '/v1/me/orders/NK-1/chat', null, 'cust');
+  assert.deepEqual(r.json.messages.map((x) => x.mine), [true, false]);
+  r = await call('GET', '/v1/me/orders/NK-1/chat', null, 'other');
+  assert.equal(r.status, 404);
+  DB.raw.prepare("UPDATE orders SET status = 'delivered', delivered_at = ? WHERE id = 'NK-1'").run(now() - 31 * 60);
+  r = await call('POST', '/v1/me/orders/NK-1/chat', { text: 'thanks' }, 'cust');
+  assert.equal(r.json.error, 'chat_closed');
+});
+
+test('incoming: the called phone can find a ringing call without the push', async () => {
+  const { call } = await setup();
+  let r = await call('GET', '/v1/voice/incoming', null, 'owner');
+  assert.equal(r.json.call, null);
+  r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'cust');
+  r = await call('GET', '/v1/voice/incoming', null, 'owner');
+  assert.equal(r.json.call.other, 'Customer');
+  r = await call('GET', '/v1/voice/incoming', null, 'cust');
+  assert.equal(r.json.call, null);
+});

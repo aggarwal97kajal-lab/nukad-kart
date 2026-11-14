@@ -1,4 +1,5 @@
 import 'voice/voice_call.dart';
+import 'voice/start.dart';
 import 'config/keys.dart';
 import 'package:flutter/material.dart';
 import 'widgets/map_markers.dart';
@@ -82,6 +83,13 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
       nav.push(MaterialPageRoute(
           builder: (_) => VoiceCallScreen(
               call: call, lang: gLang, incomingId: id, autoAnswer: d['action'] == 'answer', stopRing: () => cancelVoiceRing(id))));
+      return;
+    }
+    if (type == 'order_chat' && d['id'] != null) {
+      await s.syncOrders();
+      final id = '${d['id']}';
+      if (s.orders.any((o) => o.id == id)) nav.push(MaterialPageRoute(builder: (_) => OrderScreen(orderId: id)));
+      if (navKey.currentContext != null) await openOrderChat(navKey.currentContext!, id);
       return;
     }
     if (type == 'order' && d['id'] != null) {

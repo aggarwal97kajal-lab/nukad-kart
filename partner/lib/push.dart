@@ -34,10 +34,9 @@ Future<void> partnerBackgroundPush(RemoteMessage m) async {
 }
 
 // In-app call from a customer: rings with the phone's ringtone until answered, declined or 40 s pass.
-final _voice = AndroidNotificationChannel('voice_calls', 'Calls from customers',
+final _voice = AndroidNotificationChannel('voice_calls2', 'Calls from customers',
     description: 'A customer calls you in the app (your number stays hidden)',
     importance: Importance.max,
-    sound: const UriAndroidNotificationSound('content://settings/system/ringtone'),
     audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
     enableVibration: true,
     vibrationPattern: Int64List.fromList([0, 1000, 800, 1000, 800, 1000]));
@@ -59,7 +58,6 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
             priority: Priority.max,
             category: AndroidNotificationCategory.call,
             fullScreenIntent: true,
-            sound: _voice.sound,
             audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
             additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT
             timeoutAfter: 40000,
@@ -364,6 +362,8 @@ void _tapped(NotificationResponse r) {
     openedPush.value = 'deliver|${p.substring(8)}|${r.actionId == 'start' ? 'start' : ''}|$t';
   } else if (p.startsWith('NK-')) {
     openedPush.value = 'order_new|$p||$t';
+  } else if (p.startsWith('order_chat|')) {
+    openedPush.value = '$p||$t';
   } else if (p.isNotEmpty) {
     openedPush.value = '$p|||$t';
   }
@@ -388,9 +388,11 @@ Future<void> _initLocal() async {
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_ordersBell);
-    await _local
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_voice);
+    try {
+      await _local
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_voice);
+    } catch (_) {}
     // Old order channels (siren, then the voice at alarm volume).
     for (final old in ['orders_alarm', 'orders_voice', 'orders_voice2']) {
       await _local
@@ -414,7 +416,7 @@ void _showLocal(RemoteMessage m) {
             : AndroidNotificationDetails(_channel.id, _channel.name,
                 channelDescription: _channel.description, importance: Importance.high, priority: Priority.high),
       ),
-      payload: '${m.data['type'] ?? ''}',
+      payload: m.data['type'] == 'order_chat' ? 'order_chat|${m.data['id'] ?? ''}' : '${m.data['type'] ?? ''}',
     );
   } catch (_) {}
 }

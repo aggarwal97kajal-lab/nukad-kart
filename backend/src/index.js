@@ -14,6 +14,7 @@
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m); thelas by live location
 //   GET  /v1/stores/:id/products                              what a store / thela sells now
 
+import { orderChatRoute, cleanOrderChat } from './orderchat.js';
 import { voiceRoute, missOld, turnStatus } from './voice.js';
 import { isAdmin, partnerRoute, offlineReason, staleThelas } from './partner.js';
 import { productOut } from './products.js';
@@ -307,6 +308,8 @@ async function route(req, env, ectx) {
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const m = req.method;
 
+  const ochat = await orderChatRoute(req, env, path, m);
+  if (ochat) return ochat;
   const orders = await orderRoute(req, env, path, m, ectx);
   if (orders) return orders;
   const chat = await chatRoute(req, env, path, m);
@@ -569,6 +572,7 @@ export default {
     ectx.waitUntil(cleanChats(env).catch((e) => console.error(e)));
     ectx.waitUntil(cleanOld(env).catch((e) => console.error(e)));
     ectx.waitUntil(missOld(env).catch((e) => console.error(e)));
+    ectx.waitUntil(cleanOrderChat(env).catch((e) => console.error(e)));
   },
 };
 

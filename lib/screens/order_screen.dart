@@ -11,6 +11,8 @@ import 'rating_sheet.dart';
 import '../widgets/bill_card.dart';
 import 'report_screen.dart';
 import '../voice/start.dart';
+import '../voice/voice_call.dart';
+import '../config/keys.dart';
 
 class OrderScreen extends StatefulWidget {
   final String orderId;
@@ -50,7 +52,11 @@ class _OrderScreenState extends State<OrderScreen> {
       });
     }
 
-    return Scaffold(
+    return VoiceIncomingWatcher(
+      base: apiBase,
+      token: () => s.apiToken,
+      lang: gLang,
+      child: Scaffold(
       backgroundColor: kBg,
       appBar: simpleAppBar('Order #${o.id}', subtitle: st.name),
       body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
@@ -81,15 +87,29 @@ class _OrderScreenState extends State<OrderScreen> {
                     o.times[OrderStatus.delivered] != null &&
                     DateTime.now().difference(o.times[OrderStatus.delivered]!).inMinutes < 30))) ...[
           SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () => callInApp(context, 'order', o.id),
-            icon: Icon(Icons.call, color: kG),
-            label: Text(t('Call delivery partner'), style: body(14.5, color: kG, weight: FontWeight.w800)),
-            style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kG, width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-          ),
+          Row(children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => callInApp(context, 'order', o.id),
+                icon: Icon(Icons.call, color: kG),
+                label: Text(t('Call'), style: body(14.5, color: kG, weight: FontWeight.w800)),
+                style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kG, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => openOrderChat(context, o.id),
+                icon: Icon(Icons.chat_bubble_outline, color: kG),
+                label: Text(t('Chat'), style: body(14.5, color: kG, weight: FontWeight.w800)),
+                style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kG, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              ),
+            ),
+          ]),
           SizedBox(height: 4),
-          Text(t('Your number stays hidden. Not recorded.'), textAlign: TextAlign.center, style: body(11.5, color: kMute)),
+          Text(t('With your delivery partner · your number stays hidden'), textAlign: TextAlign.center, style: body(11.5, color: kMute)),
         ],
         if (o.otp != null && o.isOpen) ...[
           SizedBox(height: 12),
@@ -98,6 +118,29 @@ class _OrderScreenState extends State<OrderScreen> {
         if (o.status == OrderStatus.delivered) ...[
           SizedBox(height: 12),
           BillCard(order: o),
+        ],
+        // Where it went (delivered) / is going.
+        if (o.toAddress.isNotEmpty) ...[
+          SizedBox(height: 12),
+          CardBox(
+            padding: EdgeInsets.all(14),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Icon(o.door ? Icons.location_on_outlined : Icons.storefront_outlined, color: kG),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                      o.status == OrderStatus.delivered
+                          ? (o.door ? t('Delivered to') : t('Picked up from the shop'))
+                          : (o.door ? t('Delivering to') : t('Pickup from the shop')),
+                      style: body(12, color: kMute, weight: FontWeight.w800)),
+                  SizedBox(height: 2),
+                  if (o.door) Text(o.toAddress, style: body(13.5)),
+                  if (o.door && o.toName.isNotEmpty) Text(o.toName, style: body(12.5, color: kMute)),
+                ]),
+              ),
+            ]),
+          ),
         ],
         SizedBox(height: 12),
         CardBox(
@@ -171,6 +214,7 @@ class _OrderScreenState extends State<OrderScreen> {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(order: o)))),
         ],
       ]),
+    ),
     );
   }
 

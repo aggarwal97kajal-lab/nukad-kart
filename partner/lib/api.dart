@@ -30,6 +30,8 @@ class ApiError implements Exception {
         'photo_location_required' => tr('Take the shop photo at the shop with location (GPS) on.'),
         'address_far' => tr('The map pin is more than 50 m from where the shop photo was taken. Move the pin to your shop.'),
         'agreement_needed' => tr('Sign the partner agreement first.'),
+        'wrong_code' => tr('Wrong code. Ask the customer for the 4-digit code in their app.'),
+        'too_many_tries' => tr('Wrong code 5 times. Call the customer in the app and ask again, or contact Nukad Kart.'),
         'agreement_changed' => tr('The agreement was updated. Open it again and sign the new version.'),
         'agree_required' => tr('Tick “I have read and agree” first.'),
         'signer_name_required' => tr('Type your full name.'),

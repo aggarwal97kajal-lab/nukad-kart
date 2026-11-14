@@ -280,4 +280,10 @@ const Map<String, Map<String, String>> _tr2 = {
   'Call delivery partner': {'hi': 'डिलीवरी पार्टनर को कॉल करें', 'hg': 'Delivery partner ko call karo'},
   'Your number stays hidden. Not recorded.': {'hi': 'आपका नंबर छिपा रहता है। रिकॉर्ड नहीं होती।', 'hg': 'Aapka number chhupa rehta hai. Record nahi hoti.'},
   'Call {0}': {'hi': '{0} को कॉल करें', 'hg': '{0} ko call karo'},
+  'Chat': {'hi': 'चैट', 'hg': 'Chat'},
+  'With your delivery partner · your number stays hidden': {'hi': 'डिलीवरी पार्टनर से · आपका नंबर छिपा रहता है', 'hg': 'Delivery partner se · aapka number chhupa rehta hai'},
+  'Delivered to': {'hi': 'यहाँ डिलीवर हुआ', 'hg': 'Yahan deliver hua'},
+  'Picked up from the shop': {'hi': 'दुकान से लिया', 'hg': 'Dukaan se liya'},
+  'Delivering to': {'hi': 'यहाँ आ रहा है', 'hg': 'Yahan aa raha hai'},
+  'Pickup from the shop': {'hi': 'दुकान से लेना है', 'hg': 'Dukaan se lena hai'},
 };

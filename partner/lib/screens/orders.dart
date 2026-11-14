@@ -10,6 +10,7 @@ import 'product_form.dart' show money;
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/delivery_map.dart';
 import '../voice/start.dart';
+import '../voice/voice_call.dart';
 
 /// Shop orders: New (rings, 5 min to answer) → Packing → On the way → Done.
 /// Delivery-only staff see only "On the way" orders given to them.
@@ -275,7 +276,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final total = ls.asMap().entries.where((e) => !(st == 'accepted' ? na.contains(e.key) : e.value['na'] == true))
         .fold<int>(0, (a, e) => a + (e.value['price'] as num).toInt() * (e.value['qty'] as num).toInt());
     final fee = o['door'] == true && total < 199 && total > 0 ? 20 : 0;
-    return Scaffold(
+    return VoiceIncomingWatcher(
+      base: apiBase,
+      token: () => api.token,
+      lang: gLang,
+      child: Scaffold(
       appBar: bar('#${o['id']}'),
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Box(
@@ -310,7 +315,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         // In-app call, numbers hidden: from accepting until 30 minutes after delivery.
         if (['accepted', 'packed', 'out'].contains(st) ||
             (st == 'delivered' && DateTime.now().millisecondsSinceEpoch ~/ 1000 - ((o['deliveredAt'] as num?) ?? 0) <= 1800)) ...[
-          Btn('📞 ${t('Call customer (number hidden)')}', outline: true, onTap: () => callCustomer(context, 'order', '${o['id']}')),
+          Row(children: [
+            Expanded(child: Btn('📞 ${t('Call')}', outline: true, onTap: () => callCustomer(context, 'order', '${o['id']}'))),
+            const SizedBox(width: 10),
+            Expanded(child: Btn('💬 ${t('Chat')}', outline: true, onTap: () => openOrderChat(context, '${o['id']}'))),
+          ]),
           const SizedBox(height: 8),
         ],
         if (st == 'placed' && canOrders) ...[
@@ -354,9 +363,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Row(children: [
             Expanded(child: Btn(t('Navigate'), outline: true, onTap: () => launchUrl(Uri.parse('google.navigation:q=${o['lat']},${o['lng']}&mode=two'), mode: LaunchMode.externalApplication)
                 .catchError((_) => launchUrl(Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${o['lat']},${o['lng']}'), mode: LaunchMode.externalApplication)))),
-            const SizedBox(width: 10),
-            // Number hidden: the call goes through the app.
-            Expanded(child: Btn('📞 ${t('Call customer')}', outline: true, onTap: () => callCustomer(context, 'order', '${o['id']}'))),
           ]),
           const SizedBox(height: 14),
         ],
@@ -382,6 +388,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         if (st == 'delivered')
           Box(color: kOkBg, child: Text(tr('Delivered · {0} · bill {1}', ['${o['payMode']}'.toUpperCase(), o['billNo']]), style: tx(13.5, weight: FontWeight.w700))),
       ]),
+    ),
     );
   }
 

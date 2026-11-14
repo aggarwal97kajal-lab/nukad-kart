@@ -13,7 +13,7 @@
 // Limits (per order / per street call): at most 10 connected calls (missed ones don't count); at most 3 calls
 // started in a minute; after 3 missed in a row, a 2-minute break ("send a chat instead").
 import { HttpError, json, body, now, session } from './index.js';
-import { sendPush } from './push.js';
+import { sendPush, sendPushDetail } from './push.js';
 
 export const MAX_CONNECTED = 10;
 export const PER_MINUTE = 3;
@@ -145,6 +145,13 @@ export async function voiceRoute(req, env, path, m) {
   const { uid } = await session(req, env);
   const t = now();
 
+  // A call ringing for me right now (backup for a ring push that did not arrive; the order screens ask every few seconds).
+  if (path === '/v1/voice/incoming' && m === 'GET') {
+    const c = await env.DB.prepare("SELECT * FROM voice_calls WHERE callee_id = ? AND status = 'ringing' AND created_at > ? ORDER BY created_at DESC LIMIT 1")
+      .bind(uid, t - RING_S).first();
+    return json({ call: c ? callOut(c, uid) : null });
+  }
+
   if (path === '/v1/voice/start' && m === 'POST') {
     const b = await body(req);
     const kind = String(b.kind || ''), ref = String(b.ref || '').slice(0, 64);
@@ -162,12 +169,19 @@ export async function voiceRoute(req, env, path, m) {
     await env.DB.prepare(`INSERT INTO voice_calls (id, kind, ref, caller_id, callee_id, caller_label, callee_label, title, status, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ringing', ?)`).bind(id, kind, ref, uid, callee, callerLabel, calleeLabel, p.title, t).run();
     // Data-only, high priority: the app rings with Answer / Decline. Ring and relay keys at the same time (faster start).
-    const [, ice, c] = await Promise.all([
-      sendPush(env, callee, { title: '', body: '', dataOnly: true,
-        data: { type: 'voice_call', id, from: callerLabel, title: p.title, kind, ref } }).catch(() => {}),
+    const [pushed, ice, c] = await Promise.all([
+      sendPushDetail(env, callee, { title: '', body: '', dataOnly: true,
+        data: { type: 'voice_call', id, from: callerLabel, title: p.title, kind, ref } }).catch((e) => ({ sent: 0, phones: 0, errors: [String(e)] })),
       iceServers(env),
       env.DB.prepare('SELECT * FROM voice_calls WHERE id = ?').bind(id).first(),
     ]);
+    await env.DB.prepare('UPDATE voice_calls SET pushed = ?, push_err = ? WHERE id = ?')
+      .bind(pushed.sent, (pushed.errors || []).join(' | ').slice(0, 300) || (pushed.phones ? null : 'no_phone'), id).run();
+    // Nobody's phone got the ring: say so now instead of ringing into nothing.
+    if (!pushed.sent && env.FCM_SERVICE_ACCOUNT) {
+      await env.DB.prepare("UPDATE voice_calls SET status = 'missed', ended_at = ? WHERE id = ?").bind(t, id).run();
+      throw new HttpError(409, 'callee_offline');
+    }
     return json({ call: callOut(c, uid), ice, left: lim.left });
   }
 

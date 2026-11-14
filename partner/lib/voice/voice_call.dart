@@ -38,6 +38,7 @@ String voiceText(String key, String lang) {
     'call_closed': 'अब इस ऑर्डर पर कॉल नहीं हो सकती।',
     'call_busy': 'एक कॉल पहले से चल रही है।',
     'call_over': 'यह कॉल ख़त्म हो चुकी है।',
+    'callee_offline': 'सामने वाले का फ़ोन अभी ऐप पर नहीं मिला (नेट बंद या लॉग आउट)। चैट भेजें।',
     'mic': 'माइक की इजाज़त चाहिए। फ़ोन सेटिंग में Nukad Kart को माइक दें।',
     'offline': 'इंटरनेट नहीं है। फिर कोशिश करें।',
     'error': 'कॉल नहीं लगी। फिर कोशिश करें।',
@@ -62,6 +63,7 @@ String voiceText(String key, String lang) {
     'call_closed': 'Ab is order par call nahi ho sakti.',
     'call_busy': 'Ek call pehle se chal rahi hai.',
     'call_over': 'Yeh call khatam ho chuki hai.',
+    'callee_offline': 'Saamne wale ka phone abhi app par nahi mila (net band ya logout). Chat bhejo.',
     'mic': 'Mic ki permission chahiye. Phone settings mein Nukad Kart ko mic do.',
     'offline': 'Internet nahi hai. Phir try karo.',
     'error': 'Call nahi lagi. Phir try karo.',
@@ -73,6 +75,7 @@ String voiceText(String key, String lang) {
     'call_closed': 'Calls are closed for this order now.',
     'call_busy': 'A call is already going on.',
     'call_over': 'This call has ended.',
+    'callee_offline': 'Their phone can’t be reached in the app right now (offline or logged out). Send a chat.',
     'mic': 'Microphone permission is needed. Allow it for Nukad Kart in phone settings.',
     'offline': 'No internet. Try again.',
     'error': 'The call did not connect. Try again.',
@@ -234,10 +237,13 @@ class VoiceCall extends ChangeNotifier {
   Future<void> hangup() async {
     if (_closed) return;
     _send({'type': 'bye'});
-    try {
-      if (id.isNotEmpty) await _post('/v1/voice/$id/end', {});
-    } catch (_) {}
-    _finish();
+    final callId = id;
+    _finish(); // the screen ends at once; the server is told meanwhile
+    if (callId.isNotEmpty) {
+      try {
+        await _post('/v1/voice/$callId/end', {});
+      } catch (_) {}
+    }
   }
 
   void toggleMute() {
@@ -440,7 +446,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
         }
       }
     } on VoiceError catch (e) {
-      if (mounted) setState(() => _error = w(e.code.startsWith('call_') || e.code == 'mic' || e.code == 'offline' ? e.code : 'error'));
+      if (mounted) setState(() => _error = w(e.code.startsWith('call_') || const ['mic', 'offline', 'callee_offline'].contains(e.code) ? e.code : 'error'));
     }
   }
 
@@ -527,10 +533,6 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
               child: Text(_status, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFF8CB46), fontSize: 16, fontWeight: FontWeight.w700)),
             ),
             const Spacer(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Text(w('Your number is hidden. Calls are not recorded.'), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 12.5)),
-            ),
             const SizedBox(height: 28),
             if (incoming)
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
@@ -557,4 +559,57 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       ),
     );
   }
+}
+
+/// While this widget is on screen (an open order), ask every 5 seconds whether a call is ringing for this phone,
+/// and open the ringing screen. Backup for a ring notification that did not arrive.
+class VoiceIncomingWatcher extends StatefulWidget {
+  final Widget child;
+  final String base, lang;
+  final String Function() token;
+  const VoiceIncomingWatcher({super.key, required this.child, required this.base, required this.token, required this.lang});
+  @override
+  State<VoiceIncomingWatcher> createState() => _VoiceIncomingWatcherState();
+}
+
+class _VoiceIncomingWatcherState extends State<VoiceIncomingWatcher> {
+  Timer? _t;
+  final Set<String> _seen = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _t = Timer.periodic(const Duration(seconds: 5), (_) => _check());
+  }
+
+  @override
+  void dispose() {
+    _t?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _check() async {
+    if (currentVoiceCall.value != null || !mounted) return;
+    try {
+      final r = await http
+          .get(Uri.parse('${widget.base}/v1/voice/incoming'), headers: {'authorization': 'Bearer ${widget.token()}'})
+          .timeout(const Duration(seconds: 8));
+      if (r.statusCode != 200) return;
+      final c = (jsonDecode(r.body) as Map)['call'];
+      if (c is! Map) return;
+      final id = '${c['id']}';
+      if (_seen.contains(id) || currentVoiceCall.value != null || !mounted) return;
+      _seen.add(id);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VoiceCallScreen(
+              call: VoiceCall(base: widget.base, token: widget.token, other: '${c['other'] ?? ''}'), lang: widget.lang, incomingId: id),
+        ),
+      );
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
