@@ -165,4 +165,54 @@ class OlaMaps {
       return null;
     }
   }
+  static final Map<String, Future<List<(double, double)>>> _routes = {};
+
+  /// Road route between two points (Ola "Directions Basic": first 1 lakh calls a month free, then ₹0.099 each).
+  /// One call per order: cached for the app session, so map rebuilds and rider moves don't call again.
+  /// Empty list if Ola can't be reached (the map then shows a straight dotted line).
+  static Future<List<(double, double)>> route(String key, double fLat, double fLng, double tLat, double tLng) {
+    return _routes.putIfAbsent(key, () async {
+      final client = HttpClient()..connectionTimeout = Duration(seconds: 10);
+      try {
+        final req = await client.postUrl(Uri.parse(withKey('$_base/routing/v1/directions/basic?origin=$fLat,$fLng&destination=$tLat,$tLng&mode=driving')));
+        req.headers.set('X-Request-Id', 'nk-$key');
+        final res = await req.close();
+        final body = await res.transform(utf8.decoder).join();
+        if (res.statusCode != 200) throw HttpException('Ola route ${res.statusCode}');
+        final d = Map<String, dynamic>.from(jsonDecode(body) as Map);
+        final r = (d['routes'] as List?)?.firstOrNull as Map?;
+        final ov = r?['overview_polyline'];
+        final poly = ov is Map ? '${ov['points'] ?? ''}' : '${ov ?? ''}';
+        return poly.isEmpty ? <(double, double)>[] : decodePolyline(poly);
+      } catch (_) {
+        _routes.remove(key);
+        return <(double, double)>[];
+      } finally {
+        client.close();
+      }
+    });
+  }
+
+  /// Google encoded polyline (precision 5) → points.
+  static List<(double, double)> decodePolyline(String s) {
+    final out = <(double, double)>[];
+    var i = 0, lat = 0, lng = 0;
+    int next() {
+      var shift = 0, result = 0, b = 0;
+      do {
+        b = s.codeUnitAt(i++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20 && i < s.length);
+      return (result & 1) != 0 ? ~(result >> 1) : result >> 1;
+    }
+
+    while (i < s.length) {
+      lat += next();
+      if (i >= s.length) break;
+      lng += next();
+      out.add((lat / 1e5, lng / 1e5));
+    }
+    return out;
+  }
 }

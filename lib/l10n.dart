@@ -253,4 +253,7 @@ const Map<String, Map<String, String>> _tr2 = {
   'Alert me when a thela comes': {'hi': 'ठेला आते ही अलर्ट दो', 'hg': 'Thela aate hi alert do'},
   'Meanwhile: {0} shops near you →': {'hi': 'तब तक: पास की {0} दुकानें देखें →', 'hg': 'Tab tak: paas ki {0} dukaanein dekho →'},
   'Placing your order…': {'hi': 'आपका ऑर्डर भेजा जा रहा है…', 'hg': 'Aapka order bheja ja raha hai…'},
+  'Your home': {'hi': 'आपका घर', 'hg': 'Ghar'},
+  'The shop': {'hi': 'दुकान', 'hg': 'Dukaan'},
+  'Recentre': {'hi': 'बीच में लाएँ', 'hg': 'Beech mein lao'},
 };
