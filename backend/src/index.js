@@ -14,7 +14,7 @@
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m); thelas by live location
 //   GET  /v1/stores/:id/products                              what a store / thela sells now
 
-import { voiceRoute, missOld } from './voice.js';
+import { voiceRoute, missOld, iceServers } from './voice.js';
 import { isAdmin, partnerRoute, offlineReason, staleThelas } from './partner.js';
 import { productOut } from './products.js';
 import { sendPushDetail } from './push.js';
@@ -323,7 +323,13 @@ async function route(req, env, ectx) {
   if (m === 'GET' && (path === '/' || path === '/health')) {
     const t0 = Date.now();
     const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM stores WHERE active = 1').all();
-    return json({ ok: true, service: 'nukad-kart-api', stores: r.results[0].n, time: new Date().toISOString(),
+    // Call relay check (no secrets shown): 'turn' = Cloudflare TURN works, 'stun_only' = no key, 'turn_error' = key refused.
+    let calls = 'stun_only';
+    if (env.CF_TURN_KEY_ID && env.CF_TURN_TOKEN && url.searchParams.get('calls') === '1') {
+      const ice = await iceServers(env);
+      calls = JSON.stringify(ice).includes('turn:') ? 'turn' : 'turn_error';
+    } else if (env.CF_TURN_KEY_ID && env.CF_TURN_TOKEN) calls = 'turn_set';
+    return json({ ok: true, service: 'nukad-kart-api', calls, stores: r.results[0].n, time: new Date().toISOString(),
       worker: req.cf?.colo || '', db: r.meta?.served_by_region || r.meta?.served_by || '', dbMs: Date.now() - t0 });
   }
 
