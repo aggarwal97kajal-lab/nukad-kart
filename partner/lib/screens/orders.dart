@@ -283,7 +283,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('${_statusText(o)} · ${o['door'] == true ? t('Door delivery') : t('Pickup')}', style: tx(14, weight: FontWeight.w800)),
             const SizedBox(height: 4),
-            Text('${o['toName']}${'${o['toPhone']}'.isNotEmpty ? ' · ${o['toPhone']}' : ''}', style: tx(13)),
+            Text('${o['toName']}', style: tx(13)),
             Text('${o['address']}', style: tx(13, color: kMute)),
             if ('${o['buyerGstin']}'.isNotEmpty) Text('GSTIN ${o['buyerGstin']} · ${o['buyerBusiness']}', style: tx(12, color: kMute)),
           ]),
@@ -355,8 +355,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             Expanded(child: Btn(t('Navigate'), outline: true, onTap: () => launchUrl(Uri.parse('google.navigation:q=${o['lat']},${o['lng']}&mode=two'), mode: LaunchMode.externalApplication)
                 .catchError((_) => launchUrl(Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${o['lat']},${o['lng']}'), mode: LaunchMode.externalApplication)))),
             const SizedBox(width: 10),
-            if ('${o['toPhone']}'.isNotEmpty)
-              Expanded(child: Btn(t('Call customer'), outline: true, onTap: () => launchUrl(Uri.parse('tel:+91${o['toPhone']}')))),
+            // Number hidden: the call goes through the app.
+            Expanded(child: Btn('📞 ${t('Call customer')}', outline: true, onTap: () => callCustomer(context, 'order', '${o['id']}'))),
           ]),
           const SizedBox(height: 14),
         ],

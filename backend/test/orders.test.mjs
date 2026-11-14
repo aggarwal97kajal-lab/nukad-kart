@@ -168,12 +168,12 @@ test('same checkout key three times (double tap / retry) makes one order', async
   assert.notEqual(r2.json.order.id, rs[0].json.order.id);
 });
 
-test('delivery staff never get the customer phone number', async () => {
+test('the shop (owner and staff) never gets the customer phone number', async () => {
   const { DB, call } = await setup();
   const r = await place(call, [{ id: 'maggi', qty: 20 }]);
   const id = r.json.order.id;
   let o = await call('GET', `/v1/partner/orders/${id}`, null, 'owner');
-  assert.equal(o.json.order.toPhone, '9876543210');
+  assert.equal(o.json.order.toPhone, '');
   DB.raw.prepare("INSERT INTO staff (id, store_id, name, phone, can_orders, user_id, created_at) VALUES ('st9', 'sh1', 'Raju', '9000000009', 1, 'cust', ?)").run(now());
   DB.raw.prepare("UPDATE users SET app = 'staff' WHERE id = 'cust'").run();
   o = await call('GET', `/v1/partner/orders/${id}`, null, 'cust');

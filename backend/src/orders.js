@@ -41,7 +41,7 @@ function prefixOf(s) {
   return (w || 'NK').slice(0, 4);
 }
 
-/** hidePhone: shop staff (delivery boys) never see the customer's number; they call in the app. */
+/** hidePhone: the shop (owner and staff) never sees the customer's number; they call in the app. */
 function orderOut(o, forCustomer, store, hidePhone = false) {
   const lines = JSON.parse(o.lines);
   return {
@@ -353,7 +353,7 @@ export async function orderRoute(req, env, path, m, ectx) {
           FROM staff st WHERE st.store_id = ? AND st.removed_at IS NULL`).bind(s.id).all()).results.map((x) => ({ ...staffOut(x), busy: x.busy > 0 })) : [];
     const mine = await env.DB.prepare(`SELECT COUNT(*) AS n FROM orders WHERE store_id = ? AND status = 'out' AND door = 1 AND ${c.staff ? 'staff_id = ?' : 'staff_id IS NULL'}`)
       .bind(s.id, ...(c.staff ? [c.staff.id] : [])).first();
-    return json({ orders: results.map((o) => orderOut(o, false, s, !!c.staff)), counts: Object.fromEntries(counts.map((x) => [x.status, x.n])), staff, myDoorOut: mine.n,
+    return json({ orders: results.map((o) => orderOut(o, false, s, true)), counts: Object.fromEntries(counts.map((x) => [x.status, x.n])), staff, myDoorOut: mine.n,
       missedToday: s.missed_date === istDate() ? s.missed_count : 0, missedLimit: MISSED_LIMIT });
   }
 
@@ -363,7 +363,7 @@ export async function orderRoute(req, env, path, m, ectx) {
     if (!o || (c.staff && !c.canOrders && o.staff_id !== c.staff.id)) throw new HttpError(404, 'not_found');
     const staff = (await env.DB.prepare(`SELECT st.*, (SELECT COUNT(*) FROM orders o WHERE o.staff_id = st.id AND o.status IN ('packed','out')) AS busy
       FROM staff st WHERE st.store_id = ? AND st.removed_at IS NULL`).bind(s.id).all()).results.map((x) => ({ ...staffOut(x), busy: x.busy > 0 }));
-    return json({ order: orderOut(o, false, s, !!c.staff), staff: c.owner || c.canOrders ? staff : [] });
+    return json({ order: orderOut(o, false, s, true), staff: c.owner || c.canOrders ? staff : [] });
   }
 
   const act = path.match(/^\/v1\/partner\/orders\/([\w-]+)\/(accept|reject|send|pack|out|deliver)$/);
@@ -384,7 +384,7 @@ export async function orderRoute(req, env, path, m, ectx) {
         body: `Your delivery code: ${o.otp}. Give it only after you get your items.`,
         data: { type: 'order', id },
       });
-      return json({ order: orderOut(r, false, s, !!c.staff) });
+      return json({ order: orderOut(r, false, s, true) });
     }
     if (what === 'accept' || what === 'reject') {
       if (o.status !== 'placed' || o.created_at < t - RING_S) throw new HttpError(409, o.status === 'placed' ? 'too_late' : 'already_answered');
@@ -394,7 +394,7 @@ export async function orderRoute(req, env, path, m, ectx) {
       await sendPush(env, o.customer_id, ok
         ? { title: `${s.name} accepted your order`, body: `#${id} is being packed.`, data: { type: 'order', id } }
         : { title: `${s.name} couldn’t take your order`, body: `#${id} was not accepted${r.reason ? `: ${r.reason}` : ''}. Try another shop nearby.`, data: { type: 'order', id } });
-      return json({ order: orderOut(r, false, s, !!c.staff) });
+      return json({ order: orderOut(r, false, s, true) });
     }
     if (what === 'send' || what === 'pack') {
       if (o.status !== 'accepted') throw new HttpError(409, 'not_packing');
@@ -407,7 +407,7 @@ export async function orderRoute(req, env, path, m, ectx) {
         const r = await env.DB.prepare("UPDATE orders SET status = 'cancelled', reason = 'items_unavailable', lines = ?, closed_at = ? WHERE id = ? RETURNING *")
           .bind(JSON.stringify(lines), t, id).first();
         await sendPush(env, o.customer_id, { title: `${s.name} had none of your items`, body: `Order #${id} was cancelled. You were not charged.`, data: { type: 'order', id } });
-        return json({ order: orderOut(r, false, s, !!c.staff) });
+        return json({ order: orderOut(r, false, s, true) });
       }
       const fee = o.door && itemsTotal < FREE_DELIVERY_MIN ? DELIVERY_FEE : 0;
       let staffId = b.staffId ? String(b.staffId) : null;
@@ -429,7 +429,7 @@ export async function orderRoute(req, env, path, m, ectx) {
           if (su?.user_id) await sendPush(env, su.user_id, { title: '', body: '', dataOnly: true,
             data: { type: 'deliver', id, title: `Deliver #${id} · collect ₹${itemsTotal + fee}`, body: o.address } });
         }
-        return json({ order: orderOut(r, false, s, !!c.staff) });
+        return json({ order: orderOut(r, false, s, true) });
       }
       await sendPush(env, o.customer_id, {
         title: o.door ? `Order #${id} is on the way` : `Order #${id} is ready for pickup`,
@@ -440,7 +440,7 @@ export async function orderRoute(req, env, path, m, ectx) {
         const su = await env.DB.prepare('SELECT user_id FROM staff WHERE id = ?').bind(staffId).first();
         if (su?.user_id) await sendPush(env, su.user_id, { title: `Deliver #${id}`, body: `${o.address} · collect ₹${itemsTotal + fee}`, data: { type: 'order', id } });
       }
-      return json({ order: orderOut(r, false, s, !!c.staff) });
+      return json({ order: orderOut(r, false, s, true) });
     }
     // deliver
     if (o.status !== 'out') throw new HttpError(409, 'not_out');
@@ -457,7 +457,7 @@ export async function orderRoute(req, env, path, m, ectx) {
     const r = await env.DB.prepare(`UPDATE orders SET status = 'delivered', pay_mode = ?, bill_no = ?, delivered_at = ?, closed_at = ? WHERE id = ? AND status = 'out' RETURNING *`)
       .bind(b.pay === 'upi' ? 'upi' : 'cash', billNo, t, t, id).first();
     await sendPush(env, o.customer_id, { title: 'Order delivered', body: `#${id} from ${s.name}. Your bill ${billNo} is in the app.`, data: { type: 'order', id } });
-    return json({ order: orderOut(r, false, s, !!c.staff) });
+    return json({ order: orderOut(r, false, s, true) });
   }
   throw new HttpError(404, 'not_found');
 }
