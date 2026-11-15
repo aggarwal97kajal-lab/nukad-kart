@@ -7,6 +7,7 @@ import '../ui.dart';
 import 'orders.dart';
 import '../push.dart';
 import '../open_push.dart';
+import '../voice/call_setup.dart';
 
 /// Staff login: no Google, no Shop / Thela choice. The number must be added by a store owner,
 /// checked before the SMS is sent, then verified by the SMS code.
@@ -122,6 +123,10 @@ class _StaffShellState extends State<StaffShell> {
     super.initState();
     openedPush.addListener(_opened);
     if (openedPush.value.isNotEmpty) WidgetsBinding.instance.addPostFrameCallback((_) => _opened());
+    // Once per phone: the settings that let customer calls ring while the app is closed (Xiaomi, Oppo, Vivo…).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) CallSetup('nukadpartner/device').askOnce(context, gLang);
+    });
   }
 
   @override

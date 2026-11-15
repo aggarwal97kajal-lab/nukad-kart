@@ -19,6 +19,7 @@ import { ctx, offlineReason, istDate, MISSED_LIMIT } from './partner.js';
 import { sendPush, sendPushDetail } from './push.js';
 import { samePhoneOut } from './sessions.js';
 import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
+import { orderLive } from './orderchat.js';
 
 export const RING_S = 300; // the shop has 5 minutes to accept
 const FREE_DELIVERY_MIN = 199, DELIVERY_FEE = 20, MAX_LIVE = 2, MAX_STAFF = 5, MAX_OTP_TRIES = 5;
@@ -225,6 +226,16 @@ export async function orderRoute(req, env, path, m, ectx) {
     return json({ orders: results.map((o) => orderOut(o, true, { name: o.store_name })) });
   }
 
+  // Where the scooter is now (the order screen asks every few seconds when its live socket is not connected).
+  const rd = path.match(/^\/v1\/me\/orders\/([\w-]+)\/rider$/);
+  if (rd && m === 'GET') {
+    const { uid } = await session(req, env);
+    const o = await env.DB.prepare('SELECT status, rider_lat, rider_lng, rider_at FROM orders WHERE id = ? AND customer_id = ?').bind(rd[1], uid).first();
+    if (!o) throw new HttpError(404, 'not_found');
+    const t = now();
+    return json({ status: o.status, rider: o.status === 'out' && o.rider_at && t - o.rider_at < 600 ? { lat: o.rider_lat, lng: o.rider_lng, at: o.rider_at, ago: t - o.rider_at } : null });
+  }
+
   const cc = path.match(/^\/v1\/me\/orders\/([\w-]+)\/cancel$/);
   if (cc && m === 'POST') {
     const { uid } = await session(req, env);
@@ -329,8 +340,11 @@ export async function orderRoute(req, env, path, m, ectx) {
     const lat = Number(b.lat), lng = Number(b.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'bad_location');
     const who = c.staff ? c.staff.id : null;
-    await env.DB.prepare(`UPDATE orders SET rider_lat = ?, rider_lng = ?, rider_at = ? WHERE store_id = ? AND status = 'out' AND door = 1
-      AND ${who ? 'staff_id = ?' : 'staff_id IS NULL'}`).bind(lat, lng, now(), s.id, ...(who ? [who] : [])).run();
+    const t = now();
+    const { results } = await env.DB.prepare(`UPDATE orders SET rider_lat = ?, rider_lng = ?, rider_at = ? WHERE store_id = ? AND status = 'out' AND door = 1
+      AND ${who ? 'staff_id = ?' : 'staff_id IS NULL'} RETURNING id`).bind(lat, lng, t, s.id, ...(who ? [who] : [])).all();
+    // The customer's open order screen gets the scooter's new spot at once (live socket), not at its next poll.
+    await later(ectx, Promise.all(results.map((r) => orderLive(env, r.id, { type: 'rider', lat, lng, at: t }))));
     return json({ ok: true });
   }
 

@@ -1,5 +1,6 @@
 import 'voice/voice_call.dart';
 import 'voice/start.dart';
+import 'voice/call_setup.dart';
 import 'config/keys.dart';
 import 'package:flutter/material.dart';
 import 'widgets/map_markers.dart';
@@ -172,6 +173,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     if (st == AppLifecycleState.resumed) {
       _checkSession();
       AppScope.read(context).syncOrders();
+      refreshPushToken(AppScope.read(context).apiToken);
     }
   }
 
@@ -193,6 +195,9 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
         return;
       }
     }
+    // Once per phone: the settings that let calls ring while the app is closed (Xiaomi, Oppo, Vivo…).
+    final over = navKey.currentState?.overlay?.context;
+    if (over != null && !_askingConsent) CallSetup('nukadkart/device').askOnce(over, gLang);
     if (DateTime.now().difference(_lastCheck) < const Duration(minutes: 1)) return;
     _lastCheck = DateTime.now();
     try {
@@ -252,7 +257,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
       systemNavigationBarColor: kCard,
       systemNavigationBarIconBrightness: gDark ? Brightness.light : Brightness.dark,
     ));
-    return MaterialApp(
+    final materialApp = MaterialApp(
       navigatorKey: navKey,
       scaffoldMessengerKey: messengerKey,
       title: 'Nukad Kart',
@@ -317,5 +322,16 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
       },
       home: const SplashScreen(),
     );
+    // Every screen: an incoming in-app call opens and rings while the app is open (push or not).
+    final app = VoiceIncomingWatcher(
+      base: apiBase,
+      token: () => AppScope.read(context).apiToken,
+      lang: gLang,
+      navigatorKey: navKey,
+      ring: (c) => showVoiceRing(c),
+      stopRing: (id) => cancelVoiceRing(id),
+      child: materialApp,
+    );
+    return app;
   }
 }

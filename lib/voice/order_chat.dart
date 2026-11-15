@@ -1,10 +1,12 @@
 // Chat on a shop order (same file in the customer and the Partner app). Numbers can't be sent; the other side
-// gets a notification. The screen checks for new messages every 4 seconds while it is open.
+// gets a notification. New messages and "read" arrive at once over the order's live socket; a sent message shows
+// at once (clock → ✓ sent → blue ✓✓ read). If the socket is down, the screen asks every 4 seconds instead.
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 String chatText(String key, String lang) {
   const hi = {
@@ -44,25 +46,98 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
   final text = TextEditingController();
   final scroll = ScrollController();
   List<Map<String, dynamic>> msgs = [];
-  bool open = true, sending = false, loaded = false;
-  Timer? _poll;
+  bool open = true, loaded = false;
+  int otherReadAt = 0;
+  Timer? _poll, _ping, _retry;
+  WebSocketChannel? _ws;
+  StreamSubscription? _wsSub;
+  bool _live = false, _gone = false;
+  int _tmp = 0;
 
   String w(String k) => chatText(k, widget.lang);
   Map<String, String> get _h => {'content-type': 'application/json', 'authorization': 'Bearer ${widget.token()}'};
+  String get _me => widget.path.contains('/me/') ? 'c' : 's';
+  String get _orderId => RegExp(r'/orders/([^/]+)/chat').firstMatch(widget.path)?.group(1) ?? '';
 
   @override
   void initState() {
     super.initState();
     _load();
-    _poll = Timer.periodic(const Duration(seconds: 4), (_) => _load());
+    _connect();
+    // Backup when the live socket is down: ask every 4 s (every 15 s while it is up, in case one was missed).
+    _poll = Timer.periodic(const Duration(seconds: 4), (t) {
+      if (!_live || t.tick % 4 == 0) _load();
+    });
   }
 
   @override
   void dispose() {
+    _gone = true;
     _poll?.cancel();
+    _ping?.cancel();
+    _retry?.cancel();
+    _wsSub?.cancel();
+    try {
+      _ws?.sink.close();
+    } catch (_) {}
     text.dispose();
     scroll.dispose();
     super.dispose();
+  }
+
+  void _connect() {
+    if (_gone || _orderId.isEmpty) return;
+    try {
+      final ws = widget.base.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
+      _ws = WebSocketChannel.connect(
+          Uri.parse('$ws/v1/orders/${Uri.encodeComponent(_orderId)}/chat/socket?token=${Uri.encodeQueryComponent(widget.token())}'));
+      _wsSub = _ws!.stream.listen((m) {
+        _live = true;
+        _onLive('$m');
+      }, onDone: _lost, onError: (_) => _lost());
+      _ping?.cancel();
+      _ping = Timer.periodic(const Duration(seconds: 25), (_) {
+        try {
+          _ws?.sink.add('ping');
+        } catch (_) {}
+      });
+      _ws!.ready.then((_) {
+        _live = true;
+        _load(); // anything sent while connecting
+      }).catchError((_) => _lost());
+    } catch (_) {
+      _lost();
+    }
+  }
+
+  void _lost() {
+    _live = false;
+    _ping?.cancel();
+    _wsSub?.cancel();
+    if (_gone) return;
+    _retry?.cancel();
+    _retry = Timer(const Duration(seconds: 3), _connect);
+  }
+
+  void _onLive(String raw) {
+    if (raw == 'pong' || !mounted) return;
+    Map<String, dynamic> m;
+    try {
+      m = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    } catch (_) {
+      return;
+    }
+    if (m['type'] == 'message') {
+      final id = '${m['id']}';
+      if (msgs.any((x) => x['id'] == id)) return;
+      // My own message comes back here too; the send answer already put it in place.
+      if (m['sender'] == _me && msgs.any((x) => x['pending'] == true && x['text'] == m['text'])) return;
+      setState(() => msgs = [...msgs, {'id': id, 'mine': m['sender'] == _me, 'text': '${m['text']}', 'at': m['at']}]);
+      _toEnd();
+      if (m['sender'] != _me) _load(); // marks it read, so their ticks turn blue
+    } else if (m['type'] == 'read' && m['by'] != _me) {
+      setState(() => otherReadAt = ((m['at'] as num?) ?? 0).toInt());
+    }
   }
 
   Future<void> _load() async {
@@ -72,10 +147,14 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
       final d = Map<String, dynamic>.from(jsonDecode(r.body) as Map);
       final list = ((d['messages'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
       if (!mounted) return;
-      final grew = list.length != msgs.length;
+      // Keep messages still on their way (not in the server's list yet).
+      final ids = list.map((x) => x['id']).toSet();
+      final pending = msgs.where((x) => (x['pending'] == true || x['failed'] == true) && !ids.contains(x['id'])).toList();
+      final grew = list.length + pending.length != msgs.length;
       setState(() {
-        msgs = list;
+        msgs = [...list, ...pending];
         open = d['open'] != false;
+        otherReadAt = ((d['otherReadAt'] as num?) ?? otherReadAt).toInt();
         loaded = true;
       });
       if (grew) _toEnd();
@@ -86,28 +165,60 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
         if (scroll.hasClients) scroll.animateTo(scroll.position.maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
       });
 
-  Future<void> _send() async {
-    final t = text.text.trim();
-    if (t.isEmpty || sending) return;
+  Future<void> _send([Map<String, dynamic>? again]) async {
+    final t = again?['text'] as String? ?? text.text.trim();
+    if (t.isEmpty) return;
     HapticFeedback.lightImpact();
-    setState(() => sending = true);
+    // Shows at once with a clock; the server's answer turns it into ✓.
+    final tmpId = again?['id'] as String? ?? 'tmp${_tmp++}';
+    final mine = <String, dynamic>{'id': tmpId, 'mine': true, 'text': t, 'at': DateTime.now().millisecondsSinceEpoch ~/ 1000, 'pending': true};
+    setState(() {
+      msgs = [...msgs.where((x) => x['id'] != tmpId), mine];
+      loaded = true;
+    });
+    if (again == null) text.clear();
+    _toEnd();
+    void fail(String msg) {
+      if (!mounted) return;
+      setState(() => msgs = [for (final x in msgs) x['id'] == tmpId ? {...x, 'pending': false, 'failed': true} : x]);
+      _toast(msg);
+    }
+
     try {
       final r = await http
           .post(Uri.parse('${widget.base}${widget.path}'), headers: _h, body: jsonEncode({'text': t}))
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 15));
       final d = Map<String, dynamic>.from(jsonDecode(r.body) as Map);
       if (r.statusCode >= 400) {
         final code = '${d['error']}';
         if (code == 'chat_closed') setState(() => open = false);
-        _toast(code == 'no_numbers' ? w('no_numbers') : (code == 'chat_closed' ? w('Chat is closed for this order.') : w('error')));
-      } else {
-        text.clear();
-        await _load();
+        if (code == 'no_numbers' || code == 'chat_closed') {
+          setState(() => msgs = msgs.where((x) => x['id'] != tmpId).toList());
+          if (again == null && text.text.isEmpty) text.text = t;
+          _toast(code == 'no_numbers' ? w('no_numbers') : w('Chat is closed for this order.'));
+        } else {
+          fail(w('error'));
+        }
+        return;
       }
+      final m = Map<String, dynamic>.from(d['message'] as Map);
+      if (!mounted) return;
+      setState(() {
+        msgs = [for (final x in msgs) if (x['id'] == tmpId) m else if (x['id'] != m['id']) x];
+        otherReadAt = ((d['otherReadAt'] as num?) ?? otherReadAt).toInt();
+      });
     } catch (_) {
-      _toast(w('error'));
+      fail(w('error'));
     }
-    if (mounted) setState(() => sending = false);
+  }
+
+  /// ✓✓ blue = read, ✓ = sent, clock = on its way, ! = not sent (tap to try again).
+  Widget _tick(Map<String, dynamic> m, Color c) {
+    if (m['failed'] == true) return const Icon(Icons.error_outline, size: 14, color: Color(0xFFD93025));
+    if (m['pending'] == true) return Icon(Icons.schedule, size: 13, color: c);
+    final at = ((m['at'] as num?) ?? 0).toInt();
+    if (otherReadAt > 0 && at <= otherReadAt) return const Icon(Icons.done_all, size: 15, color: Color(0xFF1E88E5));
+    return Icon(Icons.done, size: 14, color: c);
   }
 
   void _toast(String m) => ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(m), behavior: SnackBarBehavior.floating));
@@ -137,9 +248,12 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
                         final m = msgs[i];
                         final mine = m['mine'] == true;
                         final at = DateTime.fromMillisecondsSinceEpoch(((m['at'] as num?) ?? 0).toInt() * 1000);
+                        final ink = (mine ? const Color(0xFF21331B) : scheme.onSurface).withAlpha(140);
                         return Align(
                           alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
+                          child: GestureDetector(
+                            onTap: m['failed'] == true ? () => _send(m) : null,
+                            child: Container(
                             margin: const EdgeInsets.symmetric(vertical: 3),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
@@ -150,9 +264,13 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
                             child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                               Text('${m['text']}', style: TextStyle(fontSize: 15, color: mine ? const Color(0xFF21331B) : scheme.onSurface)),
                               const SizedBox(height: 2),
-                              Text('${at.hour % 12 == 0 ? 12 : at.hour % 12}:${at.minute.toString().padLeft(2, '0')} ${at.hour < 12 ? 'am' : 'pm'}',
-                                  style: TextStyle(fontSize: 10.5, color: (mine ? const Color(0xFF21331B) : scheme.onSurface).withAlpha(140))),
+                              Row(mainAxisSize: MainAxisSize.min, children: [
+                                Text('${at.hour % 12 == 0 ? 12 : at.hour % 12}:${at.minute.toString().padLeft(2, '0')} ${at.hour < 12 ? 'am' : 'pm'}',
+                                    style: TextStyle(fontSize: 10.5, color: ink)),
+                                if (mine) ...[const SizedBox(width: 4), _tick(m, ink)],
+                              ]),
                             ]),
+                          ),
                           ),
                         );
                       },
@@ -177,7 +295,7 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton.filled(onPressed: sending ? null : _send, icon: const Icon(Icons.send)),
+                    IconButton.filled(onPressed: () => _send(), icon: const Icon(Icons.send)),
                   ]),
                 )
               : Padding(padding: const EdgeInsets.all(14), child: Text(w('Chat is closed for this order.'))),

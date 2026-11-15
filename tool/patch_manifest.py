@@ -14,6 +14,10 @@ perms = [
     '<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>',
     '<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>',
     '<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>',
+    # One tap "Allow" so the phone does not stop the app from ringing for calls while it is closed.
+    '<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>',
+    '<uses-permission android:name="android.permission.WAKE_LOCK"/>',
+    '<uses-permission android:name="android.permission.VIBRATE"/>',
 ]
 for perm in perms:
     if perm not in s:

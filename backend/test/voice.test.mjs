@@ -47,29 +47,64 @@ test('customer calls the shop while nobody is assigned, then the delivery partne
   assert.equal(r.status, 404);
 });
 
-test('limits: 3 per minute, 2-minute break after 3 missed, 10 connected, closed 30 min after delivery', async () => {
+test('no call limit: many calls in a row, missed or connected; one at a time; closed 30 min after delivery', async () => {
   const { DB, call, ins } = await setup();
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 25; i++) {
     ins('voice_calls', { id: 'm' + i, kind: 'order', ref: 'NK-1', caller_id: 'cust', callee_id: 'owner', caller_label: 'Customer', callee_label: 'Delivery partner',
-      status: 'missed', created_at: T - 30 - i });
+      status: i % 2 ? 'missed' : 'ended', created_at: T - 50 - i, answered_at: i % 2 ? null : T - 45 - i });
   }
   let r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'cust');
-  assert.equal(r.json.error, 'call_too_fast');
-  DB.raw.prepare('UPDATE voice_calls SET created_at = created_at - 40').run(); // a minute later, still within the break
+  assert.equal(r.status, 200, JSON.stringify(r.json));
   r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'cust');
-  assert.equal(r.json.error, 'call_break');
-  assert.ok(Number(r.json.detail) > 0);
-  DB.raw.prepare('DELETE FROM voice_calls').run();
-  for (let i = 0; i < 10; i++) {
-    ins('voice_calls', { id: 'c' + i, kind: 'order', ref: 'NK-1', caller_id: 'cust', callee_id: 'owner', caller_label: 'Customer', callee_label: 'Delivery partner',
-      status: 'ended', created_at: T - 3000 - i * 100, answered_at: T - 2990 - i * 100 });
-  }
-  r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'cust');
-  assert.equal(r.json.error, 'call_limit');
+  assert.equal(r.json.error, 'call_busy');
   DB.raw.prepare('DELETE FROM voice_calls').run();
   DB.raw.prepare("UPDATE orders SET status = 'delivered', delivered_at = ? WHERE id = 'NK-1'").run(T - 31 * 60);
   r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'cust');
   assert.equal(r.json.error, 'call_closed');
+});
+
+test('store button after accepting; rider button only once out for delivery', async () => {
+  const { DB, call } = await setup();
+  DB.raw.prepare("UPDATE orders SET status = 'accepted', staff_id = 'st1' WHERE id = 'NK-1'").run();
+  let r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1', to: 'rider' }, 'cust');
+  assert.equal(r.json.error, 'call_closed');
+  r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1', to: 'store' }, 'cust');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.equal(r.json.call.other, 'Sharma Store');
+  assert.equal(DB.raw.prepare('SELECT callee_id FROM voice_calls WHERE id = ?').get(r.json.call.id).callee_id, 'owner');
+  await call('POST', `/v1/voice/${r.json.call.id}/end`, {}, 'cust');
+  DB.raw.prepare("UPDATE orders SET status = 'out' WHERE id = 'NK-1'").run();
+  r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1', to: 'rider' }, 'cust');
+  assert.equal(r.json.call.other, 'Delivery partner');
+  assert.equal(DB.raw.prepare('SELECT callee_id FROM voice_calls WHERE id = ?').get(r.json.call.id).callee_id, 'rider');
+  await call('POST', `/v1/voice/${r.json.call.id}/end`, {}, 'cust');
+  r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1', to: 'store' }, 'cust');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  await call('POST', `/v1/voice/${r.json.call.id}/end`, {}, 'cust');
+  // The shop owner calling the customer shows as the shop; the rider as "Delivery partner".
+  r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'owner');
+  assert.equal(DB.raw.prepare('SELECT caller_label FROM voice_calls WHERE id = ?').get(r.json.call.id).caller_label, 'Sharma Store');
+  await call('POST', `/v1/voice/${r.json.call.id}/end`, {}, 'owner');
+  r = await call('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'rider');
+  assert.equal(DB.raw.prepare('SELECT caller_label FROM voice_calls WHERE id = ?').get(r.json.call.id).caller_label, 'Delivery partner');
+});
+
+test('ring push failed: still rings when the app was open in the last 30 s, else "can\u2019t be reached"', async () => {
+  const { DB, call } = await setup();
+  const env2 = { FCM_SERVICE_ACCOUNT: '{}' }; // a key that can't sign: no phone gets the ring push
+  const { default: worker2, signSession: sign } = await import('../src/index.js');
+  const go = async (method, path, body, who) => {
+    const r = await worker2.fetch(new Request(`https://x${path}`, { method, headers: { 'content-type': 'application/json',
+      authorization: `Bearer ${await sign(who, SECRET, 30, 's' + who)}` }, body: body ? JSON.stringify(body) : undefined }), { DB, SESSION_SECRET: SECRET, ...env2 });
+    return { status: r.status, json: await r.json() };
+  };
+  let r = await go('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'owner');
+  assert.equal(r.json.error, 'callee_offline');
+  await call('GET', '/v1/voice/incoming', null, 'cust'); // the customer's app is open
+  r = await go('POST', '/v1/voice/start', { kind: 'order', ref: 'NK-1' }, 'owner');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  r = await call('GET', '/v1/voice/incoming', null, 'cust');
+  assert.equal(r.json.call.other, 'Delivery partner'); // the owner delivers this one himself (nobody assigned)
 });
 
 test('thela: only while coming to the street', async () => {
@@ -115,4 +150,26 @@ test('incoming: the called phone can find a ringing call without the push', asyn
   assert.equal(r.json.call.other, 'Customer');
   r = await call('GET', '/v1/voice/incoming', null, 'cust');
   assert.equal(r.json.call, null);
+});
+
+test('order chat: read ticks; both shop phones see it; rider spot for the map', async () => {
+  const { DB, call } = await setup();
+  DB.raw.prepare("UPDATE users SET app = 'staff' WHERE id = 'rider'").run();
+  DB.raw.prepare("UPDATE orders SET staff_id = 'st1' WHERE id = 'NK-1'").run();
+  let r = await call('POST', '/v1/me/orders/NK-1/chat', { text: 'Gate 2' }, 'cust');
+  assert.equal(r.json.otherReadAt, 0);
+  r = await call('GET', '/v1/partner/orders/NK-1/chat', null, 'owner');
+  assert.equal(r.json.messages.length, 1);
+  r = await call('GET', '/v1/me/orders/NK-1/chat', null, 'cust');
+  assert.ok(r.json.otherReadAt > 0);
+  r = await call('GET', '/v1/me/orders/NK-1/rider', null, 'cust');
+  assert.equal(r.json.rider, null);
+  r = await call('POST', '/v1/partner/rider', { lat: 28.71, lng: 77.11 }, 'rider');
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  DB.raw.prepare('UPDATE orders SET door = 1').run();
+  await call('POST', '/v1/partner/rider', { lat: 28.71, lng: 77.11 }, 'rider');
+  r = await call('GET', '/v1/me/orders/NK-1/rider', null, 'cust');
+  assert.equal(r.json.rider.lat, 28.71);
+  r = await call('GET', '/v1/me/orders/NK-1/rider', null, 'other');
+  assert.equal(r.status, 404);
 });

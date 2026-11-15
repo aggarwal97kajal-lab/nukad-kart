@@ -308,7 +308,7 @@ async function route(req, env, ectx) {
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const m = req.method;
 
-  const ochat = await orderChatRoute(req, env, path, m);
+  const ochat = await orderChatRoute(req, env, path, m, ectx);
   if (ochat) return ochat;
   const orders = await orderRoute(req, env, path, m, ectx);
   if (orders) return orders;

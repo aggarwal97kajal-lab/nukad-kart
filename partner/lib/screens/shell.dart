@@ -9,6 +9,7 @@ import '../push.dart';
 import '../open_push.dart';
 import '../session.dart';
 import '../thela_location.dart';
+import '../voice/call_setup.dart';
 
 /// Which bottom tab is showing; Home's "Change prices" jumps to Products.
 final shellTab = ValueNotifier<int>(0);
@@ -30,6 +31,10 @@ class _PartnerShellState extends State<PartnerShell> {
     _loc();
     openedPush.addListener(_opened);
     if (openedPush.value.isNotEmpty) WidgetsBinding.instance.addPostFrameCallback((_) => _opened());
+    // Once per phone: the settings that let customer calls ring while the app is closed (Xiaomi, Oppo, Vivo…).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) CallSetup('nukadpartner/device').askOnce(context, gLang);
+    });
   }
 
   // Tapped a new-order notification: show the Orders tab.

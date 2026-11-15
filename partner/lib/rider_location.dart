@@ -30,8 +30,9 @@ class RiderLocation {
       _sub = Geolocator.getPositionStream(
         locationSettings: AndroidSettings(
           accuracy: LocationAccuracy.best,
-          distanceFilter: 10,
-          intervalDuration: const Duration(seconds: 10),
+          // Every ~3 s (or 5 m): the customer's scooter keeps gliding instead of jumping every 10 s.
+          distanceFilter: 5,
+          intervalDuration: const Duration(seconds: 3),
           foregroundNotificationConfig: const ForegroundNotificationConfig(
             notificationTitle: 'Delivering an order',
             notificationText: 'The customer sees you on the map until the order is delivered.',

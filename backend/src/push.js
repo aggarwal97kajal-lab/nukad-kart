@@ -32,13 +32,26 @@ async function accessToken(sa) {
 
 export const pushReady = (env) => !!env.FCM_SERVICE_ACCOUNT;
 
+const strData = (data) => Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]));
+
+/** One FCM message. ring: a call (notification on the call channel with a tag the app replaces, short life). */
+export function message(token, { title, body, data = {}, channel = 'updates', dataOnly = false, ring = null }) {
+  if (ring) {
+    return { token, notification: { title, body }, data: strData(data),
+      android: { priority: 'high', ttl: '40s', notification: { channel_id: ring.channel, tag: ring.tag, notification_priority: 'PRIORITY_MAX',
+        visibility: 'PUBLIC', default_vibrate_timings: true, sound: 'default' } } };
+  }
+  if (dataOnly) return { token, data: strData(data), android: { priority: 'high', ttl: '300s' } };
+  return { token, notification: { title, body }, data: strData(data), android: { priority: 'high', notification: { channel_id: channel } } };
+}
+
 /** Send to every phone of this user. Never throws: a failed push must not break the request. */
 export async function sendPush(env, userId, msg) {
   return (await sendPushDetail(env, userId, msg)).sent;
 }
 
 /** Same as sendPush, but says what happened (for the admin "Send test" button). */
-export async function sendPushDetail(env, userId, { title, body, data = {}, channel = 'updates', dataOnly = false }) {
+export async function sendPushDetail(env, userId, { title, body, data = {}, channel = 'updates', dataOnly = false, ring = null }) {
   const out = { phones: 0, sent: 0, errors: [] };
   if (!env.FCM_SERVICE_ACCOUNT) return { ...out, errors: ['FCM_SERVICE_ACCOUNT secret is not set'] };
   if (!userId) return out;
@@ -53,20 +66,17 @@ export async function sendPushDetail(env, userId, { title, body, data = {}, chan
         method: 'POST',
         headers: { authorization: `Bearer ${at}`, 'content-type': 'application/json' },
         // dataOnly: the app draws the notification itself (shop order alarm that keeps ringing).
-        body: JSON.stringify({ message: dataOnly ? {
-          token, data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
-          android: { priority: 'high', ttl: '300s' },
-        } : {
-          token, notification: { title, body },
-          data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
-          android: { priority: 'high', notification: { channel_id: channel } },
-        } }),
+        body: JSON.stringify({ message: message(token, { title, body, data, channel, dataOnly, ring }) }),
       });
       if (res.ok) out.sent++;
       else {
-        out.errors.push(`FCM ${res.status}: ${(await res.text()).slice(0, 200)}`);
-        // App uninstalled or token changed: forget it.
-        if (res.status === 404 || res.status === 400) await env.DB.prepare('DELETE FROM push_tokens WHERE token = ?').bind(token).run();
+        const err = await res.text().catch(() => '');
+        out.errors.push(`FCM ${res.status}: ${err.slice(0, 200)}`);
+        // App uninstalled or token changed: forget it. Any other 400 (a bad message) must not throw away a good token,
+        // or that phone stops getting calls until the app is opened again.
+        if (res.status === 404 || /UNREGISTERED|registration token is not a valid/i.test(err)) {
+          await env.DB.prepare('DELETE FROM push_tokens WHERE token = ?').bind(token).run();
+        }
       }
     }
     return out;

@@ -11,7 +11,6 @@ import 'rating_sheet.dart';
 import '../widgets/bill_card.dart';
 import 'report_screen.dart';
 import '../voice/start.dart';
-import '../voice/voice_call.dart';
 import '../config/keys.dart';
 
 class OrderScreen extends StatefulWidget {
@@ -52,17 +51,19 @@ class _OrderScreenState extends State<OrderScreen> {
       });
     }
 
-    return VoiceIncomingWatcher(
-      base: apiBase,
-      token: () => s.apiToken,
-      lang: gLang,
-      child: Scaffold(
+    final afterDelivery = o.status == OrderStatus.delivered &&
+        o.times[OrderStatus.delivered] != null &&
+        DateTime.now().difference(o.times[OrderStatus.delivered]!).inMinutes < 30;
+    // Store: from accepting. Delivery partner: once out for delivery. Both until 30 minutes after delivery.
+    final canStore = o.remote && ([OrderStatus.accepted, OrderStatus.packed, OrderStatus.outForDelivery].contains(o.status) || afterDelivery);
+    final canRider = o.remote && o.door && (o.status == OrderStatus.outForDelivery || afterDelivery);
+    return Scaffold(
       backgroundColor: kBg,
       appBar: simpleAppBar('Order #${o.id}', subtitle: st.name),
       body: ListView(padding: EdgeInsets.fromLTRB(16, 12, 16, 24), children: [
         if (o.remote && o.status == OrderStatus.outForDelivery && o.door)
           RiderMap(homeLat: o.lat ?? s.current.lat, homeLng: o.lng ?? s.current.lng, riderLat: o.riderLat, riderLng: o.riderLng, storeName: st.name,
-              shopLat: st.lat, shopLng: st.lng, routeKey: o.id)
+              shopLat: st.lat, shopLng: st.lng, routeKey: o.id, base: apiBase, token: () => s.apiToken)
         else if (!o.remote && o.status == OrderStatus.outForDelivery && o.door && o.times[OrderStatus.outForDelivery] != null)
           LiveDeliveryMap(
             key: ValueKey('map-${o.id}'),
@@ -80,36 +81,20 @@ class _OrderScreenState extends State<OrderScreen> {
           NoteBox(tr('{0} didn’t have {1}. Removed from your order — new total {2}.', [st.name, o.unavailable.join(', '), rupees(o.payable)]),
               icon: Icons.info_outline, color: kAmb, bg: kAmbBg),
         ],
-        // In-app call to the delivery partner (numbers hidden): from accepting until 30 minutes after delivery.
-        if (o.remote &&
-            ([OrderStatus.accepted, OrderStatus.packed, OrderStatus.outForDelivery].contains(o.status) ||
-                (o.status == OrderStatus.delivered &&
-                    o.times[OrderStatus.delivered] != null &&
-                    DateTime.now().difference(o.times[OrderStatus.delivered]!).inMinutes < 30))) ...[
+        // In-app calls (numbers hidden) and chat: the store after accepting; the delivery partner once out for delivery.
+        if (canStore) ...[
           SizedBox(height: 12),
           Row(children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => callInApp(context, 'order', o.id),
-                icon: Icon(Icons.call, color: kG),
-                label: Text(t('Call'), style: body(14.5, color: kG, weight: FontWeight.w800)),
-                style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kG, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => openOrderChat(context, o.id),
-                icon: Icon(Icons.chat_bubble_outline, color: kG),
-                label: Text(t('Chat'), style: body(14.5, color: kG, weight: FontWeight.w800)),
-                style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kG, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              ),
-            ),
+            Expanded(child: _callBtn(Icons.storefront, t('Call store'), () => callInApp(context, 'order', o.id, to: 'store', label: st.name))),
+            if (canRider) ...[
+              SizedBox(width: 10),
+              Expanded(child: _callBtn(Icons.delivery_dining, t('Call rider'), () => callInApp(context, 'order', o.id, to: 'rider'))),
+            ],
           ]),
+          SizedBox(height: 10),
+          _callBtn(Icons.chat_bubble_outline, t('Chat'), () => openOrderChat(context, o.id)),
           SizedBox(height: 4),
-          Text(t('With your delivery partner · your number stays hidden'), textAlign: TextAlign.center, style: body(11.5, color: kMute)),
+          Text(t('Your number stays hidden'), textAlign: TextAlign.center, style: body(11.5, color: kMute)),
         ],
         if (o.otp != null && o.isOpen) ...[
           SizedBox(height: 12),
@@ -214,9 +199,16 @@ class _OrderScreenState extends State<OrderScreen> {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(order: o)))),
         ],
       ]),
-    ),
     );
   }
+
+  Widget _callBtn(IconData icon, String label, VoidCallback onTap) => OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, color: kG),
+        label: Text(label, style: body(14.5, color: kG, weight: FontWeight.w800)),
+        style: OutlinedButton.styleFrom(minimumSize: Size.fromHeight(48), side: BorderSide(color: kG, width: 1.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+      );
 
   Widget _ratingsCard(BuildContext context, AppState s, Order o, Store st) {
     final or = s.orderRatings[o.id];

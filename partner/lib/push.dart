@@ -43,12 +43,16 @@ final _voice = AndroidNotificationChannel('voice_calls2', 'Calls from customers'
 
 int voiceNotifId(String id) => 900000 + (id.hashCode & 0xffff);
 
+/// The ring push also carries a system notification (tag call_<id>, id 0) so a closed app still rings.
+/// The app's own full-screen ringing notification takes the same tag and id, so it replaces that one.
+String _voiceTag(String id) => 'call_$id';
+
 Future<void> showVoiceRing(Map<String, dynamic> d) async {
   final id = '${d['id'] ?? ''}';
   if (id.isEmpty) return;
   try {
     await _local.show(
-      voiceNotifId(id),
+      0,
       '📞 ${d['from'] ?? 'Customer'}',
       '${d['title'] ?? ''} · Nukad Kart call',
       NotificationDetails(
@@ -57,6 +61,8 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
             importance: Importance.max,
             priority: Priority.max,
             category: AndroidNotificationCategory.call,
+            tag: _voiceTag(id),
+            visibility: NotificationVisibility.public,
             fullScreenIntent: true,
             audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
             additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT
@@ -76,7 +82,28 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
 /// Stop the ringing only (answered / declined on the call screen).
 Future<void> cancelVoiceRing(String id) async {
   try {
-    await _local.cancel(voiceNotifId(id));
+    await _local.cancel(0, tag: _voiceTag(id));
+    await _local.cancel(voiceNotifId(id)); // older builds' ring
+  } catch (_) {}
+}
+
+/// The app came back on screen: send this phone's notification token again, so the server never ends up
+/// without one (a phone with no token can't be rung when the app is closed).
+Future<void> refreshPushToken() async {
+  if (!_ready || api.token.isEmpty) return;
+  try {
+    final t = await FirebaseMessaging.instance.getToken();
+    if (t != null) await _send(t);
+  } catch (_) {}
+}
+
+/// Ask once for what Android needs to ring over the lock screen (Android 14+: "full-screen notifications").
+Future<void> _askFullScreenOnce() async {
+  try {
+    final p = await SharedPreferences.getInstance();
+    if (p.getBool('fsi_asked') == true) return;
+    await p.setBool('fsi_asked', true);
+    await _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestFullScreenIntentPermission();
   } catch (_) {}
 }
 
@@ -181,6 +208,7 @@ Future<void> setupPush(VoidCallback onUpdate) async {
       FirebaseMessaging.onMessageOpenedApp.listen((_) => onUpdate());
       FirebaseMessaging.instance.onTokenRefresh.listen(_send);
       _ready = true;
+      await _askFullScreenOnce();
     }
     await FirebaseMessaging.instance.requestPermission();
     final token = await FirebaseMessaging.instance.getToken();
@@ -343,8 +371,8 @@ Future<void> testOrderSound() async {
 /// "type|id|extra|time" of the last notification the person tapped; the shell opens the matching screen.
 final openedPush = ValueNotifier<String>('');
 
-void _opened(Map<String, dynamic> d) =>
-    openedPush.value = '${d['type'] ?? ''}|${d['id'] ?? d['chatId'] ?? ''}||${DateTime.now().millisecondsSinceEpoch}';
+void _opened(Map<String, dynamic> d) => openedPush.value =
+    '${d['type'] == 'voice_call' ? 'voice' : (d['type'] ?? '')}|${d['id'] ?? d['chatId'] ?? ''}||${DateTime.now().millisecondsSinceEpoch}';
 
 void _tapped(NotificationResponse r) {
   final p = r.payload ?? '';

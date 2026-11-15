@@ -4,6 +4,7 @@ import 'api.dart';
 import 'session.dart';
 import 'prefs.dart';
 import 'push.dart';
+import 'voice/voice_call.dart';
 import 'ui.dart';
 import 'screens/login.dart';
 import 'screens/register.dart';
@@ -56,7 +57,10 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
 
   // The in-app order ringer works only while the app is on screen (closed: the notification itself rings).
   @override
-  void didChangeAppLifecycleState(AppLifecycleState s) => partnerAppOpen = s == AppLifecycleState.resumed;
+  void didChangeAppLifecycleState(AppLifecycleState s) {
+    partnerAppOpen = s == AppLifecycleState.resumed;
+    if (s == AppLifecycleState.resumed) refreshPushToken();
+  }
 
   /// Colours and words are read when a screen builds, so after a theme/language change every open screen is rebuilt.
   void _rebuildAll() {
@@ -85,7 +89,7 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
       systemNavigationBarColor: kCard,
       systemNavigationBarIconBrightness: gDark ? Brightness.light : Brightness.dark,
     ));
-    return MaterialApp(
+    final app = MaterialApp(
       navigatorKey: navKey,
       title: tr('Nukad Kart Partner'),
       debugShowCheckedModeBanner: false,
@@ -127,6 +131,16 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
         fontFamilyFallback: const ['NotoSansDevanagari'],
       ),
       home: const Gate(),
+    );
+    // Every screen: an incoming in-app call opens and rings while the app is open (push or not).
+    return VoiceIncomingWatcher(
+      base: apiBase,
+      token: () => api.token,
+      lang: gLang,
+      navigatorKey: navKey,
+      ring: (c) => showVoiceRing(c),
+      stopRing: (id) => cancelVoiceRing(id),
+      child: app,
     );
   }
 }

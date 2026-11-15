@@ -5,14 +5,14 @@ import '../state/app_state.dart';
 import 'voice_call.dart';
 import 'order_chat.dart';
 
-/// Opens the call screen and calls the delivery partner of an order (kind 'order', ref = order id; the shop while
-/// nobody is assigned) or the thela coming to the street (kind 'thela', ref = call id). Numbers stay hidden.
-Future<void> callInApp(BuildContext context, String kind, String ref, {String label = 'Delivery partner'}) {
+/// Opens the call screen and calls, on an order (kind 'order', ref = order id), the shop ([to] 'store') or the
+/// delivery partner ([to] 'rider'), or the thela coming to the street (kind 'thela', ref = call id). Numbers stay hidden.
+Future<void> callInApp(BuildContext context, String kind, String ref, {String label = 'Delivery partner', String to = ''}) {
   final s = AppScope.read(context);
   return Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => VoiceCallScreen(call: VoiceCall(base: apiBase, token: () => s.apiToken, other: label), lang: gLang, startKind: kind, startRef: ref),
+      builder: (_) => VoiceCallScreen(call: VoiceCall(base: apiBase, token: () => s.apiToken, other: label), lang: gLang, startKind: kind, startRef: ref, startTo: to),
     ),
   );
 }

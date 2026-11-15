@@ -32,9 +32,6 @@ String voiceText(String key, String lang) {
     'Speaker': 'स्पीकर',
     'End': 'काटें',
     'Your number is hidden. Calls are not recorded.': 'आपका नंबर छिपा है। कॉल रिकॉर्ड नहीं होती।',
-    'call_limit': 'इस ऑर्डर पर 10 कॉल हो चुकीं। चैट भेजें।',
-    'call_too_fast': 'एक मिनट में 3 कॉल हो गईं। थोड़ा रुककर करें।',
-    'call_break': '3 कॉल का जवाब नहीं मिला। 2 मिनट बाद करें, तब तक चैट भेजें।',
     'call_closed': 'अब इस ऑर्डर पर कॉल नहीं हो सकती।',
     'call_busy': 'एक कॉल पहले से चल रही है।',
     'call_over': 'यह कॉल ख़त्म हो चुकी है।',
@@ -57,9 +54,6 @@ String voiceText(String key, String lang) {
     'Speaker': 'Speaker',
     'End': 'Kaato',
     'Your number is hidden. Calls are not recorded.': 'Aapka number chhupa hai. Call record nahi hoti.',
-    'call_limit': 'Is order par 10 call ho chuki. Chat bhejo.',
-    'call_too_fast': 'Ek minute mein 3 call ho gayi. Thoda ruk kar karo.',
-    'call_break': '3 call ka jawab nahi mila. 2 minute baad karo, tab tak chat bhejo.',
     'call_closed': 'Ab is order par call nahi ho sakti.',
     'call_busy': 'Ek call pehle se chal rahi hai.',
     'call_over': 'Yeh call khatam ho chuki hai.',
@@ -69,9 +63,6 @@ String voiceText(String key, String lang) {
     'error': 'Call nahi lagi. Phir try karo.',
   };
   const en = {
-    'call_limit': '10 calls already on this order. Send a chat instead.',
-    'call_too_fast': '3 calls in a minute. Wait a little and try again.',
-    'call_break': '3 calls went unanswered. Try again in 2 minutes; send a chat meanwhile.',
     'call_closed': 'Calls are closed for this order now.',
     'call_busy': 'A call is already going on.',
     'call_over': 'This call has ended.',
@@ -152,11 +143,12 @@ class VoiceCall extends ChangeNotifier {
   }
 
   /// Call the other side of an order (kind 'order', ref = order id) or a street call (kind 'thela', ref = call id).
-  Future<void> start(String kind, String ref) async {
+  /// [to]: on an order, the customer picks 'store' (the shop) or 'rider' (the delivery partner).
+  Future<void> start(String kind, String ref, {String to = ''}) async {
     outgoing = true;
     state = VoiceState.calling;
     notifyListeners();
-    final r = await _post('/v1/voice/start', {'kind': kind, 'ref': ref});
+    final r = await _post('/v1/voice/start', {'kind': kind, 'ref': ref, if (to.isNotEmpty) 'to': to});
     _take(r);
     // "End" pressed while the server was still ringing the other phone: stop that ring too.
     if (_closed) {
@@ -406,11 +398,20 @@ class VoiceCallScreen extends StatefulWidget {
   final VoiceCall call;
   final String lang;
   final String? startKind, startRef; // outgoing: start this when the screen opens
+  final String startTo; // outgoing order call: 'store' or 'rider'
   final String? incomingId; // incoming: load this call
   final bool autoAnswer; // "Answer" pressed on the notification
   final VoidCallback? stopRing; // stops the ringing notification once answered / declined / over
   const VoiceCallScreen(
-      {super.key, required this.call, required this.lang, this.startKind, this.startRef, this.incomingId, this.autoAnswer = false, this.stopRing});
+      {super.key,
+      required this.call,
+      required this.lang,
+      this.startKind,
+      this.startRef,
+      this.startTo = '',
+      this.incomingId,
+      this.autoAnswer = false,
+      this.stopRing});
 
   @override
   State<VoiceCallScreen> createState() => _VoiceCallScreenState();
@@ -436,7 +437,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   Future<void> _begin() async {
     try {
-      if (widget.startKind != null) await c.start(widget.startKind!, widget.startRef!);
+      if (widget.startKind != null) await c.start(widget.startKind!, widget.startRef!, to: widget.startTo);
       if (widget.incomingId != null) {
         await c.load(widget.incomingId!);
         if (c.state != VoiceState.incoming) widget.stopRing?.call();
@@ -522,7 +523,12 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
             CircleAvatar(
               radius: 52,
               backgroundColor: const Color(0xFF2E4424),
-              child: Icon(c.other == 'Customer' ? Icons.person : Icons.delivery_dining, color: const Color(0xFFF8CB46), size: 56),
+              child: Icon(
+                  c.other == 'Customer'
+                      ? Icons.person
+                      : (c.other == 'Delivery partner' ? Icons.delivery_dining : Icons.storefront),
+                  color: const Color(0xFFF8CB46),
+                  size: 56),
             ),
             const SizedBox(height: 18),
             Text(c.other.isEmpty ? ' ' : c.other, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
@@ -561,38 +567,71 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   }
 }
 
-/// While this widget is on screen (an open order), ask every 5 seconds whether a call is ringing for this phone,
-/// and open the ringing screen. Backup for a ring notification that did not arrive.
+/// Wraps the whole app: while the app is on screen, asks every 3 seconds whether a call is ringing for this
+/// phone, and opens the ringing screen (and rings). This way an open app always gets the call, even when the
+/// ring push is late or never comes. Pauses while the app is in the background (the push rings then).
 class VoiceIncomingWatcher extends StatefulWidget {
   final Widget child;
   final String base, lang;
   final String Function() token;
-  const VoiceIncomingWatcher({super.key, required this.child, required this.base, required this.token, required this.lang});
+
+  /// The app's navigator (the watcher sits above it, in MaterialApp.builder).
+  final GlobalKey<NavigatorState>? navigatorKey;
+
+  /// Ring the phone (the app's call notification) for a call found by asking.
+  final void Function(Map<String, dynamic> call)? ring;
+
+  /// Stop that ringing (call answered / declined / over).
+  final void Function(String id)? stopRing;
+  const VoiceIncomingWatcher(
+      {super.key, required this.child, required this.base, required this.token, required this.lang, this.navigatorKey, this.ring, this.stopRing});
   @override
   State<VoiceIncomingWatcher> createState() => _VoiceIncomingWatcherState();
 }
 
-class _VoiceIncomingWatcherState extends State<VoiceIncomingWatcher> {
+class _VoiceIncomingWatcherState extends State<VoiceIncomingWatcher> with WidgetsBindingObserver {
   Timer? _t;
+  bool _busy = false;
   final Set<String> _seen = {};
 
   @override
   void initState() {
     super.initState();
-    _t = Timer.periodic(const Duration(seconds: 5), (_) => _check());
+    WidgetsBinding.instance.addObserver(this);
+    _run();
+  }
+
+  void _run() {
+    _t?.cancel();
+    _t = Timer.periodic(const Duration(seconds: 3), (_) => _check());
+    _check();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState s) {
+    if (s == AppLifecycleState.resumed) {
+      _run();
+    } else if (s == AppLifecycleState.paused || s == AppLifecycleState.detached) {
+      _t?.cancel();
+      _t = null;
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _t?.cancel();
     super.dispose();
   }
 
   Future<void> _check() async {
-    if (currentVoiceCall.value != null || !mounted) return;
+    if (_busy || currentVoiceCall.value != null || !mounted) return;
+    final tok = widget.token();
+    if (tok.isEmpty) return;
+    _busy = true;
     try {
       final r = await http
-          .get(Uri.parse('${widget.base}/v1/voice/incoming'), headers: {'authorization': 'Bearer ${widget.token()}'})
+          .get(Uri.parse('${widget.base}/v1/voice/incoming'), headers: {'authorization': 'Bearer $tok'})
           .timeout(const Duration(seconds: 8));
       if (r.statusCode != 200) return;
       final c = (jsonDecode(r.body) as Map)['call'];
@@ -600,14 +639,25 @@ class _VoiceIncomingWatcherState extends State<VoiceIncomingWatcher> {
       final id = '${c['id']}';
       if (_seen.contains(id) || currentVoiceCall.value != null || !mounted) return;
       _seen.add(id);
-      Navigator.push(
-        context,
+      // The ring push may be opening this same call right now: let it, and don't open a second screen.
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (currentVoiceCall.value != null || !mounted) return;
+      final nav = widget.navigatorKey?.currentState ?? Navigator.maybeOf(context);
+      if (nav == null) return;
+      widget.ring?.call({...Map<String, dynamic>.from(c), 'from': '${c['other'] ?? ''}'});
+      nav.push(
         MaterialPageRoute(
           builder: (_) => VoiceCallScreen(
-              call: VoiceCall(base: widget.base, token: widget.token, other: '${c['other'] ?? ''}'), lang: widget.lang, incomingId: id),
+              call: VoiceCall(base: widget.base, token: widget.token, other: '${c['other'] ?? ''}'),
+              lang: widget.lang,
+              incomingId: id,
+              stopRing: () => widget.stopRing?.call(id)),
         ),
       );
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _busy = false;
+    }
   }
 
   @override

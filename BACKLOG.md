@@ -33,5 +33,12 @@ When the founder asks "aur kya kya karna hai app mein", read this file and remin
 
 ## 4. Number-hidden call: decided 15 Nov 2026
 - Customer's phone shows "Delivery partner", never the staff member's name.
-- Only connected calls count toward the 10-per-order limit; missed calls don't count (1-minute limit still applies).
+- ~~10-per-order limit, 3-a-minute limit, 2-minute break~~: all removed 15 Nov 2026 (founder: "limit nahi honi chahiye"). Only one call at a time per order.
 - Thela: same as kirana — call + chat, same limits.
+
+## 5. Calls, chat, tracking: done 15 Nov 2026
+- "Can't be reached" only when the ring push failed AND the app wasn't open on that phone in the last 30 s.
+- Ring push carries a call notification too, so a closed app rings; one-time prompt for Autostart / battery (Xiaomi, Oppo, Vivo…).
+- Customer: Store call button from accepting; Rider call button from out for delivery.
+- Order chat: instant over a live socket, shows at once, ✓ / blue ✓✓ read.
+- Scooter drives along the road, turns with it, rider spot every ~3 s (live socket).

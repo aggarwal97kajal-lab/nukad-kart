@@ -1,26 +1,38 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show HapticFeedback, rootBundle;
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import '../l10n.dart';
 import '../services/ola_maps.dart';
 import 'ui.dart';
 
 /// Real map for a shop delivery: named pins for the customer's home and the shop, the road route between them
-/// (Ola directions, one call per order), and the Nukad Kart scooter (the delivery person's phone) gliding along
-/// that route. The camera fits home + shop + scooter; "Recentre" brings it back after the customer pans.
+/// (Ola directions, one call per order), and the Nukad Kart scooter (the delivery person's phone) driving along
+/// that route like in Swiggy / Zomato / Blinkit: it moves smoothly along the road (never jumps across buildings),
+/// turns to face where it is going, and the route behind it disappears. The rider's phone sends its spot every
+/// ~3 s; it arrives here at once over the order's live socket (or by asking every 3 s when the socket is down),
+/// and each move is drawn over the time until the next one, so the scooter keeps rolling.
+/// The camera fits home + shop + scooter; "Recentre" brings it back after the customer pans.
 class RiderMap extends StatefulWidget {
   final double homeLat, homeLng;
   final double? riderLat, riderLng;
   final String storeName;
   final double? shopLat, shopLng;
 
-  /// Order id: the road route is fetched once per order.
+  /// Order id: the road route is fetched once per order; live scooter spots come for this order.
   final String routeKey;
+
+  /// API address and the customer's session (for the live socket and /v1/me/orders/:id/rider).
+  final String base;
+  final String Function()? token;
   const RiderMap(
       {super.key,
       required this.homeLat,
@@ -30,35 +42,125 @@ class RiderMap extends StatefulWidget {
       required this.storeName,
       this.shopLat,
       this.shopLng,
-      this.routeKey = ''});
+      this.routeKey = '',
+      this.base = '',
+      this.token});
   @override
   State<RiderMap> createState() => _RiderMapState();
 }
 
-class _RiderMapState extends State<RiderMap> {
+class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin {
   late final Future<String> _style = OlaMaps.style(dark: gDark, lang: gLang);
   MapLibreMapController? _c;
   Symbol? _rider;
   Line? _ahead;
   bool _ready = false, _icon = false;
   List<LatLng> _route = [];
+  List<double> _cum = []; // metres from the shop to each route point
 
-  // The scooter is drawn here and slides to each new phone position over ~2.5 s.
-  LatLng? _shown;
-  Timer? _anim;
+  // Where the scooter is drawn: metres along the route (on the road), or a free point when it is off the route.
+  double? _shownD;
+  LatLng? _shownP;
+  double _bearing = 0;
+
+  // The move being drawn now: from → to over _animMs.
+  double? _fromD, _toD;
+  LatLng? _fromP, _toP;
+  double _animMs = 3000;
+  Ticker? _tk;
+  Ticker get _ticker => _tk ??= createTicker(_onTick);
+  Duration _lastDraw = Duration.zero, _lastLine = Duration.zero;
+  bool _drawing = false;
+
+  // Last spot from the rider's phone (to skip repeats) and when it came (the next move takes that long).
+  LatLng? _lastFix;
+  DateTime? _lastFixAt;
+
+  // Live spots.
+  WebSocketChannel? _ws;
+  StreamSubscription? _wsSub;
+  Timer? _poll, _ping, _retry;
+  bool _live = false, _gone = false;
 
   bool get _hasShop => widget.shopLat != null && widget.shopLat != 0;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.routeKey.isNotEmpty && widget.base.isNotEmpty && widget.token != null) {
+      _connect();
+      _poll = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (!_live) _fetch();
+      });
+    }
+  }
+
+  @override
   void didUpdateWidget(RiderMap old) {
     super.didUpdateWidget(old);
-    if (old.riderLat != widget.riderLat || old.riderLng != widget.riderLng) _move();
+    if ((old.riderLat != widget.riderLat || old.riderLng != widget.riderLng) && widget.riderLat != null) {
+      _fix(LatLng(widget.riderLat!, widget.riderLng!));
+    }
   }
 
   @override
   void dispose() {
-    _anim?.cancel();
+    _gone = true;
+    _tk?.dispose();
+    _poll?.cancel();
+    _ping?.cancel();
+    _retry?.cancel();
+    _wsSub?.cancel();
+    try {
+      _ws?.sink.close();
+    } catch (_) {}
     super.dispose();
+  }
+
+  // ----- live spots from the rider's phone -----
+
+  void _connect() {
+    if (_gone) return;
+    try {
+      final ws = widget.base.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
+      _ws = WebSocketChannel.connect(Uri.parse(
+          '$ws/v1/orders/${Uri.encodeComponent(widget.routeKey)}/chat/socket?token=${Uri.encodeQueryComponent(widget.token!())}'));
+      _wsSub = _ws!.stream.listen((m) {
+        _live = true;
+        try {
+          final d = jsonDecode('$m');
+          if (d is Map && d['type'] == 'rider') _fix(LatLng((d['lat'] as num).toDouble(), (d['lng'] as num).toDouble()));
+        } catch (_) {}
+      }, onDone: _lost, onError: (_) => _lost());
+      _ws!.ready.then((_) => _live = true).catchError((_) => _lost());
+      _ping?.cancel();
+      _ping = Timer.periodic(const Duration(seconds: 25), (_) {
+        try {
+          _ws?.sink.add('ping');
+        } catch (_) {}
+      });
+    } catch (_) {
+      _lost();
+    }
+  }
+
+  void _lost() {
+    _live = false;
+    _ping?.cancel();
+    _wsSub?.cancel();
+    if (_gone) return;
+    _retry?.cancel();
+    _retry = Timer(const Duration(seconds: 4), _connect);
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final r = await http.get(Uri.parse('${widget.base}/v1/me/orders/${Uri.encodeComponent(widget.routeKey)}/rider'),
+          headers: {'authorization': 'Bearer ${widget.token!()}'}).timeout(const Duration(seconds: 8));
+      if (r.statusCode != 200) return;
+      final rd = (jsonDecode(r.body) as Map)['rider'];
+      if (rd is Map) _fix(LatLng((rd['lat'] as num).toDouble(), (rd['lng'] as num).toDouble()));
+    } catch (_) {}
   }
 
   /// A round pin with an emoji and a name tag under it ("🏠 Ghar", "🏪 Dukaan"), drawn on the phone so it
@@ -97,8 +199,7 @@ class _RiderMapState extends State<RiderMap> {
     try {
       await c.addImage('nk-home', await _pin('🏠', t('Your home'), const Color(0xFF2E7D32)));
       if (_hasShop) await c.addImage('nk-shop', await _pin('🏪', t('The shop'), const Color(0xFF185FA5)));
-      final b = await rootBundle.load('assets/images/markers/bike.png');
-      await c.addImage('nk-bike', b.buffer.asUint8List());
+      await c.addImage('nk-scooter', await _scooter());
       _icon = true;
     } catch (_) {}
     // Road route shop → home (one Ola call per order, cached).
@@ -107,6 +208,10 @@ class _RiderMapState extends State<RiderMap> {
           widget.shopLat!, widget.shopLng!, widget.homeLat, widget.homeLng);
       _route = pts.map((p) => LatLng(p.$1, p.$2)).toList();
       if (_route.isEmpty) _route = [LatLng(widget.shopLat!, widget.shopLng!), home];
+      _cum = [0];
+      for (var i = 1; i < _route.length; i++) {
+        _cum.add(_cum.last + _dist(_route[i - 1].latitude, _route[i - 1].longitude, _route[i].latitude, _route[i].longitude));
+      }
       // Faint full route, and the part still ahead of the scooter in bold.
       await c.addLine(LineOptions(geometry: _route, lineColor: '#9AA59A', lineWidth: 4, lineOpacity: 0.6));
       _ahead = await c.addLine(LineOptions(geometry: _route, lineColor: '#21331B', lineWidth: 5, lineOpacity: 0.95));
@@ -119,7 +224,47 @@ class _RiderMapState extends State<RiderMap> {
     }
     _ready = true;
     await _fit();
-    await _move();
+    // Start at the rider's last spot, or at the shop until the rider's phone sends one.
+    final first = widget.riderLat != null ? LatLng(widget.riderLat!, widget.riderLng!) : (_lastFix ?? (_hasShop ? LatLng(widget.shopLat!, widget.shopLng!) : null));
+    if (first != null) await _place(first);
+    if (widget.routeKey.isNotEmpty && widget.base.isNotEmpty && widget.token != null) _fetch();
+  }
+
+  /// Top view of the Nukad Kart scooter, nose up (north); the map turns it to face where it is going.
+  static Future<Uint8List> _scooter() async {
+    const s = 240.0;
+    final rec = ui.PictureRecorder();
+    final cv = Canvas(rec);
+    const c = Offset(s / 2, s / 2);
+    cv.drawCircle(c.translate(0, 4), 98, Paint()..color = const Color(0x33000000));
+    cv.drawCircle(c, 96, Paint()..color = Colors.white);
+    cv.drawCircle(c, 96, Paint()
+      ..color = const Color(0xFF2E7D32)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6);
+    // Wheels (front and back), body, delivery box, handlebar, rider's helmet.
+    final wheel = Paint()..color = const Color(0xFF1B1B1B);
+    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, -62), width: 20, height: 34), const Radius.circular(8)), wheel);
+    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 64), width: 22, height: 34), const Radius.circular(8)), wheel);
+    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 0), width: 50, height: 120), const Radius.circular(24)),
+        Paint()..color = const Color(0xFF2E7D32));
+    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 42), width: 66, height: 50), const Radius.circular(10)),
+        Paint()..color = const Color(0xFFF8CB46));
+    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 42), width: 66, height: 50), const Radius.circular(10)), Paint()
+      ..color = const Color(0xFF21331B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4);
+    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, -36), width: 104, height: 12), const Radius.circular(6)),
+        Paint()..color = const Color(0xFF21331B));
+    cv.drawCircle(c.translate(0, -8), 22, Paint()..color = const Color(0xFFF8CB46));
+    cv.drawCircle(c.translate(0, -8), 22, Paint()
+      ..color = const Color(0xFF21331B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4);
+    cv.drawCircle(c.translate(0, -84), 7, Paint()..color = const Color(0xFFFFF59D)); // headlight
+    final img = await rec.endRecording().toImage(s.toInt(), s.toInt());
+    final png = await img.toByteData(format: ui.ImageByteFormat.png);
+    return png!.buffer.asUint8List();
   }
 
   /// Camera shows home, shop and scooter together.
@@ -129,7 +274,7 @@ class _RiderMapState extends State<RiderMap> {
     final pts = <LatLng>[
       LatLng(widget.homeLat, widget.homeLng),
       if (_hasShop) LatLng(widget.shopLat!, widget.shopLng!),
-      if (widget.riderLat != null) LatLng(widget.riderLat!, widget.riderLng!),
+      if (_shownP != null) _shownP! else if (widget.riderLat != null) LatLng(widget.riderLat!, widget.riderLng!),
     ];
     const pad = 0.0008;
     final sw = LatLng(pts.map((p) => p.latitude).reduce(math.min) - pad, pts.map((p) => p.longitude).reduce(math.min) - pad);
@@ -162,43 +307,136 @@ class _RiderMapState extends State<RiderMap> {
     return best <= 60 && at != null ? (at, seg) : null;
   }
 
-  Future<void> _move() async {
-    final c = _c;
-    if (!_ready || c == null) return;
-    // No location from the delivery phone yet: the Nukad Kart scooter waits at the shop.
-    if (widget.riderLat == null && !_hasShop) return;
-    final raw = widget.riderLat == null ? LatLng(widget.shopLat!, widget.shopLng!) : LatLng(widget.riderLat!, widget.riderLng!);
-    final snap = _snap(raw);
-    final to = snap?.$1 ?? raw;
-    if (_ahead != null && snap != null) {
-      await c.updateLine(_ahead!, LineOptions(geometry: [to, ..._route.sublist(snap.$2 + 1)]));
+  /// Metres along the route of point [p] on segment [seg].
+  double _along(LatLng p, int seg) => _cum[seg] + _dist(_route[seg].latitude, _route[seg].longitude, p.latitude, p.longitude);
+
+  /// The point [d] metres along the route, its segment, and the road's direction there (degrees from north).
+  (LatLng, int, double) _pointAt(double d) {
+    final x = d.clamp(0.0, _cum.last);
+    var i = 0;
+    while (i < _cum.length - 2 && _cum[i + 1] < x) {
+      i++;
     }
+    final a = _route[i], b = _route[i + 1];
+    final len = _cum[i + 1] - _cum[i];
+    final f = len <= 0 ? 0.0 : (x - _cum[i]) / len;
+    return (
+      LatLng(a.latitude + (b.latitude - a.latitude) * f, a.longitude + (b.longitude - a.longitude) * f),
+      i,
+      _heading(a, b),
+    );
+  }
+
+  static double _heading(LatLng a, LatLng b) {
+    final p1 = a.latitude * math.pi / 180, p2 = b.latitude * math.pi / 180, dl = (b.longitude - a.longitude) * math.pi / 180;
+    final y = math.sin(dl) * math.cos(p2);
+    final x = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl);
+    return (math.atan2(y, x) * 180 / math.pi + 360) % 360;
+  }
+
+  /// First spot: put the scooter there (no animation).
+  Future<void> _place(LatLng raw) async {
+    final c = _c;
+    if (c == null || _rider != null) return;
+    final snap = _snap(raw);
+    final at = snap?.$1 ?? raw;
+    if (snap != null && _cum.isNotEmpty) {
+      _shownD = _along(snap.$1, snap.$2);
+      _bearing = _pointAt(_shownD!).$3;
+    }
+    _shownP = at;
+    _lastFix ??= raw;
+    _lastFixAt ??= DateTime.now();
+    _rider = await c.addSymbol(_icon
+        ? SymbolOptions(geometry: at, iconImage: 'nk-scooter', iconSize: 0.5, iconAnchor: 'center', iconRotate: _bearing)
+        : SymbolOptions(geometry: at, textField: '🛵', textSize: 24));
+    if (_ahead != null && snap != null) await c.updateLine(_ahead!, LineOptions(geometry: [at, ..._route.sublist(snap.$2 + 1)]));
+    if (mounted) setState(() {});
+    await _fit();
+  }
+
+  /// A new spot from the rider's phone: drive there along the road over the time the last spot took to come.
+  void _fix(LatLng raw) {
+    if (_lastFix != null && _dist(_lastFix!.latitude, _lastFix!.longitude, raw.latitude, raw.longitude) < 1) return;
+    final now = DateTime.now();
+    final gap = _lastFixAt == null ? 3000 : now.difference(_lastFixAt!).inMilliseconds.clamp(1500, 6000);
+    _lastFix = raw;
+    _lastFixAt = now;
+    if (!_ready || _c == null) return;
     if (_rider == null) {
-      _shown = to;
-      _rider = await c.addSymbol(_icon
-          ? SymbolOptions(geometry: to, iconImage: 'nk-bike', iconSize: 0.42, iconAnchor: 'bottom')
-          : SymbolOptions(geometry: to, textField: '🛵', textSize: 24));
-      await _fit();
+      _place(raw);
       return;
     }
-    // Slide from where it is drawn to the new point: ~12 frames over 2.5 s.
-    final from = _shown ?? to;
-    _anim?.cancel();
-    var i = 0;
-    const steps = 12;
-    _anim = Timer.periodic(const Duration(milliseconds: 210), (t) async {
-      i++;
-      final f = i / steps;
-      final p = LatLng(from.latitude + (to.latitude - from.latitude) * f, from.longitude + (to.longitude - from.longitude) * f);
-      _shown = p;
-      if (i >= steps) t.cancel();
-      if (_rider != null && mounted) await c.updateSymbol(_rider!, SymbolOptions(geometry: p));
-    });
+    final snap = _snap(raw);
+    if (snap != null && _cum.isNotEmpty && _shownD != null) {
+      final d = _along(snap.$1, snap.$2);
+      // GPS wobble a few metres backwards: hold still rather than reverse.
+      if (d < _shownD! && _shownD! - d < 30) return;
+      _fromD = _shownD;
+      _toD = d;
+      _fromP = _toP = null;
+    } else {
+      _fromP = _shownP;
+      _toP = snap?.$1 ?? raw;
+      _fromD = _toD = null;
+      if (snap != null && _cum.isNotEmpty) _shownD = _along(snap.$1, snap.$2);
+    }
+    _animMs = gap.toDouble();
+    _lastDraw = _lastLine = Duration.zero;
+    if (_ticker.isActive) _ticker.stop();
+    _ticker.start();
+  }
+
+  void _onTick(Duration el) {
+    final c = _c;
+    if (c == null || _rider == null) return;
+    final f = (el.inMilliseconds / _animMs).clamp(0.0, 1.0);
+    final done = f >= 1.0;
+    // ~25 frames a second is smooth on the map and light on the phone.
+    if (!done && (el - _lastDraw).inMilliseconds < 40) return;
+    if (_drawing && !done) return;
+    _lastDraw = el;
+    LatLng p;
+    double want = _bearing;
+    int? seg;
+    if (_fromD != null && _toD != null) {
+      final d = _fromD! + (_toD! - _fromD!) * f;
+      final at = _pointAt(d);
+      p = at.$1;
+      seg = at.$2;
+      want = at.$3;
+      _shownD = d;
+    } else if (_fromP != null && _toP != null) {
+      p = LatLng(_fromP!.latitude + (_toP!.latitude - _fromP!.latitude) * f, _fromP!.longitude + (_toP!.longitude - _fromP!.longitude) * f);
+      if (_dist(_fromP!.latitude, _fromP!.longitude, _toP!.latitude, _toP!.longitude) > 3) want = _heading(_fromP!, _toP!);
+    } else {
+      _ticker.stop();
+      return;
+    }
+    _shownP = p;
+    // Turn smoothly (shortest way round) instead of snapping to each new road direction.
+    final diff = ((want - _bearing + 540) % 360) - 180;
+    _bearing = (_bearing + diff * (done ? 1 : 0.25) + 360) % 360;
+    _drawing = true;
+    c.updateSymbol(_rider!, SymbolOptions(geometry: p, iconRotate: _bearing)).whenComplete(() => _drawing = false);
+    // The road still ahead: redrawn a few times a second.
+    if (_ahead != null && seg != null && (done || (el - _lastLine).inMilliseconds > 300)) {
+      _lastLine = el;
+      c.updateLine(_ahead!, LineOptions(geometry: [p, ..._route.sublist(seg + 1)]));
+    }
+    if (done) {
+      _ticker.stop();
+      if (mounted) setState(() {}); // distance / minutes left
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.riderLat == null ? null : _dist(widget.homeLat, widget.homeLng, widget.riderLat!, widget.riderLng!);
+    // Distance still to go: along the road when the scooter is on it, else straight to the door.
+    final at = _shownP ?? _lastFix ?? (widget.riderLat == null ? null : LatLng(widget.riderLat!, widget.riderLng!));
+    final double? d = _shownD != null && _cum.isNotEmpty
+        ? math.max(0.0, _cum.last - _shownD!)
+        : (at == null ? null : _dist(widget.homeLat, widget.homeLng, at.latitude, at.longitude));
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: SizedBox(

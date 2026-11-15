@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 import '../voice/voice_call.dart';
 
@@ -27,6 +28,10 @@ final _voice = AndroidNotificationChannel('voice_calls2', 'Calls from shops and 
 
 int _voiceId(String id) => 900000 + (id.hashCode & 0xffff);
 
+/// The ring push also carries a system notification (tag call_<id>, id 0) so a closed app still rings.
+/// The app's own full-screen ringing notification takes the same tag and id, so it replaces that one.
+String _voiceTag(String id) => 'call_$id';
+
 Future<void> _initLocal() async {
   await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')),
       onDidReceiveNotificationResponse: _tapResponse);
@@ -43,7 +48,7 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
   if (id.isEmpty) return;
   try {
     await _local.show(
-      _voiceId(id),
+      0,
       '📞 ${d['from'] ?? 'Nukad Kart'}',
       '${d['title'] ?? ''} · Nukad Kart call',
       NotificationDetails(
@@ -52,6 +57,8 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
             importance: Importance.max,
             priority: Priority.max,
             category: AndroidNotificationCategory.call,
+            tag: _voiceTag(id),
+            visibility: NotificationVisibility.public,
             fullScreenIntent: true,
             audioAttributesUsage: AudioAttributesUsage.notificationRingtone,
             additionalFlags: Int32List.fromList([4]), // FLAG_INSISTENT
@@ -70,9 +77,35 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
 
 Future<void> cancelVoiceRing(String id) async {
   try {
-    await _local.cancel(_voiceId(id));
+    await _local.cancel(0, tag: _voiceTag(id));
+    await _local.cancel(_voiceId(id)); // older builds' ring
   } catch (_) {}
 }
+
+/// Ask once for what Android needs to ring over the lock screen (Android 14+: "full-screen notifications").
+Future<void> _askFullScreenOnce() async {
+  try {
+    final p = await SharedPreferences.getInstance();
+    if (p.getBool('fsi_asked') == true) return;
+    final a = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await p.setBool('fsi_asked', true);
+    await a?.requestFullScreenIntentPermission();
+  } catch (_) {}
+}
+
+/// The app came back on screen: send this phone's notification token again, so the server never ends up
+/// without one (a phone with no token can't be rung when the app is closed).
+Future<void> refreshPushToken(String apiToken) async {
+  if (!_ready || apiToken.isEmpty) return;
+  try {
+    final t = await FirebaseMessaging.instance.getToken();
+    if (t != null) await api.pushToken(apiToken, t);
+  } catch (_) {}
+}
+
+/// A tapped push about a call opens the ringing screen.
+Map<String, dynamic> _openData(Map<String, dynamic> d) =>
+    d['type'] == 'voice_call' ? {'type': 'voice', 'id': '${d['id']}', '_t': DateTime.now().millisecondsSinceEpoch} : {...d, '_t': DateTime.now().millisecondsSinceEpoch};
 
 Future<void> _voiceEnded(String id) async {
   await cancelVoiceRing(id);
@@ -138,15 +171,16 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
       });
       FirebaseMessaging.onMessageOpenedApp.listen((m) {
         onPush('', '', m.data);
-        openedPush.value = {...m.data, '_t': DateTime.now().millisecondsSinceEpoch};
+        openedPush.value = _openData(m.data);
       });
       // Opened from a notification while the app was closed.
       final first = await FirebaseMessaging.instance.getInitialMessage();
-      if (first != null) openedPush.value = {...first.data, '_t': DateTime.now().millisecondsSinceEpoch};
+      if (first != null) openedPush.value = _openData(first.data);
       final launch = await _local.getNotificationAppLaunchDetails();
       if (launch?.didNotificationLaunchApp == true && launch!.notificationResponse != null) _tapResponse(launch.notificationResponse!);
       FirebaseMessaging.instance.onTokenRefresh.listen((t) => api.pushToken(_sentFor, t).catchError((_) {}));
       _ready = true;
+      await _askFullScreenOnce();
     }
     final perm = await FirebaseMessaging.instance.requestPermission();
     if (perm.authorizationStatus == AuthorizationStatus.denied) pushProblem = 'Notifications are turned off for Nukad Kart in phone settings.';

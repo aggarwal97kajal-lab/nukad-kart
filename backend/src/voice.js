@@ -2,66 +2,68 @@
 // when a network blocks that). The server only checks who may call whom, rings the other phone, and passes the
 // connection messages through a Durable Object room. Audio is never recorded; the call log is kept 90 days.
 //
-//   POST /v1/voice/start { kind: 'order'|'thela', ref }   (auth) → { call, ice }
-//        order: the customer ↔ the delivery person on that order (the shop owner while nobody is assigned);
-//               from the shop accepting until 30 minutes after delivery.
+//   POST /v1/voice/start { kind: 'order'|'thela', ref, to? } (auth) → { call, ice }
+//        order, to 'store': the customer ↔ the shop owner, from the shop accepting until 30 minutes after delivery.
+//        order, to 'rider': the customer ↔ the delivery person (the owner when nobody is assigned), from
+//               "out for delivery" until 30 minutes after delivery.
+//        order, no to (older app builds): the delivery person, else the shop; from accepting.
 //        thela: the customer ↔ the thela, while the thela is "Coming" to the customer's street (calls row).
 //   GET  /v1/voice/:id                                    (auth) the call (for the screen that opened from a push)
 //   POST /v1/voice/:id/answer | decline | end             (auth)
 //   GET  /v1/voice/:id/socket?token=                      WebSocket: offer / answer / ice / bye between the two phones
 //
-// Limits (per order / per street call): at most 10 connected calls (missed ones don't count); at most 3 calls
-// started in a minute; after 3 missed in a row, a 2-minute break ("send a chat instead").
+// No limit on how many calls: only one call at a time per order / street call.
+// "Their phone can't be reached" is said only when the ring push reached no phone AND the app was not open on
+// that phone in the last 30 seconds (an open app asks /v1/voice/incoming every few seconds and rings itself).
 import { HttpError, json, body, now, session } from './index.js';
 import { sendPush, sendPushDetail } from './push.js';
 
-export const MAX_CONNECTED = 10;
-export const PER_MINUTE = 3;
-export const MISSED_IN_ROW = 3;
-export const BREAK_S = 120;
+export const SEEN_S = 30; // the app asked for incoming calls this recently = the phone is reachable
 export const RING_S = 40; // unanswered after this = missed
 export const AFTER_DELIVERY_S = 30 * 60;
 export const KEEP_DAYS = 90;
 
 /** Who is on each side of a call about this order / street call, and whether calling is open now. */
-export async function parties(env, kind, ref, t = now()) {
+export async function parties(env, kind, ref, t = now(), to = '') {
   if (kind === 'order') {
     const o = await env.DB.prepare(`SELECT o.id, o.customer_id, o.status, o.accepted_at, o.delivered_at, o.closed_at, o.staff_id, s.owner_id, s.name,
         (SELECT user_id FROM staff WHERE id = o.staff_id AND removed_at IS NULL) AS staff_user
       FROM orders o JOIN stores s ON s.id = o.store_id WHERE o.id = ?`).bind(ref).first();
     if (!o) throw new HttpError(404, 'not_found');
-    const open = ['accepted', 'packed', 'out'].includes(o.status)
-      || (o.status === 'delivered' && t - (o.delivered_at || o.closed_at || 0) <= AFTER_DELIVERY_S);
-    // The customer reaches the delivery person on this order, or the shop while nobody is assigned.
-    const seller = o.staff_user || o.owner_id;
-    return { open, customer: o.customer_id, seller, sellers: [o.owner_id, o.staff_user].filter(Boolean),
-      sellerLabel: 'Delivery partner', customerLabel: 'Customer', title: `Order #${o.id}` };
+    const afterDelivery = o.status === 'delivered' && t - (o.delivered_at || o.closed_at || 0) <= AFTER_DELIVERY_S;
+    const storeOpen = ['accepted', 'packed', 'out'].includes(o.status) || afterDelivery;
+    const riderOpen = o.status === 'out' || afterDelivery;
+    const storeLabel = o.name || 'Store';
+    const rider = o.staff_user || o.owner_id;
+    // Who the customer reaches: the shop (after accepting), or the delivery person (once out for delivery).
+    const pick = to === 'store' ? { open: storeOpen, seller: o.owner_id, sellerLabel: storeLabel }
+      : to === 'rider' ? { open: riderOpen, seller: rider, sellerLabel: 'Delivery partner' }
+        : { open: storeOpen, seller: rider, sellerLabel: 'Delivery partner' };
+    return { ...pick, customer: o.customer_id, sellers: [o.owner_id, o.staff_user].filter(Boolean), customerLabel: 'Customer', title: `Order #${o.id}`,
+      // A shop phone calling the customer shows as the delivery partner when it is the one delivering, else as the shop.
+      labelFor: (uid) => (uid === o.staff_user || (!o.staff_user && o.status === 'out') ? 'Delivery partner' : storeLabel) };
   }
   if (kind === 'thela') {
     const c = await env.DB.prepare(`SELECT c.id, c.customer_id, c.status, s.owner_id, s.name FROM calls c JOIN stores s ON s.id = c.thela_id WHERE c.id = ?`)
       .bind(ref).first();
     if (!c) throw new HttpError(404, 'not_found');
     return { open: c.status === 'coming', customer: c.customer_id, seller: c.owner_id, sellers: [c.owner_id],
-      sellerLabel: c.name || 'Thela', customerLabel: 'Customer', title: c.name || 'Thela' };
+      sellerLabel: c.name || 'Thela', customerLabel: 'Customer', title: c.name || 'Thela', labelFor: () => c.name || 'Thela' };
   }
   throw new HttpError(400, 'bad_kind');
 }
 
-/** Can `uid` start a call now? Returns nothing or throws with the reason the app shows. */
-export async function checkLimits(env, kind, ref, t = now()) {
-  const { results } = await env.DB.prepare(`SELECT status, answered_at, created_at FROM voice_calls WHERE kind = ? AND ref = ?
-    ORDER BY created_at DESC LIMIT 50`).bind(kind, ref).all();
-  if (results.some((c) => c.status === 'ringing' && t - c.created_at < RING_S) || results.some((c) => c.status === 'connected')) {
-    throw new HttpError(409, 'call_busy');
-  }
-  const connected = results.filter((c) => c.answered_at).length;
-  if (connected >= MAX_CONNECTED) throw new HttpError(429, 'call_limit');
-  if (results.filter((c) => t - c.created_at < 60).length >= PER_MINUTE) throw new HttpError(429, 'call_too_fast');
-  const last = results.slice(0, MISSED_IN_ROW);
-  if (last.length === MISSED_IN_ROW && last.every((c) => !c.answered_at) && t - last[0].created_at < BREAK_S) {
-    throw new HttpError(429, 'call_break', String(BREAK_S - (t - last[0].created_at)));
-  }
-  return { connected, left: MAX_CONNECTED - connected };
+/** Only one call at a time on an order / street call. No limit on how many calls. */
+export async function checkBusy(env, kind, ref, t = now()) {
+  const { results } = await env.DB.prepare(`SELECT status, created_at FROM voice_calls WHERE kind = ? AND ref = ? AND status IN ('ringing', 'connected')
+    ORDER BY created_at DESC LIMIT 5`).bind(kind, ref).all();
+  if (results.some((c) => c.status === 'connected' || (c.status === 'ringing' && t - c.created_at < RING_S))) throw new HttpError(409, 'call_busy');
+}
+
+/** The app is open on one of this person's phones (it asked for incoming calls in the last 30 s). */
+export async function appOpen(env, uid, t = now()) {
+  const r = await env.DB.prepare('SELECT app_seen_at FROM users WHERE id = ?').bind(uid).first();
+  return !!r?.app_seen_at && t - r.app_seen_at <= SEEN_S;
 }
 
 /** Health check: does Cloudflare accept the TURN key? 'turn', or 'turn_error_<status>' (404 = key id wrong, 401/403 = token wrong). */
@@ -147,6 +149,8 @@ export async function voiceRoute(req, env, path, m) {
 
   // A call ringing for me right now (backup for a ring push that did not arrive; the order screens ask every few seconds).
   if (path === '/v1/voice/incoming' && m === 'GET') {
+    // The app is open on this phone: remember it (at most every 10 s), so a caller is not told "can't be reached".
+    await env.DB.prepare('UPDATE users SET app_seen_at = ? WHERE id = ? AND (app_seen_at IS NULL OR app_seen_at < ?)').bind(t, uid, t - 10).run();
     const c = await env.DB.prepare("SELECT * FROM voice_calls WHERE callee_id = ? AND status = 'ringing' AND created_at > ? ORDER BY created_at DESC LIMIT 1")
       .bind(uid, t - RING_S).first();
     return json({ call: c ? callOut(c, uid) : null });
@@ -154,35 +158,36 @@ export async function voiceRoute(req, env, path, m) {
 
   if (path === '/v1/voice/start' && m === 'POST') {
     const b = await body(req);
-    const kind = String(b.kind || ''), ref = String(b.ref || '').slice(0, 64);
-    const p = await parties(env, kind, ref, t);
+    const kind = String(b.kind || ''), ref = String(b.ref || '').slice(0, 64), to = String(b.to || '');
+    const p = await parties(env, kind, ref, t, to);
     const isCustomer = uid === p.customer;
     if (!isCustomer && !p.sellers.includes(uid)) throw new HttpError(403, 'not_yours');
     if (!p.open) throw new HttpError(409, 'call_closed');
     await missOld(env, t);
-    const lim = await checkLimits(env, kind, ref, t);
+    await checkBusy(env, kind, ref, t);
     const callee = isCustomer ? p.seller : p.customer;
     if (!callee || callee === uid) throw new HttpError(409, 'nobody_to_call');
     const id = `V${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-    const callerLabel = isCustomer ? p.customerLabel : p.sellerLabel;
+    const callerLabel = isCustomer ? p.customerLabel : p.labelFor(uid);
     const calleeLabel = isCustomer ? p.sellerLabel : p.customerLabel;
     await env.DB.prepare(`INSERT INTO voice_calls (id, kind, ref, caller_id, callee_id, caller_label, callee_label, title, status, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ringing', ?)`).bind(id, kind, ref, uid, callee, callerLabel, calleeLabel, p.title, t).run();
-    // Data-only, high priority: the app rings with Answer / Decline. Ring and relay keys at the same time (faster start).
+    // High priority ring. It carries a call notification too (channel voice_calls2, tag call_<id>), so a phone whose
+    // app is closed still shows and sounds it; the app replaces it with the full-screen ringing one.
     const [pushed, ice, c] = await Promise.all([
-      sendPushDetail(env, callee, { title: '', body: '', dataOnly: true,
+      sendPushDetail(env, callee, { title: `📞 ${callerLabel}`, body: `${p.title} · Nukad Kart call`, ring: { tag: `call_${id}`, channel: 'voice_calls2' },
         data: { type: 'voice_call', id, from: callerLabel, title: p.title, kind, ref } }).catch((e) => ({ sent: 0, phones: 0, errors: [String(e)] })),
       iceServers(env),
       env.DB.prepare('SELECT * FROM voice_calls WHERE id = ?').bind(id).first(),
     ]);
     await env.DB.prepare('UPDATE voice_calls SET pushed = ?, push_err = ? WHERE id = ?')
       .bind(pushed.sent, (pushed.errors || []).join(' | ').slice(0, 300) || (pushed.phones ? null : 'no_phone'), id).run();
-    // Nobody's phone got the ring: say so now instead of ringing into nothing.
-    if (!pushed.sent && env.FCM_SERVICE_ACCOUNT) {
+    // Nobody's phone got the ring and the app is not open there either: say so now instead of ringing into nothing.
+    if (!pushed.sent && env.FCM_SERVICE_ACCOUNT && !(await appOpen(env, callee, t))) {
       await env.DB.prepare("UPDATE voice_calls SET status = 'missed', ended_at = ? WHERE id = ?").bind(t, id).run();
       throw new HttpError(409, 'callee_offline');
     }
-    return json({ call: callOut(c, uid), ice, left: lim.left });
+    return json({ call: callOut(c, uid), ice });
   }
 
   const one = path.match(/^\/v1\/voice\/([\w-]+)(?:\/(answer|decline|end))?$/);
@@ -209,7 +214,7 @@ export async function voiceRoute(req, env, path, m) {
       // Caller hung up before an answer: stop the other phone ringing.
       if (c.status === 'ringing') {
         const other = uid === c.caller_id ? c.callee_id : c.caller_id;
-        await sendPush(env, other, { title: '', body: '', dataOnly: true, data: { type: 'voice_end', id: c.id } }).catch(() => {});
+        await sendPush(env, other, { title: '', body: '', dataOnly: true, data: { type: 'voice_end', id: c.id, tag: `call_${c.id}` } }).catch(() => {});
       }
     }
     const r = await env.DB.prepare('SELECT * FROM voice_calls WHERE id = ?').bind(c.id).first();
