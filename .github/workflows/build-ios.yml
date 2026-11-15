@@ -1,0 +1,64 @@
+name: Build iPhone apps (unsigned, for sideloading)
+
+# Builds NukadKart.ipa and NukadPartner.ipa without an Apple signature. To put one on an iPhone, sign it with a
+# free Apple ID in Sideloadly (Windows or Mac, phone on a cable). Free Apple ID limits: the app stops opening
+# after 7 days (sideload it again), and no push notifications (so no ring when the app is closed).
+# Run it from the Actions tab ("Run workflow").
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Customer app — iOS files
+        run: |
+          flutter create --platforms=ios --org com.nukadkart --project-name nukad_kart .
+          python3 tool/ios_setup.py "Nukad Kart"
+          flutter pub get
+
+      - name: Customer app — build
+        run: |
+          flutter build ios --release --no-codesign --build-name=0.9.${{ github.run_number }} --build-number=${{ github.run_number }} --dart-define=APP_VERSION=0.9.${{ github.run_number }}
+          mkdir -p out/Payload && cp -R build/ios/iphoneos/Runner.app out/Payload/
+          (cd out && zip -qry ../NukadKart.ipa Payload) && rm -rf out
+          ls -la NukadKart.ipa
+
+      - name: Partner app — iOS files
+        working-directory: partner
+        run: |
+          flutter create --platforms=ios --org com.nukadkart --project-name nukad_partner .
+          python3 ../tool/ios_setup.py "Nukad Partner"
+          flutter pub get
+
+      - name: Partner app — build
+        working-directory: partner
+        run: |
+          flutter build ios --release --no-codesign --build-name=0.1.${{ github.run_number }} --build-number=${{ github.run_number }}
+          mkdir -p out/Payload && cp -R build/ios/iphoneos/Runner.app out/Payload/
+          (cd out && zip -qry ../../NukadPartner.ipa Payload) && rm -rf out
+          ls -la ../NukadPartner.ipa
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ios-${{ github.run_number }}
+          name: iPhone test build ${{ github.run_number }}
+          body: |
+            iPhone apps for testing (not App Store). Unsigned: install with Sideloadly and a free Apple ID.
+            Free Apple ID: works 7 days, then sideload again; no notifications and no ring when the app is closed.
+          files: |
+            NukadKart.ipa
+            NukadPartner.ipa
+          make_latest: false
