@@ -62,6 +62,9 @@ class Order {
   /// Items the shop didn't have (removed from the bill).
   List<String> unavailable = [];
 
+  /// Chat messages from the shop / delivery partner not read yet (red number on the Chat button).
+  int chatUnread = 0;
+
   Order(this.id, this.storeId, this.lines, this.door, this.placedAt) {
     times[OrderStatus.placed] = placedAt;
   }
@@ -966,6 +969,7 @@ class AppState extends ChangeNotifier {
     o.riderLat = (rider?['lat'] as num?)?.toDouble();
     o.riderLng = (rider?['lng'] as num?)?.toDouble();
     o.unavailable = [for (final l in raw) if (l['na'] == true) '${l['name']}'];
+    o.chatUnread = (j['chatUnread'] as num?)?.toInt() ?? 0;
     for (final (k, v) in [
       (OrderStatus.accepted, j['acceptedAt']),
       (OrderStatus.packed, j['packedAt'] ?? j['outAt']), // older orders had one "send out" step

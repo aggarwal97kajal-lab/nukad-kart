@@ -173,3 +173,20 @@ test('order chat: read ticks; both shop phones see it; rider spot for the map', 
   r = await call('GET', '/v1/me/orders/NK-1/rider', null, 'other');
   assert.equal(r.status, 404);
 });
+
+test('unread chat count on orders: customer and shop sides', async () => {
+  const { DB, call } = await setup();
+  await call('POST', '/v1/me/orders/NK-1/chat', { text: 'Gate 2' }, 'cust');
+  await call('POST', '/v1/me/orders/NK-1/chat', { text: 'Jaldi' }, 'cust');
+  let r = await call('GET', '/v1/partner/orders?tab=out', null, 'owner');
+  assert.equal(r.json.orders[0].chatUnread, 2, JSON.stringify(r.json));
+  r = await call('GET', '/v1/partner/orders/NK-1', null, 'owner');
+  assert.equal(r.json.order.chatUnread, 2);
+  await call('GET', '/v1/partner/orders/NK-1/chat', null, 'owner'); // opened the chat
+  DB.raw.prepare('UPDATE orders SET chat_s_read = chat_s_read + 1').run();
+  r = await call('GET', '/v1/partner/orders?tab=out', null, 'owner');
+  assert.equal(r.json.orders[0].chatUnread, 0);
+  await call('POST', '/v1/partner/orders/NK-1/chat', { text: 'Aa raha hoon' }, 'owner');
+  r = await call('GET', '/v1/me/orders', null, 'cust');
+  assert.equal(r.json.orders[0].chatUnread, 1);
+});

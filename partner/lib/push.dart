@@ -402,7 +402,7 @@ final pushTick = ValueNotifier<int>(0);
 
 Future<void> _initLocal() async {
   try {
-    await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')),
+    await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('ic_stat_nukad')),
         onDidReceiveNotificationResponse: _tapped);
     await _local
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()

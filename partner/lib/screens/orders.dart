@@ -184,6 +184,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
               if (o['door'] == true) Text('${o['address']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: tx(12, color: kMute)),
             ]),
           ),
+          // Customer messages not read yet: visible here without opening the order.
+          if (((o['chatUnread'] as num?) ?? 0) > 0) ...[
+            _unreadBadge(((o['chatUnread'] as num?) ?? 0).toInt()),
+            const SizedBox(width: 8),
+          ],
           if (st == 'placed')
             Text(left > 0 ? '${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')}' : '0:00', style: tx(15, color: kAmb, weight: FontWeight.w800))
           else
@@ -194,6 +199,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 }
+
+/// Red "💬 3": customer chat messages on this order that nobody on the shop side has read yet.
+Widget _unreadBadge(int n) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(color: const Color(0xFFD93025), borderRadius: BorderRadius.circular(12)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.chat_bubble, size: 13, color: Colors.white),
+        const SizedBox(width: 4),
+        Text(n > 99 ? '99+' : '$n', style: tx(12, color: Colors.white, weight: FontWeight.w800)),
+      ]),
+    );
 
 String _statusText(Map<String, dynamic> o) => switch ('${o['status']}') {
       'placed' => t('New'),
@@ -225,9 +241,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool get canOrders => session.staffInfo == null || session.staffInfo!['canOrders'] == true;
 
   @override
+  void initState() {
+    super.initState();
+    // A new chat message (push) or coming back from the chat: fresh unread number on the Chat button.
+    pushTick.addListener(_reload);
+  }
+
+  @override
   void dispose() {
+    pushTick.removeListener(_reload);
     code.dispose();
     super.dispose();
+  }
+
+  Future<void> _reload() async {
+    try {
+      final r = await api.call('GET', '/v1/partner/orders/${o['id']}');
+      final fresh = Map<String, dynamic>.from(r['order'] as Map);
+      if (mounted && !busy) setState(() => o = fresh);
+    } catch (_) {}
   }
 
   List<Map<String, dynamic>> get lines => ((o['lines'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
@@ -313,7 +345,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Row(children: [
             Expanded(child: Btn('📞 ${t('Call')}', outline: true, onTap: () => callCustomer(context, 'order', '${o['id']}'))),
             const SizedBox(width: 10),
-            Expanded(child: Btn('💬 ${t('Chat')}', outline: true, onTap: () => openOrderChat(context, '${o['id']}'))),
+            Expanded(
+              child: Stack(clipBehavior: Clip.none, children: [
+                Btn('💬 ${t('Chat')}', outline: true, onTap: () => openOrderChat(context, '${o['id']}').then((_) => _reload())),
+                if (((o['chatUnread'] as num?) ?? 0) > 0)
+                  Positioned(right: 6, top: -8, child: _unreadBadge(((o['chatUnread'] as num?) ?? 0).toInt())),
+              ]),
+            ),
           ]),
           const SizedBox(height: 8),
         ],

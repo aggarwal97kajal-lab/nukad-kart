@@ -42,6 +42,10 @@ function prefixOf(s) {
   return (w || 'NK').slice(0, 4);
 }
 
+/** Customer messages on this order the shop side has not read yet. */
+const SHOP_UNREAD = `(SELECT COUNT(*) FROM order_messages m WHERE m.order_id = orders.id AND m.sender = 'c'
+  AND m.created_at > COALESCE(orders.chat_s_read, 0)) AS chat_unread`;
+
 /** hidePhone: the shop (owner and staff) never sees the customer's number; they call in the app. */
 function orderOut(o, forCustomer, store, hidePhone = false) {
   const lines = JSON.parse(o.lines);
@@ -52,6 +56,8 @@ function orderOut(o, forCustomer, store, hidePhone = false) {
     otp: forCustomer && o.status === 'out' ? o.otp : undefined, staffId: o.staff_id, payMode: o.pay_mode, billNo: o.bill_no || '',
     reason: o.reason || '', createdAt: o.created_at, acceptedAt: o.accepted_at, packedAt: o.packed_at, outAt: o.out_at, deliveredAt: o.delivered_at, closedAt: o.closed_at,
     ringLeft: o.status === 'placed' ? Math.max(0, o.created_at + RING_S - now()) : 0,
+    // Chat messages from the other side not read yet (shown as a red number on the Chat button).
+    chatUnread: o.chat_unread || 0,
     rider: o.status === 'out' && o.rider_at && now() - o.rider_at < 600 ? { lat: o.rider_lat, lng: o.rider_lng, ago: now() - o.rider_at } : null,
   };
 }
@@ -218,7 +224,9 @@ export async function orderRoute(req, env, path, m, ectx) {
 
   if (path === '/v1/me/orders' && m === 'GET') {
     const { uid } = await session(req, env);
-    const { results } = await env.DB.prepare(`SELECT o.*, s.name AS store_name FROM orders o JOIN stores s ON s.id = o.store_id
+    const { results } = await env.DB.prepare(`SELECT o.*, s.name AS store_name,
+        (SELECT COUNT(*) FROM order_messages m WHERE m.order_id = o.id AND m.sender = 's' AND m.created_at > COALESCE(o.chat_c_read, 0)) AS chat_unread
+      FROM orders o JOIN stores s ON s.id = o.store_id
       WHERE o.customer_id = ? ORDER BY o.created_at DESC LIMIT 50`).bind(uid).all();
     const t = now();
     // Show "missed" right away (the cron only tells by push every few minutes).
@@ -357,7 +365,7 @@ export async function orderRoute(req, env, path, m, ectx) {
     const mineOnly = c.staff && !c.canOrders;
     // Delivery-only staff: their packed orders show under "On the way" (ready to start) and out ones.
     const whereMine = mineOnly && tab === 'out' ? "status IN ('packed','out')" : where;
-    const { results } = await env.DB.prepare(`SELECT * FROM orders WHERE store_id = ? AND ${whereMine} ${mineOnly ? 'AND staff_id = ?' : ''}
+    const { results } = await env.DB.prepare(`SELECT orders.*, ${SHOP_UNREAD} FROM orders WHERE store_id = ? AND ${whereMine} ${mineOnly ? 'AND staff_id = ?' : ''}
       AND created_at > ? ORDER BY created_at ${tab === 'done' ? 'DESC' : 'ASC'} LIMIT 50`).bind(s.id, ...(mineOnly ? [c.staff.id] : []), now() - 7 * 86400).all();
     const counts = (await env.DB.prepare(`SELECT status, COUNT(*) AS n FROM orders WHERE store_id = ? AND status IN ('placed','accepted','packed','out')
       ${mineOnly ? 'AND staff_id = ?' : ''} GROUP BY status`).bind(s.id, ...(mineOnly ? [c.staff.id] : [])).all()).results;
@@ -373,7 +381,7 @@ export async function orderRoute(req, env, path, m, ectx) {
 
   const one = path.match(/^\/v1\/partner\/orders\/([\w-]+)$/);
   if (one && m === 'GET') {
-    const o = await env.DB.prepare('SELECT * FROM orders WHERE id = ? AND store_id = ?').bind(one[1], s.id).first();
+    const o = await env.DB.prepare(`SELECT orders.*, ${SHOP_UNREAD} FROM orders WHERE id = ? AND store_id = ?`).bind(one[1], s.id).first();
     if (!o || (c.staff && !c.canOrders && o.staff_id !== c.staff.id)) throw new HttpError(404, 'not_found');
     const staff = (await env.DB.prepare(`SELECT st.*, (SELECT COUNT(*) FROM orders o WHERE o.staff_id = st.id AND o.status IN ('packed','out')) AS busy
       FROM staff st WHERE st.store_id = ? AND st.removed_at IS NULL`).bind(s.id).all()).results.map((x) => ({ ...staffOut(x), busy: x.busy > 0 }));
@@ -387,12 +395,15 @@ export async function orderRoute(req, env, path, m, ectx) {
     const o = await env.DB.prepare('SELECT * FROM orders WHERE id = ? AND store_id = ?').bind(id, s.id).first();
     if (!o) throw new HttpError(404, 'not_found');
     const t = now();
+    // The customer's open order screen shows the new status at once (live socket), before any notification.
+    const live = (r) => later(ectx, orderLive(env, id, { type: 'status', status: r?.status }));
     if (what !== 'deliver' && what !== 'out' && !c.canOrders) throw new HttpError(403, 'not_allowed');
     if (what === 'out') {
       // The delivery person taps "Out for delivery" on their own phone (their location then goes to the customer).
       if (o.status !== 'packed') throw new HttpError(409, o.status === 'out' ? 'already_out' : 'not_packed');
       if (c.staff && !c.canOrders && o.staff_id !== c.staff.id) throw new HttpError(403, 'not_your_delivery');
       const r = await env.DB.prepare("UPDATE orders SET status = 'out', out_at = ? WHERE id = ? AND status = 'packed' RETURNING *").bind(t, id).first();
+      live(r);
       await sendPush(env, o.customer_id, {
         title: o.door ? `Order #${id} is on the way` : `Order #${id} is ready for pickup`,
         body: `Your delivery code: ${o.otp}. Give it only after you get your items.`,
@@ -405,6 +416,7 @@ export async function orderRoute(req, env, path, m, ectx) {
       const ok = what === 'accept';
       const r = await env.DB.prepare(`UPDATE orders SET status = ?, accepted_at = ?, closed_at = ?, reason = ? WHERE id = ? AND status = 'placed' RETURNING *`)
         .bind(ok ? 'accepted' : 'rejected', ok ? t : null, ok ? null : t, ok ? null : String(b.reason || '').slice(0, 80) || null, id).first();
+      live(r);
       await sendPush(env, o.customer_id, ok
         ? { title: `${s.name} accepted your order`, body: `#${id} is being packed.`, data: { type: 'order', id } }
         : { title: `${s.name} couldn’t take your order`, body: `#${id} was not accepted${r.reason ? `: ${r.reason}` : ''}. Try another shop nearby.`, data: { type: 'order', id } });
@@ -420,6 +432,7 @@ export async function orderRoute(req, env, path, m, ectx) {
         // Nothing left to send: cancel and tell the customer.
         const r = await env.DB.prepare("UPDATE orders SET status = 'cancelled', reason = 'items_unavailable', lines = ?, closed_at = ? WHERE id = ? RETURNING *")
           .bind(JSON.stringify(lines), t, id).first();
+      live(r);
         await sendPush(env, o.customer_id, { title: `${s.name} had none of your items`, body: `Order #${id} was cancelled. You were not charged.`, data: { type: 'order', id } });
         return json({ order: orderOut(r, false, s, true) });
       }
@@ -430,6 +443,7 @@ export async function orderRoute(req, env, path, m, ectx) {
       const outNow = what === 'send' || !o.door; // pickup orders: packed = ready for pickup at once
       const r = await env.DB.prepare(`UPDATE orders SET status = ?, lines = ?, items_total = ?, fee = ?, total = ?, otp = ?, staff_id = ?, packed_at = ?, out_at = ?
         WHERE id = ? AND status = 'accepted' RETURNING *`).bind(outNow ? 'out' : 'packed', JSON.stringify(lines), itemsTotal, fee, itemsTotal + fee, otp, staffId, t, outNow ? t : null, id).first();
+      live(r);
       const gone = lines.filter((l) => l.na);
       if (!outNow) {
         await sendPush(env, o.customer_id, {
@@ -470,6 +484,7 @@ export async function orderRoute(req, env, path, m, ectx) {
     const billNo = `${prefixOf(s)}/${year}/${String(seq.seq).padStart(4, '0')}`;
     const r = await env.DB.prepare(`UPDATE orders SET status = 'delivered', pay_mode = ?, bill_no = ?, delivered_at = ?, closed_at = ? WHERE id = ? AND status = 'out' RETURNING *`)
       .bind(b.pay === 'upi' ? 'upi' : 'cash', billNo, t, t, id).first();
+      live(r);
     await sendPush(env, o.customer_id, { title: 'Order delivered', body: `#${id} from ${s.name}. Your bill ${billNo} is in the app.`, data: { type: 'order', id } });
     return json({ order: orderOut(r, false, s, true) });
   }

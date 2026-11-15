@@ -11,7 +11,7 @@ class CartReminder {
   static Future<void> _init() async {
     if (_ready) return;
     tzdata.initializeTimeZones();
-    await _plugin.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher')));
+    await _plugin.initialize(const InitializationSettings(android: AndroidInitializationSettings('ic_stat_nukad')));
     _ready = true;
   }
 

@@ -281,6 +281,7 @@ const Map<String, Map<String, String>> _tr2 = {
   'Your number stays hidden. Not recorded.': {'hi': 'आपका नंबर छिपा रहता है। रिकॉर्ड नहीं होती।', 'hg': 'Aapka number chhupa rehta hai. Record nahi hoti.'},
   'Call {0}': {'hi': '{0} को कॉल करें', 'hg': '{0} ko call karo'},
   'Chat': {'hi': 'चैट', 'hg': 'Chat'},
+  'Rider’s location hasn’t updated for {0} sec': {'hi': 'राइडर की लोकेशन {0} सेकंड से अपडेट नहीं हुई', 'hg': 'Rider ki location {0} sec se update nahi hui'},
   '{0} min · {1} m': {'hi': '{0} मिनट · {1} मी', 'hg': '{0} min · {1} m'},
   'Call store': {'hi': 'दुकान को कॉल', 'hg': 'Store ko call'},
   'Call rider': {'hi': 'डिलीवरी वाले को कॉल', 'hg': 'Rider ko call'},

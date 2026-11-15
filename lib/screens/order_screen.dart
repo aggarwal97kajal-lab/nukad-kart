@@ -12,6 +12,7 @@ import '../widgets/bill_card.dart';
 import 'report_screen.dart';
 import '../voice/start.dart';
 import '../config/keys.dart';
+import '../services/order_live.dart';
 
 class OrderScreen extends StatefulWidget {
   final String orderId;
@@ -23,6 +24,7 @@ class OrderScreen extends StatefulWidget {
 class _OrderScreenState extends State<OrderScreen> {
   Timer? _tick;
   bool _askedRating = false;
+  OrderLive? _live;
 
   @override
   void initState() {
@@ -30,11 +32,28 @@ class _OrderScreenState extends State<OrderScreen> {
     _tick = Timer.periodic(Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
+    // Status changes and new chat messages arrive at once while this screen is open.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final s = AppScope.read(context);
+      final o = s.orders.where((x) => x.id == widget.orderId).firstOrNull;
+      if (o == null || !o.remote) return;
+      _live = OrderLive(
+        base: apiBase,
+        orderId: o.id,
+        token: () => s.apiToken,
+        onEvent: (e) {
+          if (e['type'] == 'status' || (e['type'] == 'message' && e['sender'] == 's')) s.syncOrders();
+        },
+      )..start();
+      s.syncOrders();
+    });
   }
 
   @override
   void dispose() {
     _tick?.cancel();
+    _live?.stop();
     super.dispose();
   }
 
@@ -92,7 +111,23 @@ class _OrderScreenState extends State<OrderScreen> {
             ],
           ]),
           SizedBox(height: 10),
-          _callBtn(Icons.chat_bubble_outline, t('Chat'), () => openOrderChat(context, o.id)),
+          Stack(clipBehavior: Clip.none, children: [
+            _callBtn(Icons.chat_bubble_outline, t('Chat'), () => openOrderChat(context, o.id).then((_) => s.syncOrders())),
+            // Unread messages from the shop / delivery partner, visible without opening the chat.
+            if (o.chatUnread > 0)
+              Positioned(
+                right: 8,
+                top: -8,
+                child: Container(
+                  constraints: BoxConstraints(minWidth: 22),
+                  height: 22,
+                  padding: EdgeInsets.symmetric(horizontal: 6),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: Color(0xFFD93025), borderRadius: BorderRadius.circular(11)),
+                  child: Text(o.chatUnread > 99 ? '99+' : '${o.chatUnread}', style: body(12, color: Colors.white, weight: FontWeight.w800)),
+                ),
+              ),
+          ]),
           SizedBox(height: 4),
           Text(t('Your number stays hidden'), textAlign: TextAlign.center, style: body(11.5, color: kMute)),
         ],

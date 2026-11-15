@@ -8,6 +8,9 @@ import 'home_shell.dart';
 
 /// 3 second animated splash: cart slides in, groceries drop in, the sparrow
 /// lands, a pin drops with a 500 m ripple, then the logo opens.
+/// Set by main() when the app was opened from a notification: no splash, go straight on.
+bool gSkipSplash = false;
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
   @override
@@ -20,9 +23,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late final AnimationController c;
   bool _left = false;
 
+  bool _quick = false;
+
   @override
   void initState() {
     super.initState();
+    if (gSkipSplash) {
+      gSkipSplash = false;
+      _quick = true;
+      c = AnimationController(vsync: this, duration: Duration(milliseconds: 1));
+      WidgetsBinding.instance.addPostFrameCallback((_) => _go());
+      return;
+    }
     // Full screen: hide the phone's buttons and status bar while the splash plays.
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     c = AnimationController(vsync: this, duration: Duration(milliseconds: 3000))
@@ -39,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final state = AppScope.read(context);
     final next = (state.signedIn || state.guest) ? HomeShell() : LoginScreen();
     Navigator.of(context).pushReplacement(PageRouteBuilder(
-      transitionDuration: Duration(milliseconds: 350),
+      transitionDuration: Duration(milliseconds: _quick ? 0 : 350),
       pageBuilder: (_, __, ___) => next,
       transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
     ));

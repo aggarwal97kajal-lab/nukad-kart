@@ -33,7 +33,7 @@ int _voiceId(String id) => 900000 + (id.hashCode & 0xffff);
 String _voiceTag(String id) => 'call_$id';
 
 Future<void> _initLocal() async {
-  await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('@mipmap/launcher_icon')),
+  await _local.initialize(const InitializationSettings(android: AndroidInitializationSettings('ic_stat_nukad')),
       onDidReceiveNotificationResponse: _tapResponse);
   final a = _local.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
   await a?.createNotificationChannel(_channel);
@@ -131,6 +131,30 @@ Future<void> customerBackgroundPush(RemoteMessage m) async {
 bool _ready = false;
 String _sentFor = '';
 
+// The notification that opened the app from closed (checked once in main(), before the first screen).
+RemoteMessage? _launchMsg;
+NotificationResponse? _launchTap;
+bool _launchChecked = false;
+
+/// Was the app opened by tapping a notification? Then main() skips the splash and the app goes straight to
+/// the order / chat / call it is about (like Blinkit / Zepto). Kept so setupPush still opens that screen.
+Future<bool> openedFromNotification() async {
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(apiKey: _apiKey, appId: customerFirebaseAppId, messagingSenderId: _senderId, projectId: _projectId),
+    );
+  } catch (_) {}
+  try {
+    _launchMsg = await FirebaseMessaging.instance.getInitialMessage();
+  } catch (_) {}
+  try {
+    final l = await _local.getNotificationAppLaunchDetails();
+    if (l?.didNotificationLaunchApp == true) _launchTap = l!.notificationResponse;
+  } catch (_) {}
+  _launchChecked = true;
+  return _launchMsg != null || _launchTap != null;
+}
+
 /// Last thing that went wrong while setting up notifications on this phone (shown by "Test notification").
 String pushProblem = '';
 
@@ -141,9 +165,11 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
   _sentFor = apiToken;
   try {
     if (!_ready) {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(apiKey: _apiKey, appId: customerFirebaseAppId, messagingSenderId: _senderId, projectId: _projectId),
-      );
+      try {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(apiKey: _apiKey, appId: customerFirebaseAppId, messagingSenderId: _senderId, projectId: _projectId),
+        );
+      } catch (_) {} // already set up by openedFromNotification()
       await FirebaseMessaging.instance.requestPermission();
       try {
         await _initLocal();
@@ -174,10 +200,16 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
         openedPush.value = _openData(m.data);
       });
       // Opened from a notification while the app was closed.
-      final first = await FirebaseMessaging.instance.getInitialMessage();
+      final first = _launchChecked ? _launchMsg : await FirebaseMessaging.instance.getInitialMessage();
+      _launchMsg = null;
       if (first != null) openedPush.value = _openData(first.data);
-      final launch = await _local.getNotificationAppLaunchDetails();
-      if (launch?.didNotificationLaunchApp == true && launch!.notificationResponse != null) _tapResponse(launch.notificationResponse!);
+      if (_launchChecked) {
+        if (_launchTap != null) _tapResponse(_launchTap!);
+        _launchTap = null;
+      } else {
+        final launch = await _local.getNotificationAppLaunchDetails();
+        if (launch?.didNotificationLaunchApp == true && launch!.notificationResponse != null) _tapResponse(launch.notificationResponse!);
+      }
       FirebaseMessaging.instance.onTokenRefresh.listen((t) => api.pushToken(_sentFor, t).catchError((_) {}));
       _ready = true;
       await _askFullScreenOnce();

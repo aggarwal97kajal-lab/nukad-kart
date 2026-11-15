@@ -36,6 +36,8 @@ Future<void> main() async {
   state.scheduleCartReminders = (plan) => CartReminder.scheduleAll(plan);
   state.cancelCartReminders = () => CartReminder.cancelAll();
   state.logSentCartReminder();
+  // Opened by tapping a notification: no splash, straight to what the notification is about.
+  gSkipSplash = await openedFromNotification().timeout(const Duration(seconds: 2), onTimeout: () => false).catchError((_) => false);
   runApp(NukadKartApp(state: state));
 }
 

@@ -46,7 +46,15 @@ for q in queries:
             s = s.replace("<queries>", "<queries>\n        " + q, 1)
         else:
             s = s.replace("</manifest>", "    <queries>\n        " + q + "\n    </queries>\n</manifest>", 1)
+# Notification icon in the status bar: one-colour Nukad Kart cart (a full-colour logo shows as a white square on
+# many phones, mostly older ones). Files: partner/android_res/ (copied into the generated res folder).
+icon_meta = '''<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_nukad" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/nk_notify" />'''
+if "default_notification_icon" not in s:
+    s = s.replace("</application>", "    " + icon_meta + "\n    </application>", 1)
 m.write_text(s)
+import shutil
+shutil.copytree("android_res", "android/app/src/main/res", dirs_exist_ok=True)
 
 # applicationId must be com.nukadkart.partner (Firebase app is registered with it).
 g = pathlib.Path("android/app/build.gradle.kts")

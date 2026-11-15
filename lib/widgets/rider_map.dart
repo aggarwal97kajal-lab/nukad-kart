@@ -79,6 +79,9 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
   LatLng? _lastFix;
   DateTime? _lastFixAt;
 
+  // When the rider's phone last sent its spot (also when it didn't move). 40 s without one: say so on the map.
+  DateTime? _seenAt;
+
   // Live spots.
   WebSocketChannel? _ws;
   StreamSubscription? _wsSub;
@@ -122,6 +125,13 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
 
   // ----- live spots from the rider's phone -----
 
+  void _seen(DateTime at) {
+    if (_seenAt == null || at.isAfter(_seenAt!)) _seenAt = at;
+  }
+
+  /// No spot from the rider's phone for 40 s (GPS or internet off there).
+  bool get _stale => _seenAt != null && DateTime.now().difference(_seenAt!).inSeconds > 40;
+
   void _connect() {
     if (_gone) return;
     try {
@@ -132,7 +142,10 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
         _live = true;
         try {
           final d = jsonDecode('$m');
-          if (d is Map && d['type'] == 'rider') _fix(LatLng((d['lat'] as num).toDouble(), (d['lng'] as num).toDouble()));
+          if (d is Map && d['type'] == 'rider') {
+            _seen(DateTime.now());
+            _fix(LatLng((d['lat'] as num).toDouble(), (d['lng'] as num).toDouble()));
+          }
         } catch (_) {}
       }, onDone: _lost, onError: (_) => _lost());
       _ws!.ready.then((_) => _live = true).catchError((_) => _lost());
@@ -162,7 +175,10 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
           headers: {'authorization': 'Bearer ${widget.token!()}'}).timeout(const Duration(seconds: 8));
       if (r.statusCode != 200) return;
       final rd = (jsonDecode(r.body) as Map)['rider'];
-      if (rd is Map) _fix(LatLng((rd['lat'] as num).toDouble(), (rd['lng'] as num).toDouble()));
+      if (rd is Map) {
+        _seen(DateTime.now().subtract(Duration(seconds: ((rd['ago'] as num?) ?? 0).toInt())));
+        _fix(LatLng((rd['lat'] as num).toDouble(), (rd['lng'] as num).toDouble()));
+      }
     } catch (_) {}
   }
 
@@ -474,6 +490,20 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
                   ),
                 ),
               ),
+              if (_stale)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 12,
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(color: Color(0xFFFAEEDA), borderRadius: BorderRadius.circular(20)),
+                      child: Text(tr('Rider’s location hasn’t updated for {0} sec', [DateTime.now().difference(_seenAt!).inSeconds]),
+                          style: body(11, color: Color(0xFF633806), weight: FontWeight.w800)),
+                    ),
+                  ),
+                ),
               // Small pill at the bottom (minutes · metres), like the delivery apps.
               Positioned(
                 left: 0,

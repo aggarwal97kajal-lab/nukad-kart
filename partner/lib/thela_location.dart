@@ -98,7 +98,7 @@ class ThelaLocation {
       foregroundNotificationConfig: const ForegroundNotificationConfig(
         notificationTitle: 'You are LIVE on Nukad Kart',
         notificationText: 'Sharing your thela’s location with customers nearby. Turn LIVE off to stop.',
-        notificationIcon: AndroidResource(name: 'launcher_icon', defType: 'mipmap'),
+        notificationIcon: AndroidResource(name: 'ic_stat_nukad', defType: 'drawable'),
         enableWakeLock: true,
         setOngoing: true,
       ),
