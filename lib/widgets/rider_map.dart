@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
+import 'package:flutter/services.dart' show HapticFeedback, rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -17,9 +17,11 @@ import 'ui.dart';
 /// Real map for a shop delivery: named pins for the customer's home and the shop, the road route between them
 /// (Ola directions, one call per order), and the Nukad Kart scooter (the delivery person's phone) driving along
 /// that route like in Swiggy / Zomato / Blinkit: it moves smoothly along the road (never jumps across buildings),
-/// turns to face where it is going, and the route behind it disappears. The rider's phone sends its spot every
-/// ~3 s; it arrives here at once over the order's live socket (or by asking every 3 s when the socket is down),
-/// and each move is drawn over the time until the next one, so the scooter keeps rolling.
+/// faces the way it is going (the brand scooter, mirrored when it drives left), and the route behind it
+/// disappears. The rider's phone sends its spot every ~3 s; it arrives here at once over the order's live socket
+/// (or by asking every 3 s when the socket is down), and each move is drawn over the time until the next one.
+/// Light on the phone, like those apps: the map gets a new scooter spot 4 times a second (not every frame), the
+/// route line once a second, and nothing at all while another screen (a call) is on top.
 /// The camera fits home + shop + scooter; "Recentre" brings it back after the customer pans.
 class RiderMap extends StatefulWidget {
   final double homeLat, homeLng;
@@ -52,6 +54,7 @@ class RiderMap extends StatefulWidget {
 class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin {
   late final Future<String> _style = OlaMaps.style(dark: gDark, lang: gLang);
   MapLibreMapController? _c;
+  Widget? _map;
   Symbol? _rider;
   Line? _ahead;
   bool _ready = false, _icon = false;
@@ -199,7 +202,9 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
     try {
       await c.addImage('nk-home', await _pin('🏠', t('Your home'), const Color(0xFF2E7D32)));
       if (_hasShop) await c.addImage('nk-shop', await _pin('🏪', t('The shop'), const Color(0xFF185FA5)));
-      await c.addImage('nk-scooter', await _scooter());
+      final b = (await rootBundle.load('assets/images/markers/bike.png')).buffer.asUint8List();
+      await c.addImage('nk-bike', b);
+      await c.addImage('nk-bike-l', await _mirror(b));
       _icon = true;
     } catch (_) {}
     // Road route shop → home (one Ola call per order, cached).
@@ -230,41 +235,17 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
     if (widget.routeKey.isNotEmpty && widget.base.isNotEmpty && widget.token != null) _fetch();
   }
 
-  /// Top view of the Nukad Kart scooter, nose up (north); the map turns it to face where it is going.
-  static Future<Uint8List> _scooter() async {
-    const s = 240.0;
+  /// The brand scooter faces right; this is it facing left (for driving west).
+  static Future<Uint8List> _mirror(Uint8List png) async {
+    final img = (await (await ui.instantiateImageCodec(png)).getNextFrame()).image;
     final rec = ui.PictureRecorder();
-    final cv = Canvas(rec);
-    const c = Offset(s / 2, s / 2);
-    cv.drawCircle(c.translate(0, 4), 98, Paint()..color = const Color(0x33000000));
-    cv.drawCircle(c, 96, Paint()..color = Colors.white);
-    cv.drawCircle(c, 96, Paint()
-      ..color = const Color(0xFF2E7D32)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6);
-    // Wheels (front and back), body, delivery box, handlebar, rider's helmet.
-    final wheel = Paint()..color = const Color(0xFF1B1B1B);
-    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, -62), width: 20, height: 34), const Radius.circular(8)), wheel);
-    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 64), width: 22, height: 34), const Radius.circular(8)), wheel);
-    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 0), width: 50, height: 120), const Radius.circular(24)),
-        Paint()..color = const Color(0xFF2E7D32));
-    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 42), width: 66, height: 50), const Radius.circular(10)),
-        Paint()..color = const Color(0xFFF8CB46));
-    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, 42), width: 66, height: 50), const Radius.circular(10)), Paint()
-      ..color = const Color(0xFF21331B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4);
-    cv.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: c.translate(0, -36), width: 104, height: 12), const Radius.circular(6)),
-        Paint()..color = const Color(0xFF21331B));
-    cv.drawCircle(c.translate(0, -8), 22, Paint()..color = const Color(0xFFF8CB46));
-    cv.drawCircle(c.translate(0, -8), 22, Paint()
-      ..color = const Color(0xFF21331B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4);
-    cv.drawCircle(c.translate(0, -84), 7, Paint()..color = const Color(0xFFFFF59D)); // headlight
-    final img = await rec.endRecording().toImage(s.toInt(), s.toInt());
-    final png = await img.toByteData(format: ui.ImageByteFormat.png);
-    return png!.buffer.asUint8List();
+    final cv = Canvas(rec)
+      ..translate(img.width.toDouble(), 0)
+      ..scale(-1, 1);
+    cv.drawImage(img, Offset.zero, Paint());
+    final out = await rec.endRecording().toImage(img.width, img.height);
+    final bytes = await out.toByteData(format: ui.ImageByteFormat.png);
+    return bytes!.buffer.asUint8List();
   }
 
   /// Camera shows home, shop and scooter together.
@@ -334,6 +315,16 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
     return (math.atan2(y, x) * 180 / math.pi + 360) % 360;
   }
 
+  /// Scooter picture for a direction: facing right while it drives east-ish, mirrored for west-ish; straight
+  /// north / south keeps the last one (so it doesn't flip back and forth on a straight road).
+  String _bike = 'nk-bike';
+  String _bikeFor(double bearing) {
+    if (!_icon) return 'nk-bike';
+    if (bearing > 20 && bearing < 160) _bike = 'nk-bike';
+    if (bearing > 200 && bearing < 340) _bike = 'nk-bike-l';
+    return _bike;
+  }
+
   /// First spot: put the scooter there (no animation).
   Future<void> _place(LatLng raw) async {
     final c = _c;
@@ -348,7 +339,7 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
     _lastFix ??= raw;
     _lastFixAt ??= DateTime.now();
     _rider = await c.addSymbol(_icon
-        ? SymbolOptions(geometry: at, iconImage: 'nk-scooter', iconSize: 0.5, iconAnchor: 'center', iconRotate: _bearing)
+        ? SymbolOptions(geometry: at, iconImage: _bikeFor(_bearing), iconSize: 0.42, iconAnchor: 'bottom')
         : SymbolOptions(geometry: at, textField: '🛵', textSize: 24));
     if (_ahead != null && snap != null) await c.updateLine(_ahead!, LineOptions(geometry: [at, ..._route.sublist(snap.$2 + 1)]));
     if (mounted) setState(() {});
@@ -392,9 +383,14 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
     if (c == null || _rider == null) return;
     final f = (el.inMilliseconds / _animMs).clamp(0.0, 1.0);
     final done = f >= 1.0;
-    // ~25 frames a second is smooth on the map and light on the phone.
-    if (!done && (el - _lastDraw).inMilliseconds < 40) return;
+    // 4 map updates a second (like Blinkit / Zepto): smooth to the eye, and the phone stays free for touches.
+    if (!done && (el - _lastDraw).inMilliseconds < 250) return;
     if (_drawing && !done) return;
+    // Another screen (a call, the chat) is on top: don't touch the map at all.
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) {
+      if (done) _tk?.stop();
+      return;
+    }
     _lastDraw = el;
     LatLng p;
     double want = _bearing;
@@ -414,13 +410,11 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
       return;
     }
     _shownP = p;
-    // Turn smoothly (shortest way round) instead of snapping to each new road direction.
-    final diff = ((want - _bearing + 540) % 360) - 180;
-    _bearing = (_bearing + diff * (done ? 1 : 0.25) + 360) % 360;
+    _bearing = want;
     _drawing = true;
-    c.updateSymbol(_rider!, SymbolOptions(geometry: p, iconRotate: _bearing)).whenComplete(() => _drawing = false);
-    // The road still ahead: redrawn a few times a second.
-    if (_ahead != null && seg != null && (done || (el - _lastLine).inMilliseconds > 300)) {
+    c.updateSymbol(_rider!, SymbolOptions(geometry: p, iconImage: _bikeFor(_bearing))).whenComplete(() => _drawing = false);
+    // The road still ahead: redrawn once a second.
+    if (_ahead != null && seg != null && (done || (el - _lastLine).inMilliseconds >= 1000)) {
       _lastLine = el;
       c.updateLine(_ahead!, LineOptions(geometry: [p, ..._route.sublist(seg + 1)]));
     }
@@ -451,7 +445,8 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
                   child: snap.hasError ? Text('On the way from ${widget.storeName}', style: head(15)) : CircularProgressIndicator());
             }
             return Stack(children: [
-              MapLibreMap(
+              // Built once: the order screen redraws every second, and rebuilding the map view each time costs the phone.
+              _map ??= MapLibreMap(
                 styleString: snap.data!,
                 initialCameraPosition: CameraPosition(target: LatLng(widget.homeLat, widget.homeLng), zoom: 15.2),
                 minMaxZoomPreference: MinMaxZoomPreference(12, 18.5),
@@ -479,19 +474,23 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
                   ),
                 ),
               ),
+              // Small pill at the bottom (minutes · metres), like the delivery apps.
               Positioned(
-                left: 10,
-                right: 10,
+                left: 0,
+                right: 0,
                 bottom: 10,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: Color(0xFF21331B), borderRadius: BorderRadius.circular(12)),
-                  child: Text(
-                      d == null
-                          ? tr('On the way from {0}', [widget.storeName])
-                          : tr('On the way · {0} m away · about {1} min', [d.round(), (d / 250).ceil().clamp(1, 30)]),
-                      maxLines: 2,
-                      style: body(11.5, color: kBrand, weight: FontWeight.w800)),
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(color: Color(0xFF21331B), borderRadius: BorderRadius.circular(20)),
+                    child: Text(
+                        d == null
+                            ? tr('On the way from {0}', [widget.storeName])
+                            : tr('{0} min · {1} m', [(d / 250).ceil().clamp(1, 30), d.round()]),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: body(11, color: kBrand, weight: FontWeight.w800)),
+                  ),
                 ),
               ),
             ]);

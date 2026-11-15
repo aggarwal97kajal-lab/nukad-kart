@@ -518,7 +518,10 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFF16210F),
         body: SafeArea(
-          child: Column(children: [
+          // Full width, so everything stays in the middle also when only one button is left (call ended).
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
             const SizedBox(height: 60),
             CircleAvatar(
               radius: 52,
@@ -561,6 +564,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
               _round(Icons.close, w('Call ended'), const Color(0xFF2E4424), () => Navigator.pop(context)),
             const SizedBox(height: 48),
           ]),
+          ),
         ),
       ),
     );
@@ -644,7 +648,7 @@ class _VoiceIncomingWatcherState extends State<VoiceIncomingWatcher> with Widget
       if (currentVoiceCall.value != null || !mounted) return;
       final nav = widget.navigatorKey?.currentState ?? Navigator.maybeOf(context);
       if (nav == null) return;
-      widget.ring?.call({...Map<String, dynamic>.from(c), 'from': '${c['other'] ?? ''}'});
+      widget.ring?.call({...Map<String, dynamic>.from(c), 'caller': '${c['other'] ?? ''}'});
       nav.push(
         MaterialPageRoute(
           builder: (_) => VoiceCallScreen(

@@ -32,7 +32,10 @@ async function accessToken(sa) {
 
 export const pushReady = (env) => !!env.FCM_SERVICE_ACCOUNT;
 
-const strData = (data) => Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]));
+// FCM refuses the whole message if a data key is one of its own words ("from", "notification", "message_type",
+// anything starting with "google" or "gcm"): every call ring failed because of a key named "from". Rename them.
+const RESERVED = /^(from|notification|message_type|collapse_key|google.*|gcm.*)$/i;
+const strData = (data) => Object.fromEntries(Object.entries(data).map(([k, v]) => [RESERVED.test(k) ? `x_${k}` : k, String(v)]));
 
 /** One FCM message. ring: a call (notification on the call channel with a tag the app replaces, short life). */
 export function message(token, { title, body, data = {}, channel = 'updates', dataOnly = false, ring = null }) {

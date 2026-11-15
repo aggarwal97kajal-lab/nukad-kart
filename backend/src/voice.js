@@ -176,7 +176,7 @@ export async function voiceRoute(req, env, path, m) {
     // app is closed still shows and sounds it; the app replaces it with the full-screen ringing one.
     const [pushed, ice, c] = await Promise.all([
       sendPushDetail(env, callee, { title: `📞 ${callerLabel}`, body: `${p.title} · Nukad Kart call`, ring: { tag: `call_${id}`, channel: 'voice_calls2' },
-        data: { type: 'voice_call', id, from: callerLabel, title: p.title, kind, ref } }).catch((e) => ({ sent: 0, phones: 0, errors: [String(e)] })),
+        data: { type: 'voice_call', id, caller: callerLabel, title: p.title, kind, ref } }).catch((e) => ({ sent: 0, phones: 0, errors: [String(e)] })),
       iceServers(env),
       env.DB.prepare('SELECT * FROM voice_calls WHERE id = ?').bind(id).first(),
     ]);

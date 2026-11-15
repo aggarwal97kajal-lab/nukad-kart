@@ -36,3 +36,11 @@ test('google id token verification', async () => {
   const t = await make(good);
   await assert.rejects(verifyGoogleIdToken(t.slice(0, -4) + 'AAAA', ['web'], { keys: [jwk] }));
 });
+
+test('push: data keys FCM refuses ("from") are renamed, so the message is not rejected', async () => {
+  const { message } = await import('../src/push.js');
+  const m = message('t', { title: 'a', body: 'b', data: { type: 'voice_call', from: 'x', caller: 'Store' }, ring: { tag: 'call_1', channel: 'voice_calls2' } });
+  assert.equal(m.data.from, undefined);
+  assert.equal(m.data.caller, 'Store');
+  assert.equal(m.android.notification.tag, 'call_1');
+});

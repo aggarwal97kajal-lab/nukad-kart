@@ -53,7 +53,7 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
   try {
     await _local.show(
       0,
-      '📞 ${d['from'] ?? 'Customer'}',
+      '📞 ${d['caller'] ?? d['from'] ?? 'Customer'}',
       '${d['title'] ?? ''} · Nukad Kart call',
       NotificationDetails(
         android: AndroidNotificationDetails(_voice.id, _voice.name,
