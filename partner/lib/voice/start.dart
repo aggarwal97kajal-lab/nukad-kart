@@ -7,10 +7,12 @@ import 'order_chat.dart';
 /// Opens the call screen and calls the customer of this order (kind 'order') or street call (kind 'thela').
 /// The customer's phone shows "Delivery partner" (shop orders) or the thela's name, never a number.
 Future<void> callCustomer(BuildContext context, String kind, String ref) {
+  // One call object, made once (not inside the builder, which runs again each time the screen is redrawn).
+  final call = VoiceCall(base: apiBase, token: () => api.token, other: 'Customer');
   return Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => VoiceCallScreen(call: VoiceCall(base: apiBase, token: () => api.token, other: 'Customer'), lang: gLang, startKind: kind, startRef: ref),
+      builder: (_) => VoiceCallScreen(call: call, lang: gLang, startKind: kind, startRef: ref),
     ),
   );
 }

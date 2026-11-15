@@ -421,7 +421,10 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> {
   Timer? _tick;
   String? _error;
 
-  VoiceCall get c => widget.call;
+  // The call this screen opened with, kept for the screen's whole life. The app redraws its screens often (order
+  // updates, theme); each redraw makes a new VoiceCallScreen widget with a new, empty VoiceCall. Reading
+  // widget.call showed that empty one: stuck on "Calling…", and the buttons worked on a call that wasn't running.
+  late final VoiceCall c = widget.call;
   String w(String k) => voiceText(k, widget.lang);
 
   @override
@@ -649,10 +652,11 @@ class _VoiceIncomingWatcherState extends State<VoiceIncomingWatcher> with Widget
       final nav = widget.navigatorKey?.currentState ?? Navigator.maybeOf(context);
       if (nav == null) return;
       widget.ring?.call({...Map<String, dynamic>.from(c), 'caller': '${c['other'] ?? ''}'});
+      final call = VoiceCall(base: widget.base, token: widget.token, other: '${c['other'] ?? ''}');
       nav.push(
         MaterialPageRoute(
           builder: (_) => VoiceCallScreen(
-              call: VoiceCall(base: widget.base, token: widget.token, other: '${c['other'] ?? ''}'),
+              call: call,
               lang: widget.lang,
               incomingId: id,
               stopRing: () => widget.stopRing?.call(id)),

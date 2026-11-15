@@ -9,10 +9,12 @@ import 'order_chat.dart';
 /// delivery partner ([to] 'rider'), or the thela coming to the street (kind 'thela', ref = call id). Numbers stay hidden.
 Future<void> callInApp(BuildContext context, String kind, String ref, {String label = 'Delivery partner', String to = ''}) {
   final s = AppScope.read(context);
+  // One call object, made once (not inside the builder, which runs again each time the screen is redrawn).
+  final call = VoiceCall(base: apiBase, token: () => s.apiToken, other: label);
   return Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => VoiceCallScreen(call: VoiceCall(base: apiBase, token: () => s.apiToken, other: label), lang: gLang, startKind: kind, startRef: ref, startTo: to),
+      builder: (_) => VoiceCallScreen(call: call, lang: gLang, startKind: kind, startRef: ref, startTo: to),
     ),
   );
 }
