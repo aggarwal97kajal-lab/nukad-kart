@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Launch screen: Golden Corner brand yellow. -->
+    <color name="nk_launch">#F8CB46</color>
+    <!-- Behind the phone's buttons after launch (light). -->
+    <color name="nk_normal">#FFFFFF</color>
+    <!-- Notification icon tint (status bar / notification shade). -->
     <color name="nk_notify">#2E7D32</color>
 </resources>
