@@ -9,4 +9,4 @@ const olaMapsProjectId = '2786de8f-21d0-4944-96bc-b1cbfccb0e93';
 const googleWebClientId = '173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
 
 /// Nukad Kart API (Cloudflare Worker).
-const apiBase = 'https://nukad-kart-api.aggarwal97kajal.workers.dev';
+const apiBase = 'https://api.nukkadkart.in';

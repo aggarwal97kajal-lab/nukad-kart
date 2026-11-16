@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
-const apiBase = 'https://nukad-kart-api.aggarwal97kajal.workers.dev';
+const apiBase = 'https://api.nukkadkart.in';
 const googleWebClientId = '173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
 
 class ApiError implements Exception {
