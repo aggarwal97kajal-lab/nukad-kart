@@ -15,7 +15,7 @@
 //   GET  /v1/stores/:id/products                              what a store / thela sells now
 
 import { orderChatRoute, cleanOrderChat } from './orderchat.js';
-import { voiceRoute, missOld, turnStatus } from './voice.js';
+import { voiceRoute, missOld } from './voice.js';
 import { isAdmin, partnerRoute, offlineReason, staleThelas } from './partner.js';
 import { productOut } from './products.js';
 import { sendPushDetail } from './push.js';
@@ -92,10 +92,37 @@ export async function signSession(uid, secret, days = SESSION_DAYS, sid = undefi
 export async function verifySession(token, secret) {
   const [payload, sig] = String(token || '').split('.');
   if (!payload || !sig) return null;
-  const ok = await crypto.subtle.verify('HMAC', await hmacKey(secret), b64urlDecode(sig), enc.encode(payload));
-  if (!ok) return null;
-  const data = JSON.parse(new TextDecoder().decode(b64urlDecode(payload)));
-  return data.exp > now() ? data : null;
+  try {
+    const ok = await crypto.subtle.verify('HMAC', await hmacKey(secret), b64urlDecode(sig), enc.encode(payload));
+    if (!ok) return null;
+    const data = JSON.parse(new TextDecoder().decode(b64urlDecode(payload)));
+    return data.exp > now() ? data : null;
+  } catch {
+    return null; // not base64 / not JSON: treated as no token
+  }
+}
+
+/**
+ * Live sockets: the app sends its session in the Authorization header. Older builds put it in ?token= (a URL can
+ * end up in logs), so that is still read for now and can be dropped once every phone runs the new build.
+ */
+export function socketAuth(req) {
+  if (req.headers.get('authorization')) return req;
+  const t = new URL(req.url).searchParams.get('token') || '';
+  return new Request(req.url, { headers: { authorization: `Bearer ${t}` } });
+}
+
+/** A phone number check passed only when MSG91 returned a number and it is the one typed in. */
+export function phoneMatches(verified, claimed) {
+  return !!verified && verified === claimed;
+}
+
+/** Signed in? (signature only, no database trip). For public lists that show a bit more to signed-in customers. */
+export async function optionalUid(req, env) {
+  const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const s = await verifySession(token, env.SESSION_SECRET);
+  return s?.sid ? s.uid : null;
 }
 
 // ---------- Google ID token ----------
@@ -233,8 +260,15 @@ async function nearbyRows(env, lat, lng) {
   return [...sh.results, ...th.results];
 }
 
-/** Stores a customer here can see now (shops: pass, switched on, timings; thelas: fresh live location), nearest first. */
-async function visibleNearby(env, lat, lng, radius) {
+/** Guests see a thela's spot to ~110 m and distances to 50 m (no exact tracking without an account). */
+const roughPos = (v) => Math.round(v * 1000) / 1000;
+const roughDist = (m) => Math.max(50, Math.round(m / 50) * 50);
+
+/**
+ * Stores a customer here can see now (shops: pass, switched on, timings; thelas: fresh live location), nearest first.
+ * No seller's phone number is ever sent: customers reach shops and thelas with the in-app call.
+ */
+async function visibleNearby(env, lat, lng, radius, guest = false) {
   const results = await nearbyRows(env, lat, lng);
   // Partner shops show only with an active pass, switched on, within their timings
   // (after closing time they drop off the map) and not paused for missed orders.
@@ -246,19 +280,28 @@ async function visibleNearby(env, lat, lng, radius) {
     .map((s) => {
       const thela = s.kind === 'thela';
       const sLat = thela ? s.live_lat : s.lat, sLng = thela ? s.live_lng : s.lng;
+      const exact = haversineM(lat, lng, sLat, sLng);
+      const rough = thela && guest;
       return {
-        id: s.id, name: s.name, kind: s.kind, lat: sLat, lng: sLng, address: thela ? '' : s.address,
-        // A thela's number is never shared; customers reach it through the app.
-        phone: thela ? '' : s.phone,
+        id: s.id, name: s.name, kind: s.kind, lat: rough ? roughPos(sLat) : sLat, lng: rough ? roughPos(sLng) : sLng,
+        address: thela ? '' : s.address,
         opensAt: s.opens_at, closesAt: s.closes_at, door: !!s.door_delivery, pickup: !!s.pickup,
         gstType: s.gst_type || 'none', fssai: s.fssai || '', photo: s.photo_at ? `/v1/stores/${s.id}/photo` : null,
-        distanceM: Math.round(haversineM(lat, lng, sLat, sLng)),
+        distanceM: rough ? roughDist(exact) : Math.round(exact),
         open: offlineReason(s, t) == null,
-        ...(thela ? { seenAgo: t - s.live_at, moving: !!s.moved_at && t - s.moved_at <= THELA_MOVING_S, heading: s.heading } : {}),
+        ...(thela ? { seenAgo: t - s.live_at, moving: !!s.moved_at && t - s.moved_at <= THELA_MOVING_S, ...(rough ? {} : { heading: s.heading }) } : {}),
+        _m: exact,
       };
     })
-    .filter((s) => s.distanceM <= radius)
-    .sort((a, b) => a.distanceM - b.distanceM);
+    .filter((s) => s._m <= radius)
+    .sort((a, b) => a._m - b._m)
+    .map(({ _m, ...s }) => s);
+}
+
+/** Public lists: guests by IP (generous: many phones share one mobile-network IP), customers per account. */
+async function listLimit(req, env, uid) {
+  if (uid) await rateLimit(env, `nearu:${uid}`, 120, 60);
+  else await rateLimit(env, `near:${clientIp(req)}`, 300, 60);
 }
 
 /** Most bought first: these rows lead the "Aaj ke daam" table when sellers have them. */
@@ -326,12 +369,9 @@ async function route(req, env, ectx) {
   if (m === 'GET' && (path === '/' || path === '/health')) {
     const t0 = Date.now();
     const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM stores WHERE active = 1').all();
-    // Call relay check (no secrets shown): 'turn' = works; 'turn_error_404' = key id wrong, 401/403 = token wrong.
-    const calls = url.searchParams.get('calls') === '1' ? await turnStatus(env) : (env.CF_TURN_KEY_ID ? 'turn_set' : 'stun_only');
-    // Shape of the TURN secrets only (length + kind of characters), never the values.
-    const shape = (v) => { const x = String(v || '').trim(); return x ? `${x.length}:${/^[0-9a-f]+$/.test(x) ? 'hex' : /^[\w-]+$/.test(x) ? 'word' : 'other'}${/\s/.test(String(v)) ? ':space' : ''}` : 'empty'; };
-    const turnShape = url.searchParams.get('calls') === '1' ? { keyId: shape(env.CF_TURN_KEY_ID), token: shape(env.CF_TURN_TOKEN) } : undefined;
-    return json({ ok: true, service: 'nukad-kart-api', calls, turnShape, stores: r.results[0].n, time: new Date().toISOString(),
+    // The full call-relay check (it asks Cloudflare each time) is in the admin health card: GET /v1/admin/health?calls=1.
+    const calls = env.CF_TURN_KEY_ID ? 'turn_set' : 'stun_only';
+    return json({ ok: true, service: 'nukad-kart-api', calls, stores: r.results[0].n, time: new Date().toISOString(),
       worker: req.cf?.colo || '', db: r.meta?.served_by_region || r.meta?.served_by || '', dbMs: Date.now() - t0 });
   }
 
@@ -394,7 +434,7 @@ async function route(req, env, ectx) {
     const claimed = String(phone || '').replace(/\D/g, '').slice(-10);
     if (claimed.length !== 10) throw new HttpError(400, 'bad_phone');
     const verified = await verifyMsg91(accessToken, env.MSG91_AUTHKEY);
-    if (verified && verified !== claimed) throw new HttpError(401, 'phone_mismatch');
+    if (!phoneMatches(verified, claimed)) throw new HttpError(401, 'phone_mismatch');
     const other = await env.DB.prepare('SELECT id FROM users WHERE phone = ? AND id != ? AND deleted_at IS NULL').bind(claimed, uid).first();
     if (other) throw new HttpError(409, 'phone_in_use');
     await env.DB.prepare('UPDATE users SET phone = ?, phone_verified = 1, updated_at = ? WHERE id = ?').bind(claimed, now(), uid).run();
@@ -446,6 +486,13 @@ async function route(req, env, ectx) {
       env.DB.prepare('DELETE FROM chat_messages WHERE chat_id IN (SELECT id FROM chats WHERE customer_id = ?)').bind(uid),
       env.DB.prepare('DELETE FROM chats WHERE customer_id = ?').bind(uid),
       env.DB.prepare("UPDATE calls SET address = '', lat = 0, lng = 0 WHERE customer_id = ?").bind(uid),
+      // Orders: open ones are cancelled; on every order the name, number and exact spot are wiped. The bill
+      // (number, items, totals, business GSTIN if any) stays for the shop's GST records.
+      env.DB.prepare(`UPDATE orders SET status = 'cancelled', reason = 'account_deleted', closed_at = ?
+        WHERE customer_id = ? AND status IN ('placed', 'accepted', 'packed', 'out')`).bind(t, uid),
+      env.DB.prepare(`UPDATE orders SET to_name = '', to_phone = '', address = CASE WHEN door = 1 THEN 'Deleted account' ELSE address END,
+        lat = NULL, lng = NULL, rider_lat = NULL, rider_lng = NULL, rider_at = NULL WHERE customer_id = ?`).bind(uid),
+      env.DB.prepare('DELETE FROM order_messages WHERE order_id IN (SELECT id FROM orders WHERE customer_id = ?)').bind(uid),
       // Keep only the row id (orders and complaints will point to it); personal details are wiped.
       env.DB.prepare(
         "UPDATE users SET google_sub = 'deleted:' || id, email = '', name = NULL, phone = NULL, phone_verified = 0, deleted_at = ?, updated_at = ? WHERE id = ?",
@@ -533,14 +580,18 @@ async function route(req, env, ectx) {
     const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'));
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
     const radius = Math.min(Number(url.searchParams.get('radius')) || RADIUS_MAX_M, RADIUS_MAX_M);
-    const stores = await visibleNearby(env, lat, lng, radius);
+    const uid = await optionalUid(req, env);
+    // The limit check runs alongside the lookup, so it adds no waiting.
+    const [, stores] = await Promise.all([listLimit(req, env, uid), visibleNearby(env, lat, lng, radius, !uid)]);
     return json({ radius, count: stores.length, stores });
   }
 
   if (path === '/v1/prices/today' && m === 'GET') {
     const lat = Number(url.searchParams.get('lat')), lng = Number(url.searchParams.get('lng'));
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) throw new HttpError(400, 'bad_location');
-    return json(await todayPrices(env, await visibleNearby(env, lat, lng, RADIUS_MAX_M)));
+    const uid = await optionalUid(req, env);
+    const [, stores] = await Promise.all([listLimit(req, env, uid), visibleNearby(env, lat, lng, RADIUS_MAX_M, !uid)]);
+    return json(await todayPrices(env, stores));
   }
 
   throw new HttpError(404, 'not_found');

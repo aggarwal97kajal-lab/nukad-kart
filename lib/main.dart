@@ -32,6 +32,7 @@ Future<void> main() async {
   // The green launch screen stays up while saved settings load (a few ms).
   final state = AppState();
   await state.load();
+  api.sessionToken = () => state.apiToken;
   await MapMarkers.load();
   state.scheduleCartReminders = (plan) => CartReminder.scheduleAll(plan);
   state.cancelCartReminders = () => CartReminder.cancelAll();

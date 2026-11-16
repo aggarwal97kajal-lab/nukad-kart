@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 
 /// The order's live connection while its screen is open: the shop's status changes ("accepted", "packed",
 /// "out for delivery"…) and new chat messages arrive the moment they happen, like Blinkit / Zepto, instead
@@ -20,8 +21,8 @@ class OrderLive {
     if (_gone || orderId.isEmpty || token().isEmpty) return;
     try {
       final ws = base.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
-      _ws = WebSocketChannel.connect(
-          Uri.parse('$ws/v1/orders/${Uri.encodeComponent(orderId)}/chat/socket?token=${Uri.encodeQueryComponent(token())}'));
+      _ws = IOWebSocketChannel.connect(Uri.parse('$ws/v1/orders/${Uri.encodeComponent(orderId)}/chat/socket'),
+          headers: {'authorization': 'Bearer ${token()}'});
       _sub = _ws!.stream.listen((m) {
         if (m == 'pong') return;
         try {

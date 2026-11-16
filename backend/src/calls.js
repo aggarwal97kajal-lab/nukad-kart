@@ -9,6 +9,7 @@
 // A "coming" call the customer doesn't confirm (button, or a chat message to the thela) in 3 minutes is dropped,
 // so the thela doesn't walk to an empty gate.
 import { HttpError, json, body, now, session, haversineM, RADIUS_MAX_M, THELA_STALE_S } from './index.js';
+import { rateLimit } from './guard.js';
 import { ctx, offlineReason } from './partner.js';
 import { sendPush } from './push.js';
 
@@ -77,6 +78,7 @@ export async function callRoute(req, env, path, m) {
   const call = path.match(/^\/v1\/thelas\/([\w-]+)\/call$/);
   if (call && m === 'POST') {
     const { uid } = await session(req, env);
+    await rateLimit(env, `callh:${uid}`, 10, 3600); // a few calls an hour is plenty; stops calling thelas again and again
     const b = await body(req);
     const lat = Number(b.lat), lng = Number(b.lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new HttpError(400, 'bad_location');
@@ -85,12 +87,13 @@ export async function callRoute(req, env, path, m) {
     const t = now();
     await expire(env, 'customer_id = ?', [uid]);
     const [ur, sr, mine] = await env.DB.batch([
-      env.DB.prepare('SELECT id, calls_blocked_until FROM users WHERE id = ? AND deleted_at IS NULL').bind(uid),
+      env.DB.prepare('SELECT id, calls_blocked_until, phone_verified FROM users WHERE id = ? AND deleted_at IS NULL').bind(uid),
       env.DB.prepare('SELECT * FROM stores WHERE id = ? AND active = 1').bind(call[1]),
       env.DB.prepare("SELECT id FROM calls WHERE customer_id = ? AND status = 'waiting'").bind(uid),
     ]);
     const u = ur.results[0], s = sr.results[0];
     if (!u) throw new HttpError(401, 'not_signed_in');
+    if (!u.phone_verified) throw new HttpError(403, 'phone_needed');
     if (u.calls_blocked_until > t) throw new HttpError(403, 'calls_blocked');
     if (mine.results.length) throw new HttpError(409, 'already_calling');
     if (!s || s.kind !== 'thela' || offlineReason(s, t) != null || !s.live_at || t - s.live_at > THELA_STALE_S) throw new HttpError(404, 'thela_not_live');

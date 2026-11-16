@@ -10,6 +10,7 @@ import 'package:flutter/services.dart' show HapticFeedback, rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 import '../l10n.dart';
 import '../services/ola_maps.dart';
 import 'ui.dart';
@@ -136,8 +137,8 @@ class _RiderMapState extends State<RiderMap> with SingleTickerProviderStateMixin
     if (_gone) return;
     try {
       final ws = widget.base.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
-      _ws = WebSocketChannel.connect(Uri.parse(
-          '$ws/v1/orders/${Uri.encodeComponent(widget.routeKey)}/chat/socket?token=${Uri.encodeQueryComponent(widget.token!())}'));
+      _ws = IOWebSocketChannel.connect(Uri.parse('$ws/v1/orders/${Uri.encodeComponent(widget.routeKey)}/chat/socket'),
+          headers: {'authorization': 'Bearer ${widget.token!()}'});
       _wsSub = _ws!.stream.listen((m) {
         _live = true;
         try {

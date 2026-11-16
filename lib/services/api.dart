@@ -31,6 +31,7 @@ class ApiException implements Exception {
         'calls_blocked' => 'Calling is paused for a few days: thelas came and found nobody 3 times.',
         'thela_not_live' => 'This thela is not live right now.',
         'too_far' => 'This thela is more than 500 m from your address.',
+        'phone_needed' => 'Add and confirm your mobile number first (Account → Personal details).',
         _ => 'Something went wrong ($code). Try again.',
       };
 
@@ -44,6 +45,11 @@ class ApiException implements Exception {
 class Api {
   Api({http.Client? client}) : _http = client ?? http.Client();
   final http.Client _http;
+
+  /// The signed-in customer's session, if any (set once in main). Public lists send it so the server can count
+  /// requests per account and show a thela's exact spot; guests get a rounded spot.
+  String Function()? sessionToken;
+  String? get _maybeToken => sessionToken?.call();
   static const _timeout = Duration(seconds: 12);
 
   Future<Map<String, dynamic>> _call(String method, String path, {String? token, Object? body}) async {
@@ -107,11 +113,11 @@ class Api {
       _call('POST', '/v1/me/delete', token: token, body: {'reason': reason, 'feedback': feedback});
 
   Future<Map<String, dynamic>> nearbyStores(double lat, double lng) =>
-      _call('GET', '/v1/stores/nearby?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}');
+      _call('GET', '/v1/stores/nearby?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}', token: _maybeToken);
 
   /// "Aaj ke daam": vegetable / fruit prices at the nearest 3 thelas + 2 kiranas.
   Future<Map<String, dynamic>> todayPrices(double lat, double lng) =>
-      _call('GET', '/v1/prices/today?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}');
+      _call('GET', '/v1/prices/today?lat=${lat.toStringAsFixed(5)}&lng=${lng.toStringAsFixed(5)}', token: _maybeToken);
 
   Future<void> pushToken(String token, String fcm) => _call('POST', '/v1/me/push-token', token: token, body: {'token': fcm});
 
@@ -132,7 +138,12 @@ class Api {
       _call('POST', '/v1/me/chats/$thelaId', token: token, body: {'text': text, if (address != null) 'address': address, if (lat != null) 'lat': lat, if (lng != null) 'lng': lng});
   Future<void> chatAction(String token, String thelaId, String what, {String reason = ''}) =>
       _call('POST', '/v1/me/chats/$thelaId/$what', token: token, body: {'reason': reason});
-  Future<void> watchThela(String thelaId) => _call('POST', '/v1/thelas/$thelaId/watch');
+  /// Signed-in customers only (guests skip it): the thela's phone sends its spot faster while its page is open.
+  Future<void> watchThela(String thelaId) async {
+    final t = _maybeToken;
+    if (t == null || t.isEmpty) return;
+    await _call('POST', '/v1/thelas/$thelaId/watch', token: t);
+  }
 
   // ----- Call to my street -----
   Future<Map<String, dynamic>> callThela(String token, String thelaId, double lat, double lng, String address) =>

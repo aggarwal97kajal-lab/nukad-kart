@@ -52,6 +52,9 @@ icon_meta = '''<meta-data android:name="com.google.firebase.messaging.default_no
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/nk_notify" />'''
 if "default_notification_icon" not in s:
     s = s.replace("</application>", "    " + icon_meta + "\n    </application>", 1)
+# Nothing from the app (login token, profile, addresses) goes into phone backups or to another phone.
+if "android:allowBackup" not in s:
+    s = s.replace("<application", '<application android:allowBackup="false" android:fullBackupContent="false"', 1)
 m.write_text(s)
 import shutil
 shutil.copytree("android_res", "android/app/src/main/res", dirs_exist_ok=True)

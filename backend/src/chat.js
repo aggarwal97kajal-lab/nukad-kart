@@ -6,7 +6,8 @@
 //   GET  /v1/partner/chats/:id                 (thela) messages
 //   POST /v1/partner/chats/:id { text }  ·  /block  ·  /report { reason }
 //   POST /v1/thelas/:id/watch                  (anyone) someone is looking at this thela: faster location for 30 s
-import { HttpError, json, body, now, session, haversineM } from './index.js';
+import { HttpError, json, body, now, session, socketAuth, haversineM } from './index.js';
+import { rateLimit } from './guard.js';
 import { ctx } from './partner.js';
 import { sendPush } from './push.js';
 
@@ -107,17 +108,19 @@ export async function chatRoute(req, env, path, m) {
   if (path === '/v1/chat/socket' && m === 'GET') {
     const url = new URL(req.url);
     const chatId = url.searchParams.get('chat') || '';
-    const authed = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get('token') || ''}` } });
+    const { uid } = await session(socketAuth(req), env);
     const chat = await env.DB.prepare('SELECT c.*, s.owner_id FROM chats c JOIN stores s ON s.id = c.thela_id WHERE c.id = ?').bind(chatId).first();
-    if (!chat) throw new HttpError(404, 'not_found');
-    const { uid } = await session(authed, env);
-    if (uid !== chat.customer_id && uid !== chat.owner_id) throw new HttpError(403, 'not_yours');
+    if (!chat || (uid !== chat.customer_id && uid !== chat.owner_id)) throw new HttpError(404, 'not_found');
     if (!env.CHAT) throw new HttpError(503, 'live_chat_off');
-    return env.CHAT.get(env.CHAT.idFromName(chatId)).fetch(req);
+    // A fresh request: none of the phone's own headers reach the room (only the server marks a voice room).
+    return env.CHAT.get(env.CHAT.idFromName(chatId)).fetch(new Request(url.toString(), { headers: { upgrade: 'websocket' } }));
   }
 
   const watch = path.match(/^\/v1\/thelas\/([\w-]+)\/watch$/);
   if (watch && m === 'POST') {
+    // Signed-in customers only (it makes the thela's phone send its location every few seconds).
+    const { uid } = await session(req, env);
+    await rateLimit(env, `watch:${uid}`, 30, 60);
     await env.DB.prepare("UPDATE stores SET watched_until = ? WHERE id = ? AND kind = 'thela'").bind(now() + 30, watch[1]).run();
     return json({ ok: true });
   }
@@ -150,8 +153,10 @@ export async function chatRoute(req, env, path, m) {
       if (chat) await env.DB.prepare("UPDATE chats SET blocked_by = 'customer' WHERE id = ?").bind(chat.id).run();
       return json({ ok: true });
     }
-    const u = await env.DB.prepare('SELECT chat_blocked_until FROM users WHERE id = ?').bind(uid).first();
-    if (u?.chat_blocked_until > now()) throw new HttpError(403, 'chat_blocked');
+    const u = await env.DB.prepare('SELECT chat_blocked_until, phone_verified FROM users WHERE id = ?').bind(uid).first();
+    if (!u?.phone_verified) throw new HttpError(403, 'phone_needed');
+    if (u.chat_blocked_until > now()) throw new HttpError(403, 'chat_blocked');
+    await rateLimit(env, `chatm:${uid}`, 40, 3600);
     if (chat?.blocked_by) throw new HttpError(403, 'chat_closed');
     const text = clean(b.text);
     const t = now();

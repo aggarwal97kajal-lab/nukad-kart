@@ -129,7 +129,7 @@ class LiveData extends ChangeNotifier {
         continue;
       }
       stores.add(Store(id, '${s['name']}', (s['distanceM'] as num).toInt(), 0, 0, s['door'] == true, s['pickup'] == true,
-          _time('${s['closesAt'] ?? ''}', '11:59 pm'), '${s['phone'] ?? ''}',
+          _time('${s['closesAt'] ?? ''}', '11:59 pm'), '', // the server never sends a shop's number
           opensAt: _time('${s['opensAt'] ?? ''}', '12 am'),
           address: '${s['address'] ?? ''}',
           gst: switch ('${s['gstType']}') { 'regular' => BillGst.regular, 'composition' => BillGst.composition, _ => BillGst.none },

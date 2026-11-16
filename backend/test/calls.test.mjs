@@ -12,7 +12,7 @@ async function setup() {
   const env = { DB, SESSION_SECRET: SECRET };
   const ins = (table, row) => DB.raw.prepare(`INSERT INTO ${table} (${Object.keys(row)}) VALUES (${Object.keys(row).map(() => '?')})`).run(...Object.values(row));
   for (const u of ['owner', 'c1', 'c2', 'c3']) {
-    ins('users', { id: u, google_sub: 'g' + u, email: u + '@x.y', name: u, created_at: T, updated_at: T });
+    ins('users', { id: u, google_sub: 'g' + u, email: u + '@x.y', name: u, created_at: T, updated_at: T, phone_verified: 1 });
     ins('sessions', { id: 's' + u, user_id: u, created_at: T, last_seen: T });
   }
   ins('stores', { id: 'th1', name: 'Ramu Sabzi', kind: 'thela', owner_id: 'owner', lat: 0, lng: 0, opens_at: '', closes_at: '', status: 'active', live: 1,
@@ -84,6 +84,8 @@ test('chat: customer writes, thela replies, numbers refused, block closes it', a
   r = await call('POST', '/v1/me/chats/th1', { text: 'hello' }, 'c1');
   assert.equal(r.json.error, 'chat_closed');
   r = await call('POST', '/v1/thelas/th1/watch', null, null);
+  assert.equal(r.status, 401); // guests can't make a thela's phone send its location faster
+  r = await call('POST', '/v1/thelas/th1/watch', null, 'c1');
   assert.equal(r.json.ok, true);
 });
 

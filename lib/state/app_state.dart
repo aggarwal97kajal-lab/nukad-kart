@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/widgets.dart';
 import '../data/demo_data.dart';
 import '../services/bill.dart';
@@ -614,6 +615,13 @@ class AppState extends ChangeNotifier {
   SharedPreferences? _prefs;
   static const _key = 'nk_state_v1';
 
+  /// The login token lives in the phone's secure store (Android Keystore / iOS Keychain), not in the plain
+  /// settings file with everything else.
+  static const _secure = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+  static const _tokenKey = 'nk_api_token';
+  String _savedToken = '';
+  bool _secureOk = true; // false on a phone whose secure store fails: the token stays in the settings file there
+
   Future<void> load() async {
     try {
       _prefs = await SharedPreferences.getInstance();
@@ -651,11 +659,28 @@ class AppState extends ChangeNotifier {
       // Bad or old data: start fresh.
     }
     if (installId.isEmpty) installId = _newId();
+    try {
+      final t = await _secure.read(key: _tokenKey);
+      if (t != null && t.isNotEmpty) {
+        apiToken = t;
+      } else if (apiToken.isNotEmpty) {
+        await _secure.write(key: _tokenKey, value: apiToken); // older builds kept it in the settings file: move it
+      }
+    } catch (_) {
+      _secureOk = false;
+    }
+    _savedToken = apiToken;
+    _save(); // rewrites the settings file without the token
   }
 
   void _save() {
     final p = _prefs;
     if (p == null) return;
+    if (_secureOk && apiToken != _savedToken) {
+      _savedToken = apiToken;
+      final t = apiToken;
+      (t.isEmpty ? _secure.delete(key: _tokenKey) : _secure.write(key: _tokenKey, value: t)).catchError((_) {});
+    }
     _storeProfile();
     p.setString(
         _key,
@@ -665,7 +690,7 @@ class AppState extends ChangeNotifier {
           'guest': guest,
           'signedIn': signedIn,
           'email': email,
-          'apiToken': apiToken,
+          if (!_secureOk) 'apiToken': apiToken,
           'installId': installId,
           'acceptedTerms': acceptedTerms,
           'profiles': _profiles,

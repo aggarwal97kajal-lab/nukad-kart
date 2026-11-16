@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 import '../config/keys.dart';
 
 /// Live chat connection: the server pushes each new message at once. Reconnects on drop;
@@ -23,7 +24,8 @@ class LiveSocket {
     if (_closed) return;
     try {
       final base = apiBase.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
-      _ch = WebSocketChannel.connect(Uri.parse('$base/v1/chat/socket?chat=${Uri.encodeQueryComponent(chatId)}&token=${Uri.encodeQueryComponent(token)}'));
+      _ch = IOWebSocketChannel.connect(Uri.parse('$base/v1/chat/socket?chat=${Uri.encodeQueryComponent(chatId)}'),
+          headers: {'authorization': 'Bearer $token'});
       _ch!.stream.listen((m) {
         if (m != 'pong') onMessage();
       }, onDone: _again, onError: (_) => _again(), cancelOnError: true);

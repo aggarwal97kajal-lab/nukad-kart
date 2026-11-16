@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 
 class VoiceError implements Exception {
   final String code, detail;
@@ -280,7 +281,7 @@ class VoiceCall extends ChangeNotifier {
 
   Future<void> _socket() async {
     final ws = base.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
-    _ws = WebSocketChannel.connect(Uri.parse('$ws/v1/voice/$id/socket?token=${Uri.encodeComponent(token())}'));
+    _ws = IOWebSocketChannel.connect(Uri.parse('$ws/v1/voice/$id/socket'), headers: {'authorization': 'Bearer ${token()}'});
     _wsSub = _ws!.stream.listen((m) => _onMsg('$m'), onDone: () {
       if (state != VoiceState.connected && state != VoiceState.ended) _finish();
     }, onError: (_) {});

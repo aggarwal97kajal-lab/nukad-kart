@@ -38,10 +38,18 @@ test('thela shows at its live location, without its phone number', async () => {
   r = await call('GET', '/v1/stores/nearby?lat=28.6999&lng=77.1001');
   const th = r.json.stores.find((s) => s.id === 'th1');
   assert.ok(th, JSON.stringify(r.json));
-  assert.equal(th.phone, '');
+  // No seller's number reaches customers (shops too: they are called in the app).
+  assert.equal(th.phone, undefined);
+  assert.equal(r.json.stores.find((s) => s.id === 'sh1').phone, undefined);
   assert.equal(th.moving, true);
   assert.ok(th.distanceM < 200);
-  assert.ok(r.json.stores.find((s) => s.id === 'sh1').phone.length > 5);
+  // Guest: the spot to ~110 m, distance to 50 m, no heading. Signed in: exact.
+  assert.equal(th.lat, 28.701);
+  assert.equal(th.distanceM % 50, 0);
+  assert.equal(th.heading, undefined);
+  const exact = (await call('GET', '/v1/stores/nearby?lat=28.6999&lng=77.1001', null, auth)).json.stores.find((s) => s.id === 'th1');
+  assert.equal(exact.heading, 90);
+  assert.ok(Math.abs(exact.lat - 28.7010) < 1e-9);
   const pr = await call('GET', '/v1/stores/th1/products');
   assert.deepEqual(pr.json.products.map((p) => p.produceKey), ['aloo']);
   // 15 minutes without location → hidden, and the seller is told once

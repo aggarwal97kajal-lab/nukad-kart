@@ -25,6 +25,7 @@ class ApiError implements Exception {
         'blocked' => tr('This account is blocked. Contact support.'),
         'upi_not_set' => tr('Payments are not open yet. Try again later.'),
         'payments_paused' => tr('Too many failed payments today. Try again tomorrow.'),
+        'payment_being_checked' => tr('Your last payments are still being checked. The pass starts as soon as they are confirmed: please don’t pay again.'),
         'not_admin' => tr('Only admins can do this.'),
         'bad_upi_id' => tr('UPI ID is not valid (example: name@okaxis).'),
         'photo_location_required' => tr('Take the shop photo at the shop with location (GPS) on.'),

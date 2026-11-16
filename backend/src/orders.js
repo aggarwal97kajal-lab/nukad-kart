@@ -14,7 +14,7 @@
 // Staff login (no Google):
 //   POST /v1/staff/check { phone }  → is this number staff anywhere?  (before the SMS is sent)
 //   POST /v1/staff/login { phone, accessToken, device }
-import { HttpError, json, body, now, session, haversineM, verifyMsg91, signSession, RADIUS_MAX_M } from './index.js';
+import { HttpError, json, body, now, session, haversineM, verifyMsg91, phoneMatches, signSession, RADIUS_MAX_M } from './index.js';
 import { ctx, offlineReason, istDate, MISSED_LIMIT } from './partner.js';
 import { sendPush, sendPushDetail } from './push.js';
 import { samePhoneOut } from './sessions.js';
@@ -26,7 +26,13 @@ const FREE_DELIVERY_MIN = 199, DELIVERY_FEE = 20, MAX_LIVE = 2, MAX_STAFF = 5, M
 const OPEN = ['placed', 'accepted', 'packed', 'out'];
 
 const rid = () => crypto.randomUUID();
-const orderNo = () => 'NK-' + String(Math.floor(100000 + Math.random() * 900000));
+/** Random whole number in [lo, hi] from the secure generator (Math.random can be predicted). */
+export function secureInt(lo, hi) {
+  const span = hi - lo + 1, lim = Math.floor(0x1_0000_0000 / span) * span, a = new Uint32Array(1);
+  do crypto.getRandomValues(a); while (a[0] >= lim);
+  return lo + (a[0] % span);
+}
+const orderNo = () => 'NK-' + String(secureInt(100000, 999999));
 const phone10 = (v) => String(v || '').replace(/\D/g, '').slice(-10);
 
 /** Financial year label for bill numbers, e.g. "2627" for Apr 2026 – Mar 2027 (IST). */
@@ -158,15 +164,20 @@ export async function orderRoute(req, env, path, m, ectx) {
         return json({ order: orderOut(prev, true, ps), skipped: 0, repeat: true });
       }
     }
+    // A real, verified customer only, and not too many orders: stops fake orders that ring a shop again and again.
+    // (A retry of the same checkout is answered above and is not counted.)
+    await rateLimit(env, `ordh:${uid}`, 6, 3600);
+    await rateLimit(env, `ordd:${uid}`, 20, 86400);
     const baseIds = [...new Set(items.map((x) => x.id.replace(/_\d+$/, '')))];
     const [sr, pr, lr, ur] = await env.DB.batch([
       env.DB.prepare('SELECT * FROM stores WHERE id = ? AND active = 1').bind(String(b.storeId || '')),
       env.DB.prepare(`SELECT * FROM products WHERE store_id = ? AND in_stock = 1 AND id IN (${baseIds.map(() => '?').join(',')})`).bind(String(b.storeId || ''), ...baseIds),
       env.DB.prepare(`SELECT COUNT(*) AS n FROM orders WHERE customer_id = ? AND status IN ('placed','accepted','packed','out')`).bind(uid),
-      env.DB.prepare('SELECT id, deleted_at FROM users WHERE id = ?').bind(uid),
+      env.DB.prepare('SELECT id, deleted_at, phone_verified FROM users WHERE id = ?').bind(uid),
     ]);
     const s = sr.results[0];
     if (!ur.results[0] || ur.results[0].deleted_at) throw new HttpError(401, 'not_signed_in');
+    if (!ur.results[0].phone_verified) throw new HttpError(403, 'phone_needed');
     if (!s || s.kind === 'thela' || offlineReason(s, t) != null) throw new HttpError(409, 'shop_closed');
     if (lr.results[0].n >= MAX_LIVE) throw new HttpError(409, 'too_many_orders');
     const lat = Number(b.lat), lng = Number(b.lng);
@@ -257,6 +268,7 @@ export async function orderRoute(req, env, path, m, ectx) {
 
   // ---------- staff login ----------
   if (path === '/v1/staff/check' && m === 'POST') {
+    await rateLimit(env, `staffc:${clientIp(req)}`, 10, 60);
     const p = phone10((await body(req)).phone);
     if (!/^[6-9]\d{9}$/.test(p)) throw new HttpError(400, 'bad_phone');
     const st = await env.DB.prepare('SELECT id FROM staff WHERE phone = ? AND removed_at IS NULL').bind(p).first();
@@ -273,7 +285,7 @@ export async function orderRoute(req, env, path, m, ectx) {
     await rateLimit(env, `staffp:${p}`, 5, 900);
     const verified = await verifyMsg91(b.accessToken, env.MSG91_AUTHKEY);
     // Strict: the SMS-verified number must be the staff number (no Google account behind a staff login).
-    if (!verified || verified !== p) throw new HttpError(401, 'phone_mismatch');
+    if (!phoneMatches(verified, p)) throw new HttpError(401, 'phone_mismatch');
     const st = await env.DB.prepare('SELECT * FROM staff WHERE phone = ? AND removed_at IS NULL').bind(p).first();
     if (!st) throw new HttpError(404, 'not_staff');
     const t = now();
@@ -406,7 +418,7 @@ export async function orderRoute(req, env, path, m, ectx) {
       live(r);
       await sendPush(env, o.customer_id, {
         title: o.door ? `Order #${id} is on the way` : `Order #${id} is ready for pickup`,
-        body: `Your delivery code: ${o.otp}. Give it only after you get your items.`,
+        body: 'Your delivery code is in the app. Give it only after you get your items.',
         data: { type: 'order', id },
       });
       return json({ order: orderOut(r, false, s, true) });
@@ -439,7 +451,7 @@ export async function orderRoute(req, env, path, m, ectx) {
       const fee = o.door && itemsTotal < FREE_DELIVERY_MIN ? DELIVERY_FEE : 0;
       let staffId = b.staffId ? String(b.staffId) : null;
       if (staffId && !(await env.DB.prepare('SELECT id FROM staff WHERE id = ? AND store_id = ? AND removed_at IS NULL').bind(staffId, s.id).first())) staffId = null;
-      const otp = String(1000 + Math.floor(Math.random() * 9000));
+      const otp = String(secureInt(1000, 9999));
       const outNow = what === 'send' || !o.door; // pickup orders: packed = ready for pickup at once
       const r = await env.DB.prepare(`UPDATE orders SET status = ?, lines = ?, items_total = ?, fee = ?, total = ?, otp = ?, staff_id = ?, packed_at = ?, out_at = ?
         WHERE id = ? AND status = 'accepted' RETURNING *`).bind(outNow ? 'out' : 'packed', JSON.stringify(lines), itemsTotal, fee, itemsTotal + fee, otp, staffId, t, outNow ? t : null, id).first();
@@ -461,7 +473,7 @@ export async function orderRoute(req, env, path, m, ectx) {
       }
       await sendPush(env, o.customer_id, {
         title: o.door ? `Order #${id} is on the way` : `Order #${id} is ready for pickup`,
-        body: `${gone.length ? `${gone.map((l) => l.name).join(', ')} not available — new total ₹${itemsTotal + fee}. ` : ''}Your delivery code: ${otp}. Give it only after you get your items.`,
+        body: `${gone.length ? `${gone.map((l) => l.name).join(', ')} not available — new total ₹${itemsTotal + fee}. ` : ''}Your delivery code is in the app. Give it only after you get your items.`,
         data: { type: 'order', id },
       });
       if (staffId) {

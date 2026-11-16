@@ -15,7 +15,7 @@
 // No limit on how many calls: only one call at a time per order / street call.
 // "Their phone can't be reached" is said only when the ring push reached no phone AND the app was not open on
 // that phone in the last 30 seconds (an open app asks /v1/voice/incoming every few seconds and rings itself).
-import { HttpError, json, body, now, session } from './index.js';
+import { HttpError, json, body, now, session, socketAuth } from './index.js';
 import { sendPush, sendPushDetail } from './push.js';
 
 export const SEEN_S = 30; // the app asked for incoming calls this recently = the phone is reachable
@@ -133,9 +133,7 @@ export async function voiceRoute(req, env, path, m) {
 
   const sock = path.match(/^\/v1\/voice\/([\w-]+)\/socket$/);
   if (sock && m === 'GET') {
-    const url = new URL(req.url);
-    const authed = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get('token') || ''}` } });
-    const { uid } = await session(authed, env);
+    const { uid } = await session(socketAuth(req), env);
     const c = await mine(env, sock[1], uid);
     if (!['ringing', 'connected'].includes(c.status)) throw new HttpError(410, 'call_over');
     if (!env.CHAT) throw new HttpError(503, 'calls_off');

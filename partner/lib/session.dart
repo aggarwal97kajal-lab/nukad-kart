@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api.dart';
 import 'push.dart';
 
@@ -36,9 +37,38 @@ class Session extends ChangeNotifier {
 
   bool get signedIn => api.token.isNotEmpty;
 
+  /// The login token lives in the phone's secure store (Android Keystore / iOS Keychain), not in the settings file.
+  static const _secure = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+  static const _tokenKey = 'nkp_api_token';
+
+  /// Saves (or clears) the token in the secure store; false when the phone refused.
+  Future<bool> _keepToken(String t) async {
+    try {
+      if (t.isEmpty) {
+        await _secure.delete(key: _tokenKey);
+      } else {
+        await _secure.write(key: _tokenKey, value: t);
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> load() async {
     _p = await SharedPreferences.getInstance();
-    api.token = _p!.getString('token') ?? '';
+    String t = '';
+    try {
+      t = await _secure.read(key: _tokenKey) ?? '';
+    } catch (_) {}
+    final old = _p!.getString('token') ?? '';
+    var moved = true;
+    if (t.isEmpty && old.isNotEmpty) {
+      t = old; // older builds kept it in the settings file: move it
+      moved = await _keepToken(t);
+    }
+    if (old.isNotEmpty && moved) await _p!.remove('token');
+    api.token = t;
     email = _p!.getString('email') ?? '';
     // Last known shop details: the app opens instantly and refreshes in the background.
     final cached = _p!.getString('me_cache');
@@ -76,7 +106,7 @@ class Session extends ChangeNotifier {
     });
     api.token = '${r['token']}';
     email = '';
-    await _p!.setString('token', api.token);
+    await _keepToken(api.token);
     await _p!.setString('email', '');
     await refresh();
   }
@@ -109,7 +139,7 @@ class Session extends ChangeNotifier {
     }
     api.token = '${r['token']}';
     email = account.email;
-    await _p!.setString('token', api.token);
+    await _keepToken(api.token);
     await _p!.setString('email', email);
     await refresh();
     // One Google account = one business type. Chose Shop but this account is a Thela (or the other way)?
@@ -176,6 +206,7 @@ class Session extends ChangeNotifier {
     _pushStarted = false;
     await _p?.remove('me_cache');
     await _p?.remove('token');
+    await _keepToken('');
     await _p?.remove('email');
     notifyListeners();
   }

@@ -181,7 +181,7 @@ Future<Uint8List> billPdf(Bill b) async {
                   child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
                     pw.Text(st.name, style: pw.TextStyle(font: bold, fontSize: 14)),
                     pw.SizedBox(height: 3),
-                    pw.Text('${st.address} · ${st.phone}', style: const pw.TextStyle(fontSize: 8.5)),
+                    pw.Text(st.address, style: const pw.TextStyle(fontSize: 8.5)),
                     pw.SizedBox(height: 5),
                     kv('GSTIN', st.gst == BillGst.none || st.gstin.isEmpty ? 'NA' : st.gstin),
                     kv('FSSAI', st.fssai.isEmpty ? 'NA' : st.fssai),

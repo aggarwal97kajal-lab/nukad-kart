@@ -46,5 +46,8 @@ if "default_notification_icon" not in s:
     s = s.replace("</application>", "    " + icon_meta + "\n    </application>", 1)
 if "ScheduledNotificationReceiver" not in s:
     s = s.replace("</application>", "    " + receivers + "\n    </application>", 1)
+# Nothing from the app (login token, profile, addresses) goes into phone backups or to another phone.
+if "android:allowBackup" not in s:
+    s = s.replace("<application", '<application android:allowBackup="false" android:fullBackupContent="false"', 1)
 p.write_text(s)
 print(s)

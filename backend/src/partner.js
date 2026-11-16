@@ -12,7 +12,8 @@
 //   POST /v1/admin/payments/:id/confirm          (admin)      money is in: pass starts
 //   POST /v1/admin/payments/:id/cancel { reason } (admin)     money never came: pass undone
 import { rateLimit, clientIp, checkFields } from './guard.js';
-import { HttpError, json, body, now, verifySession, verifyMsg91, haversineM, THELA_STALE_S } from './index.js';
+import { HttpError, json, body, now, verifySession, verifyMsg91, phoneMatches, haversineM, THELA_STALE_S } from './index.js';
+import { turnStatus } from './voice.js';
 import { sendPush, sendPushDetail, pushReady } from './push.js';
 import { productRoute, bulkUpsert } from './products.js';
 import { staffMe } from './orders.js';
@@ -294,6 +295,8 @@ async function activate(env, p, by) {
   return until;
 }
 
+const shape = (v) => { const x = String(v || '').trim(); return x ? `${x.length}:${/^[0-9a-f]+$/.test(x) ? 'hex' : /^[\w-]+$/.test(x) ? 'word' : 'other'}${/\s/.test(String(v)) ? ':space' : ''}` : 'empty'; };
+
 const b64ToBytes = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 // ---------- files: R2 (object storage) when the FILES bucket is bound, else inside the database ----------
 // R2 keeps big files (photos, documents) out of the database: no base64 work on the server
@@ -377,7 +380,7 @@ export async function partnerRoute(req, env, path, m) {
     const claimed = String(b.phone || '').replace(/\D/g, '').slice(-10);
     if (!/^[6-9]\d{9}$/.test(claimed)) throw new HttpError(400, 'bad_phone');
     const verified = await verifyMsg91(b.accessToken, env.MSG91_AUTHKEY);
-    if (verified && verified !== claimed) throw new HttpError(401, 'phone_mismatch');
+    if (!phoneMatches(verified, claimed)) throw new HttpError(401, 'phone_mismatch');
     const other = await env.DB.prepare("SELECT id FROM users WHERE partner_phone = ? AND id != ? AND deleted_at IS NULL").bind(claimed, u.id).first();
     if (other) throw new HttpError(409, 'phone_in_use');
     const hw = String(b.deviceId || '').trim();
@@ -537,8 +540,11 @@ export async function partnerRoute(req, env, path, m) {
     const docId = chunk[1], idx = Number(chunk[2]);
     const raw = new Uint8Array(await req.arrayBuffer());
     if (!raw.length || raw.length > 1_048_576) throw new HttpError(400, 'bad_chunk');
-    // The part goes to R2 as it is (doc ids are random, so nobody can write into another shop's document;
-    // the database row below only counts if the document is really this shop's).
+    // Only this shop's own, unfinished document, and only a part number it said it would send: checked before
+    // anything is written, so no other shop's file can be touched.
+    const mineDoc = await env.DB.prepare('SELECT 1 AS y FROM partner_docs WHERE id = ? AND store_id = ? AND chunks > ? AND done = 0')
+      .bind(docId, s.id, idx).first();
+    if (!mineDoc) throw new HttpError(404, 'no_doc');
     if (env.FILES) await env.FILES.put(partKey(docId, idx), raw);
     // Save the part and see how many parts are in: one round trip.
     const [, info] = await env.DB.batch([
@@ -550,10 +556,7 @@ export async function partnerRoute(req, env, path, m) {
         FROM partner_docs d WHERE d.id = ? AND d.store_id = ?`).bind(docId, s.id),
     ]);
     const d = info.results[0];
-    if (!d) {
-      if (env.FILES) await env.FILES.delete(partKey(docId, idx));
-      throw new HttpError(404, 'no_doc');
-    }
+    if (!d) throw new HttpError(404, 'no_doc');
     if (d.n < d.chunks) return json({ done: false, received: d.n });
     // All parts in: check it really is a JPG / PDF, keep only this one per type, and send back the list. One round trip.
     let first = new Uint8Array();
@@ -672,9 +675,13 @@ export async function partnerRoute(req, env, path, m) {
       return json({ payment: payPublic(p), store: await writeAndRead(env, u.id), ...upi });
     }
     // 3 failed / cancelled in 24 h: wait a day (stops abuse of "paid" claims).
-    const bad = await env.DB.prepare("SELECT COUNT(*) AS n FROM pass_payments WHERE store_id = ? AND status IN ('FAILED','CANCELLED') AND created_at > ?")
-      .bind(s.id, now() - 86400).first();
-    if (bad.n >= 3) throw new HttpError(429, 'payments_paused');
+    const [bad, open] = await env.DB.batch([
+      env.DB.prepare("SELECT COUNT(*) AS n FROM pass_payments WHERE store_id = ? AND status IN ('FAILED','CANCELLED') AND created_at > ?").bind(s.id, now() - 86400),
+      env.DB.prepare("SELECT COUNT(*) AS n FROM pass_payments WHERE store_id = ? AND status = 'CHECKING'").bind(s.id),
+    ]);
+    if (bad.results[0].n >= 3) throw new HttpError(429, 'payments_paused');
+    // Two payments still being checked: wait for them instead of paying again.
+    if (open.results[0].n >= 2) throw new HttpError(409, 'payment_being_checked');
     const seq = (await env.DB.prepare('SELECT COUNT(*) AS n FROM pass_payments').first()).n + 1;
     const id = `NK${String(s.id).replace(/\W/g, '').slice(-4).toUpperCase()}-${String(seq).padStart(4, '0')}`;
     const t = now();
@@ -698,11 +705,9 @@ export async function partnerRoute(req, env, path, m) {
     if (st === 'FAILURE' || st === 'FAILED') {
       await env.DB.prepare("UPDATE pass_payments SET status='FAILED', upi_status=?, upi_ref=?, app=?, reason=?, updated_at=? WHERE id=?")
         .bind(st, ref, app, 'The UPI app said the payment failed', t, p.id).run();
-    } else if (st === 'SUCCESS') {
-      // The UPI app said SUCCESS: the pass starts now; the admin checks the bank and can cancel it.
-      await env.DB.prepare('UPDATE pass_payments SET upi_status=?, upi_ref=?, app=?, updated_at=? WHERE id=?').bind(st, ref, app, t, p.id).run();
-      await activate(env, p, 'upi-app');
     } else {
+      // Whatever the UPI app said (SUCCESS too: the phone reports it, so it can be faked), the pass starts only
+      // when the Nukad Kart team sees the money in the bank and taps Confirm.
       await env.DB.prepare("UPDATE pass_payments SET status='CHECKING', upi_status=?, upi_ref=?, app=?, updated_at=? WHERE id=?")
         .bind(st, ref, app, t, p.id).run();
     }
@@ -814,6 +819,9 @@ export async function partnerRoute(req, env, path, m) {
       users: a.results[0].n, partners: b.results[0].n, activePartners: b.results[0].active || 0,
       docs: c.results[0].n, docBytes: c.results[0].bytes, activeToday: d.results[0].n, pushPhones: e.results[0].n,
       filesInR2: !!env.FILES, pushReady: pushReady(env), dbServedBy: e.meta?.served_by_region || '',
+      // ?calls=1: ask Cloudflare whether the call relay key works ('turn'; 'turn_error_404' = key id wrong, 401/403 = token wrong),
+      // plus the shape of the two secrets (length and kind of characters, never the values).
+      ...(new URL(req.url).searchParams.get('calls') === '1' ? { calls: await turnStatus(env), turnShape: { keyId: shape(env.CF_TURN_KEY_ID), token: shape(env.CF_TURN_TOKEN) } } : {}),
     });
   }
 
@@ -1060,7 +1068,18 @@ export async function partnerRoute(req, env, path, m) {
     if (!p) throw new HttpError(404, 'no_payment');
     const t = now();
     if (adm[2] === 'confirm') {
-      if (p.status === 'CHECKING') await activate(env, p, a.email);
+      // Only a payment still being checked starts a pass, and only once (two quick taps can't add the days twice).
+      const claimed = p.status === 'CHECKING'
+        ? await env.DB.prepare("UPDATE pass_payments SET status = 'CONFIRMING', updated_at = ? WHERE id = ? AND status = 'CHECKING' RETURNING id").bind(t, p.id).first()
+        : null;
+      if (claimed) {
+        const until = await activate(env, p, a.email);
+        const st = await env.DB.prepare('SELECT owner_id FROM stores WHERE id = ?').bind(p.store_id).first();
+        if (st?.owner_id) {
+          await sendPush(env, st.owner_id, { title: 'Payment received: your pass is on', body: `₹${p.amount} ${PLANS[p.plan]?.name || ''} pass, till ${istDate(until).split('-').reverse().join('/')}. Switch LIVE on to show your shop.`,
+            data: { type: 'pass' } }).catch(() => {});
+        }
+      }
       await env.DB.prepare('UPDATE pass_payments SET checked_at = ?, decided_by = COALESCE(decided_by, ?) WHERE id = ?').bind(t, a.email, p.id).run();
     } else {
       const { reason } = await body(req);

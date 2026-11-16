@@ -350,6 +350,8 @@ const Map<String, String> hi = {
   'Today': 'आज',
   'Too hard to use': 'इस्तेमाल करना मुश्किल',
   'Too many failed payments today. Try again tomorrow.': 'आज बहुत पेमेंट फ़ेल हुए। कल कोशिश करें।',
+  'Your last payments are still being checked. The pass starts as soon as they are confirmed: please don’t pay again.': 'आपके पिछले पेमेंट अभी चेक हो रहे हैं। कन्फ़र्म होते ही पास शुरू हो जाएगा, दोबारा पेमेंट न करें।',
+  'Payment received: your pass is on': 'पेमेंट मिल गया: आपका पास चालू है',
   'Trading name': 'बिज़नेस का नाम',
   'Try again': 'फिर कोशिश करें',
   'Turn on location (GPS) and try again.': 'लोकेशन (GPS) चालू करके फिर कोशिश करें।',

@@ -225,7 +225,7 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
           SizedBox(height: 8),
           NoteBox('The store has packed your order, so it can’t be cancelled. '
-              'Need a change? Call the store: ${st.phone}.'),
+              'Need a change? Call the store with the Call button on this screen.'),
         ],
         if (o.status == OrderStatus.delivered) ...[
           _ratingsCard(context, s, o, st),

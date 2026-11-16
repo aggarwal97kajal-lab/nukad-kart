@@ -12,7 +12,7 @@ async function setup() {
   const env = { DB, SESSION_SECRET: SECRET };
   const ins = (table, row) => DB.raw.prepare(`INSERT INTO ${table} (${Object.keys(row)}) VALUES (${Object.keys(row).map(() => '?')})`).run(...Object.values(row));
   for (const u of ['owner', 'cust']) {
-    ins('users', { id: u, google_sub: 'g' + u, email: u + '@x.y', name: u, created_at: T, updated_at: T, app: u === 'owner' ? 'partner' : 'customer', partner_phone: u === 'owner' ? '9000000001' : null });
+    ins('users', { id: u, google_sub: 'g' + u, email: u + '@x.y', name: u, created_at: T, updated_at: T, phone_verified: 1, app: u === 'owner' ? 'partner' : 'customer', partner_phone: u === 'owner' ? '9000000001' : null });
     ins('sessions', { id: 's' + u, user_id: u, created_at: T, last_seen: T });
   }
   ins('stores', { id: 'sh1', name: 'Sharma General Store', kind: 'shop', owner_id: 'owner', lat: 28.7, lng: 77.1, opens_at: '', closes_at: '', status: 'active', live: 1,

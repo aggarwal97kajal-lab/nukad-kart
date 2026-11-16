@@ -4,7 +4,7 @@
 //   GET/POST /v1/partner/orders/:id/chat       (owner, or staff who handles orders / delivers this one)
 //   GET      /v1/orders/:id/chat/socket?token= WebSocket: new messages and "read" arrive at once (no waiting for a poll)
 // Sending answers at once; the notification to the other side goes out after the answer (waitUntil).
-import { HttpError, json, body, now, session } from './index.js';
+import { HttpError, json, body, now, session, socketAuth } from './index.js';
 import { hasNumber } from './chat.js';
 import { shopCtx } from './orders.js';
 import { sendPush } from './push.js';
@@ -40,9 +40,7 @@ const later = (ectx, p) => {
 export async function orderChatRoute(req, env, path, m, ectx) {
   const sock = path.match(/^\/v1\/orders\/([\w-]+)\/chat\/socket$/);
   if (sock && m === 'GET') {
-    const url = new URL(req.url);
-    const authed = new Request(req.url, { headers: { authorization: `Bearer ${url.searchParams.get('token') || ''}` } });
-    const { uid } = await session(authed, env);
+    const { uid } = await session(socketAuth(req), env);
     const o = await env.DB.prepare(`SELECT o.id, o.customer_id, s.owner_id,
         (SELECT 1 FROM staff st WHERE st.store_id = o.store_id AND st.user_id = ? AND st.removed_at IS NULL) AS is_staff
       FROM orders o JOIN stores s ON s.id = o.store_id WHERE o.id = ?`).bind(uid, sock[1]).first();

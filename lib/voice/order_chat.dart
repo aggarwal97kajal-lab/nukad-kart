@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 
 String chatText(String key, String lang) {
   const hi = {
@@ -89,8 +90,8 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
     if (_gone || _orderId.isEmpty) return;
     try {
       final ws = widget.base.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
-      _ws = WebSocketChannel.connect(
-          Uri.parse('$ws/v1/orders/${Uri.encodeComponent(_orderId)}/chat/socket?token=${Uri.encodeQueryComponent(widget.token())}'));
+      _ws = IOWebSocketChannel.connect(Uri.parse('$ws/v1/orders/${Uri.encodeComponent(_orderId)}/chat/socket'),
+          headers: {'authorization': 'Bearer ${widget.token()}'});
       _wsSub = _ws!.stream.listen((m) {
         _live = true;
         _onLive('$m');
