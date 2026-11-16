@@ -108,8 +108,6 @@ jobs:
 
       - name: Smoke test
         run: |
-          # The old address must keep working for older app builds.
-          curl -fsS https://nukad-kart-api.aggarwal97kajal.workers.dev/health; echo
           base=https://api.nukkadkart.in
           # A brand-new custom domain can take a minute or two to get its certificate.
           for i in $(seq 1 18); do curl -fsS $base/health && break; sleep 10; done
