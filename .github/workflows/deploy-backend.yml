@@ -108,8 +108,11 @@ jobs:
 
       - name: Smoke test
         run: |
-          base=https://nukad-kart-api.aggarwal97kajal.workers.dev
-          for i in 1 2 3 4 5 6; do curl -fsS $base/health && break; sleep 10; done
+          # The old address must keep working for older app builds.
+          curl -fsS https://nukad-kart-api.aggarwal97kajal.workers.dev/health; echo
+          base=https://api.nukkadkart.in
+          # A brand-new custom domain can take a minute or two to get its certificate.
+          for i in $(seq 1 18); do curl -fsS $base/health && break; sleep 10; done
           echo; for i in 1 2 3; do curl -s -o /dev/null -w 'health %{time_total}s\n' $base/health; done
           echo
           curl -fsS "$base/v1/stores/nearby?lat=28.718&lng=77.096" | tee /tmp/near.json
