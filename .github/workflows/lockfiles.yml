@@ -1,0 +1,44 @@
+name: Lock dependency versions
+
+# Writes pubspec.lock for the customer app and the Partner app and commits them, so every build uses the exact
+# package versions that were checked, instead of whatever is newest that day. Runs when a pubspec.yaml changes
+# (or by hand). Its own commit doesn't start other workflows (pushes made with GITHUB_TOKEN never do).
+
+on:
+  push:
+    branches: [main]
+    paths: ['pubspec.yaml', 'partner/pubspec.yaml', '.github/workflows/lockfiles.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lockfiles
+  cancel-in-progress: false
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve packages (keeps versions already in a lockfile, adds what's new)
+        run: |
+          flutter pub get
+          (cd partner && flutter pub get)
+
+      - name: Commit the lockfiles if they changed
+        run: |
+          git add pubspec.lock partner/pubspec.lock
+          if git diff --cached --quiet; then echo "Lockfiles already up to date."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Lock dependency versions (pubspec.lock for both apps)"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0; sleep 5; done
+          exit 1

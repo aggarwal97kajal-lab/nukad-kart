@@ -103,13 +103,11 @@ export async function verifySession(token, secret) {
 }
 
 /**
- * Live sockets: the app sends its session in the Authorization header. Older builds put it in ?token= (a URL can
- * end up in logs), so that is still read for now and can be dropped once every phone runs the new build.
+ * Live sockets: the session comes only in the Authorization header. A token in the URL (?token=, used by builds
+ * before Nov 2026) is ignored: URLs can end up in logs.
  */
 export function socketAuth(req) {
-  if (req.headers.get('authorization')) return req;
-  const t = new URL(req.url).searchParams.get('token') || '';
-  return new Request(req.url, { headers: { authorization: `Bearer ${t}` } });
+  return req;
 }
 
 /** A phone number check passed only when MSG91 returned a number and it is the one typed in. */

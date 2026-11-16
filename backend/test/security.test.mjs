@@ -105,7 +105,7 @@ test('F5: live sockets read the session from the header; a bad token is just "no
   const h = socketAuth(new Request('https://x/v1/chat/socket?chat=1', { headers: { authorization: 'Bearer abc' } }));
   assert.equal(h.headers.get('authorization'), 'Bearer abc');
   const q = socketAuth(new Request('https://x/v1/chat/socket?chat=1&token=old'));
-  assert.equal(q.headers.get('authorization'), 'Bearer old'); // older app builds, for now
+  assert.equal(q.headers.get('authorization'), null); // a token in the URL is never read
   assert.equal(await verifySession('!!!.@@@', SECRET), null);
 });
 
