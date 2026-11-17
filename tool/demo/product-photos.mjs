@@ -8,14 +8,22 @@ const names = [...new Set(items.map((p) => p.name))];
 fs.mkdirSync(path.join(dir, 'pp'), { recursive: true });
 const ua = { 'user-agent': 'NukkadKart-demo/1.0 (support@nukkadkart.in)' };
 const sql = [], r2 = [], log = [];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 for (const name of names) {
   const p = items.find((x) => x.name === name);
   const q = encodeURIComponent(`${name}`);
   let pick = null;
   try {
-    const r = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${q}&search_simple=1&json=1&page_size=24&fields=code,product_name,brands,image_front_url,countries_tags`, { headers: ua });
-    const d = await r.json();
+    // The search API allows about 10 calls a minute and answers an HTML page when over it: pace and retry.
+    let d = null;
+    for (let tryN = 0; tryN < 4 && !d; tryN++) {
+      await sleep(tryN ? 30000 : 7000);
+      const r = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${q}&search_simple=1&json=1&page_size=24&fields=code,product_name,brands,image_front_url,countries_tags`, { headers: ua });
+      const txt = await r.text();
+      try { d = JSON.parse(txt); } catch { log.push(`${name}: busy (${r.status}), retrying`); }
+    }
+    if (!d) throw new Error('search kept failing');
     const brand = norm(p.brand.split(' ')[0] || name.split(' ')[0]);
     const cands = (d.products || []).filter((x) => x.image_front_url && norm(`${x.brands || ''} ${x.product_name || ''}`).includes(brand));
     cands.sort((a, b) => (b.countries_tags || []).includes('en:india') - (a.countries_tags || []).includes('en:india'));
