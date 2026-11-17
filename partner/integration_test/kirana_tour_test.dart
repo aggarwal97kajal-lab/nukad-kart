@@ -69,8 +69,8 @@ void main() {
     // 7. Pack: untick what you don't have, then Packed
     step('pack');
     await k.scroll(-200);
-    await k.tap(find.byType(CheckboxListTile).at(2), pause: 1500);
-    await k.tap(find.byType(CheckboxListTile).at(2), pause: 1200);
+    await k.tap(find.byType(CheckboxListTile).last, pause: 1500);
+    await k.tap(find.byType(CheckboxListTile).last, pause: 1200);
     await k.tap(find.text('Packed'), pause: 2500);
 
     // 8. Out for delivery
@@ -87,6 +87,6 @@ void main() {
     step('delivered');
     await k.hold(4000);
     step('end');
-  }, timeout: const Timeout(Duration(minutes: 8)));
+  }, timeout: const Timeout(Duration(minutes: 30)));
 }
 

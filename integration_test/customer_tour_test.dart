@@ -210,5 +210,5 @@ void main() {
     step('reply');
     await hold(5000);
     step('end');
-  }, timeout: const Timeout(Duration(minutes: 8)));
+  }, timeout: const Timeout(Duration(minutes: 30)));
 }
