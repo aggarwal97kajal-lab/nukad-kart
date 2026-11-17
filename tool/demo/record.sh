@@ -23,6 +23,14 @@ adb shell settings put global transition_animation_scale 1
 adb shell settings put global animator_duration_scale 1
 adb shell cmd overlay enable com.android.internal.systemui.navbar.gestural || true
 adb emu geo fix 77.0884 28.5895
+# Clean status bar: 10:24, full battery, full signal, no notification icons.
+adb shell settings put global sysui_demo_allowed 1
+adb shell am broadcast -a com.android.systemui.demo -e command enter
+adb shell am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1024
+adb shell am broadcast -a com.android.systemui.demo -e command battery -e level 100 -e plugged false
+adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4
+adb shell am broadcast -a com.android.systemui.demo -e command network -e mobile show -e datatype 4g -e level 4
+adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
 
 DEFINES="--dart-define=API_BASE=http://10.0.2.2:8787 --dart-define=DEMO_TOKEN=$(tok customer) --dart-define=SHOP_TOKEN=$(tok gupta) --dart-define=THELA_TOKEN=$(tok ramesh)"
 flutter build apk --profile --target=integration_test/${TOUR}_tour_test.dart $DEFINES 2>&1 | tail -25
@@ -39,6 +47,8 @@ done
 adb logcat -c
 adb logcat -v epoch -s flutter:I NKREC:I > $OUT/logcat.txt &
 LOGPID=$!
+adb logcat -v epoch '*:W' > $OUT/logcat-all.txt &
+LOGPID2=$!
 adb shell 'log -t NKREC start; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r1.mp4; log -t NKREC r2; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r2.mp4' &
 RECPID=$!
 sleep 1
@@ -49,7 +59,7 @@ echo "drive exit $?" | tee -a $OUT/drive.log
 sleep 2
 adb shell pkill -INT screenrecord || true
 sleep 4
-kill $LOGPID 2>/dev/null || true
+kill $LOGPID $LOGPID2 2>/dev/null || true
 wait $RECPID 2>/dev/null || true
 adb pull /sdcard/r1.mp4 $OUT/r1.mp4 || true
 adb pull /sdcard/r2.mp4 $OUT/r2.mp4 || true

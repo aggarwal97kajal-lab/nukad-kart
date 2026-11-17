@@ -135,9 +135,10 @@ void main() {
     // 8. Packed and on the way: the delivery person's scooter moves on the map
     await callApi('POST', '/v1/partner/orders/$orderId/send', shopToken, {'na': []});
     step('out');
+    await hold(6000); // the map loads its streets
     const shop = (28.590356, 77.089169), home = (28.5895, 77.0884);
-    for (var i = 0; i <= 8; i++) {
-      final f = i / 8;
+    for (var i = 0; i <= 12; i++) {
+      final f = i / 12;
       await callApi('POST', '/v1/partner/rider', shopToken,
           {'lat': shop.$1 + (home.$1 - shop.$1) * f, 'lng': shop.$2 + (home.$2 - shop.$2) * f});
       await hold(2200);
@@ -154,14 +155,18 @@ void main() {
     await hold(4000);
 
     // 10. Live thelas
-    await t.pageBack();
-    await hold(800);
-    if (find.text('Moving sellers').evaluate().isEmpty) {
-      await t.pageBack();
-      await hold(800);
+    if (find.text('Not now').evaluate().isNotEmpty) await tap(find.text('Not now'), pause: 800);
+    for (var i = 0; i < 5 && find.textContaining('Moving sellers').evaluate().isEmpty; i++) {
+      final back = find.byType(BackButton).evaluate().isNotEmpty ? find.byType(BackButton) : find.byIcon(Icons.arrow_back);
+      if (back.evaluate().isNotEmpty) {
+        await tap(back, pause: 900);
+      } else {
+        await t.pageBack();
+        await hold(900);
+      }
     }
     step('thelas');
-    await tap(find.text('Moving sellers'), pause: 3500);
+    await tap(find.textContaining('Moving sellers'), pause: 4500);
 
     // 11. A thela's page and today's prices
     step('thela');
