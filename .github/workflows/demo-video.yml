@@ -86,7 +86,7 @@ jobs:
           D=media/${{ inputs.tour }}
           mkdir -p /tmp/m/$D
           for r in r1 r2 r3 r4 r5 r6 r7 r8; do [ -s demo-out/$r.mp4 ] && ffmpeg -loglevel error -y -i demo-out/$r.mp4 -c:v libx264 -preset veryfast -crf 17 -pix_fmt yuv420p -an /tmp/m/$D/$r.mp4; done
-          mkdir -p /tmp/m/$D/pp && cp demo-out/pp/* /tmp/m/$D/pp/ 2>/dev/null; cp demo-out/logcat.txt demo-out/logcat-all.txt demo-out/drive.log demo-out/server.log demo-out/last.png /tmp/m/$D/ 2>/dev/null || true
+          mkdir -p /tmp/m/$D/pp && { cp demo-out/pp/* /tmp/m/$D/pp/ 2>/dev/null || true; }; cp demo-out/logcat.txt demo-out/logcat-all.txt demo-out/drive.log demo-out/server.log demo-out/last.png /tmp/m/$D/ 2>/dev/null || true
           ls -la /tmp/m/$D
           R="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git clone -q --depth 1 -b demo-media "$R" /tmp/old 2>/dev/null && cp -rn /tmp/old/media/. /tmp/m/media/ || true

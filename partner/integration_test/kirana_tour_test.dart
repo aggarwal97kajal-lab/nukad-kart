@@ -17,10 +17,8 @@ void main() {
     k.dpr();
 
     // 1. Log in as a shop
-    await k.wait(find.text('Continue with Google'), secs: 40);
-    step('login');
-    await k.hold(1500);
-    if (k.has(find.text('Shop / kirana'))) await k.tap(find.text('Shop / kirana'), pause: 1000);
+    await k.onboard('Shop / kirana');
+    await k.hold(1200);
     await k.tap(find.text('Continue with Google'), pause: 2000);
 
     // 2. Home: the shop is live

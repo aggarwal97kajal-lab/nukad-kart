@@ -20,10 +20,8 @@ void main() {
     k.dpr();
 
     // 1. Log in as a thela
-    await k.wait(find.text('Continue with Google'), secs: 40);
-    step('login');
-    await k.hold(1500);
-    if (k.has(find.text('Thela (moving)'))) await k.tap(find.text('Thela (moving)'), pause: 1000);
+    await k.onboard('Thela (moving)');
+    await k.hold(1200);
     await k.tap(find.text('Continue with Google'), pause: 2500);
 
     // 2. Today's prices

@@ -42,6 +42,28 @@ class Tour {
 
   bool has(Finder f) => f.evaluate().isNotEmpty;
 
+  /// First run: language and theme, then "Who are you?" (shop or thela), then the login screen.
+  Future<void> onboard(String kindTitle) async {
+    final end = ms() + 40000 * slow;
+    while (ms() < end && !has(find.text('Continue with Google')) && !has(find.text('Who are you?')) && !has(find.text('Continue'))) {
+      await t.pump(const Duration(milliseconds: 100));
+    }
+    if (has(find.textContaining('Choose language'))) {
+      step('login');
+      await hold(1800);
+      await tap(find.text('Continue').last, pause: 1200);
+    }
+    if (has(find.text('Who are you?')) || has(find.text(kindTitle))) {
+      step('login');
+      await wait(find.text(kindTitle));
+      await hold(800);
+      await tap(find.text(kindTitle), pause: 1000);
+      await tap(find.text('Continue').last, pause: 1500);
+    }
+    await wait(find.text('Continue with Google'), secs: 40);
+    step('login');
+  }
+
   Future<Finder> wait(Finder f, {int secs = 25}) async {
     final end = ms() + secs * 1000 * slow;
     while (ms() < end) {
