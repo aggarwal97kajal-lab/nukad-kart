@@ -8,6 +8,7 @@ import 'account_pages.dart';
 import 'consent_screen.dart';
 import '../services/api.dart';
 import '../services/google_auth.dart';
+import '../config/keys.dart';
 import '../services/device_name.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -140,6 +141,15 @@ class LoginScreen extends StatelessWidget {
 /// Returns true when the user is signed in with a complete profile.
 Future<bool> googleSignInFlow(BuildContext context) async {
   final s = AppScope.read(context);
+  // Demo build (how-to videos): sign in to the local demo server without Google.
+  if (kDemoToken.isNotEmpty) {
+    final me = await api.me(kDemoToken);
+    if (!context.mounted) return false;
+    s.signIn('${(me['user'] as Map)['email']}');
+    s.apiToken = kDemoToken;
+    s.applyServerProfile(me);
+    return s.profileComplete;
+  }
   GoogleUser? g;
   try {
     g = await googleAuth.signIn();

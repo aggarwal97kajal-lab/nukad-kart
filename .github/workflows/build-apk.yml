@@ -3,7 +3,7 @@ name: Build APK
 on:
   push:
     branches: [main]
-    paths-ignore: ['backend/**', 'partner/**', '.github/workflows/deploy-backend.yml', '.github/workflows/build-partner.yml']
+    paths-ignore: ['backend/**', 'partner/**', 'website/**', 'integration_test/**', 'test_driver/**', 'tool/demo/**', '.github/workflows/deploy-backend.yml', '.github/workflows/build-partner.yml', '.github/workflows/demo-video.yml', '.github/workflows/deploy-website.yml']
   workflow_dispatch:
 
 permissions:

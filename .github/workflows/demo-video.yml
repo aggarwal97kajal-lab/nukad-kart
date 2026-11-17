@@ -1,0 +1,100 @@
+name: Demo video
+
+# Records a how-to video of the real app on an Android emulator, against a local demo server
+# (tool/demo/seed.mjs: the website's shops and thelas). Never touches the real server or real users.
+# The raw recording and its step log are pushed to the demo-media branch; the video is captioned from them.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tour:
+        description: customer | kirana | thela
+        default: customer
+
+permissions:
+  contents: write
+
+concurrency: demo-video
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Local demo server with the website's shops and thelas
+        working-directory: backend
+        run: |
+          pip install --quiet pillow
+          echo "SESSION_SECRET=demo-only-secret" > .dev.vars
+          W="npx --yes wrangler@4.160.1"
+          $W d1 migrations apply DB --local
+          node ../tool/demo/seed.mjs ../demo-out
+          $W d1 execute DB --local --file ../demo-out/seed.sql
+          while read key name; do
+            python3 -c "from PIL import Image;im=Image.open('../website/public/assets/img/$name.webp').convert('RGB');im.thumbnail((1200,1200));im.save('/tmp/p.jpg',quality=86)"
+            $W r2 object put "nukad-kart-files/$key" --file /tmp/p.jpg --content-type image/jpeg --local
+          done < ../demo-out/photos.txt
+          nohup $W dev --local --ip 0.0.0.0 --port 8787 > ../demo-out/server.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS localhost:8787/health && break; sleep 2; done
+          curl -fsS "localhost:8787/v1/stores/nearby?lat=28.5895&lng=77.0884" | head -c 400; echo
+
+      - name: Android project (same patches as the real APK, plus plain http to the local server)
+        run: |
+          flutter create --platforms=android --org com.nukadkart --project-name nukad_kart .
+          cp -r android_res/. android/app/src/main/res/
+          python3 tool/patch_manifest.py
+          python3 tool/patch_activity.py
+          cp android_extra/proguard-rules.pro android/app/proguard-rules.pro
+          sed -i 's/android:label="[^"]*"/android:label="Nukkad Kart"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+          flutter pub get
+          dart run flutter_launcher_icons
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Record on the emulator
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tool/demo/record.sh ${{ inputs.tour }}
+
+      - name: Push the recording to the demo-media branch
+        if: always()
+        run: |
+          sudo apt-get install -y -qq ffmpeg > /dev/null
+          D=media/${{ inputs.tour }}
+          mkdir -p /tmp/m/$D
+          for r in r1 r2; do [ -s demo-out/$r.mp4 ] && ffmpeg -loglevel error -y -i demo-out/$r.mp4 -c:v libx264 -preset veryfast -crf 17 -pix_fmt yuv420p -an /tmp/m/$D/$r.mp4; done
+          cp demo-out/logcat.txt demo-out/drive.log demo-out/server.log demo-out/last.png /tmp/m/$D/ 2>/dev/null || true
+          ls -la /tmp/m/$D
+          R="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          git clone -q --depth 1 -b demo-media "$R" /tmp/old 2>/dev/null && cp -rn /tmp/old/media/. /tmp/m/media/ || true
+          cd /tmp/m
+          git init -q -b demo-media
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Demo recording: ${{ inputs.tour }} (run ${{ github.run_id }})"
+          git push -q -f "$R" demo-media
