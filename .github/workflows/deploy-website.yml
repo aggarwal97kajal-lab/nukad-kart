@@ -1,0 +1,47 @@
+name: Deploy website
+
+on:
+  push:
+    branches: [main]
+    paths: ['website/**', '.github/workflows/deploy-website.yml']
+  workflow_dispatch:
+
+concurrency: deploy-website
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4.160.1
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 22
+
+      - name: Legal pages are up to date
+        run: |
+          python3 build/legal.py
+          git diff --exit-code -- public/privacy.html public/terms.html public/404.html
+
+      - name: Deploy site worker (nukkadkart.in and www)
+        run: $WRANGLER deploy
+
+      - name: Smoke test
+        run: |
+          base=https://nukkadkart.in
+          # A brand-new custom domain can take a few minutes to get its certificate.
+          for i in $(seq 1 30); do curl -fsS -o /dev/null $base/ && break; sleep 10; done
+          curl -fsS $base/ | grep -q 'Nukkad Kart'
+          curl -fsS $base/privacy | grep -q 'Privacy Policy'
+          curl -fsS $base/terms | grep -q 'Terms'
+          [ "$(curl -s -o /dev/null -w '%{http_code}' $base/no-such-page)" = 404 ]
+          curl -sI $base/ | grep -iq '^content-security-policy'
+          for i in $(seq 1 30); do code=$(curl -s -o /dev/null -w '%{http_code}' https://www.nukkadkart.in/) && [ "$code" = 301 ] && break; sleep 10; done
+          echo "www answered $code"
+          [ "$code" = 301 ]

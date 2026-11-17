@@ -13,6 +13,7 @@
 //   POST /v1/me/sessions/logout-others                        (auth) log out every other phone
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m); thelas by live location
 //   GET  /v1/stores/:id/products                              what a store / thela sells now
+//   POST /v1/waitlist           { name, email, phone, pincode, city, state, consent }  website early access (see waitlist.js)
 
 import { orderChatRoute, cleanOrderChat } from './orderchat.js';
 import { voiceRoute, missOld } from './voice.js';
@@ -25,6 +26,7 @@ import { samePhoneOut } from './sessions.js';
 import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
 import { chatRoute, cleanChats, ChatRoom } from './chat.js';
 import { countView, passReminders, sundayReports, reportRoute } from './reminders.js';
+import { waitlistRoute, syncWaitlist } from './waitlist.js';
 export { ChatRoom };
 
 export const RADIUS_MAX_M = 500;
@@ -349,6 +351,8 @@ async function route(req, env, ectx) {
   const path = url.pathname.replace(/\/+$/, '') || '/';
   const m = req.method;
 
+  const wait = await waitlistRoute(req, env, path, m, ectx);
+  if (wait) return wait;
   const ochat = await orderChatRoute(req, env, path, m, ectx);
   if (ochat) return ochat;
   const orders = await orderRoute(req, env, path, m, ectx);
@@ -622,6 +626,7 @@ export default {
     ectx.waitUntil(cleanOld(env).catch((e) => console.error(e)));
     ectx.waitUntil(missOld(env).catch((e) => console.error(e)));
     ectx.waitUntil(cleanOrderChat(env).catch((e) => console.error(e)));
+    ectx.waitUntil(syncWaitlist(env).catch((e) => console.error(e)));
   },
 };
 

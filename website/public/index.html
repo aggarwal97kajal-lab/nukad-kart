@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nukkad Kart · Every shop on your street, now on your phone</title>
+<meta name="description" content="Nukkad Kart brings the kirana stores and sabzi thelas within 500 m of your home into one app. Order, chat and call in the app, and your number stays private.">
+<link rel="canonical" href="https://nukkadkart.in/">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/assets/img/logo.webp" type="image/webp">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nukkad Kart">
+<meta property="og:url" content="https://nukkadkart.in/">
+<meta property="og:title" content="Nukkad Kart · Every shop on your street, now on your phone">
+<meta property="og:description" content="The kirana stores and sabzi thelas within 500 m of your home, in one app. Your number stays private.">
+<meta property="og:image" content="https://nukkadkart.in/assets/img/og.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F3F5EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#06110B" media="(prefers-color-scheme: dark)">
+<script>
+  (function(){ var t; try { t = localStorage.getItem('nk-theme'); } catch(e){}
+    if(!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t); })();
+</script>
+<style>
+@font-face{font-family:"Instrument Serif";font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/instrument-serif-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Instrument Serif";font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/instrument-serif-latin-400-italic.woff2) format("woff2")}
+@font-face{font-family:Geist;font-weight:400;font-display:swap;src:url(/assets/fonts/geist-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:Geist;font-weight:500;font-display:swap;src:url(/assets/fonts/geist-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:Geist;font-weight:600;font-display:swap;src:url(/assets/fonts/geist-latin-600-normal.woff2) format("woff2")}
+/*END-FONTFACE*/
+
+:root{
+  --yellow:#FDC630; --yellow-ink:#1B1400;
+  --serif:"Instrument Serif", ui-serif, Georgia, serif;
+  --sans:Geist, ui-sans-serif, system-ui, sans-serif;
+  --wrap:min(1280px, 100% - 48px);
+  --r-xl:34px; --r-lg:24px; --r-md:16px;
+  --ease:cubic-bezier(.16,1,.3,1); --ease-io:cubic-bezier(.65,0,.35,1);
+}
+[data-theme="light"]{
+  --bg:#F3F5EF; --bg-2:#E8EDE3; --surface:#FFFFFF; --ink:#0B1710; --muted:#4D5C52; --line:#DAE1D4;
+  --primary:#0B4A22; --on-primary:#FFFFFF; --primary-hover:#11602D; --accent:#0B4A22; --leaf:#1B7A2B;
+  --glass:rgba(255,255,255,.78); --shadow:0 30px 70px -34px rgba(12,40,22,.38), 0 2px 8px -3px rgba(12,40,22,.08);
+  --band:#0B2416; --band-ink:#EEF3EC; --band-muted:#A9BCAE; --band-line:#22412D; --band-chip:rgba(238,243,236,.06);
+  color-scheme:light;
+}
+[data-theme="dark"]{
+  --bg:#06110B; --bg-2:#0B1B12; --surface:#0E1F16; --ink:#EEF3EC; --muted:#9FB0A4; --line:#1B3124;
+  --primary:#FDC630; --on-primary:#1B1400; --primary-hover:#FFD65C; --accent:#FDC630; --leaf:#5CC46A;
+  --glass:rgba(14,31,22,.72); --shadow:0 30px 70px -30px rgba(0,0,0,.75), 0 2px 8px -3px rgba(0,0,0,.4);
+  --band:#FDC630; --band-ink:#13200E; --band-muted:#4A4618; --band-line:#E0AC1C; --band-chip:rgba(19,32,14,.06);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%;scrollbar-color:var(--line) var(--bg)}
+body{margin:0;font:400 18px/1.6 var(--sans);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:clip}
+::selection{background:var(--yellow);color:var(--yellow-ink)}
+img{display:block;max-width:100%}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+.wrap{width:var(--wrap);margin-inline:auto}
+.skip{position:absolute;left:12px;top:-60px;z-index:60;background:var(--primary);color:var(--on-primary);padding:10px 14px;border-radius:10px}
+.skip:focus{top:12px}
+h1,h2{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font-size:clamp(44px,5.6vw,84px);line-height:.98}
+h1 em,h2 em{font-style:italic}
+h1 .sent{display:block}
+h3{font:600 21px/1.25 var(--sans);letter-spacing:-.01em;margin:0}
+.sub{color:var(--muted);font-size:clamp(17px,1.35vw,19.5px);max-width:50ch;margin:20px 0 0;text-wrap:pretty}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .08em .1em 0;margin:0 -.08em -.1em 0}
+.w > span{display:inline-block;will-change:transform}
+
+/* view transition: theme change spreads as a circle from the toggle */
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+::view-transition-new(root){z-index:2}
+
+/* nav */
+.nav{position:fixed;inset:0 0 auto 0;z-index:40;transition:transform .5s var(--ease)}
+.nav.hide{transform:translateY(-110%)}
+.nav .wrap{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 10px 0 16px;border-radius:20px;background:var(--glass);backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border:1px solid color-mix(in srgb,var(--line) 75%,transparent);box-shadow:0 10px 30px -20px rgba(0,0,0,.35)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand img{width:36px;height:36px;border-radius:10px}
+.brand b{font:600 18px/1 var(--sans);letter-spacing:-.02em}
+.links{display:flex;gap:2px}
+.links a{position:relative;text-decoration:none;font-weight:500;font-size:15px;color:var(--muted);padding:12px 14px;transition:color .25s}
+.links a::after{content:"";position:absolute;left:14px;right:14px;bottom:8px;height:1.5px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .45s var(--ease)}
+.links a:hover{color:var(--ink)}
+.links a:hover::after{transform:scaleX(1);transform-origin:left}
+.nav-r{display:flex;align-items:center;gap:8px}
+.toggle{position:relative;width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;overflow:hidden}
+.toggle svg{position:absolute;inset:0;margin:auto;transition:transform .7s var(--ease),opacity .4s}
+[data-theme="light"] .i-sun{transform:translateY(130%) rotate(90deg);opacity:0}
+[data-theme="dark"] .i-moon{transform:translateY(-130%) rotate(-90deg);opacity:0}
+
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:54px;padding:0 26px;border-radius:999px;border:0;font:500 16.5px var(--sans);text-decoration:none;cursor:pointer;white-space:nowrap;overflow:hidden;isolation:isolate;transition:transform .35s var(--ease),box-shadow .35s}
+.btn .arr{transition:transform .45s var(--ease)}
+.btn:hover .arr{transform:translateX(4px)}
+.btn-p{background:var(--primary);color:var(--on-primary);box-shadow:0 14px 30px -14px color-mix(in srgb,var(--primary) 85%,transparent)}
+.btn-p::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--primary-hover);transform:translateY(101%);border-radius:inherit;transition:transform .5s var(--ease)}
+.btn-p:hover::before{transform:none}
+.btn-p:active{transform:scale(.98)}
+.btn-g{color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);background:transparent}
+.btn-g:hover{box-shadow:inset 0 0 0 1px var(--ink)}
+.btn-sm{height:44px;padding:0 18px;font-size:15px}
+
+/* hero */
+.hero{padding-top:150px}
+h1{font-size:clamp(56px,8.6vw,138px);line-height:.92;letter-spacing:-.03em}
+h1 .hl{position:relative;font-style:italic;white-space:nowrap;isolation:isolate}
+h1 .hl::after{content:"";position:absolute;left:-.02em;right:.02em;bottom:.1em;height:.14em;background:var(--yellow);z-index:-1;border-radius:3px;transform-origin:left;transform:scaleX(var(--u,1))}
+.hero-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);align-items:end;margin-top:clamp(26px,3vw,40px)}
+.signup{display:flex;gap:8px;padding:6px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);transition:border-color .3s,box-shadow .3s}
+.signup:focus-within{border-color:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 18%,transparent),var(--shadow)}
+.signup label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.signup input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:500 17px var(--sans);padding:0 18px;outline:none}
+.signup input::placeholder{color:var(--muted)}
+.signup .btn{height:48px}
+.fine{font-size:14.5px;color:var(--muted);margin:14px 0 0 6px}
+.fine a{color:var(--ink);font-weight:500;text-underline-offset:3px}
+
+.stage{position:relative;margin-top:clamp(36px,4.5vw,64px);border-radius:var(--r-xl);overflow:hidden;aspect-ratio:2.1/1;background:var(--bg-2);box-shadow:var(--shadow);clip-path:inset(0 round var(--r-xl))}
+.stage .ph{position:absolute;inset:-8% 0;}
+.stage img{width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+.float{position:absolute;background:var(--glass);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4);color:var(--ink);border-radius:20px;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
+.f-live{right:28px;bottom:28px;width:310px;padding:16px}
+.f-live .row{display:flex;align-items:center;gap:12px}
+.f-live .av{width:46px;height:46px;border-radius:14px;overflow:hidden;flex:none}
+.f-live .av img{width:100%;height:100%;object-fit:cover}
+.f-live b{display:block;font:600 16px/1.2 var(--sans)}
+.f-live small{color:var(--muted);font-size:13.5px}
+.live{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--sans);color:var(--leaf);margin-left:auto;align-self:flex-start;letter-spacing:.02em}
+.live i{position:relative;width:7px;height:7px;border-radius:50%;background:var(--leaf)}
+.live i::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid var(--leaf);animation:ring 2s var(--ease) infinite}
+@keyframes ring{from{transform:scale(.4);opacity:1}to{transform:scale(1.6);opacity:0}}
+.meter{margin-top:14px;height:5px;border-radius:5px;background:var(--bg-2);overflow:hidden}
+.meter span{display:block;height:100%;width:30%;background:var(--leaf);border-radius:5px;transition:width 1.4s var(--ease)}
+.eta{display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;font-size:13.5px;color:var(--muted)}
+.eta strong{color:var(--ink);font:600 15px var(--sans);font-variant-numeric:tabular-nums}
+.f-radius{left:28px;top:28px;padding:10px 16px 10px 12px;display:flex;align-items:center;gap:10px;font:500 15px var(--sans)}
+
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:clamp(30px,3vw,44px)}
+.facts div{padding:22px 28px 0 0;border-top:1px solid var(--line)}
+.facts div + div{padding-left:28px;border-left:1px solid var(--line)}
+.facts b{display:block;font:400 30px/1.1 var(--serif)}
+.facts span{color:var(--muted);font-size:16px}
+
+section.s{padding:clamp(110px,13vw,180px) 0}
+
+/* shops */
+.head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.gallery{display:grid;grid-template-columns:1.4fr 1fr 1fr;grid-template-rows:290px 290px;gap:16px;margin-top:52px}
+.tile{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--bg-2)}
+.tile img{width:100%;height:100%;object-fit:cover;transform:scale(1.001);transition:transform 1.2s var(--ease)}
+.tile:hover img{transform:scale(1.05)}
+.tile.big{grid-row:span 2}
+.tag{position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--ink);padding:8px 13px;border-radius:999px;font:500 14px var(--sans)}
+.tag i{width:7px;height:7px;border-radius:50%;background:var(--leaf)}
+
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:clamp(80px,9vw,120px)}
+.step{display:flex;flex-direction:column;gap:22px}
+.ui{border-radius:var(--r-lg);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);padding:20px;min-height:184px;display:flex;flex-direction:column;justify-content:center;gap:10px;font-size:14.5px}
+.step .n{font:italic 400 22px var(--serif);color:var(--muted)}
+.step p{margin:6px 0 0;color:var(--muted);font-size:16.5px}
+.search{display:flex;align-items:center;gap:8px;height:42px;border-radius:12px;background:var(--bg);padding:0 12px;color:var(--muted)}
+.search .typed::after{content:"";display:inline-block;width:1.5px;height:1em;background:var(--ink);margin-left:2px;vertical-align:-2px;animation:caret 1s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+.shop{display:flex;justify-content:space-between;padding:9px 2px;border-bottom:1px dashed var(--line)}
+.shop:last-child{border:0}
+.shop span{color:var(--muted)}
+.item{display:flex;justify-content:space-between;align-items:center}
+.qty{display:inline-flex;align-items:center;gap:12px;border-radius:999px;padding:4px 12px;background:var(--primary);color:var(--on-primary);font-weight:600;font-variant-numeric:tabular-nums}
+.total{display:flex;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line);font-weight:600;font-variant-numeric:tabular-nums}
+.code{display:flex;gap:8px;justify-content:center}
+.code span{width:48px;height:58px;border-radius:14px;background:var(--bg);display:grid;place-items:center;font:400 34px var(--serif)}
+
+/* thelas */
+.live-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(40px,7vw,120px);align-items:center}
+.phone{position:relative;width:min(330px,100%);margin-inline:auto;aspect-ratio:9/19.2;border-radius:50px;background:#0A0E0B;padding:11px;box-shadow:var(--shadow), inset 0 0 0 1.5px #2a322d}
+.screen{position:relative;height:100%;border-radius:40px;overflow:hidden;background:#F3F5EF;color:#0B1710}
+.notch{position:absolute;top:10px;left:50%;translate:-50% 0;width:92px;height:26px;border-radius:20px;background:#0A0E0B;z-index:3}
+.map{position:absolute;inset:0 0 42% 0;background:#EBEFE4}
+.map svg{width:100%;height:100%}
+.sheet{position:absolute;left:0;right:0;bottom:0;height:47%;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -12px 30px -14px rgba(0,0,0,.25);padding:14px 16px}
+.grab{width:38px;height:4px;border-radius:4px;background:#D5DBD2;margin:0 auto 12px}
+.sheet h4{margin:0 0 8px;font:600 14.5px var(--sans)}
+.li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #EEF1EA;font-size:12.5px}
+.li img{width:36px;height:36px;border-radius:11px;object-fit:cover}
+.li b{display:block;font:600 13px var(--sans)}
+.li span{color:#5a6a5f}
+.li em{margin-left:auto;font-style:normal;font-weight:600;color:#1B7A2B;font-variant-numeric:tabular-nums}
+.points{list-style:none;padding:0;margin:34px 0 0}
+.points li{display:grid;grid-template-columns:48px minmax(0,1fr);gap:18px;padding:22px 0;border-top:1px solid var(--line)}
+.ic{width:48px;height:48px;border-radius:14px;background:var(--bg-2);display:grid;place-items:center;color:var(--accent)}
+.points span{color:var(--muted);font-size:16.5px}
+.rail-clip{overflow:hidden}
+.rail{display:flex;gap:16px;margin-top:clamp(70px,8vw,110px);width:max-content;padding-left:max(24px, calc((100vw - 1280px)/2))}
+.rail .tile{width:clamp(240px,24vw,340px);aspect-ratio:4/5;flex:none}
+
+/* privacy band */
+.band{background:var(--band);color:var(--band-ink);border-radius:var(--r-xl);margin:0 12px;transition:background .3s}
+.band .sub{color:var(--band-muted)}
+.band-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(40px,7vw,110px);align-items:center}
+.call{background:var(--band-chip);border:1px solid var(--band-line);border-radius:var(--r-lg);padding:28px}
+.call .who{display:flex;align-items:center;gap:14px}
+.call .who img{width:58px;height:58px;border-radius:18px;object-fit:cover}
+.call .who b{display:block;font:600 19px var(--sans)}
+.call .who span{color:var(--band-muted);font-size:15px}
+.masked{margin:22px 0;padding:16px 18px;border-radius:16px;border:1px dashed var(--band-line);display:flex;justify-content:space-between;align-items:center;font-size:15px;color:var(--band-muted)}
+.masked strong{font:500 18px var(--sans);letter-spacing:.18em;color:var(--band-ink);font-variant-numeric:tabular-nums}
+.call-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.call-btns span{height:52px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:500}
+.call-btns .c1{background:var(--band-ink);color:var(--band)}
+.call-btns .c2{box-shadow:inset 0 0 0 1px var(--band-line)}
+.band ul{list-style:none;padding:0;margin:30px 0 0;display:grid;gap:16px}
+.band li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;color:var(--band-muted);font-size:17px}
+.band li b{color:var(--band-ink);font-weight:600}
+
+/* partners */
+.partner-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(40px,7vw,110px);align-items:center}
+.partner-photo{border-radius:var(--r-xl);overflow:hidden;aspect-ratio:4/3.5;box-shadow:var(--shadow)}
+.partner-photo img{width:100%;height:112%;object-fit:cover;object-position:62% 50%}
+.feat{margin-top:32px;border-top:1px solid var(--line)}
+.feat div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:18px 0;border-bottom:1px solid var(--line)}
+.feat b{font:400 26px/1.1 var(--serif)}
+.feat span{color:var(--muted);text-align:right;font-size:16px}
+.p-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
+
+/* close */
+.close{text-align:center}
+.close .wrap{display:flex;flex-direction:column;align-items:center}
+.close h2{font-size:clamp(54px,8vw,128px);max-width:12ch}
+.close .signup{width:min(560px,100%);margin-top:34px}
+footer{padding:40px 0 56px;color:var(--muted);font-size:15px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:32px}
+footer nav{display:flex;gap:4px 22px;flex-wrap:wrap}
+footer a{text-decoration:none;color:var(--ink);padding:10px 0;display:inline-block}
+footer a:hover{text-decoration:underline;text-underline-offset:3px}
+
+
+/* early access form */
+#join{scroll-margin-top:90px}
+.ea{width:min(760px,100%);margin-top:40px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:clamp(22px,3vw,36px);box-shadow:var(--shadow)}
+.ea-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px}
+.f-2{grid-column:span 2}
+.f label{display:block;font:500 14.5px var(--sans);margin:0 0 7px;color:var(--ink)}
+.f input,.f select,.pre{width:100%;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 16.5px var(--sans);padding:0 16px;transition:border-color .25s,box-shadow .25s,background .25s}
+.f select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23889a8d' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
+.f input::placeholder{color:color-mix(in srgb,var(--muted) 70%,transparent)}
+.f input:focus,.f select:focus,.pre:focus-within{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent);background:var(--surface)}
+.pre{display:flex;align-items:center;gap:10px;padding:0 0 0 16px}
+.pre span{color:var(--muted);font-weight:500;padding-right:10px;border-right:1px solid var(--line)}
+.pre input{border:0;height:100%;background:transparent;padding:0 14px 0 0;box-shadow:none!important}
+.f.bad input,.f.bad select,.f.bad .pre{border-color:#C2410C}
+.err{margin:6px 0 0;font-size:13.5px;color:#C2410C;min-height:0}
+[data-theme="dark"] .err{color:#FF9B6B}
+[data-theme="dark"] .f.bad input,[data-theme="dark"] .f.bad select,[data-theme="dark"] .f.bad .pre{border-color:#FF9B6B}
+.err:empty{display:none}
+.hint{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
+.filled{animation:fill .9s var(--ease)}
+@keyframes fill{0%{background:color-mix(in srgb,var(--yellow) 35%,var(--surface))}100%{background:var(--surface)}}
+.consent{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;align-items:start;margin-top:22px;font-size:15px;color:var(--muted);cursor:pointer}
+.consent input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--primary)}
+.ea-btn{width:100%;margin-top:22px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.ea-form-err{margin-top:14px}
+.ea-btn[aria-busy="true"] .lbl::after{content:"…"}
+.done{width:min(560px,100%);margin-top:40px;padding:40px 28px;border-radius:var(--r-xl);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);text-align:center;color:var(--leaf)}
+.done svg{margin:0 auto 14px}
+.done .c{stroke-dasharray:183;stroke-dashoffset:183;animation:draw .7s var(--ease) forwards}
+.done .k{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .5s var(--ease) .45s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.done h3{font:400 34px/1.1 var(--serif);color:var(--ink)}
+.done p{color:var(--muted);margin:10px 0 0}
+.done b{color:var(--ink);font-weight:600}
+@media (max-width:640px){ .ea-grid{grid-template-columns:minmax(0,1fr)} .f-2{grid-column:auto} }
+
+@media (max-width: 960px){
+  .links,.nav .btn-sm{display:none}
+  .hero{padding-top:120px}
+  .hero-row,.live-grid,.band-grid,.partner-grid{grid-template-columns:minmax(0,1fr)}
+  .stage{aspect-ratio:4/5}
+  .stage img{object-position:36% 30%}
+  .f-live{left:12px;right:12px;bottom:12px;width:auto}
+  .f-radius{left:auto;right:12px;top:12px;font-size:13.5px;padding:8px 12px 8px 10px}
+  .facts{grid-template-columns:minmax(0,1fr)}
+  .facts div,.facts div + div{padding:18px 0;border-left:0}
+  .gallery{grid-template-columns:1fr 1fr;grid-template-rows:auto}
+  .gallery .tile{aspect-ratio:4/5}
+  .gallery .tile.big{grid-column:span 2;grid-row:auto;aspect-ratio:4/3}
+  .steps{grid-template-columns:minmax(0,1fr);gap:48px}
+  .signup{flex-wrap:wrap;border-radius:24px}
+  .signup input{height:48px;flex:1 1 100%}
+  .signup .btn{flex:1 1 100%}
+  .band{margin:0 8px}
+  .feat div{flex-direction:column;gap:2px}
+  .feat span{text-align:left}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="/assets/img/logo.webp" alt="" width="36" height="36"><b>Nukkad Kart</b></a>
+    <nav class="links" aria-label="Main">
+      <a href="#how">How it works</a><a href="#thelas">Live thelas</a><a href="#privacy">Privacy</a><a href="#shops">For shops</a>
+    </nav>
+    <div class="nav-r">
+      <button class="toggle" id="theme" type="button" aria-label="Switch to dark theme">
+        <svg class="i-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="btn btn-p btn-sm" href="#join">Get early access</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" aria-labelledby="hero-h">
+    <div class="wrap">
+      <h1 id="hero-h" data-split><span class="sent">Every shop on your street.</span> <span class="sent">Now on your <span class="hl">phone.</span></span></h1>
+      <div class="hero-row">
+        <p class="sub" style="margin:0" data-rise>The kirana stores and sabzi thelas within 500&nbsp;m of your home, in one app. Same faces, same prices. Order, chat and call without sharing your phone number.</p>
+        <div data-rise>
+          <form class="signup" id="quick" novalidate>
+            <label for="ph1">Email address</label>
+            <input id="ph1" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required placeholder="Your email address">
+            <button class="btn btn-p" type="submit">Get early access <svg class="arr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          </form>
+          <p class="fine">Own a shop or a thela? <a href="#shops">Join as a partner</a></p>
+        </div>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="ph"><img src="/assets/img/thela-lane.webp" alt="A vegetable seller pushing her thela down a quiet residential lane" width="1200" height="900" fetchpriority="high"></div>
+        <div class="float f-radius">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>
+          Only shops within 500 m
+        </div>
+        <div class="float f-live" aria-label="Example: a sabzi thela coming your way">
+          <div class="row">
+            <div class="av"><img src="/assets/img/thela-veg-sm.webp" alt="" width="46" height="46"></div>
+            <div><b>Sabzi thela</b><small>Tomatoes, bhindi, dhaniya</small></div>
+            <span class="live"><i></i>LIVE</span>
+          </div>
+          <div class="meter"><span id="meter"></span></div>
+          <div class="eta"><span>Coming down your lane</span><strong><span id="dist">140</span> m away</strong></div>
+        </div>
+      </div>
+
+      <div class="facts" data-stagger>
+        <div><b>Your 500 m</b><span>Only the shops and thelas close to home.</span></div>
+        <div><b>Thelas, live</b><span>See the cart on the map as it moves.</span></div>
+        <div><b>Number stays private</b><span>Calls and chat happen inside the app.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="how" aria-labelledby="shops-h">
+    <div class="wrap">
+      <div class="head-row">
+        <div>
+          <h2 id="shops-h" data-split>The shops you <em>already</em> trust.</h2>
+          <p class="sub" data-rise>Not a warehouse across town. The kirana on your corner, with its real stock and real prices, now a tap away.</p>
+        </div>
+        <a class="btn btn-g" href="#join" data-rise>Notify me at launch <svg class="arr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="gallery" data-reveal>
+        <div class="tile big"><img src="/assets/img/shop-ganesh.webp" alt="A kirana store with a yellow Hindi signboard and green shutters" loading="lazy"><span class="tag"><i></i>Kirana · 180 m</span></div>
+        <div class="tile"><img src="/assets/img/shop-gupta.webp" alt="A general store painted blue, with jars and shelves of groceries" loading="lazy"><span class="tag"><i></i>General store · 260 m</span></div>
+        <div class="tile"><img src="/assets/img/thela-fruit.webp" alt="A fruit seller pushing a red cart of guavas, pomegranates and oranges" loading="lazy"><span class="tag"><i></i>Fruit thela · live</span></div>
+        <div class="tile"><img src="/assets/img/shop-verma.webp" alt="A provision store with sacks of rice and hanging snack packets" loading="lazy"><span class="tag"><i></i>Provision store · 320 m</span></div>
+        <div class="tile"><img src="/assets/img/thela-banana.webp" alt="A woman standing beside her fruit cart with bananas hanging above" loading="lazy"><span class="tag"><i></i>Fruit thela · live</span></div>
+      </div>
+
+      <div class="steps" data-stagger>
+        <div class="step">
+          <div class="ui" aria-hidden="true">
+            <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="typed" id="typed">atta</span></div>
+            <div class="shop"><b>Kirana store</b><span>180 m</span></div>
+            <div class="shop"><b>Dairy</b><span>260 m</span></div>
+          </div>
+          <div><span class="n">One</span><h3>Pick a shop nearby</h3><p>Open the app and see every shop and thela within 500 m.</p></div>
+        </div>
+        <div class="step">
+          <div class="ui" aria-hidden="true">
+            <div class="item"><span>Tomatoes · 1 kg</span><span class="qty">− <b id="q1">1</b> +</span></div>
+            <div class="item"><span>Milk · packet</span><span class="qty">− <b id="q2">2</b> +</span></div>
+            <div class="total"><span>Total</span><span>₹<b id="tot">108</b></span></div>
+          </div>
+          <div><span class="n">Two</span><h3>Fill your cart</h3><p>The shop's own stock and prices. Questions? Chat or call in the app.</p></div>
+        </div>
+        <div class="step">
+          <div class="ui" aria-hidden="true">
+            <span style="text-align:center;color:var(--muted)">Share this code at your door</span>
+            <div class="code" id="code"><span>4</span><span>7</span><span>1</span><span>9</span></div>
+          </div>
+          <div><span class="n">Three</span><h3>Get it at your door</h3><p>Track the order live. Share the delivery code only when you have your things.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="thelas" aria-labelledby="thela-h" style="padding-top:0">
+    <div class="wrap live-grid">
+      <div class="phone" aria-hidden="true" data-rise>
+        <div class="screen">
+          <span class="notch"></span>
+          <div class="map">
+            <svg viewBox="0 0 280 300" preserveAspectRatio="xMidYMid slice">
+              <rect width="280" height="300" fill="#EBEFE4"/>
+              <g fill="#DDE3D3"><rect x="44" y="0" width="74" height="58" rx="6"/><rect x="144" y="0" width="94" height="58" rx="6"/><rect x="44" y="84" width="74" height="54" rx="6"/><rect x="144" y="84" width="94" height="54" rx="6"/><rect x="44" y="164" width="74" height="72" rx="6"/><rect x="144" y="164" width="94" height="72" rx="6"/></g>
+              <rect x="160" y="96" width="62" height="34" rx="6" fill="#CFE2B8"/>
+              <path d="M30 0 V300 M130 0 V300 M250 0 V300 M0 70 H280 M0 150 H280 M0 250 H280" stroke="#fff" stroke-width="14"/>
+              <circle cx="130" cy="150" r="96" fill="rgba(11,74,34,.06)" stroke="#0B4A22" stroke-width="1.5" stroke-dasharray="2 5"><animate attributeName="r" values="88;98;88" dur="4s" repeatCount="indefinite"/></circle>
+              <circle cx="130" cy="150" r="8" fill="#C2410C" stroke="#fff" stroke-width="3"/>
+              <g fill="#0B4A22"><circle cx="81" cy="70" r="6"/><circle cx="191" cy="150" r="6"/></g>
+              <g><animateMotion dur="12s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;.5;1" calcMode="linear" path="M130 300 L130 150 L250 150 L250 70"/><circle r="13" fill="#FDC630" stroke="#0B4A22" stroke-width="2"/><path d="M-6 -3 h11 l-1.5 5 h-8z M-4 4.5 a1.6 1.6 0 1 0 0.1 0 M3 4.5 a1.6 1.6 0 1 0 0.1 0" fill="none" stroke="#0B4A22" stroke-width="1.6"/></g>
+            </svg>
+          </div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <h4>Near you right now</h4>
+            <div class="li"><img src="/assets/img/thela-blue-sm.webp" alt=""><div><b>Sabzi thela</b><span>Moving · your lane</span></div><em>140 m</em></div>
+            <div class="li"><img src="/assets/img/thela-melon-sm.webp" alt=""><div><b>Fruit thela</b><span>Stopped · Gali 3</span></div><em>310 m</em></div>
+            <div class="li"><img src="/assets/img/shop-ganesh-sm.webp" alt=""><div><b>Kirana store</b><span>Open</span></div><em>180 m</em></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2 id="thela-h" data-split>Never miss the <em>sabzi wala</em> again.</h2>
+        <p class="sub" data-rise>Thelas share their live location while they work, so you can see who is in your lane and what they are carrying.</p>
+        <ul class="points" data-stagger>
+          <li><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span><div><h3>See where they are</h3><span>Every thela near you on one map, updated as it moves.</span></div></li>
+          <li><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><div><h3>Ask them to stop</h3><span>Send a message from the app: "Bhaiya, ruko, coming down."</span></div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="rail-clip"><div class="rail" id="rail">
+      <div class="tile"><img src="/assets/img/thela-veg.webp" alt="A vegetable thela with tomatoes, cauliflower and coriander" loading="lazy"></div>
+      <div class="tile"><img src="/assets/img/thela-melon.webp" alt="A seller with a green cart of watermelons and melons" loading="lazy"></div>
+      <div class="tile"><img src="/assets/img/thela-blue.webp" alt="A seller pushing a blue cart of spinach, bottle gourd and carrots" loading="lazy"></div>
+      <div class="tile"><img src="/assets/img/thela-fruit.webp" alt="A fruit seller with a red cart under a printed canopy" loading="lazy"></div>
+      <div class="tile"><img src="/assets/img/thela-banana.webp" alt="A woman beside her cart of apples, oranges and papayas" loading="lazy"></div>
+    </div></div>
+  </section>
+
+  <section class="s band" id="privacy" aria-labelledby="privacy-h">
+    <div class="wrap band-grid">
+      <div>
+        <h2 id="privacy-h" data-split>Your number stays <em>yours.</em></h2>
+        <p class="sub" data-rise>Shops never see your phone number, and you never see theirs. Every call and chat goes through the app.</p>
+        <ul data-stagger>
+          <li><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg><span><b>In-app calls.</b> Talk to the shop about your order without exchanging numbers.</span></li>
+          <li><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span><b>Delivery code.</b> An order is only complete when you share your code at the door.</span></li>
+        </ul>
+      </div>
+      <div class="call" aria-label="Example in-app call screen" data-rise>
+        <div class="who"><img src="/assets/img/shop-ganesh-sm.webp" alt=""><div><b>Kirana store</b><span>Order #NK-1042</span></div></div>
+        <div class="masked"><span>Phone number</span><strong id="masked">•••••&nbsp;•••••</strong></div>
+        <div class="call-btns"><span class="c1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Call in app</span><span class="c2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s" id="shops" aria-labelledby="partner-h">
+    <div class="wrap partner-grid">
+      <div class="partner-photo" data-reveal><img src="/assets/img/partner.webp" alt="A shopkeeper at his counter reading a new order on his phone" loading="lazy" data-parallax></div>
+      <div>
+        <h2 id="partner-h" data-split>Your regulars, now ordering <em>from home.</em></h2>
+        <p class="sub" data-rise>Nukkad Partner puts your shop or thela online for the people who already buy from you. One simple monthly pass.</p>
+        <div class="feat" data-stagger>
+          <div><b>An order bell</b><span>Your phone rings for every new order</span></div>
+          <div><b>Barcode listing</b><span>Scan a product and it is on your shelf</span></div>
+          <div><b>Staff logins</b><span>A separate login for your delivery person</span></div>
+          <div><b>Live for thelas</b><span>Show up on the map while you move</span></div>
+        </div>
+        <div class="p-cta" data-rise><a class="btn btn-p" href="#join">Get the Partner app <svg class="arr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn btn-g" href="mailto:support@nukkadkart.in">Talk to us</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s close" id="join" aria-labelledby="join-h" style="padding-top:0">
+    <div class="wrap">
+      <h2 id="join-h" data-split>Your nukkad, one tap <em>away.</em></h2>
+      <p class="sub" data-rise>We are launching area by area. Tell us where you live and we will email you the day Nukkad Kart opens in your area.</p>
+      <form class="ea" id="ea" novalidate>
+        <div class="ea-grid">
+          <div class="f f-2"><label for="ea-name">Full name</label><input id="ea-name" name="name" autocomplete="name" required placeholder="Ravi Sharma"><p class="err" id="ea-name-e"></p></div>
+          <div class="f"><label for="ea-email">Email</label><input id="ea-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" required placeholder="you@example.com"><p class="err" id="ea-email-e"></p></div>
+          <div class="f"><label for="ea-phone">Mobile number</label><div class="pre"><span>+91</span><input id="ea-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" required placeholder="98xxxxxx10"></div><p class="err" id="ea-phone-e"></p></div>
+          <div class="f"><label for="ea-pin">Pincode</label><input id="ea-pin" name="pincode" inputmode="numeric" autocomplete="postal-code" maxlength="6" required placeholder="110077"><p class="hint" id="ea-pin-h">City and state fill in from your pincode.</p><p class="err" id="ea-pin-e"></p></div>
+          <div class="f"><label for="ea-city">City</label><input id="ea-city" name="city" autocomplete="address-level2" required placeholder="City"><p class="err" id="ea-city-e"></p></div>
+          <div class="f f-2"><label for="ea-state">State</label><select id="ea-state" name="state" autocomplete="address-level1" required><option value="">Select your state</option><option>Andaman and Nicobar Islands</option><option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option><option>Chandigarh</option><option>Chhattisgarh</option><option>Dadra and Nagar Haveli and Daman and Diu</option><option>Delhi</option><option>Goa</option><option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option><option>Jammu and Kashmir</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option><option>Ladakh</option><option>Lakshadweep</option><option>Madhya Pradesh</option><option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option><option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Puducherry</option><option>Punjab</option><option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option><option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option><option>Uttarakhand</option><option>West Bengal</option></select><p class="err" id="ea-state-e"></p></div>
+        </div>
+        <label class="consent"><input type="checkbox" id="ea-ok" required><span>Email me, and text me, when Nukkad Kart launches in my area. I can unsubscribe any time.</span></label>
+        <p class="err" id="ea-ok-e"></p>
+        <div class="hp" aria-hidden="true"><label for="ea-company">Company</label><input id="ea-company" name="company" tabindex="-1" autocomplete="off"></div>
+        <p class="err ea-form-err" id="ea-form-e" role="alert"></p>
+        <button class="btn btn-p ea-btn" type="submit"><span class="lbl">Get early access</span><svg class="arr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <p class="fine" style="margin-left:0">Used only to tell you about the launch in your area. Never shared with shops or anyone else. <a href="/privacy">Privacy Policy</a></p>
+      </form>
+      <div class="done" id="ea-done" hidden tabindex="-1">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="3" class="c"/><path d="M20 33 l8 8 l16 -18" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="k"/></svg>
+        <h3>You're on the list, <span id="ea-first">friend</span>.</h3>
+        <p>We will email you at <b id="ea-mail"></b> the day Nukkad Kart opens in <b id="ea-where"></b>.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>© Nukkad Kart · <a href="mailto:support@nukkadkart.in">support@nukkadkart.in</a> · Photos are illustrative.</div>
+    <nav aria-label="Legal"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms</a><a href="/privacy#grievance">Grievance Officer</a><a href="/privacy#delete">Delete your data</a></nav>
+  </div>
+</footer>
+
+<script src="/assets/js/gsap.min.js"></script>
+<script src="/assets/js/ScrollTrigger.min.js"></script>
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('theme');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* theme switch: the new theme spreads as a circle from the button */
+  function label(){ btn.setAttribute('aria-label', root.dataset.theme==='dark' ? 'Switch to light theme' : 'Switch to dark theme'); }
+  label();
+  btn.addEventListener('click', function(){
+    var next = root.dataset.theme==='dark' ? 'light' : 'dark';
+    function apply(){ root.dataset.theme = next; try{ localStorage.setItem('nk-theme', next); }catch(e){} label(); }
+    if(!document.startViewTransition || reduce){ apply(); return; }
+    var r = btn.getBoundingClientRect(), x = r.left + r.width/2, y = r.top + r.height/2;
+    var end = Math.hypot(Math.max(x, innerWidth-x), Math.max(y, innerHeight-y));
+    document.startViewTransition(apply).ready.then(function(){
+      root.animate({clipPath:['circle(0px at '+x+'px '+y+'px)','circle('+end+'px at '+x+'px '+y+'px)']},
+        {duration:850, easing:'cubic-bezier(.65,0,.35,1)', pseudoElement:'::view-transition-new(root)'});
+    });
+  });
+
+  /* nav hides on scroll down, returns on scroll up */
+  var nav=document.getElementById('nav'), lastY=0;
+  addEventListener('scroll', function(){ var y=scrollY; nav.classList.toggle('hide', y>lastY && y>200); lastY=y; }, {passive:true});
+
+  /* live thela card: distance ticks down */
+  var d=140, dist=document.getElementById('dist'), meter=document.getElementById('meter');
+  function tick(){ d = d<=40 ? 140 : d-20; dist.textContent=d; meter.style.width=(100-d/1.6)+'%'; }
+  if(!reduce){ setTimeout(tick,900); setInterval(tick, 2400); }
+
+
+  /* early access: hero email carries into the full form */
+  var quick=document.getElementById('quick'), ea=document.getElementById('ea');
+  quick.addEventListener('submit',function(e){ e.preventDefault(); var v=document.getElementById('ph1').value.trim(); var em=document.getElementById('ea-email'); if(v) em.value=v;
+    document.getElementById('join').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'});
+    setTimeout(function(){ document.getElementById('ea-name').focus({preventScroll:true}); }, reduce?0:1100); });
+  var PIN={'110':['New Delhi','Delhi'],'400':['Mumbai','Maharashtra'],'560':['Bengaluru','Karnataka'],'600':['Chennai','Tamil Nadu'],'700':['Kolkata','West Bengal'],'500':['Hyderabad','Telangana'],'411':['Pune','Maharashtra'],'380':['Ahmedabad','Gujarat'],'302':['Jaipur','Rajasthan'],'226':['Lucknow','Uttar Pradesh'],'122':['Gurugram','Haryana'],'201':['Ghaziabad','Uttar Pradesh']};
+  var pin=document.getElementById('ea-pin'), city=document.getElementById('ea-city'), state=document.getElementById('ea-state'), hint=document.getElementById('ea-pin-h');
+  pin.addEventListener('input',function(){ pin.value=pin.value.replace(/\D/g,''); if(pin.value.length===6){ var m=PIN[pin.value.slice(0,3)];
+      if(m){ city.value=m[0]; state.value=m[1]; [city,state].forEach(function(el){ el.classList.remove('filled'); void el.offsetWidth; el.classList.add('filled'); }); hint.textContent='Found '+m[0]+', '+m[1]+'. Change it if it is wrong.'; setErr('ea-city',''); setErr('ea-state',''); }
+      else hint.textContent='Type your city and pick your state.'; } });
+  document.getElementById('ea-phone').addEventListener('input',function(){ this.value=this.value.replace(/\D/g,''); });
+  function setErr(id,msg){ var e=document.getElementById(id+'-e'); e.textContent=msg||''; var f=document.getElementById(id).closest('.f'); if(f) f.classList.toggle('bad',!!msg); document.getElementById(id).setAttribute('aria-invalid',msg?'true':'false'); if(msg) document.getElementById(id).setAttribute('aria-describedby',id+'-e'); }
+  var RULES={'ea-name':[function(v){return v.length>=2},'Enter your name.'],'ea-email':[function(v){return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)},'Enter an email like you@example.com.'],'ea-phone':[function(v){return /^[6-9]\d{9}$/.test(v)},'Enter a 10 digit Indian mobile number.'],'ea-pin':[function(v){return /^[1-9]\d{5}$/.test(v)},'Enter your 6 digit pincode.'],'ea-city':[function(v){return v.length>=2},'Enter your city.'],'ea-state':[function(v){return !!v},'Pick your state.']};
+  Object.keys(RULES).forEach(function(id){ var el=document.getElementById(id); ['input','change','blur'].forEach(function(ev){ el.addEventListener(ev,function(){ var good=RULES[id][0](el.value.trim()); if(ev==='blur'){ if(el.value && !good) setErr(id, RULES[id][1]); } else if(el.getAttribute('aria-invalid')==='true'){ setErr(id, good?'':RULES[id][1]); } }); }); });
+  document.getElementById('ea-ok').addEventListener('change',function(){ if(this.checked) setErr('ea-ok',''); });
+  ea.addEventListener('submit',function(e){ e.preventDefault(); var ok=true, first=null;
+    function chk(id,cond,msg){ var bad=!cond; setErr(id,bad?msg:''); if(bad){ ok=false; if(!first) first=id; } }
+    var g=function(id){ return document.getElementById(id).value.trim(); };
+    chk('ea-name', g('ea-name').length>=2, 'Enter your name.');
+    chk('ea-email', /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g('ea-email')), 'Enter an email like you@example.com.');
+    chk('ea-phone', /^[6-9]\d{9}$/.test(g('ea-phone')), 'Enter a 10 digit Indian mobile number.');
+    chk('ea-pin', /^[1-9]\d{5}$/.test(g('ea-pin')), 'Enter your 6 digit pincode.');
+    chk('ea-city', g('ea-city').length>=2, 'Enter your city.');
+    chk('ea-state', !!g('ea-state'), 'Pick your state.');
+    chk('ea-ok', document.getElementById('ea-ok').checked, 'Tick this so we can email you at launch.');
+    if(!ok){ document.getElementById(first).focus(); return; }
+    var btn=ea.querySelector('.ea-btn'); btn.setAttribute('aria-busy','true'); btn.disabled=true;
+    var fe=document.getElementById('ea-form-e'); fe.textContent='';
+    var FIELD={name:'ea-name',email:'ea-email',phone:'ea-phone',pincode:'ea-pin',city:'ea-city',state:'ea-state',consent:'ea-ok'};
+    function fail(msg){ btn.removeAttribute('aria-busy'); btn.disabled=false; fe.textContent=msg; }
+    fetch('https://api.nukkadkart.in/v1/waitlist',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({name:g('ea-name'),email:g('ea-email'),phone:g('ea-phone'),pincode:g('ea-pin'),city:g('ea-city'),state:g('ea-state'),consent:true,company:g('ea-company')})})
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ return {ok:r.ok,status:r.status,d:d}; }); })
+    .then(function(res){
+      if(res.ok){ document.getElementById('ea-first').textContent=g('ea-name').split(' ')[0]; document.getElementById('ea-mail').textContent=g('ea-email'); document.getElementById('ea-where').textContent=g('ea-city');
+        var done=document.getElementById('ea-done'); ea.hidden=true; done.hidden=false; done.focus(); if(!reduce && window.gsap) gsap.from(done,{y:20,autoAlpha:0,scale:.97,duration:.8,ease:'expo.out'}); return; }
+      if(res.status===400 && res.d.field && FIELD[res.d.field]){ var id=FIELD[res.d.field]; setErr(id, RULES[id] ? RULES[id][1] : 'Tick this so we can email you at launch.'); fail(''); document.getElementById(id).focus(); return; }
+      if(res.status===429){ fail('Too many tries from this network. Please wait a few minutes and try again.'); return; }
+      fail('Something went wrong on our side. Please try again in a minute.');
+    })
+    .catch(function(){ fail('Could not reach Nukkad Kart. Check your internet and try again.'); });
+  });
+
+  if(reduce || !window.gsap) return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* split headings into words, keep inner markup (em, .hl) */
+  document.querySelectorAll('[data-split]').forEach(function(h){
+    var walk=function(node){
+      [].slice.call(node.childNodes).forEach(function(n){
+        if(n.nodeType===3){
+          var frag=document.createDocumentFragment();
+          n.textContent.split(/(\s+)/).forEach(function(part){
+            if(!part) return;
+            if(/^\s+$/.test(part)){ frag.appendChild(document.createTextNode(' ')); return; }
+            var w=document.createElement('span'); w.className='w'; var i=document.createElement('span'); i.textContent=part; w.appendChild(i); frag.appendChild(w);
+          });
+          n.replaceWith(frag);
+        } else if(n.nodeType===1 && !n.classList.contains('w')){ walk(n); }
+      });
+    };
+    walk(h);
+  });
+
+  /* hero: words rise, highlight draws, photo opens like a shutter */
+  var tl=gsap.timeline({defaults:{ease:'expo.out'}});
+  tl.from('#hero-h .w > span',{yPercent:115,rotate:4,duration:1.3,stagger:.045})
+    .fromTo('#hero-h .hl',{'--u':0},{'--u':1,duration:.8,ease:'power3.inOut'},'-=.6')
+    .from('.hero [data-rise]',{y:24,autoAlpha:0,duration:1,stagger:.1},'-=1.0')
+    .fromTo('#stage',{clipPath:'inset(18% 8% 0% 8% round 34px)'},{clipPath:'inset(0% 0% 0% 0% round 34px)',duration:1.6,ease:'expo.inOut'},'-=1.1')
+    .from('#stage img',{scale:1.25,duration:2,ease:'expo.out'},'<')
+    .from('.float',{y:24,autoAlpha:0,scale:.96,duration:1,stagger:.15},'-=1.2');
+
+  /* hero photo drifts slower than the page */
+  gsap.to('#stage .ph',{yPercent:8,ease:'none',scrollTrigger:{trigger:'#stage',start:'top top',end:'bottom top',scrub:true}});
+
+  /* section headings: words rise when they enter */
+  gsap.utils.toArray('[data-split]:not(#hero-h)').forEach(function(h){
+    gsap.from(h.querySelectorAll('.w > span'),{yPercent:115,rotate:3,duration:1.2,ease:'expo.out',stagger:.05,scrollTrigger:{trigger:h,start:'top 85%'}});
+  });
+  gsap.utils.toArray('[data-rise]:not(.hero [data-rise])').forEach(function(el){
+    gsap.from(el,{y:30,autoAlpha:0,duration:1.1,ease:'expo.out',scrollTrigger:{trigger:el,start:'top 88%'}});
+  });
+  gsap.utils.toArray('[data-stagger]').forEach(function(g){
+    gsap.from(g.children,{y:28,autoAlpha:0,duration:1,ease:'expo.out',stagger:.12,scrollTrigger:{trigger:g,start:'top 85%'}});
+  });
+
+  /* gallery tiles open one after another */
+  gsap.from('.gallery .tile',{clipPath:'inset(100% 0% 0% 0% round 24px)',duration:1.4,ease:'expo.inOut',stagger:.1,scrollTrigger:{trigger:'.gallery',start:'top 80%'}});
+  gsap.from('.gallery .tile img',{scale:1.3,duration:1.8,ease:'expo.out',stagger:.1,scrollTrigger:{trigger:'.gallery',start:'top 80%'}});
+  gsap.from('.partner-photo',{clipPath:'inset(0% 100% 0% 0% round 34px)',duration:1.5,ease:'expo.inOut',scrollTrigger:{trigger:'.partner-photo',start:'top 80%'}});
+  gsap.fromTo('[data-parallax]',{yPercent:-6},{yPercent:0,ease:'none',scrollTrigger:{trigger:'.partner-photo',start:'top bottom',end:'bottom top',scrub:true}});
+
+  /* the thela photos slide sideways as you scroll */
+  var rail=document.getElementById('rail');
+  gsap.to(rail,{x:function(){ return Math.min(0, innerWidth - rail.scrollWidth - 24); },ease:'none',scrollTrigger:{trigger:rail,start:'top bottom',end:'bottom top',scrub:.6,invalidateOnRefresh:true}});
+
+  /* step one: the search box types */
+  var words=['atta','doodh','sabzi','chai patti'], wi=0, typed=document.getElementById('typed');
+  function typeNext(){ var w=words[wi++%words.length], i=0; typed.textContent=''; var t=setInterval(function(){ typed.textContent=w.slice(0,++i); if(i>=w.length){ clearInterval(t); setTimeout(typeNext,1600);} },110); }
+  ScrollTrigger.create({trigger:'.steps',start:'top 80%',once:true,onEnter:typeNext});
+
+  /* step two: quantities change, the total follows */
+  var q1=document.getElementById('q1'), q2=document.getElementById('q2'), tot=document.getElementById('tot'), a=1, b=2;
+  function bump(){ a = a>=3?1:a+1; b = b>=3?1:b+1; q1.textContent=a; q2.textContent=b; var o={v:+tot.textContent}; gsap.to(o,{v:a*40+b*34,duration:.6,ease:'power2.out',onUpdate:function(){ tot.textContent=Math.round(o.v); }}); gsap.fromTo([q1,q2],{y:-6,opacity:0},{y:0,opacity:1,duration:.4}); }
+  ScrollTrigger.create({trigger:'.steps',start:'top 80%',once:true,onEnter:function(){ setInterval(bump,2600); }});
+
+  /* step three: the code digits drop in */
+  gsap.from('#code span',{y:-26,opacity:0,rotateX:-80,duration:.8,ease:'back.out(2)',stagger:.12,scrollTrigger:{trigger:'#code',start:'top 85%'}});
+
+  /* privacy: digits scramble and settle back to hidden */
+  var masked=document.getElementById('masked');
+  ScrollTrigger.create({trigger:masked,start:'top 85%',onEnter:function(){
+    var n=0, t=setInterval(function(){ var s=''; for(var i=0;i<10;i++){ s+= (i===5?' ':'') + (n>14 ? '•' : Math.floor(Math.random()*10)); } masked.textContent=s; if(++n>15) clearInterval(t); },70);
+  }});
+})();
+</script>
+</body>
+</html>

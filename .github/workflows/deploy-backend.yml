@@ -97,6 +97,18 @@ jobs:
             echo "::warning::CF_TURN_KEY_ID / CF_TURN_TOKEN not set: in-app calls use STUN only (some mobile networks may not connect)."
           fi
 
+      - name: Brevo key for the website early access list (only if the BREVO_API_KEY secret is set in GitHub)
+        env:
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+        run: |
+          if [ -n "$BREVO_API_KEY" ]; then
+            printf '%s' "$BREVO_API_KEY" | $WRANGLER secret put BREVO_API_KEY
+            code=$(curl -s -o /tmp/brevo.json -w '%{http_code}' -H "api-key: $BREVO_API_KEY" https://api.brevo.com/v3/account)
+            if [ "$code" = 200 ]; then echo "Brevo key works"; else echo "::warning::Brevo answered $code: $(head -c 300 /tmp/brevo.json)"; fi
+          else
+            echo "::warning::BREVO_API_KEY secret not set: website sign-ups are saved but not sent to Brevo yet."
+          fi
+
       - name: Create session secret once
         run: |
           if ! $WRANGLER secret list --format json | jq -e '.[] | select(.name=="SESSION_SECRET")' >/dev/null; then
@@ -118,3 +130,5 @@ jobs:
           jq -e '(.stores | type) == "array" and ([.stores[].id] | index("s1") == null)' /tmp/near.json
           code=$(curl -s -o /dev/null -w '%{http_code}' $base/v1/me)
           [ "$code" = 401 ] || { echo "expected 401 without sign-in, got $code"; exit 1; }
+          cors=$(curl -s -o /dev/null -D - -X OPTIONS -H 'origin: https://nukkadkart.in' $base/v1/waitlist | grep -i '^access-control-allow-origin' || true)
+          [ -n "$cors" ] || { echo "waitlist preflight has no CORS header"; exit 1; }
