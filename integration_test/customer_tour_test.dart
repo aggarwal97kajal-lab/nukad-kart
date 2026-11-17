@@ -13,7 +13,7 @@ const shopToken = String.fromEnvironment('SHOP_TOKEN');
 const thelaToken = String.fromEnvironment('THELA_TOKEN');
 
 /// Slow motion: animations run this many times slower and the video is sped up as much (smooth on the slow emulator).
-const slow = 4;
+const slow = 6;
 
 int ms() => DateTime.now().millisecondsSinceEpoch;
 void step(String id) => print('NKSTEP|$id|${ms()}');
@@ -210,5 +210,5 @@ void main() {
     step('reply');
     await hold(5000);
     step('end');
-  }, timeout: const Timeout(Duration(minutes: 30)));
+  }, timeout: const Timeout(Duration(minutes: 50)));
 }

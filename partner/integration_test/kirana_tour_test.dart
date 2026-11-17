@@ -87,6 +87,6 @@ void main() {
     step('delivered');
     await k.hold(4000);
     step('end');
-  }, timeout: const Timeout(Duration(minutes: 30)));
+  }, timeout: const Timeout(Duration(minutes: 50)));
 }
 

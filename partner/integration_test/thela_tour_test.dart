@@ -75,5 +75,5 @@ void main() {
     step('offline');
     await k.tap(find.byType(Switch).first, pause: 3500);
     step('end');
-  }, timeout: const Timeout(Duration(minutes: 30)));
+  }, timeout: const Timeout(Duration(minutes: 50)));
 }

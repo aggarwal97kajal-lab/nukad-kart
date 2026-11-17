@@ -9,7 +9,7 @@ import 'package:nukad_partner/api.dart';
 const customerToken = String.fromEnvironment('CUSTOMER_TOKEN');
 
 /// Slow motion: animations run this many times slower and the video is sped up as much (smooth on the slow emulator).
-const slow = 4;
+const slow = 6;
 
 int ms() => DateTime.now().millisecondsSinceEpoch;
 void step(String id) => print('NKSTEP|$id|${ms()}');

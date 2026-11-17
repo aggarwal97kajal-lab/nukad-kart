@@ -18,8 +18,8 @@ esac
 adb shell settings put system screen_off_timeout 1800000
 adb shell settings put global hide_error_dialogs 1
 # Fewer pixels for the software GPU = smoother app; the video shows the screen ~560 px wide anyway.
-adb shell wm size 720x1600
-adb shell wm density 280
+adb shell wm size 576x1280
+adb shell wm density 224
 sleep 30
 # The Pixel launcher on a fresh emulator stalls and pops "isn't responding" over the app: the demo doesn't need it.
 adb shell am force-stop com.google.android.apps.nexuslauncher || true
@@ -48,18 +48,24 @@ for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION 
 adb shell dumpsys deviceidle whitelist +$PKG || true
 cd "$ROOT"
 
-# Thelas show for 10 minutes after their last location: send a fresh one now.
-for k in ramesh sita; do
-  pos=$(node -e "const t=require('./$OUT/tokens.json');const id={ramesh:'t_ramesh',sita:'t_sita'}['$k'];process.stdout.write(JSON.stringify(t.thelas[id]))")
-  curl -s -X POST localhost:8787/v1/partner/location -H "authorization: Bearer $(tok $k)" -H 'content-type: application/json' -d "$pos"; echo
-done
+# Thelas show for 10 minutes after their last location, and the slow-motion tour runs longer: keep them fresh.
+THELAS="ramesh sita"; [ "$TOUR" = thela ] && THELAS="sita"   # the thela tour's own thela goes live in the app
+ping_thelas() {
+  for k in $THELAS; do
+    pos=$(node -e "const t=require('./$OUT/tokens.json');const id={ramesh:'t_ramesh',sita:'t_sita'}['$k'];process.stdout.write(JSON.stringify(t.thelas[id]))")
+    curl -s -X POST localhost:8787/v1/partner/location -H "authorization: Bearer $(tok $k)" -H 'content-type: application/json' -d "$pos"; echo
+  done
+}
+ping_thelas
+( while sleep 120; do ping_thelas > /dev/null; done ) &
+PINGPID=$!
 
 adb logcat -c
 adb logcat -v epoch -s flutter:I NKREC:I > $OUT/logcat.txt &
 LOGPID=$!
 adb logcat -v epoch '*:W' > $OUT/logcat-all.txt &
 LOGPID2=$!
-adb shell 'log -t NKREC start; for i in 1 2 3 4 5 6 7 8; do [ $i -gt 1 ] && log -t NKREC r$i; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r$i.mp4; done' &
+adb shell 'log -t NKREC start; for i in 1 2 3 4 5 6 7 8 9 10 11 12; do [ $i -gt 1 ] && log -t NKREC r$i; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r$i.mp4; done' &
 RECPID=$!
 sleep 1
 
@@ -71,8 +77,8 @@ cd "$ROOT"
 sleep 2
 adb shell 'pkill -f "for i in"; pkill -INT screenrecord' || true
 sleep 4
-kill $LOGPID $LOGPID2 2>/dev/null || true
+kill $LOGPID $LOGPID2 $PINGPID 2>/dev/null || true
 wait $RECPID 2>/dev/null || true
-for i in 1 2 3 4 5 6 7 8; do adb pull /sdcard/r$i.mp4 $OUT/r$i.mp4 2>/dev/null || true; done
+for i in 1 2 3 4 5 6 7 8 9 10 11 12; do adb pull /sdcard/r$i.mp4 $OUT/r$i.mp4 2>/dev/null || true; done
 adb exec-out screencap -p > $OUT/last.png || true
 ls -la $OUT
