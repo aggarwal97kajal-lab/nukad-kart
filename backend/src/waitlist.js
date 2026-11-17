@@ -133,17 +133,18 @@ export function confirmEmail(row) {
     + `We will email you once, on the day the app opens in your area. Nothing before that.\n\n`
     + `Did not sign up, or want to be removed? Reply to this email and we will delete your details.\nUnsubscribed by mistake? Fill in the form on nukkadkart.in again.\n\n— Nukkad Kart\nhttps://nukkadkart.in`;
   const html = `<!doctype html><html><body style="margin:0;background:#f6f3ea;font-family:Arial,Helvetica,sans-serif;color:#0d1f14">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px">
-<tr><td style="padding:28px 28px 8px;font-size:22px;font-weight:bold;color:#023717">Nukkad <span style="color:#248A09">Kart</span></td></tr>
-<tr><td style="padding:8px 28px 0;font-size:16px;line-height:1.6">
-<p>Hi ${esc(first)},</p>
-<p>You're on the early access list for <b>${esc(row.city)}</b> (${esc(row.pincode)}).</p>
-<p>We will email you once, on the day the app opens in your area. Nothing before that.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden">
+<tr><td style="background:#03200F"><a href="https://nukkadkart.in"><img src="https://nukkadkart.in/assets/img/email-banner.jpg" width="560"
+ alt="Nukkad Kart: every shop on your street, now on your phone. Kirana stores and sabzi thelas within 500 m." style="display:block;width:100%;max-width:560px;height:auto;border:0;color:#F3F5EF;font-size:18px"></a></td></tr>
+<tr><td style="padding:24px 28px 0;font-size:16px;line-height:1.6">
+<p style="margin:0 0 14px">Hi ${esc(first)},</p>
+<p style="margin:0 0 14px">You're on the early access list for <b>${esc(row.city)}</b> (${esc(row.pincode)}).</p>
+<p style="margin:0 0 14px">We will email you once, on the day the app opens in your area. Nothing before that.</p>
 </td></tr>
-<tr><td style="padding:8px 28px 28px;font-size:13px;line-height:1.6;color:#5b6b60">
+<tr><td style="padding:4px 28px 28px;font-size:13px;line-height:1.6;color:#5b6b60">
 Did not sign up, or want to be removed? Reply to this email and we will delete your details.<br>
-<a href="https://nukkadkart.in" style="color:#248A09">nukkadkart.in</a></td></tr>
+Unsubscribed by mistake? Fill in the form on <a href="https://nukkadkart.in" style="color:#248A09">nukkadkart.in</a> again.</td></tr>
 </table></td></tr></table></body></html>`;
   return { subject: `You're on the list, ${first}`, text, html };
 }
