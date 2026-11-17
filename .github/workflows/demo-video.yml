@@ -47,8 +47,9 @@ jobs:
             python3 -c "from PIL import Image;im=Image.open('../website/public/assets/img/$name.webp').convert('RGB');im.thumbnail((1200,1200));im.save('/tmp/p.jpg',quality=86)"
             $W r2 object put "nukad-kart-files/$key" --file /tmp/p.jpg --content-type image/jpeg --local
           done < ../demo-out/photos.txt
-          nohup $W dev --local --ip 0.0.0.0 --port 8787 > ../demo-out/server.log 2>&1 &
+          nohup $W dev src/demo-entry.js --local --ip 0.0.0.0 --port 8787 > ../demo-out/server.log 2>&1 &
           for i in $(seq 1 60); do curl -fsS localhost:8787/health && break; sleep 2; done
+          curl -fsS localhost:8787/health || { tail -30 ../demo-out/server.log; exit 1; }
           curl -fsS "localhost:8787/v1/stores/nearby?lat=28.5895&lng=77.0884" | head -c 400; echo
 
       - name: Android project (same patches as the real APK, plus plain http to the local server)
