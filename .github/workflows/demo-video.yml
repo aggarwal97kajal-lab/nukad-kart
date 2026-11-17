@@ -19,7 +19,7 @@ concurrency: demo-video
 jobs:
   record:
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
@@ -85,7 +85,7 @@ jobs:
           sudo apt-get install -y -qq ffmpeg > /dev/null
           D=media/${{ inputs.tour }}
           mkdir -p /tmp/m/$D
-          for r in r1 r2; do [ -s demo-out/$r.mp4 ] && ffmpeg -loglevel error -y -i demo-out/$r.mp4 -c:v libx264 -preset veryfast -crf 17 -pix_fmt yuv420p -an /tmp/m/$D/$r.mp4; done
+          for r in r1 r2 r3 r4 r5 r6 r7 r8; do [ -s demo-out/$r.mp4 ] && ffmpeg -loglevel error -y -i demo-out/$r.mp4 -c:v libx264 -preset veryfast -crf 17 -pix_fmt yuv420p -an /tmp/m/$D/$r.mp4; done
           mkdir -p /tmp/m/$D/pp && cp demo-out/pp/* /tmp/m/$D/pp/ 2>/dev/null; cp demo-out/logcat.txt demo-out/logcat-all.txt demo-out/drive.log demo-out/server.log demo-out/last.png /tmp/m/$D/ 2>/dev/null || true
           ls -la /tmp/m/$D
           R="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"

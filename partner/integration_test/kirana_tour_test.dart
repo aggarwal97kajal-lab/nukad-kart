@@ -11,6 +11,7 @@ void main() {
 
   testWidgets('kirana tour', (t) async {
     final k = Tour(t);
+    k.start();
     app.main();
     await k.hold(1500);
     k.dpr();

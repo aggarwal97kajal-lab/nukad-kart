@@ -2,6 +2,7 @@
 // Run only by .github/workflows/demo-video.yml. It prints NKSTEP / NKTAP lines; the video is cut and captioned from them.
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
@@ -10,6 +11,9 @@ import 'package:nukad_kart/config/keys.dart';
 
 const shopToken = String.fromEnvironment('SHOP_TOKEN');
 const thelaToken = String.fromEnvironment('THELA_TOKEN');
+
+/// Slow motion: animations run this many times slower and the video is sped up as much (smooth on the slow emulator).
+const slow = 4;
 
 int ms() => DateTime.now().millisecondsSinceEpoch;
 void step(String id) => print('NKSTEP|$id|${ms()}');
@@ -30,7 +34,7 @@ void main() {
 
   testWidgets('customer tour', (t) async {
     Future<void> hold(int milli) async {
-      final end = ms() + milli;
+      final end = ms() + milli * slow;
       while (ms() < end) {
         await t.pump(const Duration(milliseconds: 50));
       }
@@ -42,7 +46,7 @@ void main() {
     }
 
     Future<Finder> wait(Finder f, {int secs = 25}) async {
-      final end = ms() + secs * 1000;
+      final end = ms() + secs * 1000 * slow;
       while (ms() < end) {
         await t.pump(const Duration(milliseconds: 100));
         if (f.evaluate().isNotEmpty) return f;
@@ -69,6 +73,7 @@ void main() {
       for (var i = 1; i <= text.length; i++) {
         await t.enterText(field.first, text.substring(0, i));
         await t.pump(const Duration(milliseconds: 55));
+        await hold(55);
       }
       await hold(500);
     }
@@ -76,10 +81,12 @@ void main() {
     Future<void> scroll(double dy) async {
       final s = find.byType(Scrollable);
       if (s.evaluate().isEmpty) return;
-      await t.timedDrag(s.first, Offset(0, dy), const Duration(milliseconds: 900));
+      await t.timedDrag(s.first, Offset(0, dy), const Duration(milliseconds: 900 * slow));
       await hold(600);
     }
 
+    timeDilation = slow.toDouble();
+    print('NKSLOW|$slow');
     app.main();
     await hold(1500);
     final v = t.view;

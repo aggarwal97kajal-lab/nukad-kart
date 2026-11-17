@@ -59,7 +59,7 @@ adb logcat -v epoch -s flutter:I NKREC:I > $OUT/logcat.txt &
 LOGPID=$!
 adb logcat -v epoch '*:W' > $OUT/logcat-all.txt &
 LOGPID2=$!
-adb shell 'log -t NKREC start; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r1.mp4; log -t NKREC r2; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r2.mp4' &
+adb shell 'log -t NKREC start; for i in 1 2 3 4 5 6 7 8; do [ $i -gt 1 ] && log -t NKREC r$i; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r$i.mp4; done' &
 RECPID=$!
 sleep 1
 
@@ -69,11 +69,10 @@ flutter drive --profile --driver=test_driver/integration_test.dart --target=inte
 echo "drive exit $?" | tee -a "$ROOT/$OUT/drive.log"
 cd "$ROOT"
 sleep 2
-adb shell pkill -INT screenrecord || true
+adb shell 'pkill -f "for i in"; pkill -INT screenrecord' || true
 sleep 4
 kill $LOGPID $LOGPID2 2>/dev/null || true
 wait $RECPID 2>/dev/null || true
-adb pull /sdcard/r1.mp4 $OUT/r1.mp4 || true
-adb pull /sdcard/r2.mp4 $OUT/r2.mp4 || true
+for i in 1 2 3 4 5 6 7 8; do adb pull /sdcard/r$i.mp4 $OUT/r$i.mp4 2>/dev/null || true; done
 adb exec-out screencap -p > $OUT/last.png || true
 ls -la $OUT

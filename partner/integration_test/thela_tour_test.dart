@@ -14,6 +14,7 @@ void main() {
     final k = Tour(t);
     // Start offline with yesterday's prices, like a morning.
     await callApi('POST', '/v1/partner/live', kDemoToken, {'on': false});
+    k.start();
     app.main();
     await k.hold(1500);
     k.dpr();

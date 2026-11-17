@@ -1,11 +1,15 @@
 // Helpers for the how-to video tours (see tool/demo). Each step and tap is printed so the video can be captioned.
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:nukad_partner/api.dart';
 
 const customerToken = String.fromEnvironment('CUSTOMER_TOKEN');
+
+/// Slow motion: animations run this many times slower and the video is sped up as much (smooth on the slow emulator).
+const slow = 4;
 
 int ms() => DateTime.now().millisecondsSinceEpoch;
 void step(String id) => print('NKSTEP|$id|${ms()}');
@@ -25,7 +29,7 @@ class Tour {
   Tour(this.t);
 
   Future<void> hold(int milli) async {
-    final end = ms() + milli;
+    final end = ms() + milli * slow;
     while (ms() < end) {
       await t.pump(const Duration(milliseconds: 50));
     }
@@ -39,7 +43,7 @@ class Tour {
   bool has(Finder f) => f.evaluate().isNotEmpty;
 
   Future<Finder> wait(Finder f, {int secs = 25}) async {
-    final end = ms() + secs * 1000;
+    final end = ms() + secs * 1000 * slow;
     while (ms() < end) {
       await t.pump(const Duration(milliseconds: 100));
       if (f.evaluate().isNotEmpty) return f;
@@ -66,6 +70,7 @@ class Tour {
     for (var i = 1; i <= text.length; i++) {
       await t.enterText(field.first, text.substring(0, i));
       await t.pump(const Duration(milliseconds: 55));
+      await hold(55);
     }
     await hold(500);
   }
@@ -73,8 +78,13 @@ class Tour {
   Future<void> scroll(double dy) async {
     final s = find.byType(Scrollable);
     if (s.evaluate().isEmpty) return;
-    await t.timedDrag(s.first, Offset(0, dy), const Duration(milliseconds: 900));
+    await t.timedDrag(s.first, Offset(0, dy), const Duration(milliseconds: 900 * slow));
     await hold(600);
+  }
+
+  void start() {
+    timeDilation = slow.toDouble();
+    print('NKSLOW|$slow');
   }
 
   void dpr() {
