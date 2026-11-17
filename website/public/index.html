@@ -26,7 +26,7 @@
     /* logo intro: on the first visit and on every refresh, not when coming back from another page */
     var n = performance.getEntriesByType && performance.getEntriesByType('navigation')[0], seen;
     try { seen = localStorage.getItem('nk-intro'); } catch(e){}
-    if(!matchMedia('(prefers-reduced-motion: reduce)').matches && (!seen || (n && n.type === 'reload')))
+    if(location.pathname === '/' && !matchMedia('(prefers-reduced-motion: reduce)').matches && (!seen || (n && n.type === 'reload')))
       document.documentElement.classList.add('intro');
   })();
 </script>
@@ -253,7 +253,7 @@ footer a:hover{text-decoration:underline;text-underline-offset:3px}
 
 
 /* early access form */
-#join{scroll-margin-top:90px}
+main section[id]{scroll-margin-top:90px}
 .ea{width:min(760px,100%);margin-top:40px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xl);padding:clamp(22px,3vw,36px);box-shadow:var(--shadow)}
 .ea-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px}
 .f-2{grid-column:span 2}
@@ -560,14 +560,22 @@ footer a:hover{text-decoration:underline;text-underline-offset:3px}
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 
-  /* in-page links scroll without adding #section to the address */
-  if(location.hash){ history.replaceState(null,'',location.pathname+location.search); }
+  /* sections have clean addresses (nukkadkart.in/join) instead of #join; the page still scrolls, Back works */
+  var SLUG={top:'/',how:'/how-it-works',thelas:'/thelas',privacy:'/your-privacy',shops:'/partners',join:'/join'}, BYPATH={};
+  Object.keys(SLUG).forEach(function(k){ BYPATH[SLUG[k]]=k; });
+  function go(id, smooth){ var t=document.getElementById(id); if(!t) return; t.scrollIntoView({behavior: smooth&&!reduce?'smooth':'auto', block:'start'}); }
+  window.nkGo=function(id){ if(SLUG[id] && location.pathname!==SLUG[id]) history.pushState({id:id},'',SLUG[id]); go(id,true); };
+  if(location.hash){ var h=location.hash.slice(1); history.replaceState(null,'',SLUG[h]||location.pathname); if(SLUG[h]) setTimeout(function(){ go(h,false); },0); }
+  var start=BYPATH[location.pathname.replace(/\/$/,'')||'/'];
+  if(start && start!=='top') setTimeout(function(){ go(start,false); }, 60);
+  addEventListener('popstate', function(){ var id=BYPATH[location.pathname.replace(/\/$/,'')||'/']; if(id) go(id,true); });
   document.addEventListener('click', function(e){
     var a=e.target.closest && e.target.closest('a[href^="#"]'); if(!a) return;
     var id=a.getAttribute('href').slice(1), t=id ? document.getElementById(id) : null; if(!t) return;
     e.preventDefault();
-    t.scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'});
-    if(id==='main' || id==='top'){ t.setAttribute('tabindex','-1'); t.focus({preventScroll:true}); }
+    if(id==='main'){ t.setAttribute('tabindex','-1'); t.focus(); return; }
+    nkGo(id);
+    if(id==='top'){ t.setAttribute('tabindex','-1'); t.focus({preventScroll:true}); }
   });
 
   /* logo intro (decided in the head before the first paint) */
@@ -627,7 +635,7 @@ footer a:hover{text-decoration:underline;text-underline-offset:3px}
   /* early access: hero email carries into the full form */
   var quick=document.getElementById('quick'), ea=document.getElementById('ea');
   quick.addEventListener('submit',function(e){ e.preventDefault(); var v=document.getElementById('ph1').value.trim(); var em=document.getElementById('ea-email'); if(v) em.value=v;
-    document.getElementById('join').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'});
+    nkGo('join');
     setTimeout(function(){ document.getElementById('ea-name').focus({preventScroll:true}); }, reduce?0:1100); });
   var PIN={'110':['New Delhi','Delhi'],'400':['Mumbai','Maharashtra'],'560':['Bengaluru','Karnataka'],'600':['Chennai','Tamil Nadu'],'700':['Kolkata','West Bengal'],'500':['Hyderabad','Telangana'],'411':['Pune','Maharashtra'],'380':['Ahmedabad','Gujarat'],'302':['Jaipur','Rajasthan'],'226':['Lucknow','Uttar Pradesh'],'122':['Gurugram','Haryana'],'201':['Ghaziabad','Uttar Pradesh']};
   var pin=document.getElementById('ea-pin'), city=document.getElementById('ea-city'), state=document.getElementById('ea-state'), hint=document.getElementById('ea-pin-h');

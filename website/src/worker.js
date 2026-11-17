@@ -12,6 +12,8 @@ const CSP = [
   "object-src 'none'",
 ].join('; ');
 
+const SECTIONS = ['/join', '/how-it-works', '/thelas', '/your-privacy', '/partners'];
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -20,7 +22,9 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
     if (url.pathname === '/index.html') return Response.redirect(new URL('/', url).toString(), 301);
-    const res = await env.ASSETS.fetch(req);
+    // Sections of the home page have their own addresses (nukkadkart.in/join); they all serve the home page.
+    const section = SECTIONS.includes(url.pathname.replace(/\/$/, ''));
+    const res = await env.ASSETS.fetch(section ? new Request(new URL('/', url), req) : req);
     const h = new Headers(res.headers);
     h.set('content-security-policy', CSP);
     h.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
