@@ -64,6 +64,7 @@ void main() {
     }
 
     Future<void> type(Finder field, String text) async {
+      t.testTextInput.register(); // letters appear one by one (the phone keyboard would replace them)
       await tap(field, pause: 300);
       for (var i = 1; i <= text.length; i++) {
         await t.enterText(field.first, text.substring(0, i));
@@ -166,11 +167,11 @@ void main() {
       }
     }
     step('thelas');
-    await tap(find.textContaining('Moving sellers'), pause: 4500);
+    await tap(find.textContaining('Moving sellers'), pause: 5000);
 
     // 11. A thela's page and today's prices
     step('thela');
-    await tap(find.text('Ramesh Sabzi Thela'), pause: 2500);
+    await tap(find.text('Ramesh Sabzi Thela'), pause: 6000); // the map shows where the thela stands
     await scroll(-350);
     await hold(1200);
 
