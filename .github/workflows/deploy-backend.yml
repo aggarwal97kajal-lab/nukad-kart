@@ -103,7 +103,7 @@ jobs:
         run: |
           if [ -n "$BREVO_API_KEY" ]; then
             printf '%s' "$BREVO_API_KEY" | $WRANGLER secret put BREVO_API_KEY
-            code=$(curl -s -o /tmp/brevo.json -w '%{http_code}' -H "api-key: $BREVO_API_KEY" https://api.brevo.com/v3/account)
+            code=$(curl -s -o /tmp/brevo.json -w '%{http_code}' -H "api-key: $BREVO_API_KEY" 'https://api.brevo.com/v3/contacts/lists?limit=1&offset=0')
             if [ "$code" = 200 ]; then echo "Brevo key works"; else echo "::warning::Brevo answered $code: $(head -c 300 /tmp/brevo.json)"; fi
           else
             echo "::warning::BREVO_API_KEY secret not set: website sign-ups are saved but not sent to Brevo yet."

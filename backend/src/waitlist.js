@@ -182,10 +182,22 @@ export async function syncOne(env, email) {
 /** Cron: retry rows Brevo has not taken yet (Brevo down, key added later, sender not verified yet). */
 export async function syncWaitlist(env) {
   if (!env.BREVO_API_KEY) return;
+  await keepKeyAlive(env);
   const { results } = await env.DB.prepare(
     `SELECT email FROM waitlist WHERE (brevo_synced = 0 OR confirm_sent = 0) AND brevo_tries < ? ORDER BY created_at LIMIT 20`,
   ).bind(MAX_TRIES).all();
   for (const r of results) {
     try { await syncOne(env, r.email); } catch (e) { console.error('brevo_retry', e.message); }
   }
+}
+
+/** Brevo switches off an API key after 90 days without use. One small read a day keeps it alive before launch. */
+async function keepKeyAlive(env) {
+  const day = Math.floor(now() / 86400);
+  const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'brevo_ping_day'").first();
+  if (row && Number(row.value) === day) return;
+  const r = await brevo(env, 'GET', '/contacts/lists?limit=1&offset=0');
+  if (!r.ok) { console.error('brevo_ping', r.status, JSON.stringify(r.data)); return; }
+  await env.DB.prepare("INSERT INTO settings (key, value) VALUES ('brevo_ping_day', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+    .bind(String(day)).run();
 }
