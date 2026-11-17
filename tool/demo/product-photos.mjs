@@ -31,8 +31,12 @@ for (const name of names) {
   } catch (e) { log.push(`${name}: search failed ${e.message}`); }
   if (!pick) { log.push(`${name}: no photo`); continue; }
   const url = pick.image_front_url.replace(/\.(\d+|full)\.jpg$/, '.400.jpg');
-  const img = new Uint8Array(await (await fetch(url, { headers: ua })).arrayBuffer());
-  if (img[0] !== 0xff || img[1] !== 0xd8) { log.push(`${name}: not a jpeg`); continue; }
+  let img = null;
+  for (let tryN = 0; tryN < 3 && !img; tryN++) {
+    try { img = new Uint8Array(await (await fetch(url, { headers: ua, signal: AbortSignal.timeout(30000) })).arrayBuffer()); }
+    catch (e) { log.push(`${name}: image fetch failed ${e.message}`); await sleep(5000); }
+  }
+  if (!img || img[0] !== 0xff || img[1] !== 0xd8) { log.push(`${name}: not a jpeg`); continue; }
   const file = path.join(dir, 'pp', norm(name).replace(/ /g, '-') + '.jpg');
   fs.writeFileSync(file, img);
   log.push(`${name}: ${pick.code} ${pick.brands} / ${pick.product_name} ${url}`);

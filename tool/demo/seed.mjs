@@ -59,6 +59,9 @@ for (const s of shops) {
     photo_lat: s.pos.lat, photo_lng: s.pos.lng, photo_at: t - 86400 * 15, agreement_version: AGREE, addr_shop: s.name, addr_area: s.area,
     addr_city: 'New Delhi', addr_state: 'Delhi', addr_pin: '110045', phone_verified: 1, prices_confirmed: null, pan: 'ABCPG1234K', aadhaar_last4: '4321' });
   photos.push(`photos/${s.id}.jpg ${s.photo}`);
+  // KYC papers already uploaded (rows only, no file), so the home screen shows no "to buy a pass" checklist.
+  for (const type of ['pan', 'aadhaar', 'fssai'])
+    insert('partner_docs', { id: `doc_${s.id}_${type}`, store_id: s.id, type, mime: 'image/jpeg', name: `${type}.jpg`, size: 1, chunks: 0, done: 1, created_at: t - 86400 * 15 });
 }
 for (const th of thelas) {
   insert('stores', { id: th.id, name: th.name, kind: 'thela', lat: th.pos.lat, lng: th.pos.lng, address: '', opens_at: null, closes_at: null,
@@ -67,6 +70,7 @@ for (const th of thelas) {
     live_lat: th.pos.lat, live_lng: th.pos.lng, live_at: t, moved_at: t, heading: 90, prices_confirmed: new Date((t + 19800) * 1000).toISOString().slice(0, 10),
     alert_lat: th.pos.lat, alert_lng: th.pos.lng });
   photos.push(`photos/${th.id}.jpg ${th.photo}`);
+  insert('partner_docs', { id: `doc_${th.id}_aadhaar`, store_id: th.id, type: 'aadhaar', mime: 'image/jpeg', name: 'aadhaar.jpg', size: 1, chunks: 0, done: 1, created_at: t - 86400 * 10 });
 }
 
 // ---------- products ----------
