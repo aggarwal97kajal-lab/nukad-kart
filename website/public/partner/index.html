@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nukkad Kart Partner · Kirana web panel</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<style>
+@font-face{font-family:Fraunces;font-weight:600;font-display:swap;src:url(/assets/fonts/fraunces-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Fraunces;font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/fraunces-latin-500-italic.woff2) format("woff2")}
+@font-face{font-family:PJ;font-weight:400;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:PJ;font-weight:500;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:PJ;font-weight:600;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:PJ;font-weight:700;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-700-normal.woff2) format("woff2")}
+:root{--bg:#F3F5EF;--card:#fff;--ink:#0B1F12;--mute:#5E6B62;--line:#DDE2D9;--soft:#FAFBF8;--green:#03200F;--leaf:#248A09;--y:#FDC630;
+  --ok:#E3F0DB;--okI:#1E6A08;--up:#E5EEFB;--upI:#1F4E9A;--bad:#FDE7E4;--badI:#A3261A;--wr:#FFF3D1;--wrI:#7A5A00}
+*{box-sizing:border-box}
+body{margin:0;font:400 15px/1.5 PJ,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--leaf);outline-offset:2px;border-radius:8px}
+[hidden]{display:none!important}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:#B9C2B5}
+.btn.p{background:var(--green);border-color:var(--green);color:#fff}
+.btn.p:hover{background:#0B3A1C}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.sm{min-height:36px;padding:0 12px;border-radius:10px;font-size:14px}
+.chip{display:inline-flex;align-items:center;font-weight:600;font-size:13px;padding:6px 11px;border-radius:999px;white-space:nowrap}
+.g1{background:var(--ok);color:var(--okI)}.g2{background:var(--up);color:var(--upI)}.g3{background:var(--bad);color:var(--badI)}.g4{background:var(--wr);color:var(--wrI)}.g0{background:#EEF1EB;color:var(--mute)}
+/* login */
+.login{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+.login .l{position:relative;background:#03200F url(/assets/img/shop-verma.webp) center/cover;color:#F3F5EF;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
+.login .l:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,32,15,.65),rgba(3,32,15,.25) 40%,rgba(3,32,15,.95))}
+.login .l>*{position:relative}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:19px}.brand img{width:44px;height:44px;border-radius:12px}
+.login h1{font:600 clamp(36px,4.4vw,58px)/1.1 Fraunces,Georgia,serif;letter-spacing:-.02em;margin:0}
+.login h1 em{font-family:Fraunces;font-style:italic;font-weight:400;color:var(--y)}
+.login .l p{color:#C7D6CB;font-size:17px;margin:14px 0 0;max-width:460px}
+.login .r{display:grid;place-items:center;padding:32px}
+.box{width:100%;max-width:400px}
+.tag{display:inline-block;font-weight:600;font-size:13px;color:var(--leaf);background:var(--ok);padding:6px 12px;border-radius:999px}
+.box h2{font-size:30px;letter-spacing:-.02em;margin:16px 0 8px}
+.box .s{color:var(--mute);margin:0 0 26px}
+#gbtn{min-height:44px}
+.note{margin-top:20px;background:var(--wr);border:1px solid #F5E2A6;border-radius:12px;padding:12px 14px;font-size:14px;color:#5A4A12}
+.err{margin-top:16px;background:var(--bad);color:var(--badI);border-radius:12px;padding:12px 14px;font-size:14px}
+.fine{margin-top:22px;font-size:13px;color:var(--mute)}
+@media (max-width:820px){.login{grid-template-columns:1fr}.login .l{min-height:300px;padding:28px}.login h1{font-size:34px}}
+/* app shell */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;background:linear-gradient(90deg,var(--green) 240px,var(--bg) 240px)}
+.side{background:var(--green);color:#C7D6CB;padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.side .brand{color:#fff;padding:2px 8px 20px;font-size:17px}.side .brand img{width:36px;height:36px;border-radius:10px}
+.nv{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;font-weight:500;text-decoration:none;color:inherit}
+.nv svg{flex:none}
+.nv:hover{background:rgba(255,255,255,.07)}
+.nv.on{background:var(--y);color:var(--green);font-weight:700}
+.nv b{margin-left:auto;background:var(--leaf);color:#fff;font-size:12px;padding:1px 8px;border-radius:999px}
+.side .bot{margin-top:auto;padding:14px;border-radius:14px;background:rgba(255,255,255,.06);font-size:13px;line-height:1.5}
+.side .out{margin-top:10px;background:none;border:0;color:#C7D6CB;text-decoration:underline;cursor:pointer;padding:0;font-size:13px}
+.top{height:72px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 32px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+.top h1{font-size:19px;margin:0}.top small{display:block;color:var(--mute);font-size:13px;margin-top:2px}
+.who{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mute)}
+.av{width:36px;height:36px;border-radius:50%;background:var(--ok);color:var(--leaf);display:grid;place-items:center;font-weight:700}
+.body{padding:28px 32px 60px;max-width:1240px}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.hd h2{font-size:28px;letter-spacing:-.02em;margin:0}.hd p{color:var(--mute);margin:6px 0 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{padding:18px 20px}.stat small{color:var(--mute);font-weight:500}.stat b{display:block;font:600 34px/1.1 Fraunces,Georgia,serif;margin-top:6px}
+.tip{margin-top:18px;padding:16px 20px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+/* tables */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:600;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;padding:11px 14px;background:var(--soft);border-bottom:1px solid #EEF1EB;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #F0F2EE;vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.e td{background:#FFF8F7}tr.w td{background:#FFFCF2}
+.msg{font-size:13px;color:var(--badI)}.msg.w{color:var(--wrI)}
+.bad{outline:2px solid #E5574A;outline-offset:-2px;border-radius:6px;padding:1px 6px}
+.pn b{display:block;font-weight:600}.pn small{color:var(--mute)}
+.num{width:92px;height:36px;border:1px solid var(--line);border-radius:9px;padding:0 10px;text-align:right;background:#fff}
+.num:focus{border-color:var(--leaf);outline:none;box-shadow:0 0 0 3px rgba(36,138,9,.15)}
+.sw{position:relative;width:42px;height:24px;border-radius:999px;background:#C9CFC5;border:0;cursor:pointer;flex:none}
+.sw:after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw[aria-checked=true]{background:var(--leaf)}.sw[aria-checked=true]:after{transform:translateX(18px)}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid #EEF1EB}
+.search{flex:1;min-width:200px;height:42px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--soft)}
+.ft{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;background:var(--soft);border-radius:0 0 18px 18px}
+.ft span{color:var(--mute);font-size:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:600;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--green);color:#fff;border-color:var(--green)}
+.empty{padding:40px 20px;text-align:center;color:var(--mute)}
+/* upload */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.st{padding:14px 16px;display:flex;gap:12px;align-items:center}
+.st i{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-style:normal;background:var(--ok);color:var(--leaf)}
+.st.cur{border-color:var(--green);box-shadow:0 0 0 3px rgba(253,198,48,.6)}.st.cur i{background:var(--y);color:var(--green)}
+.st b{display:block}.st small{color:var(--mute);font-size:13px}
+.drop{display:flex;flex-direction:column;align-items:center;gap:10px;padding:36px 20px;border:2px dashed #C9CFC5;border-radius:18px;background:#fff;text-align:center;cursor:pointer}
+.drop.over{border-color:var(--leaf);background:#F6FBF2}
+.drop b{font-size:17px}.drop span{color:var(--mute);font-size:14px}
+.file{display:flex;align-items:center;gap:12px}
+.xl{width:40px;height:40px;border-radius:10px;background:#1D6F42;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.ch{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 18px;border-bottom:1px solid #EEF1EB}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.result{padding:18px 20px;margin-top:16px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--green);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.toast.bad{background:var(--badI)}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr;background:var(--bg)}
+  .side{position:sticky;top:0;height:auto;flex-direction:row;align-items:center;gap:4px;padding:10px 12px;overflow-x:auto;z-index:10}
+  .side .brand{padding:0 8px 0 0}.side .brand span,.side .bot{display:none}
+  .nv{padding:9px 11px;font-size:14px;white-space:nowrap}
+  .top{position:static;padding:0 18px;height:auto;min-height:64px}
+  .body{padding:20px 16px 60px}
+  .stats,.steps{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div id="root"><p class="empty">Loading…</p></div>
+<noscript><p class="empty">The partner panel needs JavaScript.</p></noscript>
+<script src="/partner/xlsx-lite.js"></script>
+<script>
+(function(){
+'use strict';
+var API='https://api.nukkadkart.in', CLIENT_ID='173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
+var HEADS=['Name','Brand','Size','Category','MRP','Price','GST %','HSN','Barcode','Stock','Loose (Y/N)','Unit','Sizes'];
+var REASON={name_required:'Name is missing',bad_category:'Category is not in the list',fssai_needed:'Food item: add your FSSAI number in the app first',
+  bad_price:'Price is missing or wrong',bad_mrp:'MRP is wrong',mrp_required:'MRP is missing',price_above_mrp:'Price is above MRP',
+  bad_gst:'GST must be 0, 5, 18 or 40',bad_unit:'Unit must be kg, litre, piece, dozen or bunch',pick_sizes:'Sizes missing or not allowed for this unit',
+  size_required:'Size is missing',bad_stock:'Stock must be a whole number',barcode_exists:'Another product already has this barcode'};
+var root=document.getElementById('root');
+var S={token:null, me:null, cats:null};
+try{ S.token=sessionStorage.getItem('nkp-token'); }catch(e){}
+
+/* ---------- helpers ---------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function money(n){ return n==null||n===''?'—':'₹'+(Math.round(n*100)/100).toLocaleString('en-IN'); }
+function toast(t,bad){ var d=document.createElement('div'); d.className='toast'+(bad?' bad':''); d.setAttribute('role','status'); d.textContent=t; document.body.appendChild(d); setTimeout(function(){d.remove();},3200); }
+function icon(p){ return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>'; }
+function download(blob,name){ var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500); }
+function api(method,path,body){
+  return fetch(API+path,{method:method,headers:Object.assign({'content-type':'application/json'},S.token?{authorization:'Bearer '+S.token}:{}),body:body?JSON.stringify(body):undefined})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){
+      if(r.status===401 && path!=='/v1/auth/google'){ logout(true); throw {code:'not_signed_in'}; }
+      if(!r.ok) throw {code:d.error||'server_error',status:r.status};
+      return d; }); }, function(){ throw {code:'offline'}; });
+}
+function why(e){ return REASON[e.code]||({offline:'Could not reach Nukkad Kart. Check your internet.',email_used_by_customer:'This Google account is used in the customer app. Use the account you use in the Partner app.',rate_limited:'Too many tries. Wait a minute and try again.'}[e.code])||'Something went wrong ('+e.code+'). Try again.'; }
+
+/* ---------- login ---------- */
+function loginView(msg){
+  document.title='Log in · Nukkad Kart Partner';
+  root.innerHTML='<div class="login"><div class="l"><div class="brand"><img src="/assets/img/logo.webp" alt="">Nukkad Kart Partner</div>'+
+    '<div><h1>Run your kirana store from a <em>bigger screen.</em></h1><p>Upload your whole price list from Excel, change prices and stock, and see your orders.</p></div></div>'+
+    '<div class="r"><div class="box"><span class="tag">For kirana stores</span><h2>Log in to your store</h2>'+
+    '<p class="s">Use the same Google account you use in the Nukkad Kart Partner app.</p><div id="gbtn"></div>'+
+    (msg?'<div class="err" role="alert">'+esc(msg)+'</div>':'')+
+    '<div class="note"><b>Thela partners:</b> please use the Partner app on your phone. Going live and sharing your location work only in the app.</div>'+
+    '<p class="fine">New store? Register in the Partner app first. It checks your shop photo and documents. · <a href="/privacy">Privacy</a></p></div></div></div>';
+  var tries=0;
+  (function gis(){
+    if(window.google && google.accounts && google.accounts.id){
+      google.accounts.id.initialize({client_id:CLIENT_ID,callback:onGoogle,ux_mode:'popup',auto_select:false});
+      google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'outline',size:'large',shape:'pill',text:'continue_with',width:360});
+      return;
+    }
+    if(tries++===0){ var s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=gis; s.onerror=function(){ document.getElementById('gbtn').innerHTML='<div class="err">Google sign-in could not load. Check your internet and reload.</div>'; }; document.head.appendChild(s); }
+  })();
+}
+function onGoogle(resp){
+  api('POST','/v1/auth/google',{idToken:resp.credential,app:'partner',device:{name:'Web browser',platform:'web'}})
+    .then(function(d){ S.token=d.token; try{sessionStorage.setItem('nkp-token',d.token);}catch(e){} return start(); })
+    .catch(function(e){ loginView(why(e)); });
+}
+function logout(silent){
+  if(S.token && !silent) api('POST','/v1/me/logout').catch(function(){});
+  S.token=null; S.me=null; try{sessionStorage.removeItem('nkp-token');}catch(e){}
+  if(location.pathname!=='/partner') history.replaceState(null,'','/partner');
+  loginView(silent===true?'You were logged out. Please log in again.':'');
+}
+
+/* ---------- shell ---------- */
+var NAV=[['/partner','Today',icon('<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>')],
+  ['/partner/orders','Orders',icon('<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>')],
+  ['/partner/products','Products',icon('<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>')],
+  ['/partner/upload','Upload from Excel',icon('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>')]];
+function shell(){
+  var st=S.me.store, u=S.me.user, ini=(u.name||u.email||'?').split(/[\s@]/).filter(Boolean).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');
+  root.innerHTML='<div class="app"><aside class="side"><div class="brand"><img src="/assets/img/logo.webp" alt=""><span>Nukkad Kart</span></div>'+
+    NAV.map(function(n){ return '<a class="nv" href="'+n[0]+'" data-nav>'+n[2]+'<span>'+n[1]+'</span>'+(n[0]==='/partner/orders'?'<b id="newN" hidden></b>':'')+'</a>'; }).join('')+
+    '<div class="bot">Orders also ring on your phone in the Partner app. Accept and pack them there.<br><button class="out" id="logout">Log out</button></div></aside>'+
+    '<div class="main"><div class="top"><div><h1>'+esc(st.name)+'</h1><small>'+esc([st.addr.area,st.addr.city].filter(Boolean).join(', ')||st.address)+' · '+(st.visible?'Open for orders':'Not taking orders now')+'</small></div>'+
+    '<div class="who"><span>'+esc(u.email)+'</span><div class="av">'+esc(ini)+'</div></div></div><div class="body" id="view"></div></div></div>';
+  document.getElementById('logout').onclick=function(){ logout(false); };
+}
+function route(){
+  var p=location.pathname.replace(/\/$/,'')||'/partner';
+  if(!S.me) return;
+  document.querySelectorAll('[data-nav]').forEach(function(a){ a.classList.toggle('on',a.getAttribute('href')===p); a.setAttribute('aria-current',a.getAttribute('href')===p?'page':'false'); });
+  var v=document.getElementById('view');
+  ({'/partner':today,'/partner/orders':orders,'/partner/products':products,'/partner/upload':upload}[p]||today)(v);
+  window.scrollTo(0,0);
+}
+document.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[data-nav],a[data-go]'); if(!a||e.metaKey||e.ctrlKey) return;
+  e.preventDefault(); history.pushState(null,'',a.getAttribute('href')); route();
+});
+addEventListener('popstate',route);
+
+function start(){
+  return api('GET','/v1/partner/me').then(function(me){
+    if(!me.store){ logout(true); loginView('No store on this account yet. Register your shop in the Partner app first.'); return; }
+    if(me.store.kind==='thela'){ S.me=null; api('POST','/v1/me/logout').catch(function(){}); S.token=null; try{sessionStorage.removeItem('nkp-token');}catch(e){}
+      loginView('This is a thela account. The web panel is for kirana stores. Please use the Partner app.'); return; }
+    S.me=me; shell(); route();
+    api('GET','/v1/partner/orders?tab=new').then(function(o){ var n=(o.orders||[]).length, b=document.getElementById('newN'); if(b&&n){ b.textContent=n; b.hidden=false; } }).catch(function(){});
+  });
+}
+
+/* ---------- today ---------- */
+function today(v){
+  document.title='Today · Nukkad Kart Partner';
+  v.innerHTML='<div class="hd"><div><h2>Today</h2><p>Your store at a glance.</p></div><a class="btn p" href="/partner/upload" data-go>'+icon('<path d="M12 16V4M7 9l5-5 5 5"/>')+' Upload from Excel</a></div>'+
+    '<div class="stats"><div class="card stat"><small>New orders</small><b id="t-new">–</b></div><div class="card stat"><small>Packing</small><b id="t-pack">–</b></div>'+
+    '<div class="card stat"><small>Products selling</small><b>'+(S.me.selling||0)+'</b></div><div class="card stat"><small>Out of stock</small><b id="t-out">–</b></div></div>'+
+    '<div class="card tip"><div><b>Price list changed?</b><br><span style="color:var(--mute)">Download your products, change prices in Excel, and upload the same file back.</span></div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="exp">Download my products</button><a class="btn" href="/partner/products" data-go>Edit products</a></div></div>';
+  api('GET','/v1/partner/orders?tab=new').then(function(o){ var e=document.getElementById('t-new'); if(e) e.textContent=(o.orders||[]).length; }).catch(function(){});
+  api('GET','/v1/partner/orders?tab=packing').then(function(o){ var e=document.getElementById('t-pack'); if(e) e.textContent=(o.orders||[]).length; }).catch(function(){});
+  api('GET','/v1/partner/products?filter=out').then(function(o){ var e=document.getElementById('t-out'); if(e) e.textContent=o.outOfStock||0; }).catch(function(){});
+  document.getElementById('exp').onclick=exportProducts;
+}
+
+/* ---------- orders (read only) ---------- */
+function orders(v){
+  document.title='Orders · Nukkad Kart Partner';
+  var TABS=[['new','New'],['packing','Packing'],['out','On the way'],['done','Done']], cur='new';
+  v.innerHTML='<div class="hd"><div><h2>Orders</h2><p>Last 7 days. Accept, pack and hand over orders in the Partner app on your phone.</p></div></div>'+
+    '<div class="card"><div class="bar"><div class="tabs" role="tablist">'+TABS.map(function(t){return '<button role="tab" data-t="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div></div><div id="ol"></div></div>';
+  function load(){
+    v.querySelectorAll('[data-t]').forEach(function(b){ b.setAttribute('aria-selected',b.dataset.t===cur); });
+    var box=document.getElementById('ol'); box.innerHTML='<p class="empty">Loading…</p>';
+    api('GET','/v1/partner/orders?tab='+cur).then(function(d){
+      var list=d.orders||[];
+      if(!list.length){ box.innerHTML='<p class="empty">No orders here.</p>'; return; }
+      var ST={placed:['New','g4'],accepted:['Accepted','g2'],packed:['Packed','g2'],out:['On the way','g2'],delivered:['Delivered','g1'],rejected:['Rejected','g3'],missed:['Missed','g3'],cancelled:['Cancelled','g0']};
+      box.innerHTML='<div class="tw"><table><thead><tr><th>Order</th><th>Time</th><th>Customer</th><th>Items</th><th class="n">Total</th><th>Delivery</th><th>Status</th></tr></thead><tbody>'+
+        list.map(function(o){ var s=ST[o.status]||[o.status,'g0'], n=(o.lines||[]).reduce(function(a,l){return a+(l.qty||1);},0);
+          return '<tr><td><b>#'+esc(o.id)+'</b></td><td>'+new Date(o.createdAt*1000).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})+'</td>'+
+            '<td>'+esc(o.toName||'—')+'</td><td title="'+esc((o.lines||[]).map(function(l){return (l.qty||1)+' × '+(l.name||'');}).join(', '))+'">'+n+' item'+(n===1?'':'s')+'</td>'+
+            '<td class="n">'+money(o.total)+'</td><td>'+(o.door?'Home delivery':'Pickup')+'</td><td><span class="chip '+s[1]+'">'+s[0]+'</span></td></tr>'; }).join('')+'</tbody></table></div>';
+    }).catch(function(e){ box.innerHTML='<p class="empty">'+esc(why(e))+'</p>'; });
+  }
+  v.querySelector('.tabs').onclick=function(e){ var b=e.target.closest('[data-t]'); if(b){ cur=b.dataset.t; load(); } };
+  load();
+}
+
+/* ---------- products ---------- */
+function productBody(p,patch){
+  var b={id:p.id,kind:p.kind,name:p.name,brand:p.brand,size:p.size,unit:p.unit,options:p.options,barcode:p.barcode,category:p.category,
+    mrp:p.mrp,price:p.price,gst:p.gst,hsn:p.hsn,stock:p.stock,inStock:p.inStock,produceKey:p.produceKey,desc:p.desc,veg:p.veg,ingredients:p.ingredients,shelf:p.shelf};
+  return Object.assign(b,patch);
+}
+function products(v){
+  document.title='Products · Nukkad Kart Partner';
+  var q='', out=false, items=[], more=false, t=null;
+  v.innerHTML='<div class="hd"><div><h2>Products</h2><p>Change a price or stock and press Enter, or use the switch.</p></div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="exp">Download my products</button><a class="btn p" href="/partner/upload" data-go>Upload from Excel</a></div></div>'+
+    '<div class="card"><div class="bar"><input class="search" id="q" type="search" placeholder="Search name, brand or barcode" aria-label="Search products">'+
+    '<div class="tabs" role="tablist"><button data-f="all" aria-selected="true">All</button><button data-f="out" aria-selected="false">Out of stock</button></div></div>'+
+    '<div id="pl"></div><div class="ft"><span id="pc"></span><button class="btn sm" id="more" hidden>Load more</button></div></div>';
+  document.getElementById('exp').onclick=exportProducts;
+  function load(next){
+    var qs='?'+(q?'q='+encodeURIComponent(q)+'&':'')+(out?'filter=out&':'')+(next&&items.length?'before='+encodeURIComponent(items[items.length-1].name):'');
+    if(!next) document.getElementById('pl').innerHTML='<p class="empty">Loading…</p>';
+    api('GET','/v1/partner/products'+qs).then(function(d){
+      items=next?items.concat(d.products):d.products; more=d.more;
+      document.getElementById('pc').textContent=items.length+' shown · '+d.total+' products · '+d.outOfStock+' out of stock';
+      document.getElementById('more').hidden=!more; draw();
+    }).catch(function(e){ document.getElementById('pl').innerHTML='<p class="empty">'+esc(why(e))+'</p>'; });
+  }
+  function draw(){
+    var box=document.getElementById('pl');
+    if(!items.length){ box.innerHTML='<p class="empty">'+(q||out?'Nothing matches.':'No products yet. Upload your price list from Excel.')+'</p>'; return; }
+    box.innerHTML='<div class="tw"><table><thead><tr><th>Product</th><th>Category</th><th class="n">MRP</th><th class="n">Your price</th><th class="n">Stock</th><th>In stock</th></tr></thead><tbody>'+
+      items.map(function(p,i){ var loose=p.kind==='loose';
+        return '<tr data-i="'+i+'"><td class="pn"><b>'+esc(p.name)+'</b><small>'+esc([p.brand,loose?'per '+p.unit:p.size].filter(Boolean).join(' · '))+'</small></td>'+
+          '<td>'+esc(p.category)+'</td><td class="n">'+(loose?'—':money(p.mrp))+'</td>'+
+          '<td class="n"><input class="num" data-k="price" inputmode="decimal" value="'+esc(p.price)+'" aria-label="Price of '+esc(p.name)+'"></td>'+
+          '<td class="n"><input class="num" data-k="stock" inputmode="numeric" value="'+esc(p.stock==null?'':p.stock)+'" placeholder="—" aria-label="Stock of '+esc(p.name)+'"></td>'+
+          '<td><button class="sw" role="switch" aria-checked="'+p.inStock+'" aria-label="'+esc(p.name)+' in stock"></button></td></tr>'; }).join('')+'</tbody></table></div>';
+  }
+  function save(i,patch,el){
+    var p=items[i];
+    api('POST','/v1/partner/products',productBody(p,patch)).then(function(d){ items[i]=d.product; draw(); toast('Saved: '+d.product.name); })
+      .catch(function(e){ toast(why(e),true); if(el){ el.value=el.dataset.k==='price'?p.price:(p.stock==null?'':p.stock); el.focus(); } });
+  }
+  var box=document.getElementById('pl');
+  box.addEventListener('keydown',function(e){ if(e.key==='Enter'&&e.target.classList.contains('num')) e.target.blur(); });
+  box.addEventListener('change',function(e){
+    var el=e.target; if(!el.classList.contains('num')) return;
+    var i=+el.closest('tr').dataset.i, k=el.dataset.k, raw=el.value.trim().replace(/[₹,\s]/g,'');
+    if(k==='price'){ var n=Number(raw); if(!(n>0)){ toast('Enter a price above 0',true); el.value=items[i].price; return; } save(i,{price:n},el); }
+    else { if(raw===''){ save(i,{stock:null},el); return; } var s=Number(raw); if(!(Number.isInteger(s)&&s>=0)){ toast('Stock must be a whole number',true); el.value=items[i].stock==null?'':items[i].stock; return; } save(i,{stock:s},el); }
+  });
+  box.addEventListener('click',function(e){
+    var b=e.target.closest('.sw'); if(!b) return;
+    var i=+b.closest('tr').dataset.i, p=items[i], on=b.getAttribute('aria-checked')!=='true';
+    b.setAttribute('aria-checked',on);
+    api('PATCH','/v1/partner/products/'+p.id+'/stock',p.stock!=null?{stock:on?Math.max(p.stock,1):0}:{inStock:on})
+      .then(function(d){ items[i]=d.product; draw(); }).catch(function(e){ b.setAttribute('aria-checked',!on); toast(why(e),true); });
+  });
+  document.getElementById('q').addEventListener('input',function(e){ clearTimeout(t); t=setTimeout(function(){ q=e.target.value.trim(); load(false); },300); });
+  v.querySelector('.bar .tabs').onclick=function(e){ var b=e.target.closest('[data-f]'); if(!b) return; out=b.dataset.f==='out';
+    v.querySelectorAll('[data-f]').forEach(function(x){ x.setAttribute('aria-selected',x===b); }); load(false); };
+  document.getElementById('more').onclick=function(){ load(true); };
+  load(false);
+}
+
+/* ---------- excel ---------- */
+function categories(){ return S.cats?Promise.resolve(S.cats):api('GET','/v1/partner/categories').then(function(d){ S.cats=d; return d; }); }
+function exportProducts(){
+  api('GET','/v1/partner/products?all=1').then(function(d){
+    var rows=[HEADS].concat(d.products.map(function(p){ var l=p.kind==='loose';
+      return [p.name,p.brand,p.size,p.category,p.mrp,p.price,p.gst,p.hsn,p.barcode,p.stock,l?'Y':'N',l?p.unit:'',l?p.options.join(','):'']; }));
+    download(XlsxLite.build({Products:rows}),'Nukkad products '+new Date().toISOString().slice(0,10)+'.xlsx');
+    toast(d.products.length+' products downloaded');
+  }).catch(function(e){ toast(why(e),true); });
+}
+function template(){
+  categories().then(function(c){
+    download(XlsxLite.build({Products:[HEADS,['Parle-G Gold','Parle','250 g','Bakery & biscuits',30,28,5,'1905','8901719110047','','N','',''],['Toor Dal','','','Atta, rice & dal','',160,5,'0713','','','Y','kg','250,500,1000']],
+      'How to fill':[['One product per row. Keep row 1 (the headings) as it is. Delete the 2 example rows.'],
+        ['Packed item: Name, Size, Category, MRP and Price are needed. Price can’t be more than MRP.'],
+        ['Loose item (sold by weight): Loose = Y, Unit = kg / litre / piece / dozen / bunch, Price is per kg / litre / piece, Sizes = what customers can buy, e.g. 250,500,1000 (grams).'],
+        ['GST % and HSN are optional: if empty, the usual one for the category is used.'],['Stock is optional: empty = not counted.'],
+        ['Same barcode, or same name + size, updates the product that is already there.'],['Categories: '+c.categories.map(function(x){return x.name;}).join(' · ')]]}),'Nukkad products template.xlsx');
+  }).catch(function(e){ toast(why(e),true); });
+}
+function lev(a,b){ a=a.toLowerCase(); b=b.toLowerCase(); var d=[]; for(var i=0;i<=a.length;i++){ d[i]=[i]; } for(var j=1;j<=b.length;j++) d[0][j]=j;
+  for(i=1;i<=a.length;i++) for(j=1;j<=b.length;j++) d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[a.length][b.length]; }
+function toRows(grid){
+  if(!grid.length) return [];
+  var heads=grid[0].map(function(h){return String(h).toLowerCase().trim();}), col=function(h){return heads.indexOf(h.toLowerCase());};
+  var out=[];
+  for(var i=1;i<grid.length;i++){
+    var r=grid[i], val=function(h){ var c=col(h); return c<0||c>=r.length?'':String(r[c]).trim(); };
+    if(!val('Name')) continue;
+    var loose=/^y/i.test(val('Loose (Y/N)')), n=function(h){ var s=val(h).replace(/[,₹\s]/g,''); return s===''?null:Number(s); };
+    out.push({row:i+1,kind:loose?'loose':'packed',name:val('Name'),brand:val('Brand'),size:val('Size'),category:val('Category'),mrp:n('MRP'),price:n('Price'),
+      gst:val('GST %')===''?undefined:n('GST %'),hsn:val('HSN'),barcode:val('Barcode').replace(/\D/g,''),stock:val('Stock')===''?null:n('Stock'),
+      unit:loose?val('Unit').toLowerCase():undefined,options:loose?val('Sizes').split(/[,; ]+/).map(Number).filter(function(x){return x>0;}):undefined});
+  }
+  return out;
+}
+/* same rules as the server (backend/src/products.js cleanProduct); the server checks again on save */
+function check(r,c){
+  var cat=c.categories.filter(function(x){return x.name===r.category;})[0];
+  if(r.name.length<2) return {e:'name_required',f:'name'};
+  if(!cat){ var best=c.categories.map(function(x){return [lev(r.category,x.name),x.name];}).sort(function(a,b){return a[0]-b[0];})[0];
+    return {e:'bad_category',f:'category',hint:r.category&&best&&best[0]<=4?best[1]:''}; }
+  if(!(r.price>0)) return {e:'bad_price',f:'price'};
+  if(r.mrp!==null&&!(r.mrp>0)) return {e:'bad_mrp',f:'mrp'};
+  if(r.kind==='packed'&&r.mrp===null) return {e:'mrp_required',f:'mrp'};
+  if(r.mrp!==null&&r.price>r.mrp) return {e:'price_above_mrp',f:'price'};
+  if(r.gst!==undefined&&c.gstRates.indexOf(r.gst)<0) return {e:'bad_gst',f:'gst'};
+  if(r.kind==='loose'){ var u=c.units[r.unit]; if(!u) return {e:'bad_unit',f:'unit'}; if(!r.options.filter(function(x){return u.indexOf(x)>=0;}).length) return {e:'pick_sizes',f:'unit'}; }
+  else if(!r.size) return {e:'size_required',f:'size'};
+  if(r.stock!==null&&!(Number.isInteger(r.stock)&&r.stock>=0&&r.stock<=100000)) return {e:'bad_stock',f:'stock'};
+  if(cat.food&&!S.me.store.fssai) return {e:'fssai_needed',f:'category'};
+  return null;
+}
+function upload(v){
+  document.title='Upload from Excel · Nukkad Kart Partner';
+  var rows=[], fileName='', onlyBad=false;
+  v.innerHTML='<div class="hd"><div><h2>Upload products from Excel</h2><p>Add or update many products at once. Nothing changes until you press Save.</p></div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="tpl">'+icon('<path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/>')+' Download template</button><button class="btn" id="exp">Download my products</button></div></div>'+
+    '<div class="steps"><div class="card st" id="s1"><i>1</i><div><b>Download template</b><small>Or your own products</small></div></div><div class="card st" id="s2"><i>2</i><div><b>Fill it in</b><small>Name, MRP, price, stock</small></div></div>'+
+    '<div class="card st cur" id="s3"><i>3</i><div><b>Upload</b><small>.xlsx or .csv</small></div></div><div class="card st" id="s4"><i>4</i><div><b>Check and save</b><small>Fix the red rows</small></div></div></div>'+
+    '<label class="drop" id="drop"><input type="file" id="file" accept=".xlsx,.csv" hidden>'+icon('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>')+
+    '<b>Choose your Excel file</b><span>or drop it here · .xlsx or .csv · up to 2000 rows</span></label><div id="pv"></div>';
+  document.getElementById('tpl').onclick=template; document.getElementById('exp').onclick=exportProducts;
+  var drop=document.getElementById('drop'), inp=document.getElementById('file');
+  inp.onchange=function(){ if(inp.files[0]) read(inp.files[0]); inp.value=''; };
+  ['dragenter','dragover'].forEach(function(t){ drop.addEventListener(t,function(e){ e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(t){ drop.addEventListener(t,function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop',function(e){ var f=e.dataTransfer.files[0]; if(f) read(f); });
+  function read(f){
+    fileName=f.name;
+    if(f.size>15e6){ toast('File is too big (over 15 MB)',true); return; }
+    var pv=document.getElementById('pv'); pv.innerHTML='<p class="empty">Reading '+esc(f.name)+'…</p>';
+    var isCsv=/\.csv$/i.test(f.name);
+    Promise.all([isCsv?f.text().then(XlsxLite.readCsv):f.arrayBuffer().then(function(b){return XlsxLite.read(b,'Products');}),categories(),api('GET','/v1/partner/products?all=1')])
+      .then(function(res){
+        var grid=res[0], c=res[1], have=res[2].products;
+        if(!grid.length||grid[0].map(function(h){return h.toLowerCase();}).indexOf('name')<0){ pv.innerHTML='<div class="err">Row 1 must have the headings from the template (Name, Brand, Size, Category, MRP, Price…). Download the template and copy your data into it.</div>'; return; }
+        var byCode={}, byKey={}, key=function(p){ return p.kind+'|'+p.name.trim().toLowerCase()+'|'+(p.kind==='loose'?p.unit:String(p.size||'').trim().toLowerCase()); };
+        have.forEach(function(p){ if(p.barcode) byCode[p.barcode]=p; byKey[key(p)]=p; });
+        rows=toRows(grid).map(function(r){ var bad=check(r,c), old=(r.barcode&&byCode[r.barcode])||byKey[key(r)];
+          var st=bad?'bad':old?(old.price!==r.price?'price':'same'):'new'; return {r:r,bad:bad,st:st,old:old}; });
+        if(rows.length>2000){ pv.innerHTML='<div class="err">'+rows.length+' rows: upload at most 2000 at a time.</div>'; return; }
+        ['s1','s2','s3'].forEach(function(id){ var s=document.getElementById(id); s.classList.remove('cur'); s.querySelector('i').textContent='✓'; });
+        document.getElementById('s4').classList.add('cur'); draw();
+      }).catch(function(e){ pv.innerHTML='<div class="err">'+(e&&e.message==='not_xlsx'?'This file is not an Excel (.xlsx) file. Save it as .xlsx or .csv and try again.':esc(why(e)))+'</div>'; });
+  }
+  function draw(){
+    var pv=document.getElementById('pv'), cnt={new:0,price:0,same:0,bad:0}; rows.forEach(function(x){cnt[x.st]++;});
+    var good=rows.length-cnt.bad, shown=onlyBad?rows.filter(function(x){return x.bad;}):rows;
+    if(!rows.length){ pv.innerHTML='<div class="err">No products found in the sheet. Each product needs a Name.</div>'; return; }
+    pv.innerHTML='<div class="card" style="margin-top:18px"><div class="ch"><div class="file"><div class="xl">XLS</div><div><b>'+esc(fileName)+'</b><br><small style="color:var(--mute)">'+rows.length+' rows read</small></div></div>'+
+      '<div class="chips">'+(cnt.new?'<span class="chip g1">'+cnt.new+' new</span>':'')+(cnt.price?'<span class="chip g2">'+cnt.price+' price updates</span>':'')+
+      (cnt.same?'<span class="chip g0">'+cnt.same+' unchanged price</span>':'')+(cnt.bad?'<span class="chip g3">'+cnt.bad+' errors</span>':'')+'</div></div>'+
+      '<div class="tw"><table><thead><tr><th>Row</th><th>Product</th><th>Size</th><th>Category</th><th class="n">MRP</th><th class="n">Your price</th><th class="n">Stock</th><th>Status</th></tr></thead><tbody>'+
+      shown.slice(0,400).map(function(x){ var r=x.r, f=x.bad&&x.bad.f, m=function(k,t){ return f===k?'<span class="bad">'+t+'</span>':t; }, s;
+        if(x.bad) s='<span class="msg">'+esc(REASON[x.bad.e])+(x.bad.hint?' · did you mean '+esc(x.bad.hint)+'?':'')+'</span>';
+        else if(x.st==='new') s='<span class="chip g1">New</span>';
+        else if(x.st==='price') s='<span class="chip g2">Price '+money(x.old.price)+' → '+money(r.price)+'</span>';
+        else s='<span class="chip g0">Update</span>';
+        return '<tr class="'+(x.bad?'e':'')+'"><td>'+r.row+'</td><td>'+m('name',esc(r.name)||'&nbsp;—&nbsp;')+'</td><td>'+m('size',m('unit',esc(r.kind==='loose'?'per '+(r.unit||'?'):r.size)||'&nbsp;—&nbsp;'))+'</td>'+
+          '<td>'+m('category',esc(r.category)||'&nbsp;—&nbsp;')+'</td><td class="n">'+m('mrp',r.mrp===null?'&nbsp;—&nbsp;':money(r.mrp))+'</td><td class="n">'+m('price',r.price===null?'&nbsp;—&nbsp;':money(r.price))+'</td>'+
+          '<td class="n">'+m('stock',r.stock===null?'—':esc(r.stock))+'</td><td>'+s+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+      '<div class="ft"><span>Showing '+Math.min(shown.length,400)+' of '+shown.length+(cnt.bad?' · <a href="#" id="only">'+(onlyBad?'Show all rows':'Show only problems')+'</a>':'')+'</span>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">'+(cnt.bad?'<button class="btn" id="errs">Download rows with errors</button>':'')+
+      '<button class="btn p" id="save"'+(good?'':' disabled')+'>Save '+good+' product'+(good===1?'':'s')+'</button></div></div></div><div id="res"></div>';
+    var only=document.getElementById('only'); if(only) only.onclick=function(e){ e.preventDefault(); onlyBad=!onlyBad; draw(); };
+    var errs=document.getElementById('errs'); if(errs) errs.onclick=function(){ errorFile(rows.filter(function(x){return x.bad;}).map(function(x){return [x.r,REASON[x.bad.e]];})); };
+    document.getElementById('save').onclick=function(){ save(this); };
+  }
+  function save(btn){
+    var ok=rows.filter(function(x){return !x.bad;}).map(function(x){ var r=Object.assign({},x.r); if(r.gst===undefined) delete r.gst; if(r.kind!=='loose'){ delete r.unit; delete r.options; } return r; });
+    btn.disabled=true; btn.textContent='Saving…';
+    api('POST','/v1/partner/products/bulk',{rows:ok}).then(function(d){
+      var byRow={}; ok.forEach(function(r){ byRow[r.row]=r; });
+      document.getElementById('res').innerHTML='<div class="card result" role="status"><b style="font-size:18px">Saved: '+d.added+' added, '+d.updated+' updated.</b>'+
+        (d.errorCount?'<p class="msg" style="margin:8px 0 0">'+d.errorCount+' rows were refused by the server:</p><ul>'+d.errors.slice(0,20).map(function(e){ return '<li>Row '+e.row+': '+esc(REASON[e.error]||e.error)+'</li>'; }).join('')+'</ul>':'')+
+        '<p style="margin:10px 0 0"><a class="btn sm" href="/partner/products" data-go>See products</a></p></div>';
+      btn.textContent='Saved'; toast('Products saved');
+    }).catch(function(e){ btn.disabled=false; btn.textContent='Save again'; toast(why(e),true); });
+  }
+}
+function errorFile(list){
+  var rows=[HEADS.concat(['Problem'])].concat(list.map(function(x){ var r=x[0];
+    return [r.name,r.brand,r.size,r.category,r.mrp,r.price,r.gst,r.hsn,r.barcode,r.stock,r.kind==='loose'?'Y':'N',r.unit||'',r.options?r.options.join(','):'',x[1]]; }));
+  download(XlsxLite.build({Products:rows}),'Nukkad rows to fix.xlsx');
+}
+
+/* ---------- boot ---------- */
+if(S.token) start().catch(function(){ loginView(''); }); else loginView('');
+})();
+</script>
+</body>
+</html>

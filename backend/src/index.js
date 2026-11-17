@@ -27,6 +27,7 @@ import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
 import { chatRoute, cleanChats, ChatRoom } from './chat.js';
 import { countView, passReminders, sundayReports, reportRoute } from './reminders.js';
 import { waitlistRoute, syncWaitlist } from './waitlist.js';
+import { webMethods, preflight, withWebCors } from './webcors.js';
 export { ChatRoom };
 
 export const RADIUS_MAX_M = 500;
@@ -599,20 +600,28 @@ async function route(req, env, ectx) {
   throw new HttpError(404, 'not_found');
 }
 
+async function handle(req, env, ectx) {
+  try {
+    return await route(req, env, ectx);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      // Why a sign-in was refused (token issuer, SMS service message…) stays in the server log only.
+      if (e.status === 401 && e.message !== e.code) console.warn('auth_refused', e.code, e.message);
+      const detail = e.status !== 401 && e.message !== e.code ? e.message : undefined;
+      return json({ error: e.code, detail }, e.status);
+    }
+    console.error(e);
+    return json({ error: 'server_error' }, 500);
+  }
+}
+
 export default {
   async fetch(req, env, ectx) {
-    try {
-      return await route(req, env, ectx);
-    } catch (e) {
-      if (e instanceof HttpError) {
-        // Why a sign-in was refused (token issuer, SMS service message…) stays in the server log only.
-        if (e.status === 401 && e.message !== e.code) console.warn('auth_refused', e.code, e.message);
-        const detail = e.status !== 401 && e.message !== e.code ? e.message : undefined;
-        return json({ error: e.code, detail }, e.status);
-      }
-      console.error(e);
-      return json({ error: 'server_error' }, 500);
-    }
+    // The kirana web panel at nukkadkart.in/partner (see webcors.js).
+    const web = webMethods(req, new URL(req.url).pathname);
+    if (web && req.method === 'OPTIONS') return preflight(web);
+    const res = await handle(req, env, ectx);
+    return web ? withWebCors(res) : res;
   },
   // Every 5 minutes: thelas whose location stopped coming are hidden; tell the seller once.
   async scheduled(_ev, env, ectx) {

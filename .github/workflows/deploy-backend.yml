@@ -132,3 +132,5 @@ jobs:
           [ "$code" = 401 ] || { echo "expected 401 without sign-in, got $code"; exit 1; }
           cors=$(curl -s -o /dev/null -D - -X OPTIONS -H 'origin: https://nukkadkart.in' $base/v1/waitlist | grep -i '^access-control-allow-origin' || true)
           [ -n "$cors" ] || { echo "waitlist preflight has no CORS header"; exit 1; }
+          pc=$(curl -s -o /dev/null -D - -X OPTIONS -H 'origin: https://nukkadkart.in' -H 'access-control-request-method: GET' $base/v1/partner/products | grep -i '^access-control-allow-origin' || true)
+          [ -n "$pc" ] || { echo "partner panel preflight has no CORS header"; exit 1; }

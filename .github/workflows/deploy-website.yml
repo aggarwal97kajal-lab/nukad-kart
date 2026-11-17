@@ -40,6 +40,8 @@ jobs:
           curl -fsS $base/ | grep -q 'Nukkad Kart'
           curl -fsS $base/privacy | grep -q 'Privacy Policy'
           curl -fsS $base/join | grep -q 'id="join"'
+          curl -fsS $base/partner/products | grep -q 'Kirana web panel'
+          curl -sI $base/partner | grep -i '^content-security-policy' | grep -q 'accounts.google.com'
           curl -fsS $base/terms | grep -q 'Terms'
           [ "$(curl -s -o /dev/null -w '%{http_code}' $base/no-such-page)" = 404 ]
           curl -sI $base/ | grep -iq '^content-security-policy'
