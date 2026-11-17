@@ -26,7 +26,7 @@ jobs:
 
       - name: Legal pages are up to date
         run: |
-          python3 build/legal.py
+          python3 tool/legal.py
           git diff --exit-code -- public/privacy.html public/terms.html public/404.html
 
       - name: Deploy site worker (nukkadkart.in and www)
