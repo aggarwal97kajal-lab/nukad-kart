@@ -71,8 +71,10 @@ for (const th of thelas) {
 
 // ---------- products ----------
 let n = 0;
+const plist = [];
 const product = (store, p) => {
   n++;
+  plist.push({ id: `pr_demo${String(n).padStart(3, '0')}`, store, name: p.name, brand: p.brand || '', size: p.size || '', kind: p.kind || 'packed' });
   insert('products', { id: `pr_demo${String(n).padStart(3, '0')}`, store_id: store, kind: p.kind || 'packed', name: p.name, brand: p.brand || '',
     size: p.size || '', unit: p.unit || null, options: p.options ? JSON.stringify(p.options) : null, barcode: null, category: p.cat,
     mrp: p.mrp ?? null, price: p.price, gst: p.gst ?? 5, hsn: null, stock: p.stock ?? null, in_stock: 1, photo: null,
@@ -106,5 +108,6 @@ for (const [name, key, price, unit, options] of fruit) product('t_sita', { name,
 fs.writeFileSync(path.join(out, 'seed.sql'), sql.join('\n') + '\n');
 fs.writeFileSync(path.join(out, 'tokens.json'), JSON.stringify({ ...tokens, home: HOME, thelas: Object.fromEntries(thelas.map((x) => [x.id, x.pos])),
   shops: Object.fromEntries(shops.map((x) => [x.id, x.pos])) }, null, 2));
+fs.writeFileSync(path.join(out, 'products.json'), JSON.stringify(plist, null, 1));
 fs.writeFileSync(path.join(out, 'photos.txt'), photos.join('\n') + '\n');
 console.log(`seed: ${sql.length} rows, ${photos.length} photos`);

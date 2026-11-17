@@ -47,6 +47,9 @@ jobs:
             python3 -c "from PIL import Image;im=Image.open('../website/public/assets/img/$name.webp').convert('RGB');im.thumbnail((1200,1200));im.save('/tmp/p.jpg',quality=86)"
             $W r2 object put "nukad-kart-files/$key" --file /tmp/p.jpg --content-type image/jpeg --local
           done < ../demo-out/photos.txt
+          node ../tool/demo/product-photos.mjs ../demo-out || true
+          [ -s ../demo-out/photos-sql.sql ] && $W d1 execute DB --local --file ../demo-out/photos-sql.sql
+          while read key file; do [ -n "$key" ] && $W r2 object put "nukad-kart-files/$key" --file "$file" --content-type image/jpeg --local > /dev/null; done < ../demo-out/r2.txt || true
           nohup $W dev src/demo-entry.js --local --ip 0.0.0.0 --port 8787 > ../demo-out/server.log 2>&1 &
           for i in $(seq 1 60); do curl -fsS localhost:8787/health && break; sleep 2; done
           curl -fsS localhost:8787/health || { tail -30 ../demo-out/server.log; exit 1; }
@@ -100,7 +103,7 @@ jobs:
           D=media/${{ inputs.tour }}
           mkdir -p /tmp/m/$D
           for r in r1 r2; do [ -s demo-out/$r.mp4 ] && ffmpeg -loglevel error -y -i demo-out/$r.mp4 -c:v libx264 -preset veryfast -crf 17 -pix_fmt yuv420p -an /tmp/m/$D/$r.mp4; done
-          cp demo-out/logcat.txt demo-out/logcat-all.txt demo-out/drive.log demo-out/server.log demo-out/last.png /tmp/m/$D/ 2>/dev/null || true
+          mkdir -p /tmp/m/$D/pp && cp demo-out/pp/* /tmp/m/$D/pp/ 2>/dev/null; cp demo-out/logcat.txt demo-out/logcat-all.txt demo-out/drive.log demo-out/server.log demo-out/last.png /tmp/m/$D/ 2>/dev/null || true
           ls -la /tmp/m/$D
           R="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
           git clone -q --depth 1 -b demo-media "$R" /tmp/old 2>/dev/null && cp -rn /tmp/old/media/. /tmp/m/media/ || true
