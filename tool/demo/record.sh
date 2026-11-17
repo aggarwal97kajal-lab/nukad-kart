@@ -15,7 +15,7 @@ adb shell cmd overlay enable com.android.internal.systemui.navbar.gestural || tr
 adb emu geo fix 77.0884 28.5895
 
 DEFINES="--dart-define=API_BASE=http://10.0.2.2:8787 --dart-define=DEMO_TOKEN=$(tok customer) --dart-define=SHOP_TOKEN=$(tok gupta) --dart-define=THELA_TOKEN=$(tok ramesh)"
-flutter build apk --profile --target=integration_test/${TOUR}_tour_test.dart $DEFINES | tail -3
+flutter build apk --profile --target=integration_test/${TOUR}_tour_test.dart $DEFINES 2>&1 | tail -25
 APK=build/app/outputs/flutter-apk/app-profile.apk
 adb install -r -g "$APK"
 for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION POST_NOTIFICATIONS RECORD_AUDIO CAMERA; do adb shell pm grant $PKG android.permission.$p 2>/dev/null || true; done
