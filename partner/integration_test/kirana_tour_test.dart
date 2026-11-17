@@ -42,7 +42,7 @@ void main() {
     // 4. Ways to add products
     step('addways');
     await k.tap(find.byType(FloatingActionButton).evaluate().isNotEmpty ? find.byType(FloatingActionButton) : find.text('Add product'), pause: 3500);
-    await t.pageBack().catchError((_) {});
+    await t.binding.handlePopRoute();
     await k.hold(800);
     if (k.has(find.text('Scan barcode'))) {
       await t.tapAt(const Offset(200, 120));

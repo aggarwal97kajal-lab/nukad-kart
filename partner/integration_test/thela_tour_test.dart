@@ -61,10 +61,10 @@ void main() {
     await k.wait(find.textContaining('5 min mein aata'), secs: 20);
     await k.hold(1500);
     await k.tap(find.textContaining('5 min mein aata').last, pause: 3000);
-    await t.pageBack();
+    await t.binding.handlePopRoute();
     await k.hold(1000);
     if (!k.has(find.byType(Switch))) {
-      await t.pageBack();
+      await t.binding.handlePopRoute();
       await k.hold(1000);
     }
 
