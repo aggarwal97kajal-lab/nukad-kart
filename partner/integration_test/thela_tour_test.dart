@@ -57,9 +57,10 @@ void main() {
     final open = find.textContaining('Messages').evaluate().isNotEmpty ? find.textContaining('Messages') : find.byIcon(Icons.chat_bubble_outline);
     await k.tap(open, pause: 2000);
     if (k.has(find.text('Open'))) await k.tap(find.text('Open'), pause: 1500);
-    if (!k.has(find.byType(TextField))) await k.tap(find.textContaining('Neha').evaluate().isNotEmpty ? find.textContaining('Neha') : find.text('Customer'), pause: 1500);
-    await k.type(find.byType(TextField).last, 'Haan ji, 5 minute mein aa raha hoon');
-    await k.tap(find.byIcon(Icons.send), pause: 2500);
+    // The thela chat answers with one tap: ready-made replies (typing is there too, under "Type").
+    await k.wait(find.textContaining('5 min mein aata'), secs: 20);
+    await k.hold(1500);
+    await k.tap(find.textContaining('5 min mein aata').last, pause: 3000);
     await t.pageBack();
     await k.hold(1000);
     if (!k.has(find.byType(Switch))) {
