@@ -10,8 +10,17 @@ const ua = { 'user-agent': 'NukkadKart-demo/1.0 (support@nukkadkart.in)' };
 const sql = [], r2 = [], log = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const cache = new URL('./pp/', import.meta.url).pathname; // photos already picked (Open Food Facts is often busy)
+const use = (name, file) => {
+  for (const it of items.filter((x) => x.name === name)) {
+    r2.push(`products/${it.id}.jpg ${file}`);
+    sql.push(`UPDATE products SET photo = 'off', photo_credit = 'Photo: Open Food Facts (CC BY-SA)' WHERE id = '${it.id}';`);
+  }
+};
 for (const name of names) {
   const p = items.find((x) => x.name === name);
+  const cached = path.join(cache, norm(name).replace(/ /g, '-') + '.jpg');
+  if (fs.existsSync(cached)) { log.push(`${name}: cached`); use(name, cached); continue; }
   const q = encodeURIComponent(`${name}`);
   let pick = null;
   try {
@@ -40,10 +49,7 @@ for (const name of names) {
   const file = path.join(dir, 'pp', norm(name).replace(/ /g, '-') + '.jpg');
   fs.writeFileSync(file, img);
   log.push(`${name}: ${pick.code} ${pick.brands} / ${pick.product_name} ${url}`);
-  for (const it of items.filter((x) => x.name === name)) {
-    r2.push(`products/${it.id}.jpg ${file}`);
-    sql.push(`UPDATE products SET photo = 'off', photo_credit = 'Photo: Open Food Facts (CC BY-SA)' WHERE id = '${it.id}';`);
-  }
+  use(name, file);
 }
 fs.writeFileSync(path.join(dir, 'photos-sql.sql'), sql.join('\n') + '\n');
 fs.writeFileSync(path.join(dir, 'r2.txt'), r2.join('\n') + '\n');
