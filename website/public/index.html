@@ -22,20 +22,29 @@
 <script>
   (function(){ var t; try { t = localStorage.getItem('nk-theme'); } catch(e){}
     if(!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', t); })();
+    document.documentElement.setAttribute('data-theme', t);
+    /* logo intro: on the first visit and on every refresh, not when coming back from another page */
+    var n = performance.getEntriesByType && performance.getEntriesByType('navigation')[0], seen;
+    try { seen = localStorage.getItem('nk-intro'); } catch(e){}
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches && (!seen || (n && n.type === 'reload')))
+      document.documentElement.classList.add('intro');
+  })();
 </script>
 <style>
-@font-face{font-family:"Instrument Serif";font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/instrument-serif-latin-400-normal.woff2) format("woff2")}
-@font-face{font-family:"Instrument Serif";font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/instrument-serif-latin-400-italic.woff2) format("woff2")}
-@font-face{font-family:Geist;font-weight:400;font-display:swap;src:url(/assets/fonts/geist-latin-400-normal.woff2) format("woff2")}
-@font-face{font-family:Geist;font-weight:500;font-display:swap;src:url(/assets/fonts/geist-latin-500-normal.woff2) format("woff2")}
-@font-face{font-family:Geist;font-weight:600;font-display:swap;src:url(/assets/fonts/geist-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Fraunces;font-style:normal;font-weight:400;font-display:swap;src:url(/assets/fonts/fraunces-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:Fraunces;font-style:normal;font-weight:600;font-display:swap;src:url(/assets/fonts/fraunces-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Fraunces;font-style:italic;font-weight:400;font-display:swap;src:url(/assets/fonts/fraunces-latin-500-italic.woff2) format("woff2")}
+@font-face{font-family:Fraunces;font-style:italic;font-weight:600;font-display:swap;src:url(/assets/fonts/fraunces-latin-500-italic.woff2) format("woff2")}
+@font-face{font-family:"Plus Jakarta Sans";font-weight:400;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Plus Jakarta Sans";font-weight:500;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Plus Jakarta Sans";font-weight:600;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Plus Jakarta Sans";font-weight:700;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-700-normal.woff2) format("woff2")}
 /*END-FONTFACE*/
 
 :root{
   --yellow:#FDC630; --yellow-ink:#1B1400;
-  --serif:"Instrument Serif", ui-serif, Georgia, serif;
-  --sans:Geist, ui-sans-serif, system-ui, sans-serif;
+  --serif:Fraunces, ui-serif, Georgia, serif;
+  --sans:"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --wrap:min(1280px, 100% - 48px);
   --r-xl:34px; --r-lg:24px; --r-md:16px;
   --ease:cubic-bezier(.16,1,.3,1); --ease-io:cubic-bezier(.65,0,.35,1);
@@ -65,12 +74,12 @@ a{color:inherit}
 .skip{position:absolute;left:12px;top:-60px;z-index:60;background:var(--primary);color:var(--on-primary);padding:10px 14px;border-radius:10px}
 .skip:focus{top:12px}
 h1,h2{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;margin:0;text-wrap:balance}
-h2{font-size:clamp(44px,5.6vw,84px);line-height:.98}
+h2{font-size:clamp(40px,5.2vw,78px);line-height:1.08}
 h1 em,h2 em{font-style:italic}
 h1 .sent{display:block}
 h3{font:600 21px/1.25 var(--sans);letter-spacing:-.01em;margin:0}
 .sub{color:var(--muted);font-size:clamp(17px,1.35vw,19.5px);max-width:50ch;margin:20px 0 0;text-wrap:pretty}
-.w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .08em .1em 0;margin:0 -.08em -.1em 0}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .08em .3em 0;margin:0 -.08em -.3em 0}
 .w > span{display:inline-block;will-change:transform}
 
 /* view transition: theme change spreads as a circle from the toggle */
@@ -108,9 +117,12 @@ h3{font:600 21px/1.25 var(--sans);letter-spacing:-.01em;margin:0}
 
 /* hero */
 .hero{padding-top:150px}
-h1{font-size:clamp(56px,8.6vw,138px);line-height:.92;letter-spacing:-.03em}
-h1 .hl{position:relative;font-style:italic;white-space:nowrap;isolation:isolate}
-h1 .hl::after{content:"";position:absolute;left:-.02em;right:.02em;bottom:.1em;height:.14em;background:var(--yellow);z-index:-1;border-radius:3px;transform-origin:left;transform:scaleX(var(--u,1))}
+h1{font-size:clamp(46px,8vw,126px);line-height:1.1;letter-spacing:-.025em;font-weight:600}
+h1 .hl{position:relative;font-style:italic;white-space:nowrap;isolation:isolate;padding-bottom:.06em;text-shadow:-.05em 0 0 var(--bg),.05em 0 0 var(--bg),0 .04em 0 var(--bg),-.04em .04em 0 var(--bg),.04em .04em 0 var(--bg),0 .08em 0 var(--bg)}
+h1 .hl::after{content:"";position:absolute;left:0;right:.04em;bottom:.02em;height:.075em;background:var(--yellow);z-index:-1;border-radius:99px;transform-origin:left;transform:scaleX(var(--u,1))}
+h1 .hl::before{content:"";position:absolute;left:0;right:.04em;bottom:.02em;height:.075em;z-index:-1;border-radius:99px;background:linear-gradient(90deg,transparent 0,rgba(255,255,255,.95) 50%,transparent 100%) no-repeat;background-size:30% 100%;background-position:-40% 0;opacity:0}
+h1 .hl.shine::before{animation:hlshine 1s ease-in-out forwards}
+@keyframes hlshine{0%{opacity:1;background-position:-40% 0}100%{opacity:1;background-position:140% 0}}
 .hero-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,5vw,80px);align-items:end;margin-top:clamp(26px,3vw,40px)}
 .signup{display:flex;gap:8px;padding:6px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);transition:border-color .3s,box-shadow .3s}
 .signup:focus-within{border-color:var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 18%,transparent),var(--shadow)}
@@ -298,12 +310,29 @@ footer a:hover{text-decoration:underline;text-underline-offset:3px}
   .feat div{flex-direction:column;gap:2px}
   .feat span{text-align:left}
 }
+/* logo intro: the kart drives in, the sparrow flies onto it, then the logo settles into the nav */
+#intro{display:none}
+.intro #intro{display:block;position:fixed;inset:0;z-index:100;pointer-events:none}
+#intro .cover{position:absolute;inset:0;background:var(--bg)}
+#intro .car{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#intro .lg{position:relative;width:100%;height:100%;border-radius:23%;overflow:hidden;background:#FCC732;box-shadow:0 20px 50px rgba(3,32,15,.25)}
+#intro .lg img,#intro .lg svg{position:absolute;inset:0;width:100%;height:100%}
+#intro .bw{position:absolute;left:65%;top:12.9%;width:14.8%;z-index:2}
+#intro .bird{position:relative;z-index:1;width:100%;display:block}
+#intro .wing{position:absolute;width:62%;left:40%;top:30%;transform-origin:4% 50%}
+#intro .far{z-index:0;top:24%;left:46%;width:52%}
+#intro .near{z-index:2}
+.intro .brand img{visibility:hidden}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
 </style>
 </head>
 <body>
+<div id="intro" aria-hidden="true"><div class="cover"></div><div class="car">
+<div class="lg"><img src="/assets/img/intro-base.webp" alt=""><svg viewBox="0 0 900 900"><clipPath id="nk-bl"><rect x="0" y="682" width="900" height="100"/></clipPath><g clip-path="url(#nk-bl)"><circle cx="321" cy="701" r="56" fill="#FCC732"/><circle cx="591" cy="701" r="56" fill="#FCC732"/></g><g class="wh" style="transform-origin:321px 701px"><circle cx="321" cy="701" r="36.5" fill="none" stroke="#013717" stroke-width="27"/><g stroke="#013717" stroke-width="3.5" stroke-linecap="round"><path d="M321 701 v-22"/><path d="M321 701 l19 11"/><path d="M321 701 l-19 11"/></g><circle cx="321" cy="701" r="5" fill="#013717"/></g><g class="wh" style="transform-origin:591px 701px"><circle cx="591" cy="701" r="36.5" fill="none" stroke="#013717" stroke-width="27"/><g stroke="#013717" stroke-width="3.5" stroke-linecap="round"><path d="M591 701 v-22"/><path d="M591 701 l19 11"/><path d="M591 701 l-19 11"/></g><circle cx="591" cy="701" r="5" fill="#013717"/></g></svg></div>
+<div class="bw"><svg class="wing far" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 30 C30 6 70 2 116 10 C96 18 100 24 112 26 C92 32 96 38 104 42 C80 46 50 48 4 34 Z" fill="#6A4423" stroke="#3F2716" stroke-width="2" stroke-linejoin="round"/><path d="M40 22 C60 16 80 14 100 16 M40 30 C58 27 76 27 94 30 M40 36 C56 36 70 38 86 40" stroke="#3F2716" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/><path d="M10 30 C26 20 40 18 52 20" stroke="#F2E6D2" stroke-width="3" fill="none" stroke-linecap="round"/></svg><img class="bird" src="/assets/img/intro-bird.webp" alt=""><svg class="wing near" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 30 C30 6 70 2 116 10 C96 18 100 24 112 26 C92 32 96 38 104 42 C80 46 50 48 4 34 Z" fill="#9C6A3B" stroke="#3F2716" stroke-width="2" stroke-linejoin="round"/><path d="M40 22 C60 16 80 14 100 16 M40 30 C58 27 76 27 94 30 M40 36 C56 36 70 38 86 40" stroke="#3F2716" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/><path d="M10 30 C26 20 40 18 52 20" stroke="#F2E6D2" stroke-width="3" fill="none" stroke-linecap="round"/></svg></div>
+</div></div>
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="nav" id="nav">
@@ -530,6 +559,46 @@ footer a:hover{text-decoration:underline;text-underline-offset:3px}
   var root=document.documentElement, btn=document.getElementById('theme');
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+
+  /* in-page links scroll without adding #section to the address */
+  if(location.hash){ history.replaceState(null,'',location.pathname+location.search); }
+  document.addEventListener('click', function(e){
+    var a=e.target.closest && e.target.closest('a[href^="#"]'); if(!a) return;
+    var id=a.getAttribute('href').slice(1), t=id ? document.getElementById(id) : null; if(!t) return;
+    e.preventDefault();
+    t.scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'});
+    if(id==='main' || id==='top'){ t.setAttribute('tabindex','-1'); t.focus({preventScroll:true}); }
+  });
+
+  /* logo intro (decided in the head before the first paint) */
+  var introDelay=0;
+  if(root.classList.contains('intro')){
+    try{ localStorage.setItem('nk-intro','1'); }catch(e){}
+    introDelay=2.25;
+    (function(){
+      var box=document.getElementById('intro'), car=box.querySelector('.car'), cover=box.querySelector('.cover');
+      var vw=innerWidth, vh=innerHeight, S=Math.round(Math.min(220, vw*0.5)), x=Math.round((vw-S)/2), y=Math.round(vh*0.3);
+      car.style.width=car.style.height=S+'px';
+      var ease='cubic-bezier(.2,.75,.3,1)';
+      car.animate([{transform:'translate('+(-S-60)+'px,'+y+'px)'},{transform:'translate('+(x+8)+'px,'+y+'px)',offset:.78},{transform:'translate('+(x-4)+'px,'+y+'px) rotate(-2deg)',offset:.88},{transform:'translate('+x+'px,'+y+'px)'}],{duration:1500,delay:150,easing:ease,fill:'both'});
+      car.querySelector('.lg').animate([{transform:'translateY(0)'},{transform:'translateY(-'+(S*0.015)+'px)'}],{duration:160,delay:150,iterations:9,direction:'alternate'});
+      box.querySelectorAll('.wh').forEach(function(w){ w.animate([{transform:'rotate(-1080deg)'},{transform:'rotate(0)'}],{duration:1500,delay:150,easing:ease,fill:'both'}); });
+      var k=S/200;
+      box.querySelector('.bw').animate([{transform:'translate('+260*k+'px,'+(-230*k-y*0.5)+'px) rotate(-10deg)'},{transform:'translate('+150*k+'px,'+(-150*k)+'px) rotate(-6deg)',offset:.35},{transform:'translate('+50*k+'px,'+(-60*k)+'px) rotate(-4deg)',offset:.65},{transform:'translate(0,'+(-10*k)+'px)',offset:.88},{transform:'translate(0,'+2*k+'px)',offset:.94},{transform:'none'}],{duration:1450,delay:100,easing:'cubic-bezier(.3,.6,.35,1)',fill:'both'});
+      [['.near',-75,25],['.far',-95,5]].forEach(function(w){
+        var el=box.querySelector(w[0]);
+        el.animate([{transform:'rotate('+w[1]+'deg)'},{transform:'rotate('+w[2]+'deg) scaleY(.6)'}],{duration:140,delay:100,iterations:9,direction:'alternate',easing:'ease-in-out',fill:'both'})
+          .finished.then(function(){ el.animate([{transform:'rotate(10deg) scale(.2)',opacity:0}],{duration:180,easing:'ease-in',fill:'forwards'}); });
+      });
+      setTimeout(function(){
+        var r=document.querySelector('.brand img').getBoundingClientRect();
+        car.animate([{transform:'translate('+x+'px,'+y+'px) scale(1)'},{transform:'translate('+r.left+'px,'+r.top+'px) scale('+(r.width/S)+')'}],{duration:560,easing:'cubic-bezier(.6,0,.2,1)',fill:'forwards'});
+        cover.animate([{opacity:1},{opacity:0}],{duration:450,delay:100,fill:'forwards'});
+        setTimeout(function(){ root.classList.remove('intro'); box.remove(); }, 620);
+      }, 1750);
+    })();
+  }
+
   /* theme switch: the new theme spreads as a circle from the button */
   function label(){ btn.setAttribute('aria-label', root.dataset.theme==='dark' ? 'Switch to light theme' : 'Switch to dark theme'); }
   label();
@@ -620,9 +689,9 @@ footer a:hover{text-decoration:underline;text-underline-offset:3px}
   });
 
   /* hero: words rise, highlight draws, photo opens like a shutter */
-  var tl=gsap.timeline({defaults:{ease:'expo.out'}});
+  var tl=gsap.timeline({delay:introDelay,defaults:{ease:'expo.out'}});
   tl.from('#hero-h .w > span',{yPercent:115,rotate:4,duration:1.3,stagger:.045})
-    .fromTo('#hero-h .hl',{'--u':0},{'--u':1,duration:.8,ease:'power3.inOut'},'-=.6')
+    .fromTo('#hero-h .hl',{'--u':0},{'--u':1,duration:.9,ease:'power3.inOut',onComplete:function(){document.querySelector('#hero-h .hl').classList.add('shine');}},'-=.6')
     .from('.hero [data-rise]',{y:24,autoAlpha:0,duration:1,stagger:.1},'-=1.0')
     .fromTo('#stage',{clipPath:'inset(18% 8% 0% 8% round 34px)'},{clipPath:'inset(0% 0% 0% 0% round 34px)',duration:1.6,ease:'expo.inOut'},'-=1.1')
     .from('#stage img',{scale:1.25,duration:2,ease:'expo.out'},'<')

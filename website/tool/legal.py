@@ -20,13 +20,13 @@ HEAD = '''<!doctype html>
     document.documentElement.setAttribute('data-theme', t); }})();
 </script>
 <style>
-@font-face{{font-family:"Instrument Serif";font-weight:400;font-display:swap;src:url(/assets/fonts/instrument-serif-latin-400-normal.woff2) format("woff2")}}
-@font-face{{font-family:Geist;font-weight:400;font-display:swap;src:url(/assets/fonts/geist-latin-400-normal.woff2) format("woff2")}}
-@font-face{{font-family:Geist;font-weight:600;font-display:swap;src:url(/assets/fonts/geist-latin-600-normal.woff2) format("woff2")}}
+@font-face{{font-family:Fraunces;font-weight:600;font-display:swap;src:url(/assets/fonts/fraunces-latin-600-normal.woff2) format("woff2")}}
+@font-face{{font-family:"Plus Jakarta Sans";font-weight:400;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-400-normal.woff2) format("woff2")}}
+@font-face{{font-family:"Plus Jakarta Sans";font-weight:600;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-600-normal.woff2) format("woff2")}}
 :root{{--bg:#F3F5EF;--ink:#0B1F12;--mute:#4E5E53;--line:#D9DED5;--card:#FFFFFF;--acc:#1E7A08;--yel:#FDC630}}
 [data-theme=dark]{{--bg:#06110B;--ink:#EEF3EC;--mute:#A3B2A7;--line:#1D2E23;--card:#0C1A12;--acc:#8BD46E}}
 *{{box-sizing:border-box}}
-body{{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.65 Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}}
+body{{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.65 "Plus Jakarta Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}}
 a{{color:var(--acc);text-underline-offset:3px}}
 a:focus-visible{{outline:2px solid var(--acc);outline-offset:3px;border-radius:4px}}
 .wrap{{max-width:720px;margin:0 auto;padding:0 22px}}
@@ -34,7 +34,7 @@ header{{padding:22px 0;border-bottom:1px solid var(--line)}}
 header .wrap{{display:flex;align-items:center;justify-content:space-between;gap:16px}}
 .brand{{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:600}}
 .brand img{{border-radius:10px}}
-h1{{font:400 clamp(40px,8vw,64px)/1.05 "Instrument Serif",Georgia,serif;margin:48px 0 8px;letter-spacing:-.01em}}
+h1{{font:600 clamp(36px,7vw,56px)/1.12 Fraunces,Georgia,serif;margin:48px 0 8px;letter-spacing:-.02em}}
 .upd{{color:var(--mute);font-size:14px;margin:0 0 36px}}
 h2{{font-size:19px;font-weight:600;margin:36px 0 8px;scroll-margin-top:24px}}
 p,li{{color:var(--mute)}} p b,li b{{color:var(--ink);font-weight:600}}
