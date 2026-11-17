@@ -113,6 +113,16 @@ class Session extends ChangeNotifier {
 
   /// Google account chooser, then server login. Returns false when the person closes the chooser.
   Future<bool> signIn() async {
+    // Demo build (how-to videos): sign in to the local demo server without Google.
+    if (kDemoToken.isNotEmpty) {
+      _p ??= await SharedPreferences.getInstance();
+      api.token = kDemoToken;
+      email = 'demo@nukkadkart.in';
+      await _keepToken(api.token);
+      await _p!.setString('email', email);
+      await refresh();
+      return true;
+    }
     await _initGoogle();
     GoogleSignInAccount account;
     try {

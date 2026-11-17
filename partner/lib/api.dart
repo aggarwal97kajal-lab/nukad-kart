@@ -4,7 +4,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
-const apiBase = 'https://api.nukkadkart.in';
+const apiBase = String.fromEnvironment('API_BASE', defaultValue: 'https://api.nukkadkart.in');
+
+/// Demo builds for the how-to videos only (tool/demo): a session token for a local demo server. Empty in real builds.
+const kDemoToken = String.fromEnvironment('DEMO_TOKEN');
 const googleWebClientId = '173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
 
 class ApiError implements Exception {

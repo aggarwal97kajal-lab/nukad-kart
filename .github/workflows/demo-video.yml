@@ -58,24 +58,7 @@ jobs:
       - name: Android project (same patches as the real APK, plus plain http to the local server)
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        run: |
-          flutter create --platforms=android --org com.nukadkart --project-name nukad_kart .
-          cp -r android_res/. android/app/src/main/res/
-          python3 tool/patch_manifest.py
-          python3 tool/patch_activity.py
-          cp android_extra/proguard-rules.pro android/app/proguard-rules.pro
-          sed -i 's/android:label="[^"]*"/android:label="Nukkad Kart"/' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
-          # Skia instead of Impeller: faster on the emulator's software GPU.
-          sed -i 's#</application>#<meta-data android:name="io.flutter.embedding.android.EnableImpeller" android:value="false" /></application>#' android/app/src/main/AndroidManifest.xml
-          # Same signing key and desugaring as the real APK (maps and Firebase check the app's signature).
-          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in android_extra/upload.jks.enc \
-            -out android/app/upload.jks -pass env:KEYSTORE_PASSWORD
-          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=nukadkart\nstoreFile=upload.jks\n' \
-            "$KEYSTORE_PASSWORD" "$KEYSTORE_PASSWORD" > android/key.properties
-          python3 tool/patch_gradle.py > /dev/null
-          flutter pub get
-          dart run flutter_launcher_icons
+        run: bash tool/demo/prepare.sh ${{ inputs.tour }}
 
       - name: Enable KVM
         run: |

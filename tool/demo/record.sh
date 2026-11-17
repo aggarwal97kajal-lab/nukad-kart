@@ -4,8 +4,16 @@
 set -uo pipefail
 TOUR="${1:-customer}"
 OUT=demo-out
-PKG=com.nukadkart.nukad_kart
-tok() { node -e "process.stdout.write(require('./$OUT/tokens.json').$1)"; }
+ROOT=$(pwd)
+tok() { node -e "process.stdout.write(require('$ROOT/$OUT/tokens.json').$1)"; }
+case "$TOUR" in
+  customer) PKG=com.nukadkart.nukad_kart; APP=.;
+    DEFINES="--dart-define=API_BASE=http://10.0.2.2:8787 --dart-define=DEMO_TOKEN=$(tok customer) --dart-define=SHOP_TOKEN=$(tok gupta) --dart-define=THELA_TOKEN=$(tok ramesh)";;
+  kirana) PKG=com.nukadkart.partner; APP=partner;
+    DEFINES="--dart-define=API_BASE=http://10.0.2.2:8787 --dart-define=DEMO_TOKEN=$(tok gupta) --dart-define=CUSTOMER_TOKEN=$(tok customer)";;
+  thela) PKG=com.nukadkart.partner; APP=partner;
+    DEFINES="--dart-define=API_BASE=http://10.0.2.2:8787 --dart-define=DEMO_TOKEN=$(tok ramesh) --dart-define=CUSTOMER_TOKEN=$(tok customer)";;
+esac
 
 adb shell settings put system screen_off_timeout 1800000
 adb shell settings put global hide_error_dialogs 1
@@ -32,11 +40,13 @@ adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi s
 adb shell am broadcast -a com.android.systemui.demo -e command network -e mobile show -e datatype 4g -e level 4
 adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
 
-DEFINES="--dart-define=API_BASE=http://10.0.2.2:8787 --dart-define=DEMO_TOKEN=$(tok customer) --dart-define=SHOP_TOKEN=$(tok gupta) --dart-define=THELA_TOKEN=$(tok ramesh)"
+cd "$APP"
 flutter build apk --profile --target=integration_test/${TOUR}_tour_test.dart $DEFINES 2>&1 | tail -25
-APK=build/app/outputs/flutter-apk/app-profile.apk
+APK=$(pwd)/build/app/outputs/flutter-apk/app-profile.apk
 adb install -r -g "$APK"
-for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION POST_NOTIFICATIONS RECORD_AUDIO CAMERA; do adb shell pm grant $PKG android.permission.$p 2>/dev/null || true; done
+for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION POST_NOTIFICATIONS RECORD_AUDIO CAMERA; do adb shell pm grant $PKG android.permission.$p 2>/dev/null || true; done
+adb shell dumpsys deviceidle whitelist +$PKG || true
+cd "$ROOT"
 
 # Thelas show for 10 minutes after their last location: send a fresh one now.
 for k in ramesh sita; do
@@ -53,9 +63,11 @@ adb shell 'log -t NKREC start; screenrecord --bit-rate 12000000 --time-limit 180
 RECPID=$!
 sleep 1
 
+cd "$APP"
 flutter drive --profile --driver=test_driver/integration_test.dart --target=integration_test/${TOUR}_tour_test.dart \
-  --use-application-binary="$APK" $DEFINES > $OUT/drive.log 2>&1
-echo "drive exit $?" | tee -a $OUT/drive.log
+  --use-application-binary="$APK" $DEFINES > "$ROOT/$OUT/drive.log" 2>&1
+echo "drive exit $?" | tee -a "$ROOT/$OUT/drive.log"
+cd "$ROOT"
 sleep 2
 adb shell pkill -INT screenrecord || true
 sleep 4

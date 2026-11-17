@@ -32,7 +32,7 @@ const tokens = {};
 for (const [k, u] of Object.entries(people)) {
   insert('users', { id: u.id, google_sub: 'demo-' + k, email: u.email, name: u.name, phone: u.phone || null, phone_verified: u.phone ? 1 : 0,
     created_at: t - 86400 * 20, updated_at: t, role: 'customer', app: u.app, partner_phone: u.partner_phone || null,
-    consent_version: CONSENT, consent_at: t - 86400 * 20 });
+    consent_version: u.app === 'partner' ? 'p-2026-11-13' : CONSENT, consent_at: t - 86400 * 20 });
   const sid = 'sess_' + k;
   insert('sessions', { id: sid, user_id: u.id, device: 'Demo phone', platform: 'android', created_at: t, last_seen: t });
   tokens[k] = await signSession(u.id, SECRET, 30, sid);
@@ -57,7 +57,7 @@ for (const s of shops) {
     opens_at: '12:00 am', closes_at: '11:59 pm', door_delivery: s.door, active: 1, demo: 0, created_at: t - 86400 * 15, owner_id: s.owner,
     pickup: s.pickup, fssai: '13323999000123', gst_type: 'none', pass_until: t + 86400 * 25, live: 1, status: 'active',
     photo_lat: s.pos.lat, photo_lng: s.pos.lng, photo_at: t - 86400 * 15, agreement_version: AGREE, addr_shop: s.name, addr_area: s.area,
-    addr_city: 'New Delhi', addr_state: 'Delhi', addr_pin: '110045', phone_verified: 1, prices_confirmed: null });
+    addr_city: 'New Delhi', addr_state: 'Delhi', addr_pin: '110045', phone_verified: 1, prices_confirmed: null, pan: 'ABCPG1234K', aadhaar_last4: '4321' });
   photos.push(`photos/${s.id}.jpg ${s.photo}`);
 }
 for (const th of thelas) {
