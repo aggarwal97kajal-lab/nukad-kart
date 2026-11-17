@@ -71,7 +71,8 @@ export async function waitlistRoute(req, env, path, m, ectx) {
       `INSERT INTO waitlist (email, name, phone, pincode, city, state, consent_at, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(email) DO UPDATE SET name = excluded.name, phone = excluded.phone, pincode = excluded.pincode, city = excluded.city,
-         state = excluded.state, consent_at = excluded.consent_at, updated_at = excluded.updated_at, brevo_synced = 0, brevo_tries = 0`,
+         state = excluded.state, consent_at = excluded.consent_at, updated_at = excluded.updated_at, brevo_synced = 0, brevo_tries = 0,
+         confirm_sent = 0`,
     ).bind(s.email, s.name, s.phone, s.pincode, s.city, s.state, t, t, t).run();
     if (env.BREVO_API_KEY && ectx?.waitUntil) ectx.waitUntil(syncOne(env, s.email).catch((e) => console.error('brevo', e.message)));
     // Same answer for a new or an existing email: the page does not reveal who is on the list.
@@ -130,7 +131,7 @@ export function confirmEmail(row) {
   const first = row.name.split(' ')[0];
   const text = `Hi ${first},\n\nYou're on the Nukkad Kart early access list for ${row.city} (${row.pincode}).\n\n`
     + `We will email you once, on the day the app opens in your area. Nothing before that.\n\n`
-    + `Did not sign up, or want to be removed? Reply to this email and we will delete your details.\n\n— Nukkad Kart\nhttps://nukkadkart.in`;
+    + `Did not sign up, or want to be removed? Reply to this email and we will delete your details.\nUnsubscribed by mistake? Fill in the form on nukkadkart.in again.\n\n— Nukkad Kart\nhttps://nukkadkart.in`;
   const html = `<!doctype html><html><body style="margin:0;background:#f6f3ea;font-family:Arial,Helvetica,sans-serif;color:#0d1f14">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px">
@@ -157,10 +158,14 @@ export async function syncOne(env, email) {
       const listId = await brevoListId(env);
       const [first, ...rest] = row.name.split(' ');
       const r = await brevo(env, 'POST', '/contacts', {
-        email: row.email, updateEnabled: true, listIds: [listId],
+        // Filling the form again is a fresh opt-in: it undoes an earlier unsubscribe.
+        email: row.email, updateEnabled: true, listIds: [listId], emailBlacklisted: false,
         attributes: { FIRSTNAME: first, LASTNAME: rest.join(' '), PHONE: '+91' + row.phone, PINCODE: row.pincode, CITY: row.city, STATE: row.state },
       });
       if (!r.ok) throw new Error(`contact: ${r.status} ${JSON.stringify(r.data)}`);
+      // An unsubscribe from a confirmation email also blocks transactional mail; lift it (404 = was not blocked).
+      const u = await brevo(env, 'DELETE', `/smtp/blockedContacts/${encodeURIComponent(row.email)}`);
+      if (!u.ok && u.status !== 404) throw new Error(`unblock: ${u.status} ${JSON.stringify(u.data)}`);
       await env.DB.prepare('UPDATE waitlist SET brevo_synced = 1 WHERE email = ?').bind(email).run();
     }
     if (!row.confirm_sent) {

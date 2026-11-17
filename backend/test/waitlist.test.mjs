@@ -31,6 +31,7 @@ function fakeBrevo() {
     if (path.startsWith('/contacts/folders?')) return Response.json({ folders: [{ id: 1 }] });
     if (path === '/contacts/lists') return Response.json({ id: 7 }, { status: 201 });
     if (path === '/contacts') return new Response('{"id":1}', { status: 201 });
+    if (path.startsWith('/smtp/blockedContacts/')) return new Response('', { status: 404 });
     if (path === '/smtp/email') return Response.json({ messageId: 'm' }, { status: 201 });
     return new Response('{}', { status: 404 });
   };
@@ -120,5 +121,22 @@ test('saved even with no Brevo key; the cron sends it once the key is there', as
     await syncWaitlist(env);
     assert.equal(DB.raw.prepare('SELECT confirm_sent FROM waitlist').get().confirm_sent, 1);
     assert.equal(calls.filter((c) => c.path === '/smtp/email').length, 1);
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test('filling the form again re-subscribes: Brevo unblock + a fresh confirmation', async () => {
+  const realFetch = globalThis.fetch;
+  const calls = fakeBrevo();
+  try {
+    const { call, waits } = setup({ BREVO_API_KEY: 'k' });
+    await call('POST', GOOD);
+    await Promise.all(waits.splice(0));
+    await call('POST', GOOD);
+    await Promise.all(waits.splice(0));
+    const contacts = calls.filter((c) => c.path === '/contacts');
+    assert.equal(contacts.length, 2);
+    assert.equal(contacts[1].body.emailBlacklisted, false);
+    assert.equal(calls.filter((c) => c.method === 'DELETE' && c.path === '/smtp/blockedContacts/ravi%40example.com').length, 2);
+    assert.equal(calls.filter((c) => c.path === '/smtp/email').length, 2);
   } finally { globalThis.fetch = realFetch; }
 });
