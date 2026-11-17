@@ -8,6 +8,16 @@ PKG=com.nukadkart.nukad_kart
 tok() { node -e "process.stdout.write(require('./$OUT/tokens.json').$1)"; }
 
 adb shell settings put system screen_off_timeout 1800000
+adb shell settings put global hide_error_dialogs 1
+# Fewer pixels for the software GPU = smoother app; the video shows the screen ~560 px wide anyway.
+adb shell wm size 720x1600
+adb shell wm density 280
+sleep 30
+# The Pixel launcher on a fresh emulator stalls and pops "isn't responding" over the app: the demo doesn't need it.
+adb shell am force-stop com.google.android.apps.nexuslauncher || true
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
+sleep 10
+adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
 adb shell settings put global window_animation_scale 1
 adb shell settings put global transition_animation_scale 1
 adb shell settings put global animator_duration_scale 1
@@ -29,7 +39,7 @@ done
 adb logcat -c
 adb logcat -v epoch -s flutter:I NKREC:I > $OUT/logcat.txt &
 LOGPID=$!
-adb shell 'log -t NKREC start; screenrecord --bit-rate 16000000 --time-limit 180 /sdcard/r1.mp4; log -t NKREC r2; screenrecord --bit-rate 16000000 --time-limit 180 /sdcard/r2.mp4' &
+adb shell 'log -t NKREC start; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r1.mp4; log -t NKREC r2; screenrecord --bit-rate 12000000 --time-limit 180 /sdcard/r2.mp4' &
 RECPID=$!
 sleep 1
 

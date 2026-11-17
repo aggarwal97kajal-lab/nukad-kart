@@ -118,6 +118,10 @@ void main() {
     // 6. Place the order
     step('place');
     await tap(find.textContaining('Place order'), pause: 1500);
+    if (find.textContaining('Agree & place order').evaluate().isNotEmpty) {
+      await hold(2500); // the rules sheet, shown before the first order
+      await tap(find.textContaining('Agree & place order'), pause: 1500);
+    }
     await wait(find.textContaining('Waiting for the store'), secs: 30);
     await hold(2500);
 
