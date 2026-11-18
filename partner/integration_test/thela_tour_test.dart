@@ -61,9 +61,8 @@ void main() {
     await k.wait(find.textContaining('5 min mein aata'), secs: 20);
     await k.hold(1500);
     await k.tap(find.textContaining('5 min mein aata').last, pause: 3000);
-    await t.binding.handlePopRoute();
-    await k.hold(1000);
-    if (!k.has(find.byType(Switch))) {
+    // Go back only while not on the home screen: popping the home screen would close the app.
+    for (var i = 0; i < 3 && !k.has(find.byType(Switch)); i++) {
       await t.binding.handlePopRoute();
       await k.hold(1000);
     }
