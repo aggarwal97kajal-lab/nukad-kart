@@ -49,8 +49,8 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
   try {
     await _local.show(
       0,
-      '📞 ${d['caller'] ?? d['from'] ?? 'Nukad Kart'}',
-      '${d['title'] ?? ''} · Nukad Kart call',
+      '📞 ${d['caller'] ?? d['from'] ?? 'Nukkad Kart'}',
+      '${d['title'] ?? ''} · Nukkad Kart call',
       NotificationDetails(
         android: AndroidNotificationDetails(_voice.id, _voice.name,
             channelDescription: _voice.description,
@@ -215,7 +215,7 @@ Future<void> setupPush(String apiToken, void Function(String title, String body,
       await _askFullScreenOnce();
     }
     final perm = await FirebaseMessaging.instance.requestPermission();
-    if (perm.authorizationStatus == AuthorizationStatus.denied) pushProblem = 'Notifications are turned off for Nukad Kart in phone settings.';
+    if (perm.authorizationStatus == AuthorizationStatus.denied) pushProblem = 'Notifications are turned off for Nukkad Kart in phone settings.';
     final t = await FirebaseMessaging.instance.getToken();
     if (t == null) {
       pushProblem = 'This phone did not give a notification token (Google Play services?).';

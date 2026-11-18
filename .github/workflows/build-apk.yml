@@ -51,7 +51,7 @@ jobs:
           python3 tool/patch_gradle.py > /dev/null
 
       - name: Set app name
-        run: sed -i 's/android:label="[^"]*"/android:label="Nukad Kart"/' android/app/src/main/AndroidManifest.xml
+        run: sed -i 's/android:label="[^"]*"/android:label="Nukkad Kart"/' android/app/src/main/AndroidManifest.xml
 
       - run: flutter pub get
 
@@ -79,7 +79,7 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: v0.9.${{ github.run_number }}
-          name: Nukad Kart v0.9.${{ github.run_number }}
+          name: Nukkad Kart v0.9.${{ github.run_number }}
           body: |
             Customer app. Real Google sign-in and SMS code; shops, orders and payments are still demo data.
             Install: download NukadKart.apk on your Android phone and allow "Install unknown apps".

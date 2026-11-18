@@ -11,7 +11,7 @@ import 'session.dart';
 ///  * Balanced accuracy (phone towers + Wi-Fi, GPS only when needed) while moving.
 ///  * Sends only after ~75 m of movement, not on a timer.
 ///  * When standing, a "still here" every 90 s (no GPS) and one precise GPS fix every 5 minutes.
-///  * Runs as an ongoing notification ("Nukad Partner is sharing your location"), so Android
+///  * Runs as an ongoing notification ("Nukkad Partner is sharing your location"), so Android
 ///    keeps it alive with the screen off — no "Allow all the time" location needed.
 /// No location for 10 minutes → the server hides the thela and sends a push.
 class ThelaLocation {
@@ -96,7 +96,7 @@ class ThelaLocation {
       distanceFilter: 75,
       intervalDuration: const Duration(seconds: 30),
       foregroundNotificationConfig: const ForegroundNotificationConfig(
-        notificationTitle: 'You are LIVE on Nukad Kart',
+        notificationTitle: 'You are LIVE on Nukkad Kart',
         notificationText: 'Sharing your thela’s location with customers nearby. Turn LIVE off to stop.',
         notificationIcon: AndroidResource(name: 'ic_stat_nukad', defType: 'drawable'),
         enableWakeLock: true,

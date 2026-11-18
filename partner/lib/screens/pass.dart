@@ -14,7 +14,7 @@ class PassScreen extends StatefulWidget {
 
 class _PassScreenState extends State<PassScreen> {
   List<Map<String, dynamic>> plans = [];
-  String upiId = '', upiName = 'Nukad Kart';
+  String upiId = '', upiName = 'Nukkad Kart';
   String selected = 'monthly';
   bool _loading = true;
   String? _error;
@@ -30,7 +30,7 @@ class _PassScreenState extends State<PassScreen> {
       final r = await api.call('GET', '/v1/partner/plans');
       plans = ((r['plans'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
       upiId = '${r['upiId'] ?? ''}';
-      upiName = '${r['upiName'] ?? 'Nukad Kart'}';
+      upiName = '${r['upiName'] ?? 'Nukkad Kart'}';
       testMode = r['testMode'] == true;
       _error = null;
     } on ApiError catch (e) {
@@ -102,7 +102,7 @@ class _PassScreenState extends State<PassScreen> {
   }
 }
 
-/// Nukad Kart's own payment page: the UPI apps on this phone (real names and icons from the phone).
+/// Nukkad Kart's own payment page: the UPI apps on this phone (real names and icons from the phone).
 class PayScreen extends StatefulWidget {
   final Map<String, dynamic> plan;
   final bool upiReady, demo;
@@ -147,7 +147,7 @@ class _PayScreenState extends State<PayScreen> {
         upiId: '${c['upiId']}',
         name: '${c['upiName']}',
         amount: (pay['amount'] as num),
-        note: 'Nukad Kart ${pay['planName']} pass ${pay['id']}',
+        note: 'Nukkad Kart ${pay['planName']} pass ${pay['id']}',
         ref: '${pay['id']}',
         package: app.package,
       );
@@ -202,7 +202,7 @@ class _PayScreenState extends State<PayScreen> {
                 Text(tr('{0} day{1} · {2}', [p['days'], p['days'] == 1 ? '' : 's', startsLater ? 'starts when your current pass ends' : 'starts now']),
                     style: tx(12, color: kMute)),
                 const SizedBox(height: 4),
-                Text(tr('To: Nukad Kart'), style: tx(12, color: kMute)),
+                Text(tr('To: Nukkad Kart'), style: tx(12, color: kMute)),
               ]),
             ),
             Text('₹${p['price']}', style: tx(24, weight: FontWeight.w800)),

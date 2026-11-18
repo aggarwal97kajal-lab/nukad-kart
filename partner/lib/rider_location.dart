@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'api.dart';
 
 /// While this phone has a shop order out for door delivery, share its position so the customer
-/// sees the Nukad Kart scooter on the map. Stops when there is nothing to deliver.
+/// sees the Nukkad Kart scooter on the map. Stops when there is nothing to deliver.
 class RiderLocation {
   RiderLocation._();
   static final RiderLocation instance = RiderLocation._();

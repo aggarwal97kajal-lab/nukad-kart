@@ -10,7 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'screens/agreement.dart';
 
-String _fileName(AgreementData d) => 'NukadKart_Agreement_${d.signed!['id']}.pdf';
+String _fileName(AgreementData d) => 'NukkadKart_Agreement_${d.signed!['id']}.pdf';
 
 /// Signed agreement as a PDF: both parties, full text, signature, name, date and reference.
 Future<Uint8List> agreementPdf(AgreementData d) async {
@@ -43,15 +43,15 @@ Future<Uint8List> agreementPdf(AgreementData d) async {
       );
 
   final paras = d.text.split(RegExp(r'\n\s*\n')).map((x) => x.trim()).where((x) => x.isNotEmpty);
-  final doc = pw.Document(title: 'Nukad Kart Vendor Agreement ${s['id']}', author: 'Nukad Kart');
+  final doc = pw.Document(title: 'Nukkad Kart Vendor Agreement ${s['id']}', author: 'Nukkad Kart');
   doc.addPage(pw.MultiPage(
     pageFormat: PdfPageFormat.a4,
     margin: const pw.EdgeInsets.fromLTRB(36, 36, 36, 40),
     header: (ctx) => ctx.pageNumber == 1
         ? pw.SizedBox()
-        : pw.Text('Nukad Kart · Vendor Agreement · Ref ${s['id']}', style: st(8, c: mute)),
+        : pw.Text('Nukkad Kart · Vendor Agreement · Ref ${s['id']}', style: st(8, c: mute)),
     footer: (ctx) => pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-      pw.Text('Signed electronically in the Nukad Kart Partner app · ${s['id']}', style: st(7.5, c: mute)),
+      pw.Text('Signed electronically in the Nukkad Kart Partner app · ${s['id']}', style: st(7.5, c: mute)),
       pw.Text('Page ${ctx.pageNumber} of ${ctx.pagesCount}', style: st(7.5, c: mute)),
     ]),
     build: (ctx) => [
@@ -62,7 +62,7 @@ Future<Uint8List> agreementPdf(AgreementData d) async {
       pw.SizedBox(height: 10),
       box('FIRST PARTY - PLATFORM OPERATOR', [
         row('Legal name', '${p['legalName']}'),
-        row('Trading name', 'Nukad Kart'),
+        row('Trading name', 'Nukkad Kart'),
         row('Business constitution', 'Sole Proprietorship'),
         row('Address', '${p['address']}'),
         row('PAN', '${p['pan']}'),

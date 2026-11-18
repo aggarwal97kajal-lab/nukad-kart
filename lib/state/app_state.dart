@@ -422,7 +422,7 @@ class AppState extends ChangeNotifier {
 
   bool phoneVerified = false;
 
-  /// Session token from the Nukad Kart server ('' when signed in offline).
+  /// Session token from the Nukkad Kart server ('' when signed in offline).
   String apiToken = '';
 
   /// Random id made once per app install. Tells the server "same phone" when logging in again.

@@ -24,7 +24,7 @@ jobs:
       - name: Customer app — iOS files
         run: |
           flutter create --platforms=ios --org com.nukadkart --project-name nukad_kart .
-          python3 tool/ios_setup.py "Nukad Kart"
+          python3 tool/ios_setup.py "Nukkad Kart"
           flutter pub get
 
       - name: Customer app — build
@@ -38,7 +38,7 @@ jobs:
         working-directory: partner
         run: |
           flutter create --platforms=ios --org com.nukadkart --project-name nukad_partner .
-          python3 ../tool/ios_setup.py "Nukad Partner"
+          python3 ../tool/ios_setup.py "Nukkad Partner"
           flutter pub get
 
       - name: Partner app — build

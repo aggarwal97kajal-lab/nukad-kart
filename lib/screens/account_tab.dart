@@ -119,7 +119,7 @@ class AccountTab extends StatelessWidget {
               _Row(icon: Icons.logout, title: t('Log out'), onTap: () => _logout(context)),
             ]),
           const SizedBox(height: 12),
-          Text('Nukad Kart · v${const String.fromEnvironment('APP_VERSION', defaultValue: 'dev')}', style: body(11.5, color: kMute)),
+          Text('Nukkad Kart · v${const String.fromEnvironment('APP_VERSION', defaultValue: 'dev')}', style: body(11.5, color: kMute)),
         ]),
       ),
     ]);

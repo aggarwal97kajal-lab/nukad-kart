@@ -91,7 +91,7 @@ class _WeekReportScreenState extends State<WeekReportScreen> {
 
   String _text(Map<String, dynamic> r, bool thela) {
     final lines = <String>[
-      tr('My report on Nukad Kart ({0} – {1})', [r['from'], r['to']]),
+      tr('My report on Nukkad Kart ({0} – {1})', [r['from'], r['to']]),
       tr('{0} times people looked at my {1}', [r['views'], thela ? tr('thela') : tr('shop')]),
       if (thela) tr('{0} calls to their street', [r['calls']]) else tr('{0} orders · ₹{1}', [r['orders'], r['sales']]),
       tr('{0} new customers', [r['newCustomers']]),

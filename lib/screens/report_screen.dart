@@ -68,7 +68,7 @@ class _ReportScreenState extends State<ReportScreen> {
             SizedBox(height: 6),
             Text('We send your complaint to ${st.name} and keep a record of it.', style: body(12.5)),
             SizedBox(height: 4),
-            Text('You paid the store directly; Nukad Kart does not give refunds. Any money back comes from the store.',
+            Text('You paid the store directly; Nukkad Kart does not give refunds. Any money back comes from the store.',
                 style: body(12.5)),
             SizedBox(height: 4),
             Text('Stores found at fault can be suspended.', style: body(12.5)),

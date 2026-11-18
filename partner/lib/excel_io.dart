@@ -17,7 +17,7 @@ Future<void> _save(String name, Map<String, List<List<Object?>>> sheets) async {
 
 /// Blank sheet with headings, how-to notes, and one example of each kind.
 Future<void> saveTemplate(List<String> categories) async {
-  await _save('Nukad products template', {
+  await _save('Nukkad products template', {
     'Products': [kExcelHeads, _example, _exampleLoose],
     'How to fill': [
       for (final line in [
@@ -85,7 +85,7 @@ Future<int> exportProducts() async {
       loose ? 'Y' : 'N', loose ? p['unit'] : '', loose ? (p['options'] as List).join(',') : '',
     ]);
   }
-  await _save('Nukad products ${DateTime.now().toIso8601String().substring(0, 10)}', {'Products': rows});
+  await _save('Nukkad products ${DateTime.now().toIso8601String().substring(0, 10)}', {'Products': rows});
   return list.length;
 }
 

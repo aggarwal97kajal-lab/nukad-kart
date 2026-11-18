@@ -12,7 +12,7 @@ for perm in ["INTERNET", "CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATI
     tag = f'<uses-permission android:name="android.permission.{perm}"/>'
     if tag not in s:
         s = s.replace("<application", tag + "\n    <application", 1)
-s = re.sub(r'android:label="[^"]*"', 'android:label="Nukad Kart Partner"', s, count=1)
+s = re.sub(r'android:label="[^"]*"', 'android:label="Nukkad Kart Partner"', s, count=1)
 # UPI apps register "upi://pay" (scheme + host). Asking only for "upi" hides most of them on Android 11+,
 # so ask for both, and name the common UPI apps too.
 # Package names from Razorpay's list of UPI apps (docs: payments/payment-methods/upi/supported-apps),
@@ -46,7 +46,7 @@ for q in queries:
             s = s.replace("<queries>", "<queries>\n        " + q, 1)
         else:
             s = s.replace("</manifest>", "    <queries>\n        " + q + "\n    </queries>\n</manifest>", 1)
-# Notification icon in the status bar: one-colour Nukad Kart cart (a full-colour logo shows as a white square on
+# Notification icon in the status bar: one-colour Nukkad Kart cart (a full-colour logo shows as a white square on
 # many phones, mostly older ones). Files: partner/android_res/ (copied into the generated res folder).
 icon_meta = '''<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_nukad" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/nk_notify" />'''

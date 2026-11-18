@@ -91,7 +91,7 @@ class _PartnerAppState extends State<PartnerApp> with WidgetsBindingObserver {
     ));
     final app = MaterialApp(
       navigatorKey: navKey,
-      title: tr('Nukad Kart Partner'),
+      title: tr('Nukkad Kart Partner'),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -181,7 +181,7 @@ class WelcomePrefsScreen extends StatelessWidget {
           const SizedBox(height: 20),
           Center(child: ClipRRect(borderRadius: BorderRadius.circular(28), child: Image.asset('assets/logo.png', width: 130))),
           const SizedBox(height: 14),
-          Center(child: Text(tr('Nukad Kart Partner'), style: tx(24, weight: FontWeight.w800))),
+          Center(child: Text(tr('Nukkad Kart Partner'), style: tx(24, weight: FontWeight.w800))),
           const SizedBox(height: 28),
           Text(tr('Choose language · भाषा चुनें'), style: tx(15, weight: FontWeight.w800)),
           const SizedBox(height: 10),
@@ -344,7 +344,7 @@ class _GateState extends State<Gate> {
     // DPDP: clear consent (18+, privacy notice) first; asked again when the notice changes.
     if (session.consentVersion != kPartnerConsentVersion) return const PartnerConsentScreen();
     if (session.staffInfo != null) return const StaffShell();
-    // Steps: phone OTP → business details → documents → agreement → waiting for Nukad Kart team → home.
+    // Steps: phone OTP → business details → documents → agreement → waiting for Nukkad Kart team → home.
     // Admin without a shop: straight to the admin screen.
     if (session.admin && session.store == null) return const AdminScreen(root: true);
     if (!session.phoneVerified) return const PhoneScreen();
@@ -353,7 +353,7 @@ class _GateState extends State<Gate> {
     // newly added number) is asked for on the home screen. Before signing again, the missing one is added first.
     final st = session.store!;
     if (st['kind'] != 'thela') {
-      // Kirana: FSSAI certificate → sent to the Nukad Kart team → 7-day trial. PAN, Aadhaar and the agreement are
+      // Kirana: FSSAI certificate → sent to the Nukkad Kart team → 7-day trial. PAN, Aadhaar and the agreement are
       // asked on the home screen and before the first pass. A shop with everything but a new agreement signs it here.
       if (st['status'] != 'active') return st['startComplete'] == true && st['status'] != 'pending' ? const PartnerShell() : const DocsScreen();
       final readyToSign = st['docsComplete'] == true && '${st['pan'] ?? ''}'.isNotEmpty && '${st['aadhaarLast4'] ?? ''}'.isNotEmpty;

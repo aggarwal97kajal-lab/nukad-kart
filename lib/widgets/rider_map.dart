@@ -16,7 +16,7 @@ import '../services/ola_maps.dart';
 import 'ui.dart';
 
 /// Real map for a shop delivery: named pins for the customer's home and the shop, the road route between them
-/// (Ola directions, one call per order), and the Nukad Kart scooter (the delivery person's phone) driving along
+/// (Ola directions, one call per order), and the Nukkad Kart scooter (the delivery person's phone) driving along
 /// that route like in Swiggy / Zomato / Blinkit: it moves smoothly along the road (never jumps across buildings),
 /// faces the way it is going (the brand scooter, mirrored when it drives left), and the route behind it
 /// disappears. The rider's phone sends its spot every ~3 s; it arrives here at once over the order's live socket

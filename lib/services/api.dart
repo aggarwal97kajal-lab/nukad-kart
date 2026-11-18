@@ -15,7 +15,7 @@ class ApiException implements Exception {
         'call_not_coming' => 'This call is no longer active. Call again if you still need the thela.',
         'bad_request' => 'Something went wrong. Try again.',
         'phone_in_use' => 'This number is already linked to another account.',
-        'email_used_by_partner' => 'This Google account is used for a shop in the Nukad Kart Partner app. Use a different Google account to shop.',
+        'email_used_by_partner' => 'This Google account is used for a shop in the Nukkad Kart Partner app. Use a different Google account to shop.',
         'phone_not_verified' || 'phone_mismatch' => 'This number could not be confirmed. Send a new code and try again.',
         'not_signed_in' || 'unknown_user' => 'Your session ended. Log in again.',
         'offline' || 'timeout' => 'No internet connection. Try again.',
@@ -41,7 +41,7 @@ class ApiException implements Exception {
   String toString() => 'ApiException($status, $code)';
 }
 
-/// Talks to the Nukad Kart server. The session token comes from [AppState.apiToken].
+/// Talks to the Nukkad Kart server. The session token comes from [AppState.apiToken].
 class Api {
   Api({http.Client? client}) : _http = client ?? http.Client();
   final http.Client _http;

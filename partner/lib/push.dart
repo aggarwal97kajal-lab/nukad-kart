@@ -54,7 +54,7 @@ Future<void> showVoiceRing(Map<String, dynamic> d) async {
     await _local.show(
       0,
       '📞 ${d['caller'] ?? d['from'] ?? 'Customer'}',
-      '${d['title'] ?? ''} · Nukad Kart call',
+      '${d['title'] ?? ''} · Nukkad Kart call',
       NotificationDetails(
         android: AndroidNotificationDetails(_voice.id, _voice.name,
             channelDescription: _voice.description,
@@ -274,7 +274,7 @@ Future<void> showOrderAlarm(Map<String, dynamic> d) async {
   final id = '${d['id'] ?? ''}';
   if (id.isEmpty) return;
   final title = '${d['title'] ?? 'New order'}';
-  final body = '${d['body'] ?? 'Open Nukad Kart Partner to accept'}';
+  final body = '${d['body'] ?? 'Open Nukkad Kart Partner to accept'}';
   _ringing[id] = (title, body);
   await _ring(id, title, body);
   _startRinger();
@@ -348,7 +348,7 @@ void ringNewOrders(List<Map<String, dynamic>> orders) {
   for (final o in orders) {
     final id = '${o['id']}';
     if (o['status'] == 'placed' && !_ringing.containsKey(id)) {
-      _ringing[id] = ('New order ${o['id']}', 'Open Nukad Kart Partner to accept');
+      _ringing[id] = ('New order ${o['id']}', 'Open Nukkad Kart Partner to accept');
     }
   }
   if (_ringing.isNotEmpty) _startRinger();

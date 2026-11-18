@@ -38,7 +38,7 @@ receivers = '''<receiver android:exported="false" android:name="com.dexterous.fl
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>'''
-# Notification icon in the status bar: one-colour Nukad Kart cart (a full-colour logo shows as a white square on
+# Notification icon in the status bar: one-colour Nukkad Kart cart (a full-colour logo shows as a white square on
 # many phones, mostly older ones). Files come from android_res/drawable-*/ic_stat_nukad.png.
 icon_meta = '''<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_nukad" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/nk_notify" />'''

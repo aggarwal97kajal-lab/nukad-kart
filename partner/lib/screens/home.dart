@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final r = await api.call('POST', '/v1/partner/submit');
       session.setStore(Map<String, dynamic>.from(r['store'] as Map));
-      if (mounted) toast(context, tr('Sent. Nukad Kart team will check again.'));
+      if (mounted) toast(context, tr('Sent. Nukkad Kart team will check again.'));
     } on ApiError catch (e) {
       if (mounted) toast(context, e.message);
     }
@@ -86,12 +86,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return switch (reason) {
       null => (tr('You are LIVE'), tr('Customers within 500 m can see you and order.'), kOnAct, kAct),
       'no_pass' => (tr('Pass ended · hidden'), tr('Customers can’t see you. Buy a pass to go live.'), kRed, kRedBg),
-      'blocked' => (tr('Account blocked'), tr('Contact Nukad Kart support.'), kRed, kRedBg),
+      'blocked' => (tr('Account blocked'), tr('Contact Nukkad Kart support.'), kRed, kRedBg),
       'closed_now' => (tr('Closed now'), tr('Outside your timings ({0} – {1}). You show again at opening time.', [s['opensAt'], s['closesAt']]), kAmb, kAmbBg),
       'missed_orders' => (tr('Offline for today'), tr('5 orders were missed today. Switch on to go live again.'), kAmb, kAmbBg),
       'no_agreement' => (tr('Agreement not signed'), tr('Sign the partner agreement to go live.'), kRed, kRedBg),
-      'not_verified' => (tr('Waiting for verification'), tr('Nukad Kart team is verifying your details and documents. Your shop can go live after approval.'), kAmb, kAmbBg),
-      'rejected' => (tr('Changes needed'), tr('Nukad Kart team asked for changes. Fix them below and send again.'), kRed, kRedBg),
+      'not_verified' => (tr('Waiting for verification'), tr('Nukkad Kart team is verifying your details and documents. Your shop can go live after approval.'), kAmb, kAmbBg),
+      'rejected' => (tr('Changes needed'), tr('Nukkad Kart team asked for changes. Fix them below and send again.'), kRed, kRedBg),
       _ => (tr('You are offline'), tr('Switch on to show your shop to customers.'), kInk, kSurf),
     };
   }
@@ -199,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(tr('Upload: {0}', [_needDocs(s).map((x) => docLabels[x]?.$1 ?? x).join(', ')]), style: tx(14, weight: FontWeight.w800)),
                     const SizedBox(height: 2),
-                    Text(tr('Nukad Kart team checks it with your change. Your shop stays live.'), style: tx(12.5, color: kMute)),
+                    Text(tr('Nukkad Kart team checks it with your change. Your shop stays live.'), style: tx(12.5, color: kMute)),
                     const SizedBox(height: 8),
                     Btn(tr('Upload document'), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DocsScreen(pushed: true)))),
                   ]),
@@ -212,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Text(
                       session.change!['status'] == 'rejected'
                           ? tr('Your changes were not approved: {0}', [session.change!['note']])
-                          : t('Your new details are with the Nukad Kart team. You stay live meanwhile.'),
+                          : t('Your new details are with the Nukkad Kart team. You stay live meanwhile.'),
                       style: tx(12.5, weight: FontWeight.w700)),
                 ),
               ],
@@ -267,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                          tr('Nukad Kart team is verifying your shop. This usually takes less than a day. Pull down to check. ') +
+                          tr('Nukkad Kart team is verifying your shop. This usually takes less than a day. Pull down to check. ') +
                               (session.trialAvailable
                                   ? t('Your 7-day free trial starts when you are approved.')
                                   : t('Free trial was already used on this number or phone.')),

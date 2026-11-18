@@ -32,7 +32,7 @@ Uint8List? cleanSignature(Uint8List photo) {
   return Uint8List.fromList(img.encodePng(crop));
 }
 
-/// Admin: Nukad Kart's signature, drawn or uploaded once, used on every partner agreement.
+/// Admin: Nukkad Kart's signature, drawn or uploaded once, used on every partner agreement.
 class AdminSignatureScreen extends StatefulWidget {
   final String name;
   final String? current; // base64 PNG
@@ -111,7 +111,7 @@ class _AdminSignatureScreenState extends State<AdminSignatureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: bar(t('Nukad Kart signature')),
+      appBar: bar(t('Nukkad Kart signature')),
       body: ListView(
         physics: _drawing ? const NeverScrollableScrollPhysics() : null,
         padding: const EdgeInsets.all(16),
@@ -149,7 +149,7 @@ class _AdminSignatureScreenState extends State<AdminSignatureScreen> {
           const SizedBox(height: 16),
           Btn(_saving ? t('Saving…') : t('Save signature'), onTap: _saving ? null : _save),
           const SizedBox(height: 8),
-          Text(t('Used on every partner agreement as "For Nukad Kart".'), textAlign: TextAlign.center, style: tx(12, color: kMute)),
+          Text(t('Used on every partner agreement as "For Nukkad Kart".'), textAlign: TextAlign.center, style: tx(12, color: kMute)),
         ],
       ),
     );

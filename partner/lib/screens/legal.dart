@@ -12,11 +12,11 @@ const kPartnerTerms = [
   ['2. Pass and free trial', 'To be shown to customers you need an active pass. A free trial is given once per mobile number and phone. Pass prices are shown in the app before you pay. Days already used are not refunded.'],
   ['3. Orders (shops)', 'A new order rings for up to 5 minutes. If you do not accept or reject it in that time, it is marked missed. 5 missed orders in a day pause your shop for the rest of the day. After accepting, pack what you have, mark items you do not have, and hand over the order only after the customer gives the 4-digit delivery code. Mark truthfully whether you were paid by cash or UPI.'],
   ['4. Prices, MRP and bills', 'You set your own prices. They must not be more than MRP. The bill to the customer is issued in your name with your details; GST, FSSAI and other licences for what you sell are your responsibility.'],
-  ['5. Thelas: location, calls and chat', 'While you are LIVE, your phone shares its location with Nukad Kart so customers within 500 m can see your thela on a map. It stops when you go offline; after 10 minutes without location you are hidden. Customers can call you to their street: answer within 3 minutes, and go if you say “Coming”. Use “Nobody there” only when it is true. Chat is text only; do not ask for or share phone numbers.'],
+  ['5. Thelas: location, calls and chat', 'While you are LIVE, your phone shares its location with Nukkad Kart so customers within 500 m can see your thela on a map. It stops when you go offline; after 10 minutes without location you are hidden. Customers can call you to their street: answer within 3 minutes, and go if you say “Coming”. Use “Nobody there” only when it is true. Chat is text only; do not ask for or share phone numbers.'],
   ['6. Staff', 'You may add up to 5 staff by mobile number. You are responsible for what your staff do in the app, including deliveries and money they collect. Remove staff who leave.'],
-  ['7. Payments', 'Customers pay you directly, in cash or to your own UPI. Nukad Kart does not collect or hold order money and is not responsible for payment disputes between you and a customer.'],
+  ['7. Payments', 'Customers pay you directly, in cash or to your own UPI. Nukkad Kart does not collect or hold order money and is not responsible for payment disputes between you and a customer.'],
   ['8. What is not allowed', 'Fake or expired items, selling above MRP, a photo or details that are not of your own shop or thela, abusing customers, misusing a customer’s address or number, and taking orders outside the app to avoid these terms. We may pause or remove accounts that do this.'],
-  ['9. Changing your details', 'A new name, address or shop photo is checked by the Nukad Kart team. After approval, or after you change your mobile number, you must sign the updated agreement before going LIVE again. Earlier signed agreements are kept.'],
+  ['9. Changing your details', 'A new name, address or shop photo is checked by the Nukkad Kart team. After approval, or after you change your mobile number, you must sign the updated agreement before going LIVE again. Earlier signed agreements are kept.'],
   ['10. Pausing, leaving and your data', 'You can go offline at any time and can delete your account from the app. Your documents, photos and products are then removed; the signed agreement, payment records and trial record are kept as the law requires.'],
   ['11. Complaints', 'Write to our Grievance Officer at $kGrievanceEmail. We acknowledge within 48 hours and aim to resolve within one month.'],
   ['12. Agreement', 'These terms apply together with the Vendor Partnership Agreement you sign in the app. If they differ, the signed agreement applies.'],
@@ -34,7 +34,7 @@ class LegalScreen extends StatelessWidget {
   final String title;
   final List<List<String>> sections;
   const LegalScreen({super.key, required this.title, required this.sections});
-  const LegalScreen.terms({super.key}) : title = 'Nukad Kart Partner Terms', sections = kPartnerTerms;
+  const LegalScreen.terms({super.key}) : title = 'Nukkad Kart Partner Terms', sections = kPartnerTerms;
   const LegalScreen.privacy({super.key}) : title = 'Privacy Policy', sections = kPartnerPrivacy;
 
   @override
@@ -89,7 +89,7 @@ class _PartnerConsentScreenState extends State<PartnerConsentScreen> {
     return Scaffold(
       appBar: bar(t('Before you start')),
       body: ListView(padding: const EdgeInsets.all(18), children: [
-        Text(t('Nukad Kart keeps your account and business details, KYC documents, products, orders and signed agreements. For thelas, your location while LIVE; for deliveries, the delivery phone’s location while an order is out. Chats are deleted after 24 hours.'),
+        Text(t('Nukkad Kart keeps your account and business details, KYC documents, products, orders and signed agreements. For thelas, your location while LIVE; for deliveries, the delivery phone’s location while an order is out. Chats are deleted after 24 hours.'),
             style: tx(13.5)),
         const SizedBox(height: 8),
         Wrap(spacing: 8, children: [

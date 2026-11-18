@@ -8,7 +8,7 @@ const olaMapsProjectId = '2786de8f-21d0-4944-96bc-b1cbfccb0e93';
 /// The app asks Google for an ID token meant for this client; the server checks it.
 const googleWebClientId = '173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
 
-/// Nukad Kart API (Cloudflare Worker).
+/// Nukkad Kart API (Cloudflare Worker).
 const apiBase = String.fromEnvironment('API_BASE', defaultValue: 'https://api.nukkadkart.in');
 
 /// Demo builds for the how-to videos only (tool/demo): a session token for a local demo server. Empty in real builds.

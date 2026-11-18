@@ -157,7 +157,7 @@ class _ThelaView extends StatelessWidget {
                   ),
                 SizedBox(height: 12),
                 NoteBox(
-                  t('No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukad Kart. Phone numbers are never shared.'),
+                  t('No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukkad Kart. Phone numbers are never shared.'),
                   color: kBlu,
                   bg: kBluBg,
                 ),

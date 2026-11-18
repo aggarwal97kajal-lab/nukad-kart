@@ -105,7 +105,7 @@ class _AgreementScreenState extends State<AgreementScreen> {
         'name': name.text.trim(),
         'signature': base64Encode(png),
         'date': today,
-        'device': 'Nukad Partner app',
+        'device': 'Nukkad Partner app',
       });
       final fresh = await AgreementData.load();
       if (!mounted) return;
@@ -202,8 +202,8 @@ class _AgreementScreenState extends State<AgreementScreen> {
             const SizedBox(height: 4),
             Text(
                 session.admin
-                    ? tr('Nukad Kart details missing: {0}. Fill them so partners can sign.', [d.missingParty.join(', ')])
-                    : tr('Nukad Kart’s own legal details are being added. Your documents are saved; come back in a little while and pull down to refresh.'),
+                    ? tr('Nukkad Kart details missing: {0}. Fill them so partners can sign.', [d.missingParty.join(', ')])
+                    : tr('Nukkad Kart’s own legal details are being added. Your documents are saved; come back in a little while and pull down to refresh.'),
                 style: tx(13)),
             if (session.admin) ...[
               const SizedBox(height: 8),
@@ -294,7 +294,7 @@ class AgreementDetails extends StatelessWidget {
       const SizedBox(height: 8),
       _section(tr('FIRST PARTY · PLATFORM'), [
         _row(tr('Legal name'), '${p['legalName']}'),
-        _row(tr('Trading name'), 'Nukad Kart'),
+        _row(tr('Trading name'), 'Nukkad Kart'),
         _row(tr('Type'), tr('Sole proprietorship')),
         _row(tr('Address'), '${p['address']}'),
         _row('PAN', '${p['pan']}'),
@@ -429,7 +429,7 @@ class SignedScreen extends StatelessWidget {
         Icon(Icons.check_circle, color: kAct, size: 64),
         const SizedBox(height: 6),
         Text(tr('Signed'), textAlign: TextAlign.center, style: tx(20, weight: FontWeight.w800)),
-        Text(tr('Nukad Kart team will now verify your documents.'), textAlign: TextAlign.center, style: tx(13, color: kMute)),
+        Text(tr('Nukkad Kart team will now verify your documents.'), textAlign: TextAlign.center, style: tx(13, color: kMute)),
         const SizedBox(height: 16),
         SignedCard(data: data),
         const SizedBox(height: 16),

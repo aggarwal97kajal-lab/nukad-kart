@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
-/// Nukad Kart branded map markers: delivery bike and thela.
+/// Nukkad Kart branded map markers: delivery bike and thela.
 class MapMarkers {
   static ui.Image? bike, thela;
 

@@ -309,7 +309,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
         _StoreCard(store: st),
         SizedBox(height: 10),
       ],
-      Text(t('You pay the store at delivery, cash or UPI. Nukad Kart adds no fee to your bill.'),
+      Text(t('You pay the store at delivery, cash or UPI. Nukkad Kart adds no fee to your bill.'),
           style: body(11.5, color: kMute)),
     ]);
   }
@@ -394,7 +394,7 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
           SizedBox(height: 6),
           Text(moving
               ? 'Thelas show here when they are LIVE within 500 m of ${s.current.short}. Pull down to check again.'
-              : 'No Nukad Kart shop is open within 500 m of ${s.current.short} right now.\nTry changing your location.',
+              : 'No Nukkad Kart shop is open within 500 m of ${s.current.short} right now.\nTry changing your location.',
               textAlign: TextAlign.center, style: body(14, color: kMute)),
           SizedBox(height: 18),
           SizedBox(
@@ -410,8 +410,8 @@ class _HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
           ),
           SizedBox(height: 12),
           GestureDetector(
-            onTap: () => showToast(context, 'We’ll notify you when Nukad Kart starts in ${s.current.pin}'),
-            child: Text('🔔 Tell me when Nukad Kart starts here', style: body(13, color: kG, weight: FontWeight.w700)),
+            onTap: () => showToast(context, 'We’ll notify you when Nukkad Kart starts in ${s.current.pin}'),
+            child: Text('🔔 Tell me when Nukkad Kart starts here', style: body(13, color: kG, weight: FontWeight.w700)),
           ),
         ]),
       ),

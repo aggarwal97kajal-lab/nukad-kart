@@ -68,7 +68,7 @@ class _ThelaRealMapState extends State<ThelaRealMap> {
     await c.addLine(LineOptions(geometry: ring, lineColor: '#21331B', lineWidth: 1.6, lineOpacity: 0.8));
     final home = LatLng(widget.homeLat, widget.homeLng);
     await c.addCircle(CircleOptions(geometry: home, circleRadius: 9, circleColor: '#21331B', circleStrokeColor: '#FFFFFF', circleStrokeWidth: 3));
-    // The Nukad Kart branded thela (same picture as before).
+    // The Nukkad Kart branded thela (same picture as before).
     try {
       final b = await rootBundle.load('assets/images/markers/thela.png');
       await c.addImage('nk-thela', b.buffer.asUint8List());

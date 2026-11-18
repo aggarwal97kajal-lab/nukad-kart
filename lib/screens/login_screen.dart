@@ -63,7 +63,7 @@ class LoginScreen extends StatelessWidget {
                   child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
                 ),
                 SizedBox(height: 14),
-                Text('Nukad Kart', style: head(28, color: kOnBrand)),
+                Text('Nukkad Kart', style: head(28, color: kOnBrand)),
                 SizedBox(height: 4),
                 Text('Apne Nukkad Ki Har Dukaan!',
                     style: body(14, color: Color(0xCC21331B), weight: FontWeight.w600)),

@@ -1,6 +1,6 @@
 import '../data/demo_data.dart';
 
-/// One row on a shop's bill. Prices on Nukad Kart include GST, so tax is worked out backwards.
+/// One row on a shop's bill. Prices on Nukkad Kart include GST, so tax is worked out backwards.
 class BillLine {
   final String name, hsn;
   final double gstRate; // %

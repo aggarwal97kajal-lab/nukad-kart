@@ -49,7 +49,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
         backgroundColor: kBg,
         appBar: AppBar(backgroundColor: kCard, automaticallyImplyLeading: false, title: Text(t('Before you start'), style: head(18))),
         body: ListView(padding: EdgeInsets.all(18), children: [
-          Text(t('What Nukad Kart keeps about you'), style: head(16)),
+          Text(t('What Nukkad Kart keeps about you'), style: head(16)),
           SizedBox(height: 10),
           _point(Icons.person_outline, t('Name, email and mobile number — for your account and orders.')),
           _point(Icons.location_on_outlined, t('Your delivery addresses and the map point of the one you choose — to show shops within 500 m and thelas near you.')),
@@ -73,7 +73,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
             contentPadding: EdgeInsets.zero,
             value: agree,
             onChanged: (v) => setState(() => agree = v == true),
-            title: Text(t('I have read the privacy policy and agree to Nukad Kart using my data as described above'), style: body(14)),
+            title: Text(t('I have read the privacy policy and agree to Nukkad Kart using my data as described above'), style: body(14)),
           ),
           SizedBox(height: 12),
           PrimaryButton(busy ? '…' : t('Agree and continue'), onTap: age && agree && !busy ? _go : null),
@@ -85,7 +85,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
             ),
           ),
           if (!age)
-            Text(t('Nukad Kart is only for people aged 18 and above.'), textAlign: TextAlign.center, style: body(12, color: kMute)),
+            Text(t('Nukkad Kart is only for people aged 18 and above.'), textAlign: TextAlign.center, style: body(12, color: kMute)),
         ]),
       ),
     );

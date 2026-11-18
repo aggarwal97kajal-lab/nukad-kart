@@ -37,7 +37,7 @@ String voiceText(String key, String lang) {
     'call_busy': 'एक कॉल पहले से चल रही है।',
     'call_over': 'यह कॉल ख़त्म हो चुकी है।',
     'callee_offline': 'सामने वाले का फ़ोन अभी ऐप पर नहीं मिला (नेट बंद या लॉग आउट)। चैट भेजें।',
-    'mic': 'माइक की इजाज़त चाहिए। फ़ोन सेटिंग में Nukad Kart को माइक दें।',
+    'mic': 'माइक की इजाज़त चाहिए। फ़ोन सेटिंग में Nukkad Kart को माइक दें।',
     'offline': 'इंटरनेट नहीं है। फिर कोशिश करें।',
     'error': 'कॉल नहीं लगी। फिर कोशिश करें।',
   };
@@ -59,7 +59,7 @@ String voiceText(String key, String lang) {
     'call_busy': 'Ek call pehle se chal rahi hai.',
     'call_over': 'Yeh call khatam ho chuki hai.',
     'callee_offline': 'Saamne wale ka phone abhi app par nahi mila (net band ya logout). Chat bhejo.',
-    'mic': 'Mic ki permission chahiye. Phone settings mein Nukad Kart ko mic do.',
+    'mic': 'Mic ki permission chahiye. Phone settings mein Nukkad Kart ko mic do.',
     'offline': 'Internet nahi hai. Phir try karo.',
     'error': 'Call nahi lagi. Phir try karo.',
   };
@@ -68,7 +68,7 @@ String voiceText(String key, String lang) {
     'call_busy': 'A call is already going on.',
     'call_over': 'This call has ended.',
     'callee_offline': 'Their phone can’t be reached in the app right now (offline or logged out). Send a chat.',
-    'mic': 'Microphone permission is needed. Allow it for Nukad Kart in phone settings.',
+    'mic': 'Microphone permission is needed. Allow it for Nukkad Kart in phone settings.',
     'offline': 'No internet. Try again.',
     'error': 'The call did not connect. Try again.',
   };

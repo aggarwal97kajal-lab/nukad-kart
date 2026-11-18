@@ -31,7 +31,7 @@ Bill billFor(Order o) {
   );
 }
 
-String _fileName(Order o) => 'Nukad-Kart-Bill-${o.id}.pdf';
+String _fileName(Order o) => 'Nukkad-Kart-Bill-${o.id}.pdf';
 
 /// Saves the bill PDF in the phone's Downloads folder. Returns (path of a copy the app can open, saved to Downloads?).
 Future<(String, bool)> downloadBill(Order o) async {
@@ -265,7 +265,7 @@ Future<Uint8List> billPdf(Bill b) async {
       pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
         pw.Expanded(
           child: pw.Text(
-            'This bill is issued by ${st.name}. Nukad Kart only connects you with the shop and is not the seller.\n'
+            'This bill is issued by ${st.name}. Nukkad Kart only connects you with the shop and is not the seller.\n'
             'Check the shop’s FSSAI status at foscos.fssai.gov.in.',
             style: pw.TextStyle(fontSize: 7.5, color: grey),
           ),
@@ -277,7 +277,7 @@ Future<Uint8List> billPdf(Bill b) async {
         ]),
       ]),
       pw.SizedBox(height: 14),
-      pw.Center(child: pw.Text('Order placed via Nukad Kart', style: pw.TextStyle(fontSize: 7.5, color: grey))),
+      pw.Center(child: pw.Text('Order placed via Nukkad Kart', style: pw.TextStyle(fontSize: 7.5, color: grey))),
     ],
   ));
   return doc.save();

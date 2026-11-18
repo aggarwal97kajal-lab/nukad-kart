@@ -51,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
     final st = session.store;
     if (st == null) return;
-    // Fixing details after Nukad Kart team asked for changes: start from what was sent.
+    // Fixing details after Nukkad Kart team asked for changes: start from what was sent.
     kind = '${st['kind']}' == 'thela' ? 'thela' : 'shop';
     name.text = '${st['name'] ?? ''}';
     opens.text = '${st['opensAt'] ?? ''}';
@@ -284,9 +284,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         nav.pop();
         toast(context, live
             ? (needsDoc
-                ? tr('Now upload the certificate for the new number. Nukad Kart team checks both together.')
+                ? tr('Now upload the certificate for the new number. Nukkad Kart team checks both together.')
                 : r['changeSent'] == true
-                ? tr('Sent to the Nukad Kart team. You stay live; the new details show after approval, then you sign the updated agreement.')
+                ? tr('Sent to the Nukkad Kart team. You stay live; the new details show after approval, then you sign the updated agreement.')
                 : tr('Saved.'))
             : tr('Details saved. Tap “Send for verification” when ready.'));
         session.refresh().catchError((_) {});

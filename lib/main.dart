@@ -263,7 +263,7 @@ class _RootState extends State<_Root> with WidgetsBindingObserver {
     final materialApp = MaterialApp(
       navigatorKey: navKey,
       scaffoldMessengerKey: messengerKey,
-      title: 'Nukad Kart',
+      title: 'Nukkad Kart',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

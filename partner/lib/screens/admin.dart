@@ -45,7 +45,7 @@ class _AdminScreenState extends State<AdminScreen> {
     try {
       final s = await api.call('GET', '/v1/admin/settings');
       upiId.text = '${s['upiId'] ?? ''}';
-      upiName.text = '${s['upiName'] ?? 'Nukad Kart'}';
+      upiName.text = '${s['upiName'] ?? 'Nukkad Kart'}';
       testMode = s['testMode'] == true;
       final pm = Map<String, dynamic>.from((s['party'] as Map?) ?? {});
       party.forEach((k, c) => c.text = '${pm[k] ?? ''}');
@@ -268,7 +268,7 @@ class _AdminScreenState extends State<AdminScreen> {
                 const SizedBox(height: 8),
                 Btn(_saving ? tr('Saving…') : tr('Save UPI ID'), onTap: _saving ? null : _saveUpi),
                 const SizedBox(height: 22),
-                Text(tr('Agreement details (Nukad Kart side)'), style: tx(15, weight: FontWeight.w800)),
+                Text(tr('Agreement details (Nukkad Kart side)'), style: tx(15, weight: FontWeight.w800)),
                 Text(tr('Shown as the first party in every vendor agreement. Kept on the server, not in the app code.'),
                     style: tx(12, color: kMute)),
                 const SizedBox(height: 8),
@@ -295,7 +295,7 @@ class _AdminScreenState extends State<AdminScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(t('Nukad Kart signature'), style: tx(14, weight: FontWeight.w800)),
+                        Text(t('Nukkad Kart signature'), style: tx(14, weight: FontWeight.w800)),
                         Text(sigB64.isEmpty ? t('Not added yet: agreements show only the vendor’s sign') : sigName, style: tx(12, color: sigB64.isEmpty ? kAmb : kMute)),
                       ]),
                     ),

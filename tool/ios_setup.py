@@ -12,7 +12,7 @@ import plistlib
 import re
 import sys
 
-name = sys.argv[1] if len(sys.argv) > 1 else "Nukad Kart"
+name = sys.argv[1] if len(sys.argv) > 1 else "Nukkad Kart"
 
 plist_path = pathlib.Path("ios/Runner/Info.plist")
 with plist_path.open("rb") as f:

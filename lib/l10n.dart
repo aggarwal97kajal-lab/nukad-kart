@@ -45,9 +45,9 @@ const Map<String, Map<String, String>> _tr = {
   'Shops': {'hi': 'दुकानें', 'hg': 'Dukaanein'},
   'Moving sellers': {'hi': 'ठेले वाले', 'hg': 'Thele wale'},
   'Shops within 500 m': {'hi': '500 मीटर के अंदर दुकानें', 'hg': '500 m ke andar dukaanein'},
-  'You pay the store at delivery, cash or UPI. Nukad Kart adds no fee to your bill.': {
+  'You pay the store at delivery, cash or UPI. Nukkad Kart adds no fee to your bill.': {
     'hi': 'डिलीवरी पर दुकान को नकद या UPI से पैसे दें। नुक्कड़ कार्ट आपके बिल में कोई फीस नहीं जोड़ता।',
-    'hg': 'Delivery par dukaan ko cash ya UPI se pay kariye. Nukad Kart bill mein koi fee nahi jodta.'
+    'hg': 'Delivery par dukaan ko cash ya UPI se pay kariye. Nukkad Kart bill mein koi fee nahi jodta.'
   },
   'Moving sellers near you': {'hi': 'आपके पास ठेले वाले', 'hg': 'Aapke paas thele wale'},
   'Call or WhatsApp them, then pay in person. Only sellers within 500 m are shown.': {
@@ -126,7 +126,7 @@ const Map<String, Map<String, String>> _tr = {
   'Dark': {'hi': 'डार्क', 'hg': 'Dark'},
   'Same as phone': {'hi': 'फ़ोन जैसा', 'hg': 'Phone jaisa'},
   'Follows your phone’s setting': {'hi': 'फ़ोन की सेटिंग के हिसाब से', 'hg': 'Phone ki setting ke hisaab se'},
-  'Choose how Nukad Kart looks': {'hi': 'नुक्कड़ कार्ट कैसा दिखे, चुनें', 'hg': 'Nukad Kart kaisa dikhe, chuniye'},
+  'Choose how Nukkad Kart looks': {'hi': 'नुक्कड़ कार्ट कैसा दिखे, चुनें', 'hg': 'Nukkad Kart kaisa dikhe, chuniye'},
   'App text changes right away': {'hi': 'ऐप की भाषा तुरंत बदल जाएगी', 'hg': 'App ki bhasha turant badal jaayegi'},
   'Your information': {'hi': 'आपकी जानकारी', 'hg': 'Aapki jaankari'},
   'Address book': {'hi': 'पते', 'hg': 'Address book'},
@@ -177,7 +177,7 @@ const Map<String, Map<String, String>> _tr2 = {
   'Not within 500 m right now. You’ll get a notification when it’s back near you.': {'hi': 'अभी 500 मीटर के अंदर नहीं है। पास आने पर आपको सूचना मिलेगी।', 'hg': 'Abhi 500 m ke andar nahi hai. Paas aane pe aapko notification milegi.'},
   'Chat with {0}': {'hi': '{0} से चैट करें', 'hg': '{0} se chat karein'},
   'This thela hasn’t added today’s prices yet.': {'hi': 'इस ठेले ने आज के भाव अभी नहीं डाले।', 'hg': 'Is thele ne aaj ke bhav abhi nahi daale.'},
-  'No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukad Kart. Phone numbers are never shared.': {'hi': 'ठेले के लिए कार्ट नहीं है। उसे अपनी गली में बुलाएँ, फिर सामान लें और पैसे सीधे ठेले वाले को दें — नुक्कड़ कार्ट के ज़रिए नहीं। फ़ोन नंबर कभी नहीं दिखाए जाते।', 'hg': 'Thele ke liye cart nahi hai. Use apni gali mein bulayein, phir saman lein aur paise seedhe thele wale ko dein — Nukad Kart ke zariye nahi. Phone number kabhi share nahi hote.'},
+  'No cart for thelas. Call it to your street, then buy and pay the seller directly — not through Nukkad Kart. Phone numbers are never shared.': {'hi': 'ठेले के लिए कार्ट नहीं है। उसे अपनी गली में बुलाएँ, फिर सामान लें और पैसे सीधे ठेले वाले को दें — नुक्कड़ कार्ट के ज़रिए नहीं। फ़ोन नंबर कभी नहीं दिखाए जाते।', 'hg': 'Thele ke liye cart nahi hai. Use apni gali mein bulayein, phir saman lein aur paise seedhe thele wale ko dein — Nukkad Kart ke zariye nahi. Phone number kabhi share nahi hote.'},
   'Reported. Thanks — the chat is closed.': {'hi': 'रिपोर्ट हो गई। धन्यवाद — चैट बंद कर दी गई।', 'hg': 'Report ho gayi. Shukriya — chat band kar di gayi.'},
   'Unblocked.': {'hi': 'अनब्लॉक कर दिया।', 'hg': 'Unblock kar diya.'},
   'Blocked. They can’t message you.': {'hi': 'ब्लॉक कर दिया। वे आपको संदेश नहीं भेज सकते।', 'hg': 'Block kar diya. Wo aapko message nahi bhej sakte.'},
@@ -217,7 +217,7 @@ const Map<String, Map<String, String>> _tr2 = {
   'Live thelas within 500 m. Pay the seller in person.': {'hi': '500 मीटर के अंदर LIVE ठेले। पैसे सीधे ठेले वाले को दें।', 'hg': '500 m ke andar LIVE thele. Paise seedhe thele wale ko dein.'},
   'Packed': {'hi': 'पैक हो गया', 'hg': 'Pack ho gaya'},
   'Before you start': {'hi': 'शुरू करने से पहले', 'hg': 'Shuru karne se pehle'},
-  'What Nukad Kart keeps about you': {'hi': 'नुक्कड़ कार्ट आपके बारे में क्या रखता है', 'hg': 'Nukad Kart aapke baare mein kya rakhta hai'},
+  'What Nukkad Kart keeps about you': {'hi': 'नुक्कड़ कार्ट आपके बारे में क्या रखता है', 'hg': 'Nukkad Kart aapke baare mein kya rakhta hai'},
   'Name, email and mobile number — for your account and orders.': {'hi': 'नाम, ईमेल और मोबाइल नंबर — आपके अकाउंट और ऑर्डर के लिए।', 'hg': 'Naam, email aur mobile number — aapke account aur orders ke liye.'},
   'Your delivery addresses and the map point of the one you choose — to show shops within 500 m and thelas near you.': {'hi': 'आपके डिलीवरी पते और चुने हुए पते की नक्शे पर जगह — 500 मीटर के अंदर की दुकानें और पास के ठेले दिखाने के लिए।', 'hg': 'Aapke delivery address aur chune hue address ki map location — 500 m ke andar ki dukaanein aur paas ke thele dikhane ke liye.'},
   'Your orders — shared only with the shop you order from.': {'hi': 'आपके ऑर्डर — सिर्फ़ उसी दुकान को दिखते हैं जिससे आप ऑर्डर करते हैं।', 'hg': 'Aapke orders — sirf usi dukaan ko dikhte hain jisse aap order karte hain.'},
@@ -225,10 +225,10 @@ const Map<String, Map<String, String>> _tr2 = {
   'A notification token for this phone.': {'hi': 'इस फ़ोन का नोटिफ़िकेशन टोकन।', 'hg': 'Is phone ka notification token.'},
   'You can delete your account any time from Account → Account privacy.': {'hi': 'आप कभी भी अकाउंट → अकाउंट प्राइवेसी से अपना अकाउंट मिटा सकते हैं।', 'hg': 'Aap kabhi bhi Account → Account privacy se apna account delete kar sakte hain.'},
   'I am 18 years or older': {'hi': 'मेरी उम्र 18 साल या उससे ज़्यादा है', 'hg': 'Meri umar 18 saal ya usse zyada hai'},
-  'I have read the privacy policy and agree to Nukad Kart using my data as described above': {'hi': 'मैंने प्राइवेसी पॉलिसी पढ़ ली है और ऊपर बताए तरीके से नुक्कड़ कार्ट को मेरा डेटा इस्तेमाल करने की सहमति देता/देती हूँ', 'hg': 'Maine privacy policy padh li hai aur upar bataye tareeke se Nukad Kart ko mera data use karne ki sehmati deta/deti hoon'},
+  'I have read the privacy policy and agree to Nukkad Kart using my data as described above': {'hi': 'मैंने प्राइवेसी पॉलिसी पढ़ ली है और ऊपर बताए तरीके से नुक्कड़ कार्ट को मेरा डेटा इस्तेमाल करने की सहमति देता/देती हूँ', 'hg': 'Maine privacy policy padh li hai aur upar bataye tareeke se Nukkad Kart ko mera data use karne ki sehmati deta/deti hoon'},
   'Agree and continue': {'hi': 'सहमत हूँ, आगे बढ़ें', 'hg': 'Sehmat hoon, aage badhein'},
   'Not now (log out)': {'hi': 'अभी नहीं (लॉग आउट)', 'hg': 'Abhi nahi (log out)'},
-  'Nukad Kart is only for people aged 18 and above.': {'hi': 'नुक्कड़ कार्ट सिर्फ़ 18 साल और उससे ज़्यादा उम्र वालों के लिए है।', 'hg': 'Nukad Kart sirf 18 saal aur usse zyada umar walon ke liye hai.'},
+  'Nukkad Kart is only for people aged 18 and above.': {'hi': 'नुक्कड़ कार्ट सिर्फ़ 18 साल और उससे ज़्यादा उम्र वालों के लिए है।', 'hg': 'Nukkad Kart sirf 18 saal aur usse zyada umar walon ke liye hai.'},
   'Terms & conditions': {'hi': 'नियम और शर्तें', 'hg': 'Terms & conditions'},
   'You are in a new area. Showing sellers within 500 m of where you are now.': {'hi': 'आप अभी नए इलाके में हैं। यहाँ से 500 मीटर के अंदर के विक्रेता दिखा रहे हैं।', 'hg': 'Aap abhi naye area mein ho. Yahan ke 500 m ke andar ke seller dikha rahe hain.'},
   'Showing sellers near {0}.': {'hi': '{0} के पास के विक्रेता दिखा रहे हैं।', 'hg': '{0} ke paas ke seller dikha rahe hain.'},

@@ -40,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const Spacer(),
             ClipRRect(borderRadius: BorderRadius.circular(36), child: Image.asset('assets/logo.png', width: 200)),
             const SizedBox(height: 20),
-            Text(tr('Nukad Kart Partner'), style: tx(28, color: const Color(0xFF21331B), weight: FontWeight.w800)),
+            Text(tr('Nukkad Kart Partner'), style: tx(28, color: const Color(0xFF21331B), weight: FontWeight.w800)),
             const SizedBox(height: 6),
             Text(t('Get orders from customers within 500 m.'), textAlign: TextAlign.center, style: tx(14.5, color: const Color(0xFF21331B))),
             const SizedBox(height: 14),
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 12),
             Wrap(alignment: WrapAlignment.center, crossAxisAlignment: WrapCrossAlignment.center, children: [
               Text(t('By continuing you agree to the '), style: tx(12, color: const Color(0xFF21331B))),
-              _link(context, t('Nukad Kart Partner Terms'), const LegalScreen.terms()),
+              _link(context, t('Nukkad Kart Partner Terms'), const LegalScreen.terms()),
               Text(t(' and '), style: tx(12, color: const Color(0xFF21331B))),
               _link(context, t('Privacy Policy'), const LegalScreen.privacy()),
             ]),

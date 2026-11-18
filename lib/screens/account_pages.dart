@@ -88,7 +88,7 @@ Future<void> showAppearanceSheet(BuildContext context) async {
   final s = AppScope.read(context);
   final v = await showChoiceSheet(context,
       title: t('Appearance'),
-      subtitle: t('Choose how Nukad Kart looks'),
+      subtitle: t('Choose how Nukkad Kart looks'),
       selected: s.theme.name,
       options: [
         ChoiceOption('light', t('Light'), null, Icons.light_mode_outlined),
@@ -115,7 +115,7 @@ Future<void> showLanguageSheet(BuildContext context) async {
 }
 
 Future<void> shareApp(BuildContext context) async {
-  const text = 'Nukad Kart: apne nukkad ki har dukaan, 500 m ke andar. '
+  const text = 'Nukkad Kart: apne nukkad ki har dukaan, 500 m ke andar. '
       'Download: https://github.com/aggarwal97kajal-lab/nukad-kart/releases/latest';
   await Clipboard.setData(const ClipboardData(text: text));
   if (context.mounted) showToast(context, 'App link copied. Paste it in WhatsApp to share.');
@@ -570,8 +570,8 @@ class AboutScreen extends StatelessWidget {
       const SizedBox(height: 16),
       CardBox(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          item('What we do', 'Nukad Kart lists kirana shops and moving sabzi/phal sellers within 500 m of you.'),
-          item('Payments', 'You pay the shop or seller directly at delivery. Nukad Kart does not hold your money and does not give refunds.'),
+          item('What we do', 'Nukkad Kart lists kirana shops and moving sabzi/phal sellers within 500 m of you.'),
+          item('Payments', 'You pay the shop or seller directly at delivery. Nukkad Kart does not hold your money and does not give refunds.'),
           item('Complaints', 'We take your complaint, pass it to the store, keep a record, and can suspend stores found at fault.'),
           item('Grievance officer', '[Name] · [email] · [phone]'),
         ]),
@@ -705,7 +705,7 @@ class FaqScreen extends StatelessWidget {
   const FaqScreen({super.key});
   static const faqs = [
     ['How do I pay?', 'You pay the store at delivery, by cash or the store’s UPI QR. There is no online payment in the app.'],
-    ['Why only shops within 500 m?', 'Nukad Kart is for your own nukkad. Nearby shops deliver faster and you can also walk over to pick up.'],
+    ['Why only shops within 500 m?', 'Nukkad Kart is for your own nukkad. Nearby shops deliver faster and you can also walk over to pick up.'],
     ['What is the delivery code?', 'When the store packs your order you get a 4-digit code on the order screen and as a notification. Tell it to the delivery person only after you get your items. The order is marked delivered only when they enter the right code.'],
     ['Can I cancel my order?', 'Yes, but only while the order is Placed (waiting for the store) or Accepted. Once the store marks it Packed, it can’t be cancelled from the app — call the store if you need a change. Cancelling after the store has accepted counts as 1 of the 3 “not taken” orders. You pay only at delivery, so there is nothing to refund.'],
     ['Why is there a ₹20 delivery fee?', 'Orders below ₹199 for home delivery have a ₹20 fee, paid to the store with your order. From ₹199 delivery is free. Pickup is always free.'],
@@ -714,7 +714,7 @@ class FaqScreen extends StatelessWidget {
     ['Can I order from two shops together?', 'No. One cart holds items from one shop. Adding from another shop asks you to start a new cart.'],
     ['What do “LIVE · Standing here”, “LIVE · Moving” and “Was here” mean?', 'Thelas move. “LIVE” means the seller’s phone sent its location in the last few minutes. “Was here 5 min ago” means it has not updated for a while. After 10 minutes without location the thela is hidden. Their location is shown only while they are Live.'],
     ['How do I buy from a thela?', 'Open Moving sellers, pick a thela and see today’s prices. Tap “Call to my street” to ask it to come to your address, or chat with the seller. You pay the seller in person. Phone numbers are never shared.'],
-    ['Who gives refunds?', 'The store. Nukad Kart passes your complaint to the store and records it, and can suspend stores at fault.'],
+    ['Who gives refunds?', 'The store. Nukkad Kart passes your complaint to the store and records it, and can suspend stores at fault.'],
     ['Why was my account blocked?', '3 orders not taken (or cancelled after the store accepted) in 90 days block ordering. You can appeal to the grievance officer.'],
   ];
   @override
@@ -854,7 +854,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 class DeleteReasonsScreen extends StatelessWidget {
   const DeleteReasonsScreen({super.key});
   static const reasons = [
-    'I don’t want to use Nukad Kart anymore',
+    'I don’t want to use Nukkad Kart anymore',
     'I’m using a different account',
     'I’m worried about my privacy',
     'Too many notifications',
@@ -996,10 +996,10 @@ class _DeleteFeedbackScreenState extends State<DeleteFeedbackScreen> {
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
   static const sections = [
-    ['What Nukad Kart is', 'Nukad Kart lists registered kirana stores and moving sellers (thelas) within 500 m of your address. Orders are between you and the store or seller.'],
-    ['Payment', 'You pay the store or seller directly at delivery or pickup — cash or their UPI. Nukad Kart does not collect payment and gives no refunds; any refund comes from the store. A ₹20 delivery fee below ₹199 is charged by the store.'],
+    ['What Nukkad Kart is', 'Nukkad Kart lists registered kirana stores and moving sellers (thelas) within 500 m of your address. Orders are between you and the store or seller.'],
+    ['Payment', 'You pay the store or seller directly at delivery or pickup — cash or their UPI. Nukkad Kart does not collect payment and gives no refunds; any refund comes from the store. A ₹20 delivery fee below ₹199 is charged by the store.'],
     ['Orders and cancelling', 'A store has 5 minutes to accept, otherwise the order is cancelled. You can cancel while the order is Placed or Accepted. Cancelling after the store accepted, or not taking an order, counts towards the limit: 3 in 90 days blocks ordering on your Google account, phone and number.'],
-    ['Moving sellers (thelas) and location', 'A thela seller sets a default address once, using the address form and the map. That address is never shown to customers. While the seller has turned on “Live” in the Partner app, their phone shares its current location with Nukad Kart, and customers within 500 m see where the thela is right now on a map. When the seller turns Live off, or moves outside a customer’s 500 m, the location is no longer shown to that customer. Customers must not use a seller’s location for anything other than buying from them.'],
+    ['Moving sellers (thelas) and location', 'A thela seller sets a default address once, using the address form and the map. That address is never shown to customers. While the seller has turned on “Live” in the Partner app, their phone shares its current location with Nukkad Kart, and customers within 500 m see where the thela is right now on a map. When the seller turns Live off, or moves outside a customer’s 500 m, the location is no longer shown to that customer. Customers must not use a seller’s location for anything other than buying from them.'],
     ['Call to my street and chat',
         'You can ask a LIVE thela within 500 m to come to your address, one thela at a time. The seller has 3 minutes to answer. There is no cart or in-app payment for thelas: you buy and pay the seller in person. If sellers report 3 times in 30 days that they came and nobody was there, calling thelas is paused for 7 days. Chat is text only, phone numbers cannot be sent, and messages are deleted after 24 hours. Either side can block or report; 3 reports can pause chat for 7 days.'],
     ['Delivery code and missing items',
@@ -1034,7 +1034,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
   static const sections = [
     ['Who we are',
-        'Nukad Kart is a marketplace app that connects you with kirana stores and moving sellers (thelas) within 500 m of your address. This policy explains what personal data we collect, why, who we share it with and the choices you have, under India’s Digital Personal Data Protection Act, 2023 and the IT Act, 2000.'],
+        'Nukkad Kart is a marketplace app that connects you with kirana stores and moving sellers (thelas) within 500 m of your address. This policy explains what personal data we collect, why, who we share it with and the choices you have, under India’s Digital Personal Data Protection Act, 2023 and the IT Act, 2000.'],
     ['What we collect',
         '• From your Google account: your name and email address.\n'
             '• Your mobile number, which we confirm with a one-time SMS code.\n'
@@ -1067,7 +1067,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             '• Withdraw consent at any time by deleting your account.\n'
             '• Nominate someone to use these rights for you if you die or cannot act.\n'
             '• Complain to our Grievance Officer, and if you are not satisfied, to the Data Protection Board of India.'],
-    ['Age', 'Nukad Kart is meant for people aged 18 and above.'],
+    ['Age', 'Nukkad Kart is meant for people aged 18 and above.'],
     ['Changes', 'If we change this policy, we will show the new version in the app with a new date.'],
   ];
 
@@ -1177,7 +1177,7 @@ class _LoggedInDevicesScreenState extends State<LoggedInDevicesScreen> {
     final list = _list;
     final others = list?.where((d) => d['current'] != true).length ?? 0;
     return _Page(title: t('Logged-in devices'), children: [
-      Text('Phones where your Google account ${s.email} is logged in to Nukad Kart. Don’t recognise one? Log it out.',
+      Text('Phones where your Google account ${s.email} is logged in to Nukkad Kart. Don’t recognise one? Log it out.',
           style: body(13, color: kMute)),
       const SizedBox(height: 12),
       if (_error != null)

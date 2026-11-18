@@ -110,7 +110,7 @@ class _LiveSetupScreenState extends State<LiveSetupScreen> with WidgetsBindingOb
                 await ThelaLocation.askBattery();
               }),
               if (needAuto)
-                _row(autostartDone, t('Turn on Autostart'), t('Your phone has its own setting. Find Nukad Kart Partner and turn it on, then come back.'),
+                _row(autostartDone, t('Turn on Autostart'), t('Your phone has its own setting. Find Nukkad Kart Partner and turn it on, then come back.'),
                     t('Open'), () async {
                   await ThelaLocation.openAutostart();
                   if (mounted) setState(() => autostartDone = true);
@@ -119,7 +119,7 @@ class _LiveSetupScreenState extends State<LiveSetupScreen> with WidgetsBindingOb
               Box(
                 color: kSurf,
                 child: Text(
-                    t('While you are LIVE you will see a notification “You are LIVE on Nukad Kart”. That keeps your location going. Battery use is low: the phone sends only when you move about 75 m, and once every 4 minutes when you stand.'),
+                    t('While you are LIVE you will see a notification “You are LIVE on Nukkad Kart”. That keeps your location going. Battery use is low: the phone sends only when you move about 75 m, and once every 4 minutes when you stand.'),
                     style: tx(12.5)),
               ),
               const SizedBox(height: 16),

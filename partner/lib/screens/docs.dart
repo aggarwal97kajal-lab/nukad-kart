@@ -24,7 +24,7 @@ String sizeText(int b) => b >= 1024 * 1024 ? '${(b / 1024 / 1024).toStringAsFixe
 
 /// Step 3: PAN, Aadhaar (masked), GST and FSSAI documents. JPG or PDF, up to 2 MB each.
 class DocsScreen extends StatefulWidget {
-  /// Opened from home to fix documents after Nukad Kart team asked for changes.
+  /// Opened from home to fix documents after Nukkad Kart team asked for changes.
   final bool pushed;
   const DocsScreen({super.key, this.pushed = false});
   @override
@@ -178,7 +178,7 @@ class _DocsScreenState extends State<DocsScreen> {
                 Text(isOptional ? '$title (optional)' : '$title *', style: tx(14.5, weight: FontWeight.w800)),
                 Text(
                     isLocked
-                        ? (live ? tr('Approved · locked') : tr('With Nukad Kart team for checking'))
+                        ? (live ? tr('Approved · locked') : tr('With Nukkad Kart team for checking'))
                         : d != null
                         ? '${d['name'] ?? ''} · ${sizeText((d['size'] as num).toInt())} · ${d['mime'] == 'application/pdf' ? 'PDF' : 'JPG'}'
                         : (isOptional ? (type == 'fssai' ? tr('Add if you have one. Required only when you enter an FSSAI number.') : tr('Add if you have it.')) : hint),
@@ -237,7 +237,7 @@ class _DocsScreenState extends State<DocsScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Box(
                     color: kOkBg,
-                    child: Text(tr('Your shop stays live. Add the new document below; Nukad Kart team checks it with your change.'),
+                    child: Text(tr('Your shop stays live. Add the new document below; Nukkad Kart team checks it with your change.'),
                         style: tx(13, weight: FontWeight.w700)),
                   ),
                 ),
@@ -250,7 +250,7 @@ class _DocsScreenState extends State<DocsScreen> {
                   Expanded(
                       child: Text(session.store?['kind'] != 'thela' && !live
                               ? tr('JPG photo or PDF only · max 2 MB per file. For the 7-day free trial only the FSSAI certificate is needed; PAN and Aadhaar can be added now or before your first pass.')
-                              : tr('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukad Kart team checks them before your shop goes live.'),
+                              : tr('JPG photo or PDF only · max 2 MB per file · all * documents are required. Nukkad Kart team checks them before your shop goes live.'),
                           style: tx(12.5, weight: FontWeight.w600))),
                 ]),
               ),
@@ -272,7 +272,7 @@ class _DocsScreenState extends State<DocsScreen> {
                 onTap: busy || missing > 0
                     ? null
                     : () async {
-                        // Kirana before approval: FSSAI is in, send it to the Nukad Kart team (trial starts on approval).
+                        // Kirana before approval: FSSAI is in, send it to the Nukkad Kart team (trial starts on approval).
                         final st = session.store;
                         if (!live && st != null && st['kind'] != 'thela' && (st['status'] == 'pending' || st['status'] == 'rejected')) {
                           try {

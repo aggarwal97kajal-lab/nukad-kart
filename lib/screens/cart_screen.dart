@@ -304,7 +304,7 @@ class _CartScreenState extends State<CartScreen> {
             SizedBox(height: 14),
             point('You pay the store at delivery — cash or the store’s UPI. No online payment in the app.'),
             point('The store has 5 minutes to accept, or the order is cancelled automatically.'),
-            point('Any refund comes from the store. Nukad Kart does not give refunds.'),
+            point('Any refund comes from the store. Nukkad Kart does not give refunds.'),
             point('Problems? Report in the app. We pass it to the store, keep a record, and can suspend stores at fault.'),
             point('3 orders not taken = account blocked (Google account, phone and number).', warn: true),
             SizedBox(height: 8),

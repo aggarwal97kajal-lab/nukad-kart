@@ -97,7 +97,7 @@ Future<void> openAgreementVersionPdf(BuildContext context, Map<String, dynamic> 
   try {
     final data = await AgreementData.fromSigned(a);
     final dir = await getTemporaryDirectory();
-    final f = File('${dir.path}/NukadKart_Agreement_${a['id']}.pdf');
+    final f = File('${dir.path}/NukkadKart_Agreement_${a['id']}.pdf');
     await f.writeAsBytes(await agreementPdf(data), flush: true);
     await OpenFilex.open(f.path);
   } catch (e) {
