@@ -70,9 +70,10 @@ RECPID=$!
 sleep 1
 
 cd "$APP"
-flutter drive --profile --driver=test_driver/integration_test.dart --target=integration_test/${TOUR}_tour_test.dart \
+timeout 40m flutter drive --profile --driver=test_driver/integration_test.dart --target=integration_test/${TOUR}_tour_test.dart \
   --use-application-binary="$APK" $DEFINES > "$ROOT/$OUT/drive.log" 2>&1
 echo "drive exit $?" | tee -a "$ROOT/$OUT/drive.log"
+grep -v "app_time_stats\|Choreographer\|EGL_emul\|monitor contention\|GC freed" "$ROOT/$OUT/drive.log" | tail -60 || true
 cd "$ROOT"
 sleep 2
 adb shell 'pkill -f "for i in"; pkill -INT screenrecord' || true
