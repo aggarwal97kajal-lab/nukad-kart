@@ -41,8 +41,14 @@ adb shell am broadcast -a com.android.systemui.demo -e command network -e mobile
 adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
 
 cd "$APP"
-flutter build apk --profile --target=integration_test/${TOUR}_tour_test.dart $DEFINES 2>&1 | tail -25
 APK=$(pwd)/build/app/outputs/flutter-apk/app-profile.apk
+# A broken SDK download (e.g. the NDK zip) can fail the build once: try twice, and stop if there is still no APK.
+for try in 1 2; do
+  flutter build apk --profile --target=integration_test/${TOUR}_tour_test.dart $DEFINES 2>&1 | tail -25
+  [ -s "$APK" ] && break
+  echo "build failed (try $try)"; rm -rf "$ANDROID_HOME/ndk" 2>/dev/null || true
+done
+[ -s "$APK" ] || { echo "no APK, stopping"; exit 1; }
 adb install -r -g "$APK"
 for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION POST_NOTIFICATIONS RECORD_AUDIO CAMERA; do adb shell pm grant $PKG android.permission.$p 2>/dev/null || true; done
 adb shell dumpsys deviceidle whitelist +$PKG || true
