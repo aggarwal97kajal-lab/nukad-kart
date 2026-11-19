@@ -62,9 +62,11 @@ void main() {
     await k.hold(1500);
     await k.tap(find.textContaining('5 min mein aata').last, pause: 3000);
     // Go back only while not on the home screen: popping the home screen would close the app.
+    // Use the screen's own back arrow; a system back on the last screen closes the app.
     for (var i = 0; i < 3 && !k.has(find.byType(Switch)); i++) {
-      await t.binding.handlePopRoute();
-      await k.hold(1000);
+      final back = find.byTooltip('Back');
+      if (!k.has(back)) break;
+      await k.tap(back.first, pause: 1000);
     }
 
     // 6. Reached and sold
