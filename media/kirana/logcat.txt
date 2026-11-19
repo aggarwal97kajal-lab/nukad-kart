@@ -1,0 +1,53 @@
+--------- beginning of main
+         1795030740.286  6791  6791 I NKREC   : start
+         1795030753.447  7079  7079 I flutter : [IMPORTANT:flutter/shell/common/shell.cc(521)] [Action Required]: Impeller opt-out deprecated.
+         1795030753.447  7079  7079 I flutter :     The application opted out of Impeller by either using the
+         1795030753.447  7079  7079 I flutter :     `--no-enable-impeller` flag or the
+         1795030753.447  7079  7079 I flutter :     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+         1795030753.447  7079  7079 I flutter :     These options are going to go away in an upcoming Flutter release. Remove
+         1795030753.447  7079  7079 I flutter :     the explicit opt-out. If you need to opt-out, please report a bug describing
+         1795030753.447  7079  7079 I flutter :     the issue.
+         1795030753.447  7079  7079 I flutter : 
+         1795030753.447  7079  7079 I flutter :     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+         1795030753.447  7079  7079 I flutter : 
+         1795030753.516  7079  7189 I flutter : The Dart VM service is listening on http://127.0.0.1:36849/0tmQteMQ8Tc=/
+         1795030757.116  7079  7079 I flutter : 00:00 +0: kirana tour
+         1795030757.125  7079  7079 I flutter : NKSLOW|6
+         1795030766.156  7079  7079 I flutter : NKDPR|1.399999976158142|576.0|1246.0
+         1795030766.156  7079  7079 I flutter : NKSTEP|login|1795030766156
+         1795030778.623  7079  7079 I flutter : NKTAP|205.7|519.9|1795030778623
+         1795030788.023  7079  7079 I flutter : NKSTEP|login|1795030788023
+         1795030794.656  7079  7079 I flutter : NKTAP|148.6|139.4|1795030794656
+         1795030804.490  7079  7079 I flutter : NKTAP|205.7|329.9|1795030804490
+         1795030815.773  7079  7079 I flutter : NKSTEP|login|1795030815773
+         1795030824.690  7079  7079 I flutter : NKTAP|205.7|771.0|1795030824690
+         1795030838.990  7079  7079 I flutter : NKSTEP|home|1795030838990
+         1795030878.323  7079  7079 I flutter : NKSTEP|products|1795030878323
+         1795030879.990  7079  7079 I flutter : NKTAP|205.7|868.0|1795030879990
+         1795030906.273  7079  7079 I flutter : NKSTEP|stock|1795030906273
+         1795030907.892  7079  7079 I flutter : NKTAP|358.4|295.9|1795030907892
+         1795030920.757  7079  7079 I flutter : NKTAP|358.4|295.9|1795030920756
+         1795030920.917 14142 14142 I NKREC   : r2
+         1795030931.961  7079  7079 I flutter : NKSTEP|addways|1795030931961
+         1795030933.577  7079  7079 I flutter : NKTAP|320.2|766.0|1795030933577
+         1795030961.800  7079  7079 I flutter : NKAPI|POST /v1/orders|200|
+         1795030961.800  7079  7079 I flutter : NKSTEP|neworder|1795030961800
+         1795030963.440  7079  7079 I flutter : NKTAP|342.9|868.0|1795030963440
+         1795030991.406  7079  7079 I flutter : NKTAP|98.0|169.9|1795030991406
+         1795031005.564  7079  7079 I flutter : NKSTEP|accept|1795031005564
+         1795031007.206  7079  7079 I flutter : NKTAP|205.7|412.9|1795031007206
+         1795031024.389  7079  7079 I flutter : NKSTEP|pack|1795031024389
+         1795031035.123  7079  7079 I flutter : NKTAP|205.7|336.9|1795031035123
+         1795031047.940  7079  7079 I flutter : NKTAP|205.7|336.9|1795031047939
+         1795031058.989  7079  7079 I flutter : NKTAP|205.7|506.9|1795031058989
+         1795031076.123  7079  7079 I flutter : NKSTEP|out|1795031076123
+         1795031077.773  7079  7079 I flutter : NKTAP|205.7|516.9|1795031077773
+         1795031098.068  7079  7079 I flutter : NKAPI|GET /v1/me/orders|200|
+         1795031098.069  7079  7079 I flutter : NKSTEP|code|1795031098069
+         1795031101.751 21664 21664 I NKREC   : r3
+         1795031108.825  7079  7079 I flutter : NKTAP|205.7|782.5|1795031108824
+         1795031119.293  7079  7079 I flutter : NKTAP|108.4|848.0|1795031119293
+         1795031142.542  7079  7079 I flutter : NKSTEP|delivered|1795031142542
+         1795031166.573  7079  7079 I flutter : NKSTEP|end|1795031166573
+         1795031166.582  7079  7079 I flutter : 06:49 +1: (tearDownAll)
+         1795031166.582  7079  7079 I flutter : 06:49 +2: All tests passed!

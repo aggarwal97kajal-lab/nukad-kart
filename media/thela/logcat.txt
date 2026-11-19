@@ -1,0 +1,48 @@
+--------- beginning of main
+         1795053881.787  6926  6926 I NKREC   : start
+         1795053892.241  7157  7157 I flutter : [IMPORTANT:flutter/shell/common/shell.cc(521)] [Action Required]: Impeller opt-out deprecated.
+         1795053892.241  7157  7157 I flutter :     The application opted out of Impeller by either using the
+         1795053892.241  7157  7157 I flutter :     `--no-enable-impeller` flag or the
+         1795053892.241  7157  7157 I flutter :     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+         1795053892.241  7157  7157 I flutter :     These options are going to go away in an upcoming Flutter release. Remove
+         1795053892.241  7157  7157 I flutter :     the explicit opt-out. If you need to opt-out, please report a bug describing
+         1795053892.241  7157  7157 I flutter :     the issue.
+         1795053892.241  7157  7157 I flutter : 
+         1795053892.241  7157  7157 I flutter :     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+         1795053892.241  7157  7157 I flutter : 
+         1795053892.373  7157  7274 I flutter : The Dart VM service is listening on http://127.0.0.1:46223/FJuojze96HY=/
+         1795053895.580  7157  7157 I flutter : 00:00 +0: thela tour
+         1795053896.115  7157  7157 I flutter : NKAPI|POST /v1/partner/live|200|
+         1795053896.118  7157  7157 I flutter : NKSLOW|6
+         1795053905.196  7157  7157 I flutter : NKDPR|1.399999976158142|576.0|1246.0
+         1795053905.196  7157  7157 I flutter : NKSTEP|login|1795053905196
+         1795053917.646  7157  7157 I flutter : NKTAP|205.7|519.9|1795053917646
+         1795053926.996  7157  7157 I flutter : NKSTEP|login|1795053926996
+         1795053933.562  7157  7157 I flutter : NKTAP|155.6|231.4|1795053933562
+         1795053943.429  7157  7157 I flutter : NKTAP|205.7|329.9|1795053943429
+         1795053954.746  7157  7157 I flutter : NKSTEP|login|1795053954746
+         1795053963.629  7157  7157 I flutter : NKTAP|205.7|771.0|1795053963629
+         1795053980.896  7157  7157 I flutter : NKSTEP|prices|1795053980896
+         1795053994.592  7157  7157 I flutter : NKTAP|308.6|868.0|1795053994592
+         1795054031.663  7157  7157 I flutter : NKTAP|102.9|868.0|1795054031663
+         1795054042.814  7157  7157 I flutter : NKSTEP|live|1795054042814
+         1795054044.463  7157  7157 I flutter : NKTAP|349.4|139.9|1795054044463
+         1795054062.307 14530 14530 I NKREC   : r2
+         1795054077.298  7157  7157 I flutter : NKAPI|POST /v1/partner/location|200|
+         1795054077.445  7157  7157 I flutter : NKAPI|POST /v1/thelas/t_ramesh/call|200|
+         1795054077.445  7157  7157 I flutter : NKSTEP|call|1795054077445
+         1795054103.479  7157  7157 I flutter : NKTAP|116.4|326.9|1795054103479
+         1795054121.154  7157  7157 I flutter : NKAPI|POST /v1/me/chats/t_ramesh|200|
+         1795054121.154  7157  7157 I flutter : NKSTEP|chat|1795054121154
+         1795054137.864  7157  7157 I flutter : NKTAP|69.1|272.0|1795054137864
+         1795054153.679  7157  7157 I flutter : NKTAP|229.8|410.0|1795054153679
+         1795054175.646  7157  7157 I flutter : NKTAP|106.4|803.1|1795054175646
+         1795054197.446  7157  7157 I flutter : NKTAP|28.0|55.9|1795054197446
+         1795054205.596  7157  7157 I flutter : NKSTEP|sold|1795054205596
+         1795054207.220  7157  7157 I flutter : NKTAP|115.4|303.0|1795054207220
+         1795054224.346  7157  7157 I flutter : NKSTEP|offline|1795054224346
+         1795054225.996  7157  7157 I flutter : NKTAP|349.4|145.9|1795054225996
+         1795054242.520 22392 22392 I NKREC   : r3
+         1795054249.203  7157  7157 I flutter : NKSTEP|end|1795054249202
+         1795054249.214  7157  7157 I flutter : 05:53 +1: (tearDownAll)
+         1795054249.228  7157  7157 I flutter : 05:53 +2: All tests passed!

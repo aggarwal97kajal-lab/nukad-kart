@@ -1,0 +1,844 @@
+--------- beginning of main
+         1795027201.110  1772  2180 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027201.248  5723  6613 W TapAndPay: NfcAdapter is null while obtaining CardEmulation instance. [CONTEXT service_id=79 ]
+         1795027201.248  5723  6613 W TapAndPay: java.lang.NullPointerException: NfcAdapter is null
+         1795027201.248  5723  6613 W TapAndPay: 	at android.nfc.cardemulation.CardEmulation.getInstance(CardEmulation.java:152)
+         1795027201.248  5723  6613 W TapAndPay: 	at cdoy.<init>(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.248  5723  6613 W TapAndPay: 	at com.google.android.gms.tapandpay.hce.task.TapAndPayAidRegistrationTaskOperation.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):5)
+         1795027201.248  5723  6613 W TapAndPay: 	at com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskChimeraService.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027201.248  5723  6613 W TapAndPay: 	at avzs.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027201.248  5723  6613 W TapAndPay: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027201.248  5723  6613 W TapAndPay: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027201.248  5723  6613 W TapAndPay: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027201.248  5723  6613 W TapAndPay: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027201.248  5723  6613 W TapAndPay: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027201.248  5723  6613 W TapAndPay: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.248  5723  6613 W TapAndPay: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027201.294  6890  6897 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027201.338  6890  6897 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027201.377  6890  6897 W Codec2Client: query -- param skipped: index = 1342179345.
+         1795027201.377  6890  6897 W Codec2Client: query -- param skipped: index = 2415921170.
+         1795027201.404   495   495 W ResourceManagerService: Ignoring request to add new resource entry with value <= 0
+         1795027201.432   426   595 W ServiceManagerCppClient: Permission failure: android.permission.ROTATE_SURFACE_FLINGER from uid=2000 pid=6890
+         1795027201.436   426   426 W SurfaceFlinger: Invalid layer stack -1
+         1795027201.467  1772  2180 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027201.534  2789  6585 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+         1795027201.534  2789  6585 W libc    : Access denied finding property "service.adb.tls.port"
+         1795027201.531  2789  2789 W binder:2789_B: type=1400 audit(0.0:47): avc:  denied  { read } for  name="u:object_r:system_adbd_prop:s0" dev="tmpfs" ino=292 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:system_adbd_prop:s0 tclass=file permissive=0 app=com.google.android.gms
+         1795027201.531  2789  2789 W binder:2789_B: type=1400 audit(0.0:48): avc:  denied  { read } for  name="u:object_r:adbd_prop:s0" dev="tmpfs" ino=60 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:adbd_prop:s0 tclass=file permissive=0 app=com.google.android.gms
+         1795027201.585  5723  5767 W GmsUrlRequestImpl: Content-Type header is overwritten.
+         1795027201.671   506  6902 E C2SoftAvcEnc: Unable to set air params = 0x1ad
+         1795027201.712  5723  5767 W GLSUser : [AppCertManager] Exception while requesting key: 
+         1795027201.712  5723  5767 W GLSUser : java.util.concurrent.ExecutionException: avvw: Parse Proto Exception.
+         1795027201.712  5723  5767 W GLSUser : 	at dlnv.s(:com.google.android.gms@231818047@23.18.18 (190800-535401451):3)
+         1795027201.712  5723  5767 W GLSUser : 	at dlnv.get(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027201.712  5723  5767 W GLSUser : 	at oub.b(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027201.712  5723  5767 W GLSUser : 	at otz.b(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027201.712  5723  5767 W GLSUser : 	at otu.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.712  5723  5767 W GLSUser : 	at otx.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027201.712  5723  5767 W GLSUser : 	at lzq.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):14)
+         1795027201.712  5723  5767 W GLSUser : 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027201.712  5723  5767 W GLSUser : 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027201.712  5723  5767 W GLSUser : 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027201.712  5723  5767 W GLSUser : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027201.712  5723  5767 W GLSUser : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027201.712  5723  5767 W GLSUser : 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.712  5723  5767 W GLSUser : 	at java.lang.Thread.run(Thread.java:1012)
+         1795027201.712  5723  5767 W GLSUser : Caused by: avvw: Parse Proto Exception.
+         1795027201.712  5723  5767 W GLSUser : 	at avwn.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):5)
+         1795027201.712  5723  5767 W GLSUser : 	at avxk.onSucceeded(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.712  5723  5767 W GLSUser : 	at jf.onSucceeded(:com.google.android.gms.dynamite_cronetdynamite@231818047@23.18.18 (190800-0):0)
+         1795027201.712  5723  5767 W GLSUser : 	at ie.run(:com.google.android.gms.dynamite_cronetdynamite@231818047@23.18.18 (190800-0):4)
+         1795027201.712  5723  5767 W GLSUser : 	... 6 more
+         1795027201.712  5723  5767 W GLSUser : Caused by: dzfz: Protocol message contained an invalid tag (zero).
+         1795027201.712  5723  5767 W GLSUser : 	at dzdb.k(:com.google.android.gms@231818047@23.18.18 (190800-535401451):13)
+         1795027201.712  5723  5767 W GLSUser : 	at dzha.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):47)
+         1795027201.712  5723  5767 W GLSUser : 	at dzha.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):45)
+         1795027201.712  5723  5767 W GLSUser : 	at dzfd.A(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027201.712  5723  5767 W GLSUser : 	at dzex.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.712  5723  5767 W GLSUser : 	at dzcx.d(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.712  5723  5767 W GLSUser : 	at dzcx.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.712  5723  5767 W GLSUser : 	at dzcx.n(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027201.712  5723  5767 W GLSUser : 	at avwn.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027201.712  5723  5767 W GLSUser : 	at avwn.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+         1795027201.712  5723  5767 W GLSUser : 	... 9 more
+         1795027202.070  5723  5837 W .gms.persistent: Long monitor contention with owner lowpool[26] (6915) at void bytb.n(byps, byps, int)(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6) waiters=0 in int bytb.l(bysm, aphn) for 218ms
+         1795027204.719   546  2351 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_10192/cgroup.freeze
+         1795027204.720   546  2351 W libprocessgroup: Failed to apply Frozen process profile: No such file or directory
+         1795027204.763   546  2351 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_10192/cgroup.freeze
+         1795027204.763   546  2351 W libprocessgroup: Failed to apply Unfrozen process profile: No such file or directory
+         1795027204.799   546   546 W binder:546_15: type=1400 audit(0.0:49): avc:  denied  { getopt } for  scontext=u:r:system_server:s0 tcontext=u:r:shell:s0 tclass=unix_stream_socket permissive=0
+         1795027204.811   546   546 W binder:546_15: type=1400 audit(0.0:50): avc:  denied  { getopt } for  scontext=u:r:system_server:s0 tcontext=u:r:shell:s0 tclass=unix_stream_socket permissive=0
+         1795027204.811   546   546 W binder:546_15: type=1400 audit(0.0:51): avc:  denied  { getopt } for  scontext=u:r:system_server:s0 tcontext=u:r:shell:s0 tclass=unix_stream_socket permissive=0
+         1795027207.607   546   546 W binder:546_15: type=1400 audit(0.0:52): avc:  denied  { getopt } for  scontext=u:r:system_server:s0 tcontext=u:r:shell:s0 tclass=unix_stream_socket permissive=0
+         1795027209.962   546   575 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_4294877488/cgroup.freeze
+         1795027209.962   546   575 W libprocessgroup: Failed to apply Frozen process profile: No such file or directory
+         1795027209.963   546   575 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_4294877488/cgroup.freeze
+         1795027209.963   546   575 W libprocessgroup: Failed to apply Unfrozen process profile: No such file or directory
+         1795027210.463   546   563 W system_server: Long monitor contention with owner PackageManager (600) at void com.android.server.pm.InstallPackageHelper.installPackagesLI(java.util.List)(InstallPackageHelper.java:1036) waiters=0 in com.android.server.pm.Computer com.android.server.pm.PackageManagerService.snapshotComputer(boolean) for 485ms
+--------- beginning of system
+         1795027210.463   546   563 W Looper  : Slow dispatch took 485ms android.fg h=android.os.Handler c=<recycled PooledLambda@751743f> m=0
+         1795027210.463   546   563 W Looper  : Slow delivery took 485ms android.fg h=android.os.Handler c=<recycled PooledLambda@6d3e10c> m=0
+         1795027210.466   546   563 W Looper  : Drained
+         1795027210.757   546   563 W Looper  : Slow dispatch took 250ms android.fg h=android.os.Handler c=<recycled PooledLambda@6f3155b> m=0
+         1795027210.775   546   563 W Looper  : Slow delivery took 309ms android.fg h=android.os.Handler c=<recycled PooledLambda@56401f8> m=0
+         1795027210.780   546   600 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_10192/cgroup.freeze
+         1795027210.781   546   600 W libprocessgroup: Failed to apply Frozen process profile: No such file or directory
+         1795027210.781   546   600 W ProcessStats: Tracking association SourceState{1fe96d1 com.google.android.gms.persistent/10128 BFgs #12402} whose proc state 4 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 8 (212 skipped)
+         1795027210.781   546   600 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_10192/cgroup.freeze
+         1795027210.781   546   600 W libprocessgroup: Failed to apply Unfrozen process profile: No such file or directory
+         1795027210.891  5723  5733 W .gms.persistent: Cleared Reference was only reachable from finalizer (only reported once)
+         1795027210.899  5723  5735 W System  : A resource failed to call close. 
+         1795027210.970  7073  7073 W ndroid.keychain: Unexpected CPU variant for x86: x86_64.
+         1795027210.970  7073  7073 W ndroid.keychain: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795027210.975   546   546 W binder:546_15: type=1400 audit(0.0:53): avc:  denied  { getopt } for  scontext=u:r:system_server:s0 tcontext=u:r:shell:s0 tclass=unix_stream_socket permissive=0
+         1795027210.992   546   847 E AppOps  : attributionTag VCN not declared in manifest of android
+         1795027210.991   546   546 W binder:546_15: type=1400 audit(0.0:54): avc:  denied  { getopt } for  scontext=u:r:system_server:s0 tcontext=u:r:shell:s0 tclass=unix_stream_socket permissive=0
+         1795027210.991   546   546 W binder:546_15: type=1400 audit(0.0:55): avc:  denied  { getopt } for  scontext=u:r:system_server:s0 tcontext=u:r:shell:s0 tclass=unix_stream_socket permissive=0
+         1795027211.013  7073  7073 E ndroid.keychain: Not starting debugger since process cannot load the jdwp agent.
+         1795027211.034   546   662 W PackageConfigPersister: App-specific configuration not found for packageName: com.nukadkart.nukad_kart and userId: 0
+         1795027211.037   546   847 E AppOps  : attributionTag VCN not declared in manifest of android
+         1795027211.086   546   847 E AppOps  : attributionTag VCN not declared in manifest of android
+         1795027211.232   546  1002 W ActivityTaskManager: callingPackage for (uid=2000, pid=7108) has no WPC
+         1795027211.257   546   563 W Looper  : Drained
+         1795027211.287  1772  1772 W MediaProvider: WorkProfileOwnerApps cache is empty
+         1795027211.318  1922  2474 W SearchServiceCore: Abort, client detached.
+         1795027211.318  1922  2474 W SearchServiceCore: Abort, client detached.
+         1795027211.324  1922  2474 W SearchServiceCore: Abort, client detached.
+         1795027211.332   546   574 W WindowMagnificationMgr: requestConnection duplicated request: connect=false, mConnectionState=DISCONNECTED
+         1795027211.333   546   574 W WindowMagnificationMgr: requestConnection duplicated request: connect=false, mConnectionState=DISCONNECTED
+         1795027211.392  7111  7111 W kart.nukad_kart: Unexpected CPU variant for x86: x86_64.
+         1795027211.392  7111  7111 W kart.nukad_kart: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795027211.393   546  2314 W system_server: Long monitor contention with owner binder:546_7 (1002) at void com.android.server.wm.Session.setOnBackInvokedCallbackInfo(android.view.IWindow, android.window.OnBackInvokedCallbackInfo)(Session.java:951) waiters=1 in boolean com.android.server.wm.WindowManagerService.isInTouchMode(int) for 103ms
+         1795027211.403  7073  7109 W KeyChain: Creating new DB.
+         1795027211.627  7111  7111 W ziparchive: Unable to open '/data/app/~~loDrstpcIgVbI5eaXjjpcA==/com.nukadkart.nukad_kart-3B42qvMWuru4HCSn2Iz5mg==/base.dm': No such file or directory
+         1795027211.627  7111  7111 W ziparchive: Unable to open '/data/app/~~loDrstpcIgVbI5eaXjjpcA==/com.nukadkart.nukad_kart-3B42qvMWuru4HCSn2Iz5mg==/base.dm': No such file or directory
+         1795027211.681  5390  5447 W Looper  : Slow dispatch took 36ms wmshell.anim h=android.view.Choreographer$FrameHandler c=android.view.Choreographer$FrameDisplayEventReceiver@2b51641 m=0
+--------- beginning of kernel
+         1795027211.971     0     0 W binder_debug: 66 callbacks suppressed
+         1795027211.908  5390  5447 W Looper  : Slow dispatch took 34ms wmshell.anim h=android.view.Choreographer$FrameHandler c=android.view.Choreographer$FrameDisplayEventReceiver@2b51641 m=0
+         1795027211.932  5723  5757 W ChimeraUtils: Module com.google.android.gms.nearby_en missing resource null(0)
+         1795027211.933  5723  5757 W ChimeraUtils: Module com.google.android.gms.nearby_en missing resource null(0)
+         1795027212.109  5390  5438 W Looper  : Slow dispatch took 120ms wmshell.main h=android.os.Handler c=com.android.wm.shell.transition.DefaultTransitionHandler$$ExternalSyntheticLambda0@179366f m=0
+         1795027212.328  5772  7147 W SQLiteLog: (28) double-quoted string literal: "com.nukadkart.nukad_kart"
+         1795027212.503   546  2561 E ShortcutService: Default launcher not found. user: 0
+         1795027212.517  7111  7111 W FirebaseApp: Default FirebaseApp failed to initialize because no default options were found. This usually means that com.google.gms:google-services was not applied to your gradle project.
+         1795027212.585   546  2561 E ShortcutService: Default launcher not found. user: 0
+         1795027212.666  7111  7111 W IntentUtils: Intent verification failed: The intent Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x30000000 cmp=com.nukadkart.nukad_kart/.MainActivity (has extras) } (with extras: android.util.MapCollections$KeySet@58fbfddb) sent to com.nukadkart.nukad_kart/.MainActivity was not sent by this app. This intent will be IGNORED in release builds to prevent security vulnerabilities. If this launch was internal, see https://docs.flutter.dev/release/breaking-changes/stricter-android-entrypoint-intent-verification for migration options.
+         1795027212.735  7111  7111 W kart.nukad_kart: type=1400 audit(0.0:56): avc:  denied  { read } for  name="max_map_count" dev="proc" ino=68711 scontext=u:r:untrusted_app:s0:c192,c256,c512,c768 tcontext=u:object_r:proc_max_map_count:s0 tclass=file permissive=0 app=com.nukadkart.nukad_kart
+         1795027213.143  7111  7111 W kart.nukad_kart: Accessing hidden method Landroid/view/accessibility/AccessibilityNodeInfo;->getSourceNodeId()J (unsupported,test-api, reflection, allowed)
+         1795027213.143  7111  7111 W kart.nukad_kart: Accessing hidden method Landroid/view/accessibility/AccessibilityRecord;->getSourceNodeId()J (unsupported, reflection, allowed)
+         1795027213.143  7111  7111 W kart.nukad_kart: Accessing hidden field Landroid/view/accessibility/AccessibilityNodeInfo;->mChildNodeIds:Landroid/util/LongArray; (unsupported, reflection, allowed)
+         1795027213.143  7111  7111 W kart.nukad_kart: Accessing hidden method Landroid/util/LongArray;->get(I)J (unsupported, reflection, allowed)
+         1795027213.242  7111  7111 W OpenGLRenderer: Unknown dataspace 0
+         1795027213.380   426   596 W ServiceManagerCppClient: Permission failure: android.permission.ROTATE_SURFACE_FLINGER from uid=10192 pid=0
+         1795027213.381   426   596 W ServiceManagerCppClient: Permission failure: android.permission.INTERNAL_SYSTEM_WINDOW from uid=10192 pid=0
+         1795027213.381   426   596 W ServiceManagerCppClient: Permission failure: android.permission.ACCESS_SURFACE_FLINGER from uid=10192 pid=0
+         1795027213.397  7111  7187 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+         1795027213.927   445   445 W adbd    : timeout expired while flushing socket, closing
+         1795027214.251   546  3362 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+         1795027216.543   546   902 W ServiceManagerCppClient: Permission failure: android.permission.ROTATE_SURFACE_FLINGER from uid=10192 pid=0
+         1795027216.543   546   902 W ServiceManagerCppClient: Permission failure: android.permission.INTERNAL_SYSTEM_WINDOW from uid=10192 pid=0
+         1795027216.543   546   902 W ServiceManagerCppClient: Permission failure: android.permission.ACCESS_SURFACE_FLINGER from uid=10192 pid=0
+         1795027216.549   546   563 W ziparchive: Unable to open '/data/app/~~loDrstpcIgVbI5eaXjjpcA==/com.nukadkart.nukad_kart-3B42qvMWuru4HCSn2Iz5mg==/base.dm': No such file or directory
+         1795027216.551   546   563 W ziparchive: Unable to open '/data/app/~~loDrstpcIgVbI5eaXjjpcA==/com.nukadkart.nukad_kart-3B42qvMWuru4HCSn2Iz5mg==/base.dm': No such file or directory
+         1795027216.961  7111  7310 W GooglePlayServicesUtil: Google Play services out of date for com.nukadkart.nukad_kart.  Requires 261200000 but found 231818047
+         1795027216.962  7111  7310 W GoogleApiManager: The service for com.google.android.gms.internal.cloudmessaging.zzd is not available: ConnectionResult{statusCode=SERVICE_VERSION_UPDATE_REQUIRED, resolution=null, message=null, clientMethodKey=null}
+         1795027217.095  7111  7313 W kart.nukad_kart: Long monitor contention with owner Firebase Background Thread #1 (7319) at java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController()(DefaultHeartBeatController.java:71) waiters=0 in java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController() for 390ms
+         1795027217.101  7111  7330 W kart.nukad_kart: Long monitor contention with owner Firebase Background Thread #1 (7319) at java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController()(DefaultHeartBeatController.java:71) waiters=1 in java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController() for 315ms
+         1795027217.676  5390  5466 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@8dda9dd
+         1795027217.676   546  2551 W InputManager-JNI: Input channel object '57e923f Splash Screen com.nukadkart.nukad_kart (client)' was disposed without first being removed with the input manager!
+         1795027217.898   546  7346 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+         1795027218.139   546   564 W Looper  : Slow dispatch took 362ms android.ui h=android.view.Choreographer$FrameHandler c=android.view.Choreographer$FrameDisplayEventReceiver@54afeae m=0
+         1795027218.139   546   564 W Looper  : Slow delivery took 383ms android.ui h=android.view.ViewRootImpl$ViewRootHandler c=null m=17
+         1795027218.723   546   564 W Looper  : Slow dispatch took 579ms android.ui h=android.view.Choreographer$FrameHandler c=android.view.Choreographer$FrameDisplayEventReceiver@54afeae m=0
+         1795027219.001     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027218.947  5772  7377 W ZappDownloader: No successful module downloads for requested features [vision.ocr].
+         1795027218.957  5772  7377 W ChimeraConfigService: Retry attempt was throttled. [CONTEXT service_id=264 ]
+         1795027218.965  5772  7138 W Vision  : Request for optional module download of ocr failed. Request again.
+         1795027218.965  5772  7138 W Vision  : Would have logged:
+         1795027218.965  5772  7138 W Vision  : # dsae@37884fe7
+         1795027219.008   546   564 W Looper  : Slow dispatch took 221ms android.ui h=android.view.Choreographer$FrameHandler c=android.view.Choreographer$FrameDisplayEventReceiver@54afeae m=0
+         1795027219.113   546   564 W Looper  : Drained
+         1795027219.911   546  1037 W ContentProviderHelper: Slow operation: 56ms so far, now at getContentProviderImpl: after updateOomAdj
+         1795027219.918   546  1037 W ContentProviderHelper: Slow operation: 63ms so far, now at getContentProviderImpl: done!
+         1795027226.135   546  2561 W ProcessStats: Tracking association SourceState{1fe96d1 com.google.android.gms.persistent/10128 BFgs #12547} whose proc state 4 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 8 (422 skipped)
+         1795027227.820  7111  7111 E FrameTracker: force finish cuj, time out: J<IME_INSETS_ANIMATION::1@1@com.nukadkart.nukad_kart>
+         1795027233.799   546   632 W DeviceIdleController: motion timeout went off and device isn't stationary
+         1795027234.921  5723  7173 W GCM     : Heartbeat timeout, GCM connection reset -82
+         1795027234.928   546   564 W Looper  : Slow dispatch took 101ms android.ui h=com.android.server.wm.ImmersiveModeConfirmation$H c=null m=2
+         1795027234.929   546   564 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@f511075
+         1795027234.933   546   564 W InputManager-JNI: Input channel object 'c704b7c ImmersiveModeConfirmation (client)' was disposed without first being removed with the input manager!
+         1795027234.995  5723  7173 E WakeLock: GCM_HB_ALARM release without a matched acquire!
+         1795027234.995  5723  7173 W WakeLock: GCM_HB_ALARM counter does not exist
+         1795027242.755   546  2565 W ActivityManager: Scheduling restart of crashed service com.google.android.gms/.chimera.GmsBoundBrokerService in 1000ms for connection
+         1795027243.792  8131  8131 W gle.android.gms: Unexpected CPU variant for x86: x86_64.
+         1795027243.792  8131  8131 W gle.android.gms: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795027243.799  8131  8131 E gle.android.gms: Not starting debugger since process cannot load the jdwp agent.
+         1795027243.963  8131  8131 W ProviderHelper: Unknown dynamite feature providerinstaller.dynamite
+         1795027254.763  7111  7310 W kart.nukad_kart: Verification of void com.google.android.gms.internal.location.zzdz.zzt(com.google.android.gms.internal.location.zzdr, com.google.android.gms.location.LocationRequest, com.google.android.gms.tasks.TaskCompletionSource) took 182.860ms (667.18 bytecodes/s) (5176B approximate peak alloc)
+         1795027254.772   546  2182 W ProcessStats: Tracking association SourceState{d0adb83 com.nukadkart.nukad_kart/10192 BTop #12593} whose proc state 2 is better than process ProcessState{cac08e4 com.google.android.gms.persistent/10128 pkg=com.google.android.gms} proc state 4 (21 skipped)
+         1795027255.136   546  1299 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027255.140   546  1299 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027255.144   546  1299 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027255.154   546  1299 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027255.155   546  1299 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027255.156   546  1299 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027255.264  5723  5802 W SystemServiceRegistry: No service published for: wifirtt
+         1795027255.335   546  2182 W AlarmManager: Alarms must either supply a PendingIntent or an AlarmReceiver
+         1795027256.217  5723  7172 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027256.217  5723  7172 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027256.261  5723  7173 W Conscrypt: Could not set socket write timeout: java.net.SocketException: Socket closed
+         1795027256.261  5723  7173 W Conscrypt: 	at com.google.android.gms.org.conscrypt.Platform.setSocketWriteTimeout(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027256.261  5723  7173 W Conscrypt: 	at com.google.android.gms.org.conscrypt.ConscryptFileDescriptorSocket.setSoWriteTimeout(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027256.603  5723  7173 W Conscrypt: Could not set socket write timeout: java.net.SocketException: Socket closed
+         1795027256.603  5723  7173 W Conscrypt: 	at com.google.android.gms.org.conscrypt.Platform.setSocketWriteTimeout(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027256.607  5723  7173 W Conscrypt: 	at com.google.android.gms.org.conscrypt.ConscryptFileDescriptorSocket.setSoWriteTimeout(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027256.685  5723  7172 W GlsClientGrpc: Voilatile gRPC failure INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header. [CONTEXT service_id=6 ]
+         1795027256.685  5723  7172 W GlsClientGrpc: enms: INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header.
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at enmr.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at abxw.u(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at abxw.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):17)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at abxw.g(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at cyeg.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):27)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at czpd.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027256.685  5723  7172 W GlsClientGrpc: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027259.481   546  2182 W BatteryExternalStatsWorker: error reading Bluetooth stats: 11
+         1795027260.029  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027260.404   546  1299 W AlarmManager: Alarms must either supply a PendingIntent or an AlarmReceiver
+         1795027260.438  5723  7173 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027260.438  5723  7173 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027260.567  5723  7173 W GlsClientGrpc: Voilatile gRPC failure INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header. [CONTEXT service_id=6 ]
+         1795027260.567  5723  7173 W GlsClientGrpc: enms: INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header.
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at enmr.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at abxw.u(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at abxw.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):17)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at abxw.g(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at cyeg.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):27)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at czpd.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027260.567  5723  7173 W GlsClientGrpc: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027263.945   546  2182 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027263.962   546  2182 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027263.965   546  2182 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027265.034   546  1799 W ProcessStats: Tracking association SourceState{d0adb83 com.nukadkart.nukad_kart/10192 BTop #12618} whose proc state 2 is better than process ProcessState{cac08e4 com.google.android.gms.persistent/10128 pkg=com.google.android.gms} proc state 4 (11 skipped)
+         1795027265.410   546  1799 W AlarmManager: Alarms must either supply a PendingIntent or an AlarmReceiver
+         1795027265.474  5723  7173 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027266.007  2789  2789 W binder:2789_B: type=1400 audit(0.0:57): avc:  denied  { read } for  name="u:object_r:system_adbd_prop:s0" dev="tmpfs" ino=292 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:system_adbd_prop:s0 tclass=file permissive=0 app=com.google.android.gms
+         1795027266.024  2789  6585 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+         1795027266.019  2789  2789 W binder:2789_B: type=1400 audit(0.0:58): avc:  denied  { read } for  name="u:object_r:adbd_prop:s0" dev="tmpfs" ino=60 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:adbd_prop:s0 tclass=file permissive=0 app=com.google.android.gms
+         1795027266.040  2789  6585 W libc    : Access denied finding property "service.adb.tls.port"
+         1795027266.100  5723  7173 W GmsUrlRequestImpl: Content-Type header is overwritten.
+         1795027266.599  5723  7173 W GLSUser : [AppCertManager] Exception while requesting key: 
+         1795027266.599  5723  7173 W GLSUser : java.util.concurrent.ExecutionException: avvw: Parse Proto Exception.
+         1795027266.599  5723  7173 W GLSUser : 	at dlnv.s(:com.google.android.gms@231818047@23.18.18 (190800-535401451):3)
+         1795027266.599  5723  7173 W GLSUser : 	at dlnv.get(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027266.599  5723  7173 W GLSUser : 	at oub.b(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027266.599  5723  7173 W GLSUser : 	at otz.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):8)
+         1795027266.599  5723  7173 W GLSUser : 	at otv.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at otx.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027266.599  5723  7173 W GLSUser : 	at otx.b(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at abxk.r(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+         1795027266.599  5723  7173 W GLSUser : 	at abxw.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027266.599  5723  7173 W GLSUser : 	at abxw.g(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at cyeg.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):27)
+         1795027266.599  5723  7173 W GLSUser : 	at czpd.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027266.599  5723  7173 W GLSUser : 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027266.599  5723  7173 W GLSUser : 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027266.599  5723  7173 W GLSUser : 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027266.599  5723  7173 W GLSUser : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027266.599  5723  7173 W GLSUser : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027266.599  5723  7173 W GLSUser : 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at java.lang.Thread.run(Thread.java:1012)
+         1795027266.599  5723  7173 W GLSUser : Caused by: avvw: Parse Proto Exception.
+         1795027266.599  5723  7173 W GLSUser : 	at avwn.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):5)
+         1795027266.599  5723  7173 W GLSUser : 	at avxk.onSucceeded(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at jf.onSucceeded(:com.google.android.gms.dynamite_cronetdynamite@231818047@23.18.18 (190800-0):0)
+         1795027266.599  5723  7173 W GLSUser : 	at ie.run(:com.google.android.gms.dynamite_cronetdynamite@231818047@23.18.18 (190800-0):4)
+         1795027266.599  5723  7173 W GLSUser : 	... 6 more
+         1795027266.599  5723  7173 W GLSUser : Caused by: dzfz: Protocol message contained an invalid tag (zero).
+         1795027266.599  5723  7173 W GLSUser : 	at dzdb.k(:com.google.android.gms@231818047@23.18.18 (190800-535401451):13)
+         1795027266.599  5723  7173 W GLSUser : 	at dzha.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):47)
+         1795027266.599  5723  7173 W GLSUser : 	at dzha.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):45)
+         1795027266.599  5723  7173 W GLSUser : 	at dzfd.A(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027266.599  5723  7173 W GLSUser : 	at dzex.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at dzcx.d(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at dzcx.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at dzcx.n(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.599  5723  7173 W GLSUser : 	at avwn.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027266.599  5723  7173 W GLSUser : 	at avwn.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+         1795027266.599  5723  7173 W GLSUser : 	... 9 more
+         1795027266.600  5723  7173 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027266.644  5723  7173 W GlsClientGrpc: Voilatile gRPC failure INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header. [CONTEXT service_id=6 ]
+         1795027266.644  5723  7173 W GlsClientGrpc: enms: INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header.
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at enmr.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at abxw.u(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at abxw.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):17)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at abxw.g(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at cyeg.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):27)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at czpd.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027266.644  5723  7173 W GlsClientGrpc: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027279.009     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027280.712   546  2182 W ProcessStats: Tracking association SourceState{d0adb83 com.nukadkart.nukad_kart/10192 BTop #12641} whose proc state 2 is better than process ProcessState{cac08e4 com.google.android.gms.persistent/10128 pkg=com.google.android.gms} proc state 4 (25 skipped)
+         1795027295.062   546  1799 W ProcessStats: Tracking association SourceState{d0adb83 com.nukadkart.nukad_kart/10192 BTop #12642} whose proc state 2 is better than process ProcessState{cac08e4 com.google.android.gms.persistent/10128 pkg=com.google.android.gms} proc state 4 (0 skipped)
+         1795027299.592   546  1799 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027299.592   546  1799 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027299.594   546  1799 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027299.669  5723  5802 W SystemServiceRegistry: No service published for: wifirtt
+         1795027299.689   546  1799 W AlarmManager: Alarms must either supply a PendingIntent or an AlarmReceiver
+         1795027300.590  5723  9766 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027300.596  5723  9766 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027300.631  5723  9766 W GlsClientGrpc: Voilatile gRPC failure INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header. [CONTEXT service_id=6 ]
+         1795027300.631  5723  9766 W GlsClientGrpc: enms: INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header.
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at enmr.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at abxw.u(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at abxw.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):17)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at abxw.g(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at cyeg.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):27)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at czpd.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027300.631  5723  9766 W GlsClientGrpc: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027304.756   546  1799 W AlarmManager: Alarms must either supply a PendingIntent or an AlarmReceiver
+         1795027304.778  5723  9766 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027304.782  5723  9766 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027304.845  5723  9766 W GlsClientGrpc: Voilatile gRPC failure INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header. [CONTEXT service_id=6 ]
+         1795027304.845  5723  9766 W GlsClientGrpc: enms: INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header.
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at enmr.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at abxw.u(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at abxw.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):17)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at abxw.g(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at cyeg.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):27)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at czpd.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027304.845  5723  9766 W GlsClientGrpc: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027305.575   546  2562 W ProcessStats: Tracking association SourceState{d0adb83 com.nukadkart.nukad_kart/10192 BTop #12655} whose proc state 2 is better than process ProcessState{cac08e4 com.google.android.gms.persistent/10128 pkg=com.google.android.gms} proc state 4 (5 skipped)
+         1795027306.291  7111  7111 W WindowOnBackDispatcher: OnBackInvokedCallback is not enabled for the application.
+         1795027306.291  7111  7111 W WindowOnBackDispatcher: Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+         1795027309.763   546  1002 W AlarmManager: Alarms must either supply a PendingIntent or an AlarmReceiver
+         1795027309.825  5723  9902 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027309.825  5723  9902 W GLSUser : [DeviceKeyStore] Cannot load key: Device key file not found.
+         1795027309.893  5723  9902 W GlsClientGrpc: Voilatile gRPC failure INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header. [CONTEXT service_id=6 ]
+         1795027309.893  5723  9902 W GlsClientGrpc: enms: INVALID_ARGUMENT: Application credential header not valid. Please fix the client to pass a valid application credential header.
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at enmr.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at abxw.u(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at abxw.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):17)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at abxw.g(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at cyeg.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):27)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at czpd.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027309.893  5723  9902 W GlsClientGrpc: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027320.057  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027330.462   546  2562 W ProcessStats: Tracking association SourceState{d0adb83 com.nukadkart.nukad_kart/10192 BTop #12676} whose proc state 2 is better than process ProcessState{cac08e4 com.google.android.gms.persistent/10128 pkg=com.google.android.gms} proc state 4 (10 skipped)
+         1795027339.000     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027380.114  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027381.541  6890  6922 W MPEG4Writer: 0-duration samples found: 1
+         1795027381.541  6890  6923 W MPEG4Writer: 0-duration samples found: 1
+         1795027381.942  1772  2189 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027381.987   546  2551 W ProcessStats: Tracking association SourceState{d70321c com.google.android.gms.persistent/10128 ImpBg #12684} whose proc state 6 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 14 (0 skipped)
+         1795027382.148 12027 12034 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027382.153 12027 12034 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027382.155 12027 12034 W Codec2Client: query -- param skipped: index = 1342179345.
+         1795027382.155 12027 12034 W Codec2Client: query -- param skipped: index = 2415921170.
+         1795027382.169   495   495 W ResourceManagerService: Ignoring request to add new resource entry with value <= 0
+         1795027382.196   426   426 W SurfaceFlinger: Invalid layer stack -1
+         1795027382.222  1772  2189 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027382.232  5723  5837 W .gms.persistent: Long monitor contention with owner lowpool[33] (9766) at void bytb.q(byps)(:com.google.android.gms@231818047@23.18.18 (190800-535401451):3) waiters=0 in int bytb.l(bysm, aphn) for 134ms
+         1795027382.401   506 12042 E C2SoftAvcEnc: Unable to set air params = 0x1ad
+         1795027387.282  1772  2001 W PickerDbFacade: Unable to promote cloud media with localId: 1000000019
+         1795027399.001     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027440.118  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027459.002     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027470.998   546   644 W ProcessStats: Tracking association SourceState{d0adb83 com.nukadkart.nukad_kart/10192 BTop #12701} whose proc state 2 is better than process ProcessState{cac08e4 com.google.android.gms.persistent/10128 pkg=com.google.android.gms} proc state 4 (29 skipped)
+         1795027471.323  8131 12031 W native  : W0000 00:00:1795027471.323043   12031 model-utils.cc:16] No CRC32, most likely an old model; skip CRC32 check
+         1795027471.328  8131 12031 W native  : W0000 00:00:1795027471.328773   12031 words-map.cc:36] INVALID_ARGUMENT: Empty URI
+         1795027471.328  8131 12031 W native  : W0000 00:00:1795027471.328786   12031 words-map.cc:40] WordsMap was not properly initialized
+         1795027471.512  8131 12031 W Icing   : Package com.google.android.googlequicksearchbox targets Android P and isn't allowed to use AppDataSearch indexing API
+         1795027471.589  8131 14484 W ConfigFileUtils: Failed to read asset ChimeraModuleSetList.pb: java.io.FileNotFoundException: ChimeraModuleSetList.pb
+         1795027471.623  8131 12031 W Icing   : Package com.google.android.gm targets Android P and isn't allowed to use AppDataSearch indexing API
+         1795027471.763  8131 14484 W ziparchive: Unable to open '/data/user_de/0/com.google.android.gms/app_chimera/m/00000001/CronetDynamite.dm': No such file or directory
+         1795027471.971  8131 14484 W ZappDownloader: No successful module downloads for requested features [vision.ocr].
+         1795027472.037  8131 14484 W ChimeraConfigService: Retry attempt was throttled. [CONTEXT service_id=264 ]
+         1795027472.045  8131 14486 W Vision  : Request for optional module download of ocr failed. Request again.
+         1795027472.046  8131 14486 W Vision  : Would have logged:
+         1795027472.046  8131 14486 W Vision  : # dsae@37884fe7
+         1795027472.157   546  1037 E ShortcutService: Default launcher not found. user: 0
+         1795027472.200   546  1037 E ShortcutService: Default launcher not found. user: 0
+         1795027472.224   546  1801 E ShortcutService: Default launcher not found. user: 0
+         1795027472.276   546  1801 E ShortcutService: Default launcher not found. user: 0
+         1795027472.381  8131 14487 W gle.android.gms: Long monitor contention with owner [com.google.android.gms.chimera.container.intentoperation.GmsIntentOperationChimeraService-Executor] processing com.google.android.gms.icing.proxy.UpdateIcingCorporaIntentOperation for action com.google.android.gms.icing.proxy.ACTION_MAYBE_UPDATE_CONTACTS (14485) at void hjm.run()(:com.google.android.gms@231818047@23.18.18 (190800-535401451):3) waiters=0 in void hjm.run() for 1.011s
+         1795027472.405   546  1037 E ShortcutService: Default launcher not found. user: 0
+         1795027485.972   546 14899 E GnssPsdsDownloader: No Long-Term PSDS servers were specified in the GnssConfiguration
+         1795027486.326   546  2551 W ProcessStats: Tracking association SourceState{b33fbf1 com.google.android.gms.persistent/10128 BTop #12776} whose proc state 2 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 8 (250 skipped)
+         1795027490.412   546  1801 W BrightnessThrottler: DeviceConfig ThermalBrightnessThrottlingData is null
+         1795027490.412   546  1801 W DisplayPowerController2[2]: Screen brightness nits configuration is unavailable; falling back
+         1795027490.474  5390  5438 W DisplayController: Skipping Display Configuration change on non-added display.
+         1795027491.242  7111 15026 W kart.nukad_kart: Verification of okhttp3.ConnectionSpec$Builder okhttp3.ConnectionSpec$Builder.cipherSuites(java.lang.String[]) took 266.791ms (254.88 bytecodes/s) (2720B approximate peak alloc)
+         1795027491.945   358   381 E netd    : control message was truncated when receiving file descriptors
+         1795027494.686  7111 15051 W Mbgl    : {RenderThread 10}[ParseStyle]: line dasharray requires at least two elements
+         1795027500.056  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027519.000     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027560.147  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027562.325 12027 12052 W MPEG4Writer: 0-duration samples found: 1
+         1795027562.325 12027 12053 W MPEG4Writer: 0-duration samples found: 1
+         1795027562.502 12027 12030 W GraphicBufferSource: released unpopulated slots: [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]
+         1795027562.854  1772  2189 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027562.870   546  1085 W ProcessStats: Tracking association SourceState{d70321c com.google.android.gms.persistent/10128 ImpBg #12803} whose proc state 6 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 14 (41 skipped)
+         1795027563.089 16732 16737 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027563.109 16732 16737 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027563.129 16732 16737 W Codec2Client: query -- param skipped: index = 1342179345.
+         1795027563.129 16732 16737 W Codec2Client: query -- param skipped: index = 2415921170.
+         1795027563.132   495   495 W ResourceManagerService: Ignoring request to add new resource entry with value <= 0
+         1795027563.140   426   426 W SurfaceFlinger: Invalid layer stack -1
+         1795027563.168  1772  2189 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027563.318   506 16743 E C2SoftAvcEnc: Unable to set air params = 0x1ad
+         1795027568.209  1772  2001 W PickerDbFacade: Unable to promote cloud media with localId: 1000000020
+         1795027579.013     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027620.124  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027639.002     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027647.147  5007  5033 W TimedProcessReaper: Memory state is: 125
+         1795027680.028  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027699.002     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027723.987  7111 15036 E EGL_emulation: tid 15036: eglMakeCurrent(1920): error 0x3009 (EGL_BAD_MATCH)
+         1795027723.987  7111 15036 E libEGL  : eglMakeCurrentImpl:1053 error 3009 (EGL_BAD_MATCH)
+         1795027723.988  7111 15036 E Surface : freeAllBuffers: 1 buffers were freed while being dequeued!
+         1795027724.006  7111  7111 E Surface : freeAllBuffers: 1 buffers were freed while being dequeued!
+         1795027724.025  7111 15036 E Surface : getSlotFromBufferLocked: unknown buffer: 0x0
+         1795027724.084  7111  7111 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@5daca72
+         1795027724.091   546  1000 W InputManager-JNI: Input channel object '8b0596a com.nukadkart.nukad_kart (client)' was disposed without first being removed with the input manager!
+         1795027724.111  7111  8684 E BufferQueueProducer: [ImageReader-531x420f22m7-7111-0](id:1bc700000002,api:1,p:426,c:7111) dequeueBuffer: BufferQueue has been abandoned
+         1795027724.111   426   426 E CompositionEngine: ANativeWindow::dequeueBuffer failed for display [flutter-vd#0] with error: -19
+         1795027724.111   426   426 W CompositionEngine: Dequeuing buffer for display [flutter-vd#0] failed, bailing out of client composition for this frame
+         1795027735.819  5723  8703 E WakeLock: GCM_HB_ALARM release without a matched acquire!
+         1795027736.217  5723  5723 W .gms.persistent: Long monitor contention with owner GoogleApiHandler (5760) at boolean android.os.MessageQueue.enqueueMessage(android.os.Message, long)(MessageQueue.java:600) waiters=0 in android.os.Message android.os.MessageQueue.next() for 288ms
+         1795027740.159  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027741.331   546   834 E WifiStaIfaceAidlImpl: installApfPacketFilter failed with service-specific exception: android.os.ServiceSpecificException:  (code 4)
+         1795027743.213 16732 16756 W MPEG4Writer: 0-duration samples found: 1
+         1795027743.213 16732 16757 W MPEG4Writer: 0-duration samples found: 1
+         1795027743.280 16732 16734 W GraphicBufferSource: released unpopulated slots: [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]
+         1795027743.768  1772  2180 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027743.917   546  2564 W ProcessStats: Tracking association SourceState{d70321c com.google.android.gms.persistent/10128 ImpBg #12827} whose proc state 6 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 14 (19 skipped)
+         1795027744.009  5723 20216 W TapAndPay: NfcAdapter is null while obtaining CardEmulation instance. [CONTEXT service_id=79 ]
+         1795027744.009  5723 20216 W TapAndPay: java.lang.NullPointerException: NfcAdapter is null
+         1795027744.009  5723 20216 W TapAndPay: 	at android.nfc.cardemulation.CardEmulation.getInstance(CardEmulation.java:152)
+         1795027744.009  5723 20216 W TapAndPay: 	at cdoy.<init>(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.009  5723 20216 W TapAndPay: 	at com.google.android.gms.tapandpay.hce.task.TapAndPayAidRegistrationTaskOperation.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):5)
+         1795027744.009  5723 20216 W TapAndPay: 	at com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskChimeraService.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027744.009  5723 20216 W TapAndPay: 	at avzs.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027744.009  5723 20216 W TapAndPay: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027744.009  5723 20216 W TapAndPay: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027744.009  5723 20216 W TapAndPay: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027744.009  5723 20216 W TapAndPay: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027744.009  5723 20216 W TapAndPay: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027744.009  5723 20216 W TapAndPay: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.009  5723 20216 W TapAndPay: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027744.011 20417 20421 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027744.062 20417 20421 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027744.087 20417 20421 W Codec2Client: query -- param skipped: index = 1342179345.
+         1795027744.087 20417 20421 W Codec2Client: query -- param skipped: index = 2415921170.
+         1795027744.107   495   954 W ResourceManagerService: Ignoring request to add new resource entry with value <= 0
+         1795027744.121   426   426 W SurfaceFlinger: Invalid layer stack -1
+         1795027744.130  1772 20410 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027744.285   506 20426 E C2SoftAvcEnc: Unable to set air params = 0x1ad
+         1795027744.565  2789  2840 W libc    : Access denied finding property "persist.adb.tls_server.enable"
+         1795027744.566  2789  2840 W libc    : Access denied finding property "service.adb.tls.port"
+         1795027744.563  2789  2789 W binder:2789_2: type=1400 audit(0.0:59): avc:  denied  { read } for  name="u:object_r:system_adbd_prop:s0" dev="tmpfs" ino=292 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:system_adbd_prop:s0 tclass=file permissive=0 app=com.google.android.gms
+         1795027744.596  5723  5767 W GmsUrlRequestImpl: Content-Type header is overwritten.
+         1795027744.563  2789  2789 W binder:2789_2: type=1400 audit(0.0:60): avc:  denied  { read } for  name="u:object_r:adbd_prop:s0" dev="tmpfs" ino=60 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:adbd_prop:s0 tclass=file permissive=0 app=com.google.android.gms
+         1795027744.771  5723  5767 W GLSUser : [AppCertManager] Exception while requesting key: 
+         1795027744.771  5723  5767 W GLSUser : java.util.concurrent.ExecutionException: avvw: Parse Proto Exception.
+         1795027744.771  5723  5767 W GLSUser : 	at dlnv.s(:com.google.android.gms@231818047@23.18.18 (190800-535401451):3)
+         1795027744.771  5723  5767 W GLSUser : 	at dlnv.get(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027744.771  5723  5767 W GLSUser : 	at oub.b(:com.google.android.gms@231818047@23.18.18 (190800-535401451):78)
+         1795027744.771  5723  5767 W GLSUser : 	at otz.b(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027744.771  5723  5767 W GLSUser : 	at otu.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.771  5723  5767 W GLSUser : 	at otx.a(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027744.771  5723  5767 W GLSUser : 	at lzq.call(:com.google.android.gms@231818047@23.18.18 (190800-535401451):14)
+         1795027744.771  5723  5767 W GLSUser : 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027744.771  5723  5767 W GLSUser : 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027744.771  5723  5767 W GLSUser : 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027744.771  5723  5767 W GLSUser : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027744.771  5723  5767 W GLSUser : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027744.771  5723  5767 W GLSUser : 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.771  5723  5767 W GLSUser : 	at java.lang.Thread.run(Thread.java:1012)
+         1795027744.771  5723  5767 W GLSUser : Caused by: avvw: Parse Proto Exception.
+         1795027744.771  5723  5767 W GLSUser : 	at avwn.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):5)
+         1795027744.771  5723  5767 W GLSUser : 	at avxk.onSucceeded(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.771  5723  5767 W GLSUser : 	at jf.onSucceeded(:com.google.android.gms.dynamite_cronetdynamite@231818047@23.18.18 (190800-0):0)
+         1795027744.771  5723  5767 W GLSUser : 	at ie.run(:com.google.android.gms.dynamite_cronetdynamite@231818047@23.18.18 (190800-0):4)
+         1795027744.771  5723  5767 W GLSUser : 	... 6 more
+         1795027744.771  5723  5767 W GLSUser : Caused by: dzfz: Protocol message contained an invalid tag (zero).
+         1795027744.771  5723  5767 W GLSUser : 	at dzdb.k(:com.google.android.gms@231818047@23.18.18 (190800-535401451):13)
+         1795027744.771  5723  5767 W GLSUser : 	at dzha.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):47)
+         1795027744.771  5723  5767 W GLSUser : 	at dzha.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):45)
+         1795027744.771  5723  5767 W GLSUser : 	at dzfd.A(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027744.771  5723  5767 W GLSUser : 	at dzex.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.771  5723  5767 W GLSUser : 	at dzcx.d(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.771  5723  5767 W GLSUser : 	at dzcx.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.771  5723  5767 W GLSUser : 	at dzcx.n(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027744.771  5723  5767 W GLSUser : 	at avwn.h(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027744.771  5723  5767 W GLSUser : 	at avwn.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+         1795027744.771  5723  5767 W GLSUser : 	... 9 more
+         1795027749.237  1772  2001 W PickerDbFacade: Unable to promote cloud media with localId: 1000000021
+         1795027759.000     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027771.798   546   632 W ProcessStats: Tracking association SourceState{360340c com.google.android.dialer/10130 ImpBg #12885} whose proc state 6 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 14 (22 skipped)
+         1795027771.818   546   576 W ActivityManager: Slow operation: 151ms so far, now at startProcess: done updating battery stats
+         1795027771.818   546   576 W ActivityManager: Slow operation: 151ms so far, now at startProcess: building log message
+         1795027771.818   546   576 W ActivityManager: Slow operation: 151ms so far, now at startProcess: starting to update pids map
+         1795027771.819   546   576 W ActivityManager: Slow operation: 152ms so far, now at startProcess: done updating pids map
+         1795027771.835  2669  2908 W TimedProcessReaper: Memory state is: 230
+         1795027771.901  1922 21205 W LocationOracle: getBestLocation(): no location is available
+         1795027771.913 21199 21199 W d.configupdater: Unexpected CPU variant for x86: x86_64.
+         1795027771.913 21199 21199 W d.configupdater: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795027771.946  1922  2460 W CronetNetworkRqstWrppr: Upload request without a content type.
+         1795027771.987 21199 21199 E d.configupdater: Not starting debugger since process cannot load the jdwp agent.
+         1795027772.085  1922  2350 W LocationOracle: No location returned by GMS core getLastLocation()
+         1795027772.100  1922  1922 E A       : onError
+         1795027772.100  1922  1922 E A       : com.google.android.apps.gsa.shared.speech.a.m: errorCode: 65561, engine: 2
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.staticplugins.dc.a.e.a(PG:3)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.s3.n.hh(PG:1)
+         1795027772.100  1922  1922 E A       : 	at com.google.cd.g.a.f.e(PG:2)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.speech.k.a.g.d(PG:22)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.speech.k.a.g.ks(PG:6)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.s3.o.e(PG:14)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.s3.p.run(PG:1)
+         1795027772.100  1922  1922 E A       : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+         1795027772.100  1922  1922 E A       : 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.shared.util.c.a.e.run(PG:2)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.shared.util.c.a.bi.run(PG:1)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.shared.util.c.a.bi.run(PG:1)
+         1795027772.100  1922  1922 E A       : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027772.100  1922  1922 E A       : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027772.100  1922  1922 E A       : 	at java.lang.Thread.run(Thread.java:1012)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.shared.util.c.a.l.run(PG:5)
+         1795027772.100  1922  1922 E A       : Caused by: com.google.android.apps.gsa.shared.speech.a.o: errorCode: 65586, engine: 2
+         1795027772.100  1922  1922 E A       : 	... 15 more
+         1795027772.100  1922  1922 E A       : Caused by: com.google.android.apps.gsa.shared.speech.a.k: errorCode: 401, engine: 2
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.assistant.shared.n.h.a(PG:5)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.s3.producers.j.hE(PG:2)
+         1795027772.100  1922  1922 E A       : 	at com.google.android.apps.gsa.speech.k.a.g.d(PG:16)
+         1795027772.100  1922  1922 E A       : 	... 12 more
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: Exception in upload method
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: com.google.android.apps.gsa.shared.r.d: Error code: 262182
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.shared.ab.bk.d(PG:5)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.libraries.gsa.c.a.ar.d(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.libraries.gsa.c.a.bo.b(PG:5)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.libraries.gsa.c.a.e.a(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.libraries.gsa.c.a.a.run(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.bf.execute(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.i(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:12)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.m(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.j.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.m(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.j.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.m(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.j.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.m(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.j.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.m(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.c.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.bu.cancel(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:17)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.staticplugins.bk.b.h.run(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.bf.execute(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.i(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:12)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.m(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.j.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.shared.util.c.aj.a(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.m(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.c.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.l(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.common.util.concurrent.d.cancel(PG:8)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.s3.o.c(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.s3.r.a(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.staticplugins.dc.a.c.e(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.staticplugins.dc.a.c.c(PG:3)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.staticplugins.dc.a.e.a(PG:5)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.s3.n.hh(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.cd.g.a.f.e(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.speech.k.a.g.d(PG:22)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.speech.k.a.g.ks(PG:6)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.s3.o.e(PG:14)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.s3.p.run(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:487)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.shared.util.c.a.e.run(PG:2)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.shared.util.c.a.bi.run(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.shared.util.c.a.bi.run(PG:1)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027772.103  1922  2460 E cr_CronetUrlRequestContext: 	at com.google.android.apps.gsa.shared.util.c.a.l.run(PG:5)
+         1795027772.202  1922  1922 W A       : Failed to sync device settings.
+         1795027772.226   546  1853 W JobScheduler: Job didn't exist in JobStore: c0b1237 #u0a132/-353 com.google.android.googlequicksearchbox/com.google.android.apps.gsa.tasks.BackgroundTasksJobService
+         1795027772.439  8131 12031 E constellation: [api_verify_phone_operation] Failed to generate Client Signature
+         1795027772.439  8131 12031 E constellation: acwp: Stored private key deleted
+         1795027772.439  8131 12031 E constellation: 	at acos.e(:com.google.android.gms@231818047@23.18.18 (190800-535401451):4)
+         1795027772.439  8131 12031 E constellation: 	at acos.d(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+         1795027772.439  8131 12031 E constellation: 	at acoa.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):22)
+         1795027772.439  8131 12031 E constellation: 	at acoa.f(:com.google.android.gms@231818047@23.18.18 (190800-535401451):12)
+         1795027772.439  8131 12031 E constellation: 	at avsy.eo(:com.google.android.gms@231818047@23.18.18 (190800-535401451):1)
+         1795027772.439  8131 12031 E constellation: 	at avtf.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):14)
+         1795027772.439  8131 12031 E constellation: 	at dfhf.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):2)
+         1795027772.439  8131 12031 E constellation: 	at aced.c(:com.google.android.gms@231818047@23.18.18 (190800-535401451):6)
+         1795027772.439  8131 12031 E constellation: 	at aced.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):7)
+         1795027772.439  8131 12031 E constellation: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+         1795027772.439  8131 12031 E constellation: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:644)
+         1795027772.439  8131 12031 E constellation: 	at acjn.run(:com.google.android.gms@231818047@23.18.18 (190800-535401451):0)
+         1795027772.439  8131 12031 E constellation: 	at java.lang.Thread.run(Thread.java:1012)
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: com.android.dialer.businessvoice.verifiedcall.impl.constellation.VerifiedNumberProvider.lambda$getConstellationResponse$1:155 Failed to get constellation token.
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: nkq: 5004: 
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: 	at nov.au(PG:1)
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: 	at nnf.g(PG:2)
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: 	at npo.a(Unknown Source:2)
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: 	at npy.dm(PG:9)
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: 	at ncz.onTransact(PG:4)
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: 	at android.os.Binder.execTransactInternal(Binder.java:1344)
+         1795027772.443  2669  2909 W DialerVerifiedNumberProvider: 	at android.os.Binder.execTransact(Binder.java:1275)
+         1795027772.514  2669  2909 W DialerConstellationSyncWorker: com.android.dialer.businessvoice.control.worker.ConstellationSyncWorker.lambda$syncConstellation$2:110 Constellation api request failed, status code: 5004
+         1795027772.588   546  2564 W JobScheduler: Job didn't exist in JobStore: e40a6f3 #u0a130/21 com.google.android.dialer/androidx.work.impl.background.systemjob.SystemJobService
+         1795027772.674  8131  8139 W gle.android.gms: Cleared Reference was only reachable from finalizer (only reported once)
+         1795027775.779  1922 21206 W A       : [Download] response code: 400
+         1795027795.856  5723 14538 W GCM     : Heartbeat timeout, GCM connection reset -50
+         1795027795.860  5723 14538 E WakeLock: GCM_HB_ALARM release without a matched acquire!
+         1795027795.861  5723 14538 W WakeLock: GCM_HB_ALARM counter does not exist
+         1795027800.101  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027813.105  7111  7111 W WindowOnBackDispatcher: OnBackInvokedCallback is not enabled for the application.
+         1795027813.105  7111  7111 W WindowOnBackDispatcher: Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+         1795027813.283   546  1037 W BrightnessThrottler: DeviceConfig ThermalBrightnessThrottlingData is null
+         1795027813.287   546  1037 W DisplayPowerController2[3]: Screen brightness nits configuration is unavailable; falling back
+         1795027813.369  5390  5438 W DisplayController: Skipping Display Configuration change on non-added display.
+         1795027814.952  7111 15051 W Mbgl    : {RenderThread 13}[ParseStyle]: line dasharray requires at least two elements
+         1795027814.954  7111 15051 W Mbgl    : {RenderThread 13}[ParseStyle]: line dasharray requires at least two elements
+         1795027819.001     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027824.269   546   632 W ProcessStats: Tracking association SourceState{360340c com.google.android.dialer/10130 ImpBg #12957} whose proc state 6 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 8 (1 skipped)
+         1795027824.804  8131 22610 W ZappDownloader: No successful module downloads for requested features [vision.ocr].
+         1795027824.813  8131 22610 W ChimeraConfigService: Retry attempt was throttled. [CONTEXT service_id=264 ]
+         1795027824.837  8131 22608 W Vision  : Request for optional module download of ocr failed. Request again.
+         1795027824.837  8131 22608 W Vision  : Would have logged:
+         1795027824.837  8131 22608 W Vision  : # dsae@37884fe7
+         1795027831.876  2669  2908 W TimedProcessReaper: Memory state is: 400
+         1795027831.876  2669  2908 W TimedProcessReaper: Killing process to refresh configuration
+         1795027860.064  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027879.000     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027920.057  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027924.360 20417 20446 W MPEG4Writer: 0-duration samples found: 1
+         1795027924.360 20417 20447 W MPEG4Writer: 0-duration samples found: 1
+         1795027924.414 20417 20434 E BufferQueueProducer: [GraphicBufferSource](id:4fc100000000,api:1,p:426,c:20417) queueBuffer: BufferQueue has been abandoned
+         1795027924.415   426   426 E Surface : queueBuffer: error queuing buffer, -19
+         1795027924.415   426   426 E CompositionEngine: Error when queueing buffer for display [ScreenRecorder]: -19
+         1795027924.415 20417 20434 E BufferQueueProducer: [GraphicBufferSource](id:4fc100000000,api:1,p:426,c:20417) cancelBuffer: BufferQueue has been abandoned
+         1795027924.664  1772  6211 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027924.682   546   902 W ProcessStats: Tracking association SourceState{d70321c com.google.android.gms.persistent/10128 ImpBg #13008} whose proc state 6 is better than process ProcessState{6d0dbf8 com.google.android.gms/10128 pkg=com.google.android.gms} proc state 14 (2 skipped)
+         1795027924.751 25171 25177 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027924.786 25171 25177 W ColorUtils: expected specified color aspects (0:0:0:0)
+         1795027924.799 25171 25177 W Codec2Client: query -- param skipped: index = 1342179345.
+         1795027924.799 25171 25177 W Codec2Client: query -- param skipped: index = 2415921170.
+         1795027924.801   495  4245 W ResourceManagerService: Ignoring request to add new resource entry with value <= 0
+         1795027924.824   426   426 W SurfaceFlinger: Invalid layer stack -1
+         1795027924.826  1772 20410 W MediaProvider: isAppCloneUserPair for user 0: false
+         1795027925.011   506 25182 E C2SoftAvcEnc: Unable to set air params = 0x1ad
+         1795027929.866  1772  2001 W PickerDbFacade: Unable to promote cloud media with localId: 1000000022
+         1795027932.329  7111 22363 E EGL_emulation: tid 22363: eglMakeCurrent(1920): error 0x3009 (EGL_BAD_MATCH)
+         1795027932.330  7111 22363 E libEGL  : eglMakeCurrentImpl:1053 error 3009 (EGL_BAD_MATCH)
+         1795027932.334  7111 22363 E Surface : freeAllBuffers: 1 buffers were freed while being dequeued!
+         1795027932.335  7111  7111 E Surface : freeAllBuffers: 1 buffers were freed while being dequeued!
+         1795027932.412  7111 22363 E Surface : getSlotFromBufferLocked: unknown buffer: 0x0
+         1795027932.452  7111  7111 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@d79a967
+         1795027932.515   546   902 W InputManager-JNI: Input channel object 'fdb8927 com.nukadkart.nukad_kart (client)' was disposed without first being removed with the input manager!
+         1795027932.577  7111  7139 E BufferQueueProducer: [ImageReader-531x392f22m7-7111-1](id:1bc700000005,api:1,p:426,c:7111) requestBuffer: BufferQueue has been abandoned
+         1795027932.577   426   426 E Surface : dequeueBuffer: IGraphicBufferProducer::requestBuffer failed: -19
+         1795027932.578  7111  7139 E BufferQueueProducer: [ImageReader-531x392f22m7-7111-1](id:1bc700000005,api:1,p:426,c:7111) cancelBuffer: BufferQueue has been abandoned
+         1795027932.578   426   426 E CompositionEngine: ANativeWindow::dequeueBuffer failed for display [flutter-vd#1] with error: -19
+         1795027932.578   426   426 W CompositionEngine: Dequeuing buffer for display [flutter-vd#1] failed, bailing out of client composition for this frame
+         1795027937.767   546   902 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027937.769   546  2565 W AppOps  : Noting op not finished: uid 10128 pkg com.google.android.gms code 113 startTime of in progress event=1795026642739
+         1795027939.002     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795027980.057  5390  5390 W PageIndicator: Total number of pages invalid: 0. Assuming 1 page.
+         1795027983.222   546  1773 W BrightnessThrottler: DeviceConfig ThermalBrightnessThrottlingData is null
+         1795027983.222   546  1773 W DisplayPowerController2[4]: Screen brightness nits configuration is unavailable; falling back
+         1795027983.285  5390  5438 W DisplayController: Skipping Display Configuration change on non-added display.
+         1795027985.892  7111 15051 W Mbgl    : {RenderThread 14}[ParseStyle]: line dasharray requires at least two elements
+         1795027985.892  7111 15051 W Mbgl    : {RenderThread 14}[ParseStyle]: line dasharray requires at least two elements
+         1795027999.000     0     0 W healthd : battery l=100 v=5000 t=25.0 h=2 st=2 c=900000 fc=3000000 cc=10 chg=a
+         1795028021.486  7111 26680 E EGL_emulation: tid 26680: eglMakeCurrent(1920): error 0x3009 (EGL_BAD_MATCH)
+         1795028021.486  7111 26680 E libEGL  : eglMakeCurrentImpl:1053 error 3009 (EGL_BAD_MATCH)
+         1795028021.486  7111 26680 E Surface : freeAllBuffers: 1 buffers were freed while being dequeued!
+         1795028021.499  7111  7111 E Surface : freeAllBuffers: 1 buffers were freed while being dequeued!
+         1795028021.571  7111 26680 E Surface : getSlotFromBufferLocked: unknown buffer: 0x0
+         1795028021.600  7111  7111 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@8578c34
+         1795028021.601   546  2565 W InputManager-JNI: Input channel object 'cb39b1c com.nukadkart.nukad_kart (client)' was disposed without first being removed with the input manager!
+         1795028021.633  7111 15110 E BufferQueueProducer: [ImageReader-531x392f22m7-7111-2](id:1bc700000008,api:1,p:426,c:7111) dequeueBuffer: BufferQueue has been abandoned
+         1795028021.633   426   426 E CompositionEngine: ANativeWindow::dequeueBuffer failed for display [flutter-vd#2] with error: -19
+         1795028021.633   426   426 W CompositionEngine: Dequeuing buffer for display [flutter-vd#2] failed, bailing out of client composition for this frame
+         1795028021.839   546  1774 W ActivityTaskManager: Force removing ActivityRecord{f9346ba u0 com.nukadkart.nukad_kart/.MainActivity t13 f}}: app died, no saved state
+         1795028021.843   546  2565 W BatteryExternalStatsWorker: error reading Bluetooth stats: 11
+         1795028021.868   546   582 W KernelCpuProcStringReader: File not found. It's normal if not implemented: /proc/uid_concurrent_policy_time
+         1795028021.884  5390  5438 W Looper  : Slow dispatch took 32ms wmshell.main h=android.os.Handler c=com.android.wm.shell.transition.Transitions$TransitionPlayerImpl$$ExternalSyntheticLambda1@c280e07 m=0
+         1795028022.027   546  2563 W system_server: Long monitor contention with owner binder:546_D (1774) at void com.android.server.am.OomAdjuster.updateOomAdjLocked(int)(OomAdjuster.java:570) waiters=0 in boolean com.android.server.am.ActivityManagerService.isUidActive(int, java.lang.String) for 186ms
+         1795028022.230   546  1037 W InputManager-JNI: Input channel object 'd222443 com.nukadkart.nukad_kart/com.nukadkart.nukad_kart.MainActivity (client)' was disposed without first being removed with the input manager!
+         1795028022.232   546   575 W system_server: Long monitor contention with owner binder:546_D (1774) at void com.android.server.am.ActivityManagerService.forceStopPackage(java.lang.String, int, int)(ActivityManagerService.java:3853) waiters=0 in void com.android.server.am.BroadcastQueueModernImpl.updateRunningList() for 396ms
+         1795028022.283   546   567 W WindowManager: Failed to deliver inset control state change to w=Window{d222443 u0 com.nukadkart.nukad_kart/com.nukadkart.nukad_kart.MainActivity EXITING}
+         1795028022.283   546   567 W WindowManager: android.os.DeadObjectException
+         1795028022.283   546   567 W WindowManager: 	at android.os.BinderProxy.transactNative(Native Method)
+         1795028022.283   546   567 W WindowManager: 	at android.os.BinderProxy.transact(BinderProxy.java:584)
+         1795028022.283   546   567 W WindowManager: 	at android.view.IWindow$Stub$Proxy.insetsControlChanged(IWindow.java:479)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.WindowState.notifyInsetsControlChanged(WindowState.java:3802)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.InsetsStateController.lambda$notifyPendingInsetsControlChanged$3(InsetsStateController.java:343)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.InsetsStateController.$r8$lambda$8yykPRG1GyNq_J17QvL9d5xANMc(InsetsStateController.java:0)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.InsetsStateController$$ExternalSyntheticLambda2.run(R8$$SyntheticClass:0)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.WindowAnimator.executeAfterPrepareSurfacesRunnables(WindowAnimator.java:294)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.RootWindowContainer.performSurfacePlacementNoTrace(RootWindowContainer.java:811)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.RootWindowContainer.performSurfacePlacement(RootWindowContainer.java:756)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.WindowSurfacePlacer.performSurfacePlacementLoop(WindowSurfacePlacer.java:177)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.WindowSurfacePlacer.performSurfacePlacement(WindowSurfacePlacer.java:126)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.WindowSurfacePlacer.performSurfacePlacement(WindowSurfacePlacer.java:115)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.wm.WindowSurfacePlacer$Traverser.run(WindowSurfacePlacer.java:57)
+         1795028022.283   546   567 W WindowManager: 	at android.os.Handler.handleCallback(Handler.java:958)
+         1795028022.283   546   567 W WindowManager: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+         1795028022.283   546   567 W WindowManager: 	at android.os.Looper.loopOnce(Looper.java:205)
+         1795028022.283   546   567 W WindowManager: 	at android.os.Looper.loop(Looper.java:294)
+         1795028022.283   546   567 W WindowManager: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+         1795028022.283   546   567 W WindowManager: 	at com.android.server.ServiceThread.run(ServiceThread.java:46)
+         1795028022.358  5390  5447 W Looper  : Slow delivery took 37ms wmshell.anim h=android.view.Choreographer$FrameHandler c=android.view.Choreographer$FrameDisplayEventReceiver@2b51641 m=0
+         1795028022.375   546   575 W WindowManager: removeAppToken: Attempted to remove non-existing token: Token{583fcc8 ActivityRecord{f9346ba u0 com.nukadkart.nukad_kart/.MainActivity t13 f} isExiting}}
+         1795028022.375   546   575 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_4294877488/cgroup.freeze
+         1795028022.375   546   575 W libprocessgroup: Failed to apply Frozen process profile: No such file or directory
+         1795028022.375   546   575 E libprocessgroup: No such cgroup attribute: /sys/fs/cgroup/uid_4294877488/cgroup.freeze
+         1795028022.375   546   575 W libprocessgroup: Failed to apply Unfrozen process profile: No such file or directory
+         1795028022.387  5390  5447 W Looper  : Drained
+         1795028022.454  5390  5447 W Looper  : Slow delivery took 35ms wmshell.anim h=android.view.Choreographer$FrameHandler c=android.view.Choreographer$FrameDisplayEventReceiver@2b51641 m=0
+         1795028022.479   546  1037 W WindowManager: Exception thrown during dispatchAppVisibility Window{d222443 u0 com.nukadkart.nukad_kart/com.nukadkart.nukad_kart.MainActivity EXITING}
+         1795028022.479   546  1037 W WindowManager: android.os.DeadObjectException
+         1795028022.479   546  1037 W WindowManager: 	at android.os.BinderProxy.transactNative(Native Method)
+         1795028022.479   546  1037 W WindowManager: 	at android.os.BinderProxy.transact(BinderProxy.java:584)
+         1795028022.479   546  1037 W WindowManager: 	at android.view.IWindow$Stub$Proxy.dispatchAppVisibility(IWindow.java:546)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.WindowState.sendAppVisibilityToClients(WindowState.java:3271)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.WindowContainer.sendAppVisibilityToClients(WindowContainer.java:1221)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.WindowToken.setClientVisible(WindowToken.java:409)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.ActivityRecord.setClientVisible(ActivityRecord.java:6946)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.ActivityRecord.postApplyAnimation(ActivityRecord.java:5637)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.ActivityRecord.commitVisibility(ActivityRecord.java:5580)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.Transition.finishTransition(Transition.java:1151)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.TransitionController.finishTransition(TransitionController.java:868)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.WindowOrganizerController.finishTransition(WindowOrganizerController.java:396)
+         1795028022.479   546  1037 W WindowManager: 	at android.window.IWindowOrganizerController$Stub.onTransact(IWindowOrganizerController.java:286)
+         1795028022.479   546  1037 W WindowManager: 	at com.android.server.wm.WindowOrganizerController.onTransact(WindowOrganizerController.java:181)
+         1795028022.479   546  1037 W WindowManager: 	at android.os.Binder.execTransactInternal(Binder.java:1344)
+         1795028022.479   546  1037 W WindowManager: 	at android.os.Binder.execTransact(Binder.java:1275)
+         1795028022.485   546   566 W ActivityManager: setHasOverlayUi called on unknown pid: 7111
+         1795028022.663   426   426 E BpTransactionCompletedListener: Failed to transact (-32)
+         1795028022.663   426   426 E BpTransactionCompletedListener: Failed to transact (-32)
+         1795028022.715   546  7346 W OpenGLRenderer: Failed to initialize 101010-2 format, error = EGL_SUCCESS
+         1795028022.833   546   563 W system_server: Long monitor contention with owner PackageManager (600) at void com.android.server.pm.permission.LegacyPermissionSettings.writePermissionTrees(com.android.modules.utils.TypedXmlSerializer)(LegacyPermissionSettings.java:150) waiters=0 in com.android.server.pm.Computer com.android.server.pm.PackageManagerService.snapshotComputer(boolean) for 196ms
+         1795028022.834   546   563 W Looper  : Slow dispatch took 197ms android.fg h=android.os.Handler c=<recycled PooledLambda@751743f> m=0
+         1795028022.834   546   563 W Looper  : Slow delivery took 260ms android.fg h=android.os.Handler c=<recycled PooledLambda@ecab7f3> m=0
+         1795028022.840   546   563 W Looper  : Drained
+         1795028023.069   546  3362 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+         1795028023.353   546   563 W Looper  : Slow dispatch took 397ms android.fg h=android.os.Handler c=<recycled PooledLambda@326b274> m=0
+         1795028023.426   546   563 W Looper  : Slow delivery took 514ms android.fg h=android.os.Handler c=<recycled PooledLambda@360b827> m=0
+         1795028023.492   546   566 W system_server: Long monitor contention with owner PackageManager (600) at int com.android.server.am.ActivityManagerService$LocalService.broadcastIntent(android.content.Intent, android.content.IIntentReceiver, java.lang.String[], boolean, int, int[], java.util.function.BiFunction, android.os.Bundle)(ActivityManagerService.java:18097) waiters=0 in void com.android.server.am.ActivityManagerService$LocalService.cleanUpServices(int, android.content.ComponentName, android.content.Intent) for 474ms
+         1795028023.493   546   575 W system_server: Long monitor contention with owner PackageManager (600) at int com.android.server.am.ActivityManagerService$LocalService.broadcastIntent(android.content.Intent, android.content.IIntentReceiver, java.lang.String[], boolean, int, int[], java.util.function.BiFunction, android.os.Bundle)(ActivityManagerService.java:18097) waiters=1 in boolean com.android.server.am.BroadcastQueueModernImpl.lambda$new$0(android.os.Message) for 131ms
+         1795028023.528   546   563 W Looper  : Drained
+         1795028023.606   546   847 E AppOps  : attributionTag VCN not declared in manifest of android
+         1795028023.638  1772  1772 W MediaProvider: WorkProfileOwnerApps cache is empty
+         1795028023.645   546   834 W WifiService: Couldn't get PackageInfo for package:com.nukadkart.nukad_kart
+         1795028023.662   546   834 W WifiService: Couldn't get PackageInfo for package:com.nukadkart.nukad_kart
+         1795028023.669 27595 27595 W .apps.wellbeing: Unexpected CPU variant for x86: x86_64.
+         1795028023.669 27595 27595 W .apps.wellbeing: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795028023.699 27595 27595 E .apps.wellbeing: Not starting debugger since process cannot load the jdwp agent.
+         1795028023.786   546  2556 W ProcessStats: Tracking association SourceState{1e61270 com.google.android.googlequicksearchbox:interactor/10132 BFgs #13093} whose proc state 4 is better than process ProcessState{9cde7e5 com.google.android.googlequicksearchbox:search/10132 pkg=com.google.android.googlequicksearchbox} proc state 6 (23 skipped)
+         1795028023.797   546   563 W Looper  : Slow dispatch took 148ms android.fg h=android.os.Handler c=<recycled PooledLambda@326b274> m=0
+         1795028023.918 27626 27626 W oid.documentsui: Unexpected CPU variant for x86: x86_64.
+         1795028023.918 27626 27626 W oid.documentsui: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795028023.938 27626 27626 E oid.documentsui: Not starting debugger since process cannot load the jdwp agent.
+         1795028023.982   445   445 W adbd    : timeout expired while flushing socket, closing
+         1795028024.093   546   576 W ActivityManager: Slow operation: 71ms so far, now at startProcess: returned from zygote!
+         1795028024.094   546   576 W ActivityManager: Slow operation: 72ms so far, now at startProcess: done updating battery stats
+         1795028024.094   546   576 W ActivityManager: Slow operation: 72ms so far, now at startProcess: building log message
+         1795028024.094   546   576 W ActivityManager: Slow operation: 72ms so far, now at startProcess: starting to update pids map
+         1795028024.094   546   576 W ActivityManager: Slow operation: 72ms so far, now at startProcess: done updating pids map
+         1795028024.138   546   556 W JavaBinder: BinderProxy is being destroyed but the application did not call unlinkToDeath to unlink all of its death recipients beforehand.  Releasing leaked death recipient: com.android.server.am.ActivityManagerService$14
+         1795028024.152 27645 27645 W d.process.media: Unexpected CPU variant for x86: x86_64.
+         1795028024.152 27645 27645 W d.process.media: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795028024.176  1685  1711 W id.ext.services: Reducing the number of considered missed Gc histogram windows from 141 to 100
+         1795028024.191 27645 27645 E d.process.media: Not starting debugger since process cannot load the jdwp agent.
+         1795028024.230   546   574 W WindowMagnificationMgr: requestConnection duplicated request: connect=false, mConnectionState=DISCONNECTED
+         1795028024.403   916 27665 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms.supervision, role: android.app.role.SYSTEM_SUPERVISION
+         1795028024.407   916 27665 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.SYSTEM_CALL_STREAMING
+         1795028024.407   916 27665 W Role    : Default holder doesn't have required signing certificate: com.google.android.apps.work.clouddpc:23962F4B43B9857638EA66F4D419518EAE282491ACDA4B94707BD59003C45E58
+         1795028024.493  8131  8131 W gle.android.gms: Long monitor contention with owner GoogleApiHandler (8176) at boolean abnp.d(abno, android.content.ServiceConnection, java.lang.String, java.util.concurrent.Executor)(:com.google.android.gms@231818047@23.18.18 (190800-535401451):15) waiters=0 in void abnq.onServiceConnected(android.content.ComponentName, android.os.IBinder) for 397ms
+         1795028024.509 27706 27706 W externalstorage: Unexpected CPU variant for x86: x86_64.
+         1795028024.509 27706 27706 W externalstorage: Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+         1795028024.511 27706 27706 E externalstorage: Not starting debugger since process cannot load the jdwp agent.
+         1795028024.516  8131  8169 E WorkSourceUtil: Could not find package: com.nukadkart.nukad_kart
+         1795028024.541  1804  2525 W ogle.android.as: Long monitor contention with owner aiai-min-shared-0 (2359) at java.lang.Object erb.b()(PG:2) waiters=0 in java.lang.Object erb.b() for 487ms
+         1795028024.698 27595 27743 W .apps.wellbeing: Accessing hidden field Ljava/util/Collections$SynchronizedCollection;->mutex:Ljava/lang/Object; (max-target-o, reflection, denied)
+         1795028024.698 27595 27743 W .apps.wellbeing: Accessing hidden method Ljava/util/Collections$SynchronizedSet;-><init>(Ljava/util/Set;Ljava/lang/Object;)V (max-target-o, reflection, denied)
+         1795028024.698 27595 27743 W .apps.wellbeing: Accessing hidden method Ljava/util/Collections$SynchronizedCollection;-><init>(Ljava/util/Collection;Ljava/lang/Object;)V (max-target-o, reflection, denied)
+         1795028024.735  8131 27646 W DriveInitializer: Awaiting to be initialized
+         1795028024.854 27626 27702 W oid.documentsui: Long monitor contention with owner pool-2-thread-1 (27700) at void com.android.documentsui.roots.ProvidersCache$MultiProviderUpdateTask.handleDocumentsProvider(android.content.pm.ProviderInfo, com.android.documentsui.base.UserId)(ProvidersCache.java:645) waiters=2 in void com.android.documentsui.roots.ProvidersCache$MultiProviderUpdateTask.handleDocumentsProvider(android.content.pm.ProviderInfo, com.android.documentsui.base.UserId) for 423ms
+         1795028024.856 27626 27703 W oid.documentsui: Long monitor contention with owner pool-2-thread-1 (27700) at void com.android.documentsui.roots.ProvidersCache$MultiProviderUpdateTask.handleDocumentsProvider(android.content.pm.ProviderInfo, com.android.documentsui.base.UserId)(ProvidersCache.java:645) waiters=3 in void com.android.documentsui.roots.ProvidersCache$MultiProviderUpdateTask.handleDocumentsProvider(android.content.pm.ProviderInfo, com.android.documentsui.base.UserId) for 425ms
+         1795028024.871  8131 27619 W SQLiteLog: (28) double-quoted string literal: "com.nukadkart.nukad_kart"
+         1795028025.029   546  1037 E ShortcutService: Default launcher not found. user: 0
+         1795028025.177   546  1000 W system_server: Long monitor contention with owner binder:546_E (1799) at int com.android.server.am.ActivityManagerService.bindServiceInstance(android.app.IApplicationThread, android.os.IBinder, android.content.Intent, java.lang.String, android.app.IServiceConnection, long, java.lang.String, boolean, int, java.lang.String, android.app.IApplicationThread, java.lang.String, int)(ActivityManagerService.java:13404) waiters=0 in int com.android.server.am.ActivityManagerService.bindServiceInstance(android.app.IApplicationThread, android.os.IBinder, android.content.Intent, java.lang.String, android.app.IServiceConnection, long, java.lang.String, boolean, int, java.lang.String, android.app.IApplicationThread, java.lang.String, int) for 181ms
+         1795028025.231   546   575 W system_server: Long monitor contention with owner binder:546_E (1799) at int com.android.server.am.ActivityManagerService.bindServiceInstance(android.app.IApplicationThread, android.os.IBinder, android.content.Intent, java.lang.String, android.app.IServiceConnection, long, java.lang.String, boolean, int, java.lang.String, android.app.IApplicationThread, java.lang.String, int)(ActivityManagerService.java:13404) waiters=1 in boolean com.android.server.am.BroadcastQueueModernImpl.lambda$new$0(android.os.Message) for 223ms
+         1795028025.302  5723  5723 W .gms.persistent: Long monitor contention with owner GoogleApiHandler (5760) at boolean abnp.d(abno, android.content.ServiceConnection, java.lang.String, java.util.concurrent.Executor)(:com.google.android.gms@231818047@23.18.18 (190800-535401451):15) waiters=0 in void abnq.onServiceConnected(android.content.ComponentName, android.os.IBinder) for 358ms
+         1795028025.438   546  1799 W PackageManager: Cannot suspend the platform package: android
+         1795028025.465   546  1799 W PackageManager: Cannot suspend package "com.google.android.permissioncontroller": required for permissions management
+         1795028025.466   546  1799 W PackageManager: Cannot suspend package "com.google.android.devicelockcontroller": protected package
+         1795028025.467   546  1799 W PackageManager: Cannot suspend package "com.google.android.dialer": is the default dialer
+         1795028025.467   546  1799 W PackageManager: Cannot suspend package "com.google.android.packageinstaller": required for package installation
+         1795028025.494   546  1799 E ShortcutService: Default launcher not found. user: 0
+         1795028026.902  1115  1115 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+         1795028026.903  1115  1115 W MediaControlGattService: Feature PLAYER_NAME(BIT 1) support: true
+         1795028026.903  1115  1115 W MediaControlGattService: Feature MEDIA_STATE(BIT 17) support: true

@@ -1,0 +1,80 @@
+--------- beginning of main
+         1795027200.959  6888  6888 I NKREC   : start
+         1795027212.773  7111  7111 I flutter : [IMPORTANT:flutter/shell/common/shell.cc(521)] [Action Required]: Impeller opt-out deprecated.
+         1795027212.773  7111  7111 I flutter :     The application opted out of Impeller by either using the
+         1795027212.773  7111  7111 I flutter :     `--no-enable-impeller` flag or the
+         1795027212.773  7111  7111 I flutter :     `io.flutter.embedding.android.EnableImpeller` `AndroidManifest.xml` entry.
+         1795027212.773  7111  7111 I flutter :     These options are going to go away in an upcoming Flutter release. Remove
+         1795027212.773  7111  7111 I flutter :     the explicit opt-out. If you need to opt-out, please report a bug describing
+         1795027212.773  7111  7111 I flutter :     the issue.
+         1795027212.773  7111  7111 I flutter : 
+         1795027212.773  7111  7111 I flutter :     https://github.com/flutter/flutter/issues/new?template=02_bug.yml
+         1795027212.773  7111  7111 I flutter : 
+         1795027212.865  7111  7205 I flutter : The Dart VM service is listening on http://127.0.0.1:35883/ZK-HXfB_0Cg=/
+         1795027216.231  7111  7111 I flutter : 00:00 +0: customer tour
+         1795027216.235  7111  7111 I flutter : NKSLOW|6
+         1795027225.359  7111  7111 I flutter : NKDPR|1.399999976158142|576.0|1280.0
+         1795027235.052  7111  7111 I flutter : NKSTEP|login|1795027235052
+         1795027251.736  7111  7111 I flutter : NKTAP|222.7|491.9|1795027251736
+         1795027263.004  7111  7111 I flutter : NKSTEP|home|1795027263004
+         1795027302.340  7111  7111 I flutter : NKSTEP|shop|1795027302340
+         1795027303.993  7111  7111 I flutter : NKTAP|183.0|414.4|1795027303993
+         1795027330.964  7111  7111 I flutter : NKSTEP|add|1795027330964
+         1795027332.620  7111  7111 I flutter : NKTAP|145.7|146.9|1795027332620
+         1795027343.751  7111  7111 I flutter : NKTAP|340.4|146.9|1795027343751
+         1795027354.857  7111  7111 I flutter : NKTAP|145.7|146.9|1795027354857
+         1795027366.081  7111  7111 I flutter : NKSTEP|cart|1795027366081
+         1795027367.787  7111  7111 I flutter : NKTAP|325.5|848.0|1795027367787
+         1795027381.851 12026 12026 I NKREC   : r2
+         1795027403.221  7111  7111 I flutter : NKSTEP|place|1795027403221
+         1795027404.892  7111  7111 I flutter : NKTAP|205.7|831.0|1795027404892
+         1795027432.891  7111  7111 I flutter : NKTAP|205.7|842.0|1795027432891
+         1795027459.795  7111  7111 I flutter : NKAPI|GET /v1/partner/orders?tab=new|200
+         1795027459.852  7111  7111 I flutter : NKAPI|POST /v1/partner/orders/NK-233194/accept|200
+         1795027459.855  7111  7111 I flutter : NKSTEP|accepted|1795027459855
+         1795027483.960  7111  7111 I flutter : NKAPI|POST /v1/partner/orders/NK-233194/send|200
+         1795027483.962  7111  7111 I flutter : NKSTEP|out|1795027483962
+         1795027520.057  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027533.372  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027546.671  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027559.934  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027562.783 16731 16731 I NKREC   : r3
+         1795027573.206  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027586.517  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027599.833  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027613.141  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027626.414  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027639.684  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027653.154  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027666.449  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027679.728  7111  7111 I flutter : NKAPI|POST /v1/partner/rider|200
+         1795027702.198  7111  7111 I flutter : NKSTEP|code|1795027702198
+         1795027723.758  7111  7111 I flutter : NKAPI|GET /v1/me/orders|200
+         1795027723.834  7111  7111 I flutter : NKAPI|POST /v1/partner/orders/NK-233194/deliver|200
+         1795027723.847  7111  7111 I flutter : NKSTEP|delivered|1795027723847
+         1795027743.685 20416 20416 I NKREC   : r4
+         1795027749.620  7111  7111 I flutter : NKTAP|205.7|846.0|1795027749620
+         1795027758.431  7111  7111 I flutter : NKTAP|28.0|55.9|1795027758431
+         1795027767.803  7111  7111 I flutter : NKTAP|28.0|55.9|1795027767803
+         1795027775.430  7111  7111 I flutter : NKSTEP|thelas|1795027775430
+         1795027777.075  7111  7111 I flutter : NKTAP|309.6|178.9|1795027777075
+         1795027809.328  7111  7111 I flutter : NKSTEP|thela|1795027809328
+         1795027810.961  7111  7111 I flutter : NKTAP|170.6|397.9|1795027810961
+         1795027865.576  7111  7111 I flutter : NKSTEP|call|1795027865576
+         1795027867.270  7111  7111 I flutter : NKTAP|205.7|50.0|1795027867270
+         1795027880.084  7111  7111 I flutter : NKTAP|205.7|840.0|1795027880084
+         1795027897.775  7111  7111 I flutter : NKAPI|GET /v1/partner/calls|200
+         1795027897.844  7111  7111 I flutter : NKAPI|POST /v1/partner/calls/answer|200
+         1795027897.845  7111  7111 I flutter : NKSTEP|coming|1795027897845
+         1795027914.953  7111  7111 I flutter : NKTAP|205.7|17.0|1795027914953
+         1795027924.578 25170 25170 I NKREC   : r5
+         1795027932.125  7111  7111 I flutter : NKSTEP|chat|1795027932125
+         1795027933.807  7111  7111 I flutter : NKTAP|205.7|110.0|1795027933807
+         1795027946.653  7111  7111 I flutter : NKTAP|177.7|852.0|1795027946653
+         1795027980.161  7111  7111 I flutter : NKTAP|377.4|840.0|1795027980161
+         1795027991.340  7111  7111 I flutter : NKAPI|GET /v1/partner/chats|200
+         1795027991.412  7111  7111 I flutter : NKAPI|POST /v1/partner/chats/6e6222b2-c72b-40f3-a08e-97669fc9bb9d|200
+         1795027991.413  7111  7111 I flutter : NKSTEP|reply|1795027991413
+         1795028021.438  7111  7111 I flutter : NKSTEP|end|1795028021438
+         1795028021.479  7111  7111 I flutter : 13:25 +1: (tearDownAll)
+         1795028021.636  7111  7111 I flutter : 13:25 +2: All tests passed!

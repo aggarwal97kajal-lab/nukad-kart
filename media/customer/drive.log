@@ -1,0 +1,1050 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.77 (1.4.0 available)
+  archive 4.0.9 (4.7.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  dbus 0.7.15 (0.8.0 available)
+  device_info_plus 11.5.0 (13.3.0 available)
+  device_info_plus_platform_interface 7.0.3 (8.1.0 available)
+  firebase_core 4.15.2 (5.2.0 available)
+  firebase_core_web 3.12.0 (4.2.0 available)
+  firebase_messaging 16.7.1 (17.1.0 available)
+  firebase_messaging_platform_interface 4.10.0 (4.12.0 available)
+  firebase_messaging_web 4.2.5 (4.4.0 available)
+  flutter_local_notifications 19.5.0 (23.0.3 available)
+  flutter_local_notifications_linux 6.0.0 (9.0.0 available)
+  flutter_local_notifications_platform_interface 9.1.0 (13.0.0 available)
+  flutter_local_notifications_windows 1.0.3 (4.0.1 available)
+  flutter_secure_storage 9.2.4 (11.2.0 available)
+  flutter_secure_storage_linux 1.2.3 (3.0.3 available)
+  flutter_secure_storage_macos 3.1.3 (4.0.0 available)
+  flutter_secure_storage_platform_interface 1.1.2 (2.1.1 available)
+  flutter_secure_storage_web 1.2.1 (2.1.1 available)
+  flutter_secure_storage_windows 3.1.2 (4.2.2 available)
+  geolocator 14.0.2 (14.1.2 available)
+  geolocator_linux 0.2.4 (0.2.6 available)
+  gsettings 0.2.8 (0.2.9 available)
+! image 4.5.4 (overridden) (4.13.1 available)
+  js 0.6.7 (0.7.2 available)
+  maplibre_gl 0.26.2 (0.28.0 available)
+  maplibre_gl_platform_interface 0.26.2 (0.28.0 available)
+  maplibre_gl_web 0.26.2 (0.28.0 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  open_filex 4.7.0 (5.0.0 available)
+  package_info_plus 9.0.1 (10.2.2 available)
+  package_info_plus_platform_interface 3.2.1 (4.1.0 available)
+  pdf 3.12.0 (3.13.1 available)
+  printing 5.14.3 (5.15.1 available)
+  qr 3.0.3 (4.0.1 available)
+  test_api 0.7.14 (0.7.15 available)
+  timezone 0.10.1 (0.11.2 available)
+  vector_math 2.4.3 (2.4.4 available)
+  win32 5.15.0 (6.4.0 available)
+  win32_registry 2.1.0 (3.0.3 available)
+  xml 6.6.1 (7.1.0 available)
+Got dependencies!
+42 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Installing build/app/outputs/flutter-apk/app-profile.apk...         6.2s
+D/FlutterGeolocator( 7111): Creating service.
+D/FlutterGeolocator( 7111): Binding to location service.
+D/FlutterGeolocator( 7111): Flutter engine connected. Connected engine count 1
+VMServiceFlutterDriver: Connecting to Flutter application at http://127.0.0.1:33925/BKS1SoUEK3U=/
+VMServiceFlutterDriver: Isolate found with number: 6419003263833631
+VMServiceFlutterDriver: Isolate 6419003263833631 is runnable.
+VMServiceFlutterDriver: Isolate is paused at start.
+VMServiceFlutterDriver: Attempting to resume isolate
+I/flutter ( 7111): 00:00 +0: customer tour
+I/flutter ( 7111): NKSLOW|6
+VMServiceFlutterDriver: Connected to Flutter application.
+D/CompatibilityChangeReporter( 7111): Compat change id reported: 183155436; UID 10192; state: ENABLED
+I/FirebaseApp( 7111): Device unlocked: initializing all Firebase APIs for app [DEFAULT]
+W/GooglePlayServicesUtil( 7111): Google Play services out of date for com.nukadkart.nukad_kart.  Requires 261200000 but found 231818047
+W/GoogleApiManager( 7111): The service for com.google.android.gms.internal.cloudmessaging.zzd is not available: ConnectionResult{statusCode=SERVICE_VERSION_UPDATE_REQUIRED, resolution=null, message=null, clientMethodKey=null}
+W/kart.nukad_kart( 7111): Long monitor contention with owner Firebase Background Thread #1 (7319) at java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController()(DefaultHeartBeatController.java:71) waiters=0 in java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController() for 390ms
+W/kart.nukad_kart( 7111): Long monitor contention with owner Firebase Background Thread #1 (7319) at java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController()(DefaultHeartBeatController.java:71) waiters=1 in java.lang.Void com.google.firebase.heartbeatinfo.DefaultHeartBeatController.lambda$registerHeartBeat$0$com-google-firebase-heartbeatinfo-DefaultHeartBeatController() for 315ms
+D/TrafficStats( 7111): tagSocket(151) with statsTag=0x8001, statsUid=-1
+D/ProfileInstaller( 7111): Installing profile for com.nukadkart.nukad_kart
+D/EGL_emulation( 7111): app_time_stats: avg=86.31ms min=14.80ms max=267.56ms count=11
+D/EGL_emulation( 7111): app_time_stats: avg=57.92ms min=18.93ms max=118.13ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=77.39ms min=30.70ms max=239.13ms count=12
+D/EGL_emulation( 7111): app_time_stats: avg=78.96ms min=52.05ms max=116.21ms count=11
+D/EGL_emulation( 7111): app_time_stats: avg=73.09ms min=50.73ms max=91.25ms count=13
+I/flutter ( 7111): NKDPR|1.399999976158142|576.0|1280.0
+D/EGL_emulation( 7111): app_time_stats: avg=104.07ms min=45.93ms max=240.25ms count=10
+D/EGL_emulation( 7111): app_time_stats: avg=63.25ms min=19.54ms max=227.33ms count=13
+E/FrameTracker( 7111): force finish cuj, time out: J<IME_INSETS_ANIMATION::1@1@com.nukadkart.nukad_kart>
+D/EGL_emulation( 7111): app_time_stats: avg=128.77ms min=38.27ms max=792.00ms count=11
+D/EGL_emulation( 7111): app_time_stats: avg=174.84ms min=102.53ms max=268.78ms count=6
+D/EGL_emulation( 7111): app_time_stats: avg=118.91ms min=86.08ms max=185.19ms count=9
+D/EGL_emulation( 7111): app_time_stats: avg=140.85ms min=71.50ms max=251.50ms count=7
+D/EGL_emulation( 7111): app_time_stats: avg=101.20ms min=50.27ms max=123.02ms count=10
+D/EGL_emulation( 7111): app_time_stats: avg=99.05ms min=45.66ms max=144.37ms count=9
+D/EGL_emulation( 7111): app_time_stats: avg=96.42ms min=51.56ms max=132.76ms count=9
+D/EGL_emulation( 7111): app_time_stats: avg=2591.46ms min=30.95ms max=17234.38ms count=7
+I/flutter ( 7111): NKSTEP|login|1795027235052
+D/EGL_emulation( 7111): app_time_stats: avg=180.04ms min=93.70ms max=452.76ms count=5
+D/EGL_emulation( 7111): app_time_stats: avg=164.73ms min=49.85ms max=518.48ms count=6
+D/EGL_emulation( 7111): app_time_stats: avg=61.55ms min=8.17ms max=127.28ms count=14
+D/EGL_emulation( 7111): app_time_stats: avg=70.08ms min=56.13ms max=84.97ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=68.03ms min=56.00ms max=80.37ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=66.19ms min=52.83ms max=79.10ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=66.81ms min=64.46ms max=69.03ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=67.20ms min=48.29ms max=109.04ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=66.95ms min=61.44ms max=76.40ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=66.77ms min=64.00ms max=69.27ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=66.66ms min=60.30ms max=72.56ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=66.67ms min=61.81ms max=70.45ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=67.68ms min=63.92ms max=76.45ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=66.83ms min=59.81ms max=73.76ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=69.75ms min=44.15ms max=98.94ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=69.98ms min=62.92ms max=117.81ms count=15
+I/flutter ( 7111): NKTAP|222.7|491.9|1795027251736
+D/EGL_emulation( 7111): app_time_stats: avg=66.67ms min=62.36ms max=71.47ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=66.71ms min=63.60ms max=68.71ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=72.33ms min=64.94ms max=150.75ms count=15
+W/kart.nukad_kart( 7111): Verification of void com.google.android.gms.internal.location.zzdz.zzt(com.google.android.gms.internal.location.zzdr, com.google.android.gms.location.LocationRequest, com.google.android.gms.tasks.TaskCompletionSource) took 182.860ms (667.18 bytecodes/s) (5176B approximate peak alloc)
+D/EGL_emulation( 7111): app_time_stats: avg=57.15ms min=4.88ms max=223.40ms count=14
+D/EGL_emulation( 7111): app_time_stats: avg=54.98ms min=22.65ms max=121.84ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=42.32ms min=27.73ms max=72.28ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=38.98ms min=17.21ms max=82.34ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=45.28ms min=16.66ms max=124.95ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=51.18ms min=16.35ms max=99.79ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=48.80ms min=23.17ms max=76.98ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.28ms min=14.10ms max=88.96ms count=18
+I/flutter ( 7111): NKSTEP|home|1795027263004
+D/EGL_emulation( 7111): app_time_stats: avg=52.47ms min=12.42ms max=95.25ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.15ms min=21.64ms max=88.16ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.19ms min=19.71ms max=68.06ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.51ms min=16.82ms max=126.56ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.35ms min=15.02ms max=89.51ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=50.88ms min=18.25ms max=93.73ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.73ms min=13.13ms max=110.54ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.34ms min=17.88ms max=71.56ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=74.27ms min=55.94ms max=109.78ms count=14
+D/EGL_emulation( 7111): app_time_stats: avg=43.05ms min=11.30ms max=123.70ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.45ms min=13.98ms max=68.29ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=51.80ms min=14.31ms max=88.30ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.32ms min=8.12ms max=73.13ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=48.07ms min=11.92ms max=98.26ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.21ms min=20.64ms max=81.07ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.82ms min=11.44ms max=75.82ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=48.63ms min=8.56ms max=84.99ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.08ms min=17.65ms max=67.99ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.00ms min=18.79ms max=93.14ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.11ms min=18.14ms max=69.40ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.78ms min=18.92ms max=74.19ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.82ms min=9.88ms max=154.44ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=45.30ms min=11.05ms max=87.73ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.18ms min=17.06ms max=66.25ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.85ms min=10.92ms max=65.58ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=41.67ms min=17.45ms max=72.31ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=38.00ms min=13.27ms max=77.00ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=31.38ms min=14.67ms max=71.14ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.69ms min=10.87ms max=85.34ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=47.60ms min=14.56ms max=75.00ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=50.15ms min=19.45ms max=134.48ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=47.48ms min=18.52ms max=88.16ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.13ms min=17.49ms max=78.37ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.12ms min=18.05ms max=77.76ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.21ms min=13.40ms max=62.27ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.09ms min=16.18ms max=66.42ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.85ms min=10.22ms max=74.16ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.09ms min=22.18ms max=82.18ms count=18
+I/flutter ( 7111): NKSTEP|shop|1795027302340
+D/EGL_emulation( 7111): app_time_stats: avg=35.49ms min=12.94ms max=74.02ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=43.06ms min=21.41ms max=91.72ms count=18
+I/flutter ( 7111): NKTAP|183.0|414.4|1795027303993
+D/EGL_emulation( 7111): app_time_stats: avg=50.24ms min=22.83ms max=97.01ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=43.94ms min=18.17ms max=91.83ms count=18
+W/WindowOnBackDispatcher( 7111): OnBackInvokedCallback is not enabled for the application.
+W/WindowOnBackDispatcher( 7111): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/EGL_emulation( 7111): app_time_stats: avg=68.19ms min=21.04ms max=277.80ms count=13
+D/EGL_emulation( 7111): app_time_stats: avg=41.46ms min=13.47ms max=76.02ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=47.57ms min=21.77ms max=81.75ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=49.59ms min=17.32ms max=88.21ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.15ms min=17.30ms max=84.91ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=49.52ms min=20.08ms max=97.84ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=42.81ms min=10.69ms max=78.00ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=47.04ms min=21.96ms max=66.37ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=56.33ms min=26.16ms max=88.27ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=45.68ms min=16.20ms max=78.39ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.60ms min=16.79ms max=70.18ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.50ms min=24.03ms max=73.81ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.48ms min=13.53ms max=84.59ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=50.95ms min=18.90ms max=175.02ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=40.95ms min=20.54ms max=74.23ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.49ms min=14.29ms max=66.09ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.67ms min=19.04ms max=79.97ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=34.44ms min=9.27ms max=78.90ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=49.92ms min=20.35ms max=83.79ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.52ms min=14.00ms max=61.48ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=59.10ms min=29.61ms max=107.63ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=47.27ms min=16.76ms max=103.17ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.12ms min=19.28ms max=77.31ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=57.09ms min=25.13ms max=101.43ms count=16
+I/flutter ( 7111): NKSTEP|add|1795027330964
+D/EGL_emulation( 7111): app_time_stats: avg=40.86ms min=17.19ms max=86.50ms count=18
+I/flutter ( 7111): NKTAP|145.7|146.9|1795027332620
+D/EGL_emulation( 7111): app_time_stats: avg=45.37ms min=20.11ms max=99.60ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.57ms min=15.90ms max=61.19ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=52.36ms min=21.65ms max=92.54ms count=16
+D/CompatibilityChangeReporter( 7111): Compat change id reported: 160794467; UID 10192; state: ENABLED
+D/EGL_emulation( 7111): app_time_stats: avg=54.61ms min=19.19ms max=124.30ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=46.93ms min=20.40ms max=91.52ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=43.31ms min=20.91ms max=72.62ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.23ms min=15.80ms max=76.78ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.16ms min=20.81ms max=58.59ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.00ms min=17.93ms max=78.35ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.57ms min=11.11ms max=83.38ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.58ms min=23.52ms max=71.64ms count=18
+I/flutter ( 7111): NKTAP|340.4|146.9|1795027343751
+D/EGL_emulation( 7111): app_time_stats: avg=52.52ms min=27.34ms max=89.13ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.07ms min=23.14ms max=94.17ms count=18
+I/kart.nukad_kart( 7111): Background young concurrent copying GC freed 65273(2738KB) AllocSpace objects, 19(760KB) LOS objects, 38% free, 5269KB/8503KB, paused 118us,12us total 102.781ms
+D/EGL_emulation( 7111): app_time_stats: avg=48.62ms min=18.12ms max=106.86ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=48.45ms min=14.32ms max=92.84ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.77ms min=23.13ms max=94.29ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.67ms min=18.84ms max=90.54ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.41ms min=17.56ms max=62.35ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.05ms min=17.29ms max=57.08ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=34.36ms min=14.17ms max=58.32ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.93ms min=16.13ms max=63.67ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.26ms min=15.27ms max=86.75ms count=17
+I/flutter ( 7111): NKTAP|145.7|146.9|1795027354857
+D/EGL_emulation( 7111): app_time_stats: avg=49.70ms min=17.64ms max=68.49ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=48.80ms min=22.54ms max=72.22ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=54.28ms min=16.02ms max=120.33ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=46.13ms min=22.26ms max=121.08ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.37ms min=18.28ms max=84.81ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.74ms min=21.76ms max=80.74ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.28ms min=20.81ms max=82.72ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=67.10ms min=27.69ms max=87.81ms count=14
+D/EGL_emulation( 7111): app_time_stats: avg=46.81ms min=17.51ms max=86.31ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.05ms min=17.89ms max=92.85ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.65ms min=13.72ms max=89.10ms count=17
+I/flutter ( 7111): NKSTEP|cart|1795027366081
+D/EGL_emulation( 7111): app_time_stats: avg=40.72ms min=14.47ms max=82.93ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.95ms min=15.36ms max=68.04ms count=17
+I/flutter ( 7111): NKTAP|325.5|848.0|1795027367787
+D/EGL_emulation( 7111): app_time_stats: avg=39.64ms min=16.74ms max=85.65ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.87ms min=17.97ms max=83.52ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=49.02ms min=18.90ms max=78.27ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=40.86ms min=19.56ms max=69.65ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.22ms min=12.42ms max=75.79ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.56ms min=15.79ms max=89.56ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.83ms min=12.08ms max=98.06ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=50.46ms min=13.20ms max=117.22ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=33.38ms min=12.46ms max=57.49ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.75ms min=15.22ms max=85.71ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=42.01ms min=8.05ms max=104.10ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=40.33ms min=15.19ms max=75.45ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.27ms min=18.78ms max=73.71ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=44.75ms min=17.19ms max=74.27ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=38.25ms min=11.59ms max=77.24ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=35.87ms min=13.03ms max=67.47ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=41.42ms min=14.13ms max=74.02ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.94ms min=16.96ms max=73.38ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=36.27ms min=14.98ms max=90.23ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=30.76ms min=6.51ms max=62.23ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.42ms min=19.15ms max=66.96ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=33.70ms min=11.64ms max=73.48ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.30ms min=9.11ms max=68.70ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=31.26ms min=12.03ms max=50.79ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=40.45ms min=14.47ms max=79.74ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=34.58ms min=15.01ms max=105.22ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=52.59ms min=14.38ms max=87.71ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=35.37ms min=10.02ms max=81.29ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=40.83ms min=20.65ms max=69.37ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.56ms min=17.02ms max=75.77ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.50ms min=15.71ms max=74.65ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.43ms min=13.51ms max=90.39ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=47.03ms min=21.18ms max=85.43ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.38ms min=15.29ms max=86.17ms count=19
+I/flutter ( 7111): NKSTEP|place|1795027403221
+D/EGL_emulation( 7111): app_time_stats: avg=40.53ms min=15.72ms max=63.71ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.03ms min=12.91ms max=95.09ms count=18
+I/flutter ( 7111): NKTAP|205.7|831.0|1795027404892
+D/EGL_emulation( 7111): app_time_stats: avg=34.24ms min=12.49ms max=60.09ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.46ms min=9.28ms max=108.00ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=36.23ms min=11.08ms max=111.49ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.54ms min=18.31ms max=67.23ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=44.71ms min=19.13ms max=81.45ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=41.90ms min=15.11ms max=105.12ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.24ms min=15.18ms max=75.06ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.40ms min=23.77ms max=76.86ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.56ms min=26.65ms max=76.07ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.36ms min=18.40ms max=73.63ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.71ms min=17.93ms max=113.29ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=49.37ms min=17.65ms max=88.67ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.20ms min=21.79ms max=71.41ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.94ms min=14.90ms max=67.67ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.14ms min=13.60ms max=47.48ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.80ms min=24.85ms max=85.77ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=62.27ms min=35.20ms max=78.25ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=48.41ms min=14.72ms max=106.75ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=48.83ms min=26.95ms max=95.17ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=47.94ms min=24.31ms max=75.50ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.07ms min=13.61ms max=65.22ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.79ms min=22.53ms max=69.50ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.09ms min=23.61ms max=73.97ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=48.32ms min=15.40ms max=73.45ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=51.76ms min=13.80ms max=85.39ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.34ms min=13.41ms max=85.50ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.81ms min=18.45ms max=75.85ms count=20
+I/flutter ( 7111): NKTAP|205.7|842.0|1795027432891
+D/EGL_emulation( 7111): app_time_stats: avg=41.15ms min=19.59ms max=66.80ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.57ms min=17.44ms max=79.06ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=59.19ms min=24.12ms max=181.33ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=55.78ms min=20.72ms max=153.92ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=38.17ms min=15.02ms max=72.60ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=42.94ms min=14.66ms max=81.78ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.83ms min=16.62ms max=88.72ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.09ms min=12.81ms max=56.67ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=45.29ms min=20.31ms max=79.19ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.02ms min=11.87ms max=81.50ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=45.73ms min=18.59ms max=75.27ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.97ms min=14.68ms max=74.11ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.12ms min=14.15ms max=92.47ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=42.20ms min=11.74ms max=123.06ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.47ms min=13.08ms max=57.16ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.43ms min=10.69ms max=86.69ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.76ms min=12.35ms max=80.74ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.93ms min=15.11ms max=86.22ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.83ms min=17.51ms max=107.15ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=38.89ms min=12.77ms max=66.85ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.48ms min=12.85ms max=69.24ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=40.54ms min=17.08ms max=74.41ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.42ms min=16.05ms max=67.31ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=34.61ms min=14.78ms max=71.35ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.18ms min=13.02ms max=82.19ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.23ms min=12.41ms max=70.63ms count=19
+I/flutter ( 7111): NKAPI|GET /v1/partner/orders?tab=new|200
+I/flutter ( 7111): NKAPI|POST /v1/partner/orders/NK-233194/accept|200
+I/flutter ( 7111): NKSTEP|accepted|1795027459855
+D/EGL_emulation( 7111): app_time_stats: avg=43.00ms min=17.70ms max=73.47ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.11ms min=21.88ms max=70.78ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.55ms min=15.41ms max=81.74ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.93ms min=15.15ms max=72.71ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=31.35ms min=10.29ms max=75.39ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=32.55ms min=10.72ms max=65.89ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.81ms min=18.34ms max=61.79ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=45.01ms min=17.25ms max=102.69ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.33ms min=13.50ms max=97.02ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=54.62ms min=12.17ms max=101.70ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.11ms min=18.20ms max=69.98ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=41.22ms min=12.53ms max=85.26ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=40.67ms min=20.21ms max=82.88ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=46.04ms min=14.34ms max=81.98ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=50.71ms min=16.99ms max=101.78ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.54ms min=8.51ms max=89.00ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.88ms min=15.35ms max=73.61ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=41.69ms min=14.67ms max=88.87ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=54.60ms min=13.15ms max=96.66ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.84ms min=12.75ms max=89.18ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=44.52ms min=15.90ms max=97.40ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.53ms min=7.22ms max=65.65ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=38.12ms min=16.17ms max=70.08ms count=17
+I/flutter ( 7111): NKAPI|POST /v1/partner/orders/NK-233194/send|200
+I/flutter ( 7111): NKSTEP|out|1795027483962
+D/EGL_emulation( 7111): app_time_stats: avg=40.15ms min=11.56ms max=90.72ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.14ms min=15.01ms max=68.62ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=42.19ms min=13.60ms max=110.27ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=38.13ms min=20.28ms max=67.17ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=40.00ms min=14.97ms max=76.43ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=39.87ms min=22.03ms max=63.96ms count=18
+D/CompatibilityChangeReporter( 7111): Compat change id reported: 193247900; UID 10192; state: ENABLED
+D/CompatibilityChangeReporter( 7111): Compat change id reported: 236825255; UID 10192; state: ENABLED
+D/EGL_emulation( 7111): app_time_stats: avg=58.88ms min=17.61ms max=226.16ms count=15
+I/Mbgl-EGLConfigChooser( 7111): In emulator: false
+I/Mbgl    ( 7111): {RenderThread 10}[General]: GPU Identifier: Android Emulator OpenGL ES Translator (Google SwiftShader)
+W/kart.nukad_kart( 7111): Verification of okhttp3.ConnectionSpec$Builder okhttp3.ConnectionSpec$Builder.cipherSuites(java.lang.String[]) took 266.791ms (254.88 bytecodes/s) (2720B approximate peak alloc)
+D/TrafficStats( 7111): tagSocket(232) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(245) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(249) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(260) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(252) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(254) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(254) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(255) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(263) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(264) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(262) with statsTag=0xffffffff, statsUid=-1
+D/EGL_emulation( 7111): app_time_stats: avg=103.98ms min=23.56ms max=226.27ms count=8
+D/TrafficStats( 7111): tagSocket(243) with statsTag=0xffffffff, statsUid=-1
+D/TrafficStats( 7111): tagSocket(213) with statsTag=0xffffffff, statsUid=-1
+D/EGL_emulation( 7111): app_time_stats: avg=67.37ms min=3.93ms max=298.17ms count=11
+I/kart.nukad_kart( 7111): Background young concurrent copying GC freed 24487(1478KB) AllocSpace objects, 8(3632KB) LOS objects, 9% free, 8701KB/9573KB, paused 55.417ms,958us total 670.224ms
+D/EGL_emulation( 7111): app_time_stats: avg=47.68ms min=15.39ms max=106.30ms count=16
+I/kart.nukad_kart( 7111): Background concurrent copying GC freed 32885(1856KB) AllocSpace objects, 7(1892KB) LOS objects, 49% free, 6312KB/12MB, paused 17us,17us total 118.501ms
+D/EGL_emulation( 7111): app_time_stats: avg=40.67ms min=17.71ms max=72.40ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=382.59ms min=3.56ms max=1838.19ms count=5
+W/Mbgl    ( 7111): {RenderThread 10}[ParseStyle]: line dasharray requires at least two elements
+D/EGL_emulation( 7111): app_time_stats: avg=37.10ms min=10.00ms max=178.98ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=38.09ms min=10.20ms max=103.32ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.88ms min=13.39ms max=80.71ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.50ms min=16.22ms max=107.26ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.73ms min=17.93ms max=101.91ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.23ms min=11.98ms max=122.07ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=151.89ms min=15.22ms max=844.84ms count=7
+D/EGL_emulation( 7111): app_time_stats: avg=2314.84ms min=139.90ms max=6396.21ms count=3
+D/EGL_emulation( 7111): app_time_stats: avg=48.68ms min=12.61ms max=123.17ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=1436.09ms min=1436.09ms max=1436.09ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=53.99ms min=10.23ms max=84.22ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=42.46ms min=16.58ms max=109.37ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.04ms min=15.79ms max=88.97ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.64ms min=22.46ms max=60.14ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.27ms min=16.18ms max=74.48ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=48.01ms min=21.15ms max=80.98ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.85ms min=15.15ms max=85.09ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.81ms min=15.91ms max=75.01ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=41.43ms min=11.11ms max=94.31ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.94ms min=13.24ms max=71.89ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=31.64ms min=17.45ms max=51.91ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.57ms min=23.09ms max=78.52ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=37.46ms min=11.83ms max=82.20ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=41.44ms min=18.32ms max=72.60ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.26ms min=16.09ms max=60.54ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.50ms min=12.22ms max=78.85ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.67ms min=16.21ms max=80.71ms count=16
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=41.95ms min=11.43ms max=97.50ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=64.10ms min=30.43ms max=86.94ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=42.72ms min=15.95ms max=81.99ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=46.38ms min=21.29ms max=76.37ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.90ms min=13.58ms max=77.89ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.42ms min=11.07ms max=82.61ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=53.13ms min=21.57ms max=94.16ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.03ms min=15.87ms max=68.31ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.38ms min=14.32ms max=79.26ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=34.40ms min=16.15ms max=74.32ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.11ms min=13.95ms max=73.68ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=55.60ms min=15.88ms max=122.63ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=33.12ms min=15.52ms max=50.44ms count=18
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=34.66ms min=14.56ms max=83.97ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.78ms min=12.89ms max=60.23ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.74ms min=8.76ms max=80.36ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.36ms min=13.49ms max=67.62ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=34621.91ms min=34621.91ms max=34621.91ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.90ms min=12.71ms max=74.42ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=1872.71ms min=1872.71ms max=1872.71ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=42.00ms min=13.08ms max=86.80ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.16ms min=8.66ms max=79.52ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.66ms min=14.28ms max=91.95ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=2750.48ms min=2750.48ms max=2750.48ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.64ms min=9.19ms max=65.58ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.02ms min=12.17ms max=58.84ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.01ms min=10.59ms max=58.60ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3584.76ms min=3584.76ms max=3584.76ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=35.84ms min=9.20ms max=62.20ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.64ms min=13.56ms max=69.79ms count=18
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=33.88ms min=14.43ms max=62.03ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2696.10ms min=2696.10ms max=2696.10ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.85ms min=13.99ms max=89.99ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=36.66ms min=14.58ms max=69.97ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=38.21ms min=13.63ms max=75.75ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2826.96ms min=2826.96ms max=2826.96ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.19ms min=12.50ms max=69.58ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.24ms min=15.16ms max=92.90ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=2452.41ms min=2452.41ms max=2452.41ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.79ms min=14.31ms max=93.57ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=34.56ms min=12.92ms max=65.41ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=38.76ms min=18.92ms max=65.36ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2521.79ms min=2521.79ms max=2521.79ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=43.06ms min=9.87ms max=125.56ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=1729.96ms min=1729.96ms max=1729.96ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.69ms min=13.78ms max=69.64ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.65ms min=16.40ms max=76.05ms count=19
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=34.00ms min=12.12ms max=90.81ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3045.91ms min=3045.91ms max=3045.91ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.13ms min=11.89ms max=84.00ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=35.39ms min=14.56ms max=67.28ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.05ms min=17.48ms max=69.23ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=2759.48ms min=2759.48ms max=2759.48ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.40ms min=9.00ms max=70.94ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=31.33ms min=12.13ms max=53.86ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=2015.65ms min=2015.65ms max=2015.65ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=44.34ms min=8.42ms max=158.96ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=30.79ms min=15.28ms max=64.61ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2730.81ms min=2730.81ms max=2730.81ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.47ms min=16.65ms max=76.46ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.74ms min=15.71ms max=73.02ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.21ms min=19.05ms max=88.10ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.98ms min=14.60ms max=75.56ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3078.42ms min=3078.42ms max=3078.42ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=30.58ms min=11.99ms max=69.66ms count=18
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=45.18ms min=13.39ms max=120.41ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2741.34ms min=2741.34ms max=2741.34ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=40.93ms min=14.31ms max=96.61ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.13ms min=15.37ms max=99.73ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2138.82ms min=2138.82ms max=2138.82ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.54ms min=12.02ms max=107.29ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.15ms min=13.60ms max=101.26ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.78ms min=14.60ms max=71.85ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2794.07ms min=2794.07ms max=2794.07ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.49ms min=16.15ms max=71.63ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.61ms min=10.99ms max=79.56ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.95ms min=16.29ms max=86.25ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2856.06ms min=2856.06ms max=2856.06ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.79ms min=15.10ms max=108.29ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.78ms min=17.59ms max=73.14ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2741.81ms min=2741.81ms max=2741.81ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=42.52ms min=13.52ms max=78.55ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.97ms min=15.10ms max=89.51ms count=18
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=2022.41ms min=2022.41ms max=2022.41ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=35.48ms min=14.87ms max=69.21ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.18ms min=17.21ms max=73.06ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.30ms min=12.37ms max=63.87ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=43.12ms min=15.06ms max=79.54ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3548.95ms min=3548.95ms max=3548.95ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.13ms min=17.51ms max=68.33ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.72ms min=14.29ms max=74.32ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=38.84ms min=10.73ms max=108.17ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=3181.84ms min=3181.84ms max=3181.84ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=41.75ms min=15.84ms max=87.18ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=45.00ms min=14.93ms max=108.83ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.26ms min=11.21ms max=99.20ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3058.95ms min=3058.95ms max=3058.95ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=42.27ms min=10.70ms max=94.79ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=1211.84ms min=1211.84ms max=1211.84ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=40.40ms min=14.70ms max=126.87ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=34.30ms min=10.24ms max=72.55ms count=17
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=2381.38ms min=2381.38ms max=2381.38ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=43.20ms min=15.14ms max=94.05ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.84ms min=16.01ms max=77.57ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2227.31ms min=2227.31ms max=2227.31ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=31.82ms min=13.26ms max=63.48ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.08ms min=14.09ms max=62.90ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.36ms min=13.16ms max=81.34ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3210.45ms min=3210.45ms max=3210.45ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.91ms min=13.06ms max=62.76ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.08ms min=11.20ms max=66.22ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=1789.97ms min=1789.97ms max=1789.97ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.44ms min=9.71ms max=75.57ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.97ms min=13.61ms max=89.36ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=2218.42ms min=2218.42ms max=2218.42ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=40.85ms min=13.95ms max=68.57ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.25ms min=12.31ms max=72.91ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.38ms min=15.20ms max=74.84ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2790.14ms min=2790.14ms max=2790.14ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.04ms min=11.30ms max=73.66ms count=17
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=38.13ms min=13.07ms max=62.80ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=1988.99ms min=1988.99ms max=1988.99ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.33ms min=8.50ms max=84.37ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.57ms min=17.63ms max=64.65ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=34.03ms min=15.01ms max=69.55ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2930.94ms min=2930.94ms max=2930.94ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=42.32ms min=14.19ms max=97.02ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.01ms min=20.05ms max=77.46ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2256.14ms min=2256.14ms max=2256.14ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=35.67ms min=12.96ms max=70.87ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.04ms min=9.39ms max=84.64ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.02ms min=13.11ms max=95.29ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3003.84ms min=3003.84ms max=3003.84ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.21ms min=18.06ms max=52.55ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=37.41ms min=16.26ms max=88.42ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.53ms min=18.78ms max=72.02ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3122.32ms min=3122.32ms max=3122.32ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=35.27ms min=9.10ms max=76.83ms count=17
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=37.76ms min=14.06ms max=86.52ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.99ms min=16.99ms max=106.43ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=3184.41ms min=3184.41ms max=3184.41ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=41.11ms min=18.91ms max=78.62ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.92ms min=12.27ms max=70.18ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=1960.68ms min=1960.68ms max=1960.68ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=36.23ms min=13.10ms max=78.33ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.33ms min=12.93ms max=66.74ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2373.50ms min=2373.50ms max=2373.50ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.83ms min=11.83ms max=74.04ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.47ms min=12.97ms max=106.42ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.47ms min=10.54ms max=73.39ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2811.18ms min=2811.18ms max=2811.18ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=36.91ms min=11.35ms max=68.08ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.36ms min=14.92ms max=81.93ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=33.32ms min=12.12ms max=90.64ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=3056.29ms min=3056.29ms max=3056.29ms count=1
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=36.06ms min=17.83ms max=88.11ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.06ms min=14.29ms max=69.29ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2868.05ms min=2868.05ms max=2868.05ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=33.62ms min=10.76ms max=74.25ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=41.35ms min=14.01ms max=86.61ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.99ms min=14.99ms max=61.48ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2800.21ms min=2800.21ms max=2800.21ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=42.48ms min=24.00ms max=75.12ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=30.87ms min=10.16ms max=75.17ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=37.09ms min=14.60ms max=75.35ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=2399.42ms min=2399.42ms max=2399.42ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=43.12ms min=14.52ms max=82.11ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.35ms min=16.03ms max=67.67ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=35.88ms min=13.00ms max=83.57ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=3210.77ms min=3210.77ms max=3210.77ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.62ms min=21.77ms max=63.39ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.12ms min=14.51ms max=76.79ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=2034.45ms min=2034.45ms max=2034.45ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.34ms min=18.48ms max=60.33ms count=16
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=29.95ms min=12.53ms max=52.24ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2562.05ms min=2562.05ms max=2562.05ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=41.13ms min=14.91ms max=96.84ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.34ms min=9.27ms max=69.60ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=1672.20ms min=1672.20ms max=1672.20ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=32.51ms min=19.74ms max=58.82ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=42.49ms min=10.88ms max=98.83ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.29ms min=15.81ms max=62.15ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=3157.51ms min=3157.51ms max=3157.51ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=45.49ms min=14.09ms max=83.57ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=41.48ms min=17.90ms max=105.54ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.53ms min=10.11ms max=84.87ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3175.36ms min=3175.36ms max=3175.36ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.46ms min=17.20ms max=53.37ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.26ms min=21.65ms max=64.14ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.17ms min=14.84ms max=75.93ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=2751.94ms min=2751.94ms max=2751.94ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=39.77ms min=13.99ms max=85.19ms count=18
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=45.29ms min=16.40ms max=98.63ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=2697.83ms min=2697.83ms max=2697.83ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=35.93ms min=14.95ms max=73.35ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.52ms min=11.64ms max=69.10ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=1805.57ms min=1805.57ms max=1805.57ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=40.79ms min=18.13ms max=80.12ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.23ms min=16.21ms max=89.63ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=1766.19ms min=1766.19ms max=1766.19ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=41.31ms min=14.58ms max=81.88ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.50ms min=15.85ms max=81.10ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2827.84ms min=2827.84ms max=2827.84ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=41.08ms min=22.64ms max=59.16ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.09ms min=18.02ms max=82.36ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.58ms min=16.77ms max=77.09ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2771.08ms min=2771.08ms max=2771.08ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.24ms min=18.84ms max=53.75ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=46.74ms min=18.27ms max=91.58ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2167.38ms min=2167.38ms max=2167.38ms count=1
+I/flutter ( 7111): NKAPI|POST /v1/partner/rider|200
+D/EGL_emulation( 7111): app_time_stats: avg=44.48ms min=10.68ms max=127.71ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.17ms min=16.69ms max=77.67ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=38.85ms min=18.85ms max=62.85ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3122.44ms min=3122.44ms max=3122.44ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.53ms min=12.36ms max=87.70ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.45ms min=17.90ms max=66.53ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.57ms min=18.97ms max=103.22ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2999.09ms min=2999.09ms max=2999.09ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=39.32ms min=11.30ms max=89.87ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.51ms min=17.88ms max=57.17ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.44ms min=8.45ms max=103.01ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.07ms min=17.39ms max=97.98ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=4431.83ms min=4431.83ms max=4431.83ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=41.55ms min=14.98ms max=85.77ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.36ms min=12.48ms max=92.90ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=1487.03ms min=1487.03ms max=1487.03ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=35.43ms min=8.05ms max=78.16ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.49ms min=9.19ms max=90.20ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2040.91ms min=2040.91ms max=2040.91ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=39.06ms min=18.84ms max=95.53ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.98ms min=18.16ms max=68.91ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.41ms min=19.19ms max=94.67ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=3279.60ms min=3279.60ms max=3279.60ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=45.21ms min=16.00ms max=128.15ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.42ms min=16.72ms max=74.48ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=34.67ms min=11.42ms max=73.93ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=3210.00ms min=3210.00ms max=3210.00ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.94ms min=10.45ms max=85.85ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=37.46ms min=11.93ms max=63.11ms count=19
+I/flutter ( 7111): NKSTEP|code|1795027702198
+D/EGL_emulation( 7111): app_time_stats: avg=41.46ms min=17.21ms max=71.06ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2475.15ms min=2475.15ms max=2475.15ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.81ms min=14.85ms max=80.27ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=34.34ms min=12.07ms max=64.97ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=46.26ms min=14.73ms max=93.98ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=3109.97ms min=3109.97ms max=3109.97ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.81ms min=12.62ms max=87.70ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.84ms min=19.46ms max=63.59ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.07ms min=10.22ms max=70.25ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2943.49ms min=2943.49ms max=2943.49ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=34.58ms min=19.85ms max=57.66ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=1991.33ms min=1991.33ms max=1991.33ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=40.34ms min=14.78ms max=80.76ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.50ms min=14.74ms max=83.87ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=41.93ms min=15.60ms max=96.28ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2178.01ms min=2178.01ms max=2178.01ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.52ms min=15.62ms max=83.29ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.28ms min=15.29ms max=75.15ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2074.16ms min=2074.16ms max=2074.16ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=44.65ms min=20.86ms max=89.75ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.24ms min=13.07ms max=75.24ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2459.57ms min=2459.57ms max=2459.57ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=42.92ms min=10.07ms max=107.88ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=49.57ms min=13.92ms max=95.67ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.55ms min=17.13ms max=79.31ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2863.69ms min=2863.69ms max=2863.69ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=39.58ms min=12.00ms max=71.32ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=1892.97ms min=1892.97ms max=1892.97ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=41.48ms min=9.38ms max=81.09ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=35.30ms min=16.57ms max=73.39ms count=17
+I/flutter ( 7111): NKAPI|GET /v1/me/orders|200
+I/flutter ( 7111): NKAPI|POST /v1/partner/orders/NK-233194/deliver|200
+I/flutter ( 7111): NKSTEP|delivered|1795027723847
+E/EGL_emulation( 7111): tid 15036: eglMakeCurrent(1920): error 0x3009 (EGL_BAD_MATCH)
+E/libEGL  ( 7111): eglMakeCurrentImpl:1053 error 3009 (EGL_BAD_MATCH)
+E/Surface ( 7111): freeAllBuffers: 1 buffers were freed while being dequeued!
+E/Surface ( 7111): freeAllBuffers: 1 buffers were freed while being dequeued!
+E/Surface ( 7111): getSlotFromBufferLocked: unknown buffer: 0x0
+W/WindowOnBackDispatcher( 7111): sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@5daca72
+E/BufferQueueProducer( 7111): [ImageReader-531x420f22m7-7111-0](id:1bc700000002,api:1,p:426,c:7111) dequeueBuffer: BufferQueue has been abandoned
+D/EGL_emulation( 7111): app_time_stats: avg=49.94ms min=17.15ms max=175.55ms count=15
+I/BpBinder( 7111): onLastStrongRef automatically unlinking death recipients: 
+D/EGL_emulation( 7111): app_time_stats: avg=55.14ms min=33.44ms max=95.90ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=44.69ms min=28.36ms max=67.82ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=45.23ms min=25.19ms max=72.29ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.24ms min=22.35ms max=78.75ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=48.10ms min=22.77ms max=72.40ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.45ms min=22.86ms max=75.58ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.14ms min=18.48ms max=88.27ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=50.09ms min=33.21ms max=77.10ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=52.65ms min=31.30ms max=110.26ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=61.04ms min=32.05ms max=92.37ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=52.57ms min=23.62ms max=87.03ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=52.14ms min=33.90ms max=100.04ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=44.50ms min=28.69ms max=83.97ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.44ms min=25.41ms max=74.81ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=52.83ms min=32.21ms max=79.84ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=48.89ms min=15.76ms max=99.64ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.30ms min=29.83ms max=81.94ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=49.68ms min=29.71ms max=86.01ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=57.40ms min=27.65ms max=84.53ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=58.39ms min=24.14ms max=102.93ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=46.92ms min=17.00ms max=86.17ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=54.04ms min=27.91ms max=85.61ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=46.34ms min=20.90ms max=84.37ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.30ms min=26.04ms max=73.27ms count=18
+I/flutter ( 7111): NKTAP|205.7|846.0|1795027749620
+D/EGL_emulation( 7111): app_time_stats: avg=47.54ms min=18.56ms max=74.70ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.23ms min=18.95ms max=81.86ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=52.60ms min=26.73ms max=167.36ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=58.13ms min=20.41ms max=180.60ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=42.35ms min=14.96ms max=109.47ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.25ms min=12.33ms max=83.45ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.96ms min=16.82ms max=91.00ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.43ms min=16.61ms max=87.58ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.68ms min=20.61ms max=82.48ms count=18
+I/flutter ( 7111): NKTAP|28.0|55.9|1795027758431
+D/EGL_emulation( 7111): app_time_stats: avg=38.31ms min=14.75ms max=77.39ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.09ms min=20.51ms max=76.94ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=60.88ms min=9.93ms max=252.92ms count=13
+D/EGL_emulation( 7111): app_time_stats: avg=46.54ms min=17.96ms max=74.71ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=33.90ms min=13.96ms max=66.03ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=55.43ms min=22.07ms max=85.17ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.12ms min=14.15ms max=69.34ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=47.98ms min=18.59ms max=99.34ms count=17
+I/flutter ( 7111): NKTAP|28.0|55.9|1795027767803
+D/EGL_emulation( 7111): app_time_stats: avg=43.04ms min=18.19ms max=84.79ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=46.80ms min=16.12ms max=79.86ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.87ms min=25.38ms max=82.00ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=63.62ms min=23.74ms max=130.45ms count=14
+D/EGL_emulation( 7111): app_time_stats: avg=51.67ms min=20.88ms max=118.81ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=44.49ms min=22.37ms max=73.26ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.44ms min=10.45ms max=96.49ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=51.19ms min=21.13ms max=90.08ms count=17
+I/flutter ( 7111): NKSTEP|thelas|1795027775430
+D/EGL_emulation( 7111): app_time_stats: avg=40.97ms min=15.37ms max=67.40ms count=19
+I/flutter ( 7111): NKTAP|309.6|178.9|1795027777075
+D/EGL_emulation( 7111): app_time_stats: avg=39.77ms min=14.60ms max=88.72ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.85ms min=22.07ms max=80.18ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.57ms min=17.07ms max=67.42ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=46.68ms min=11.04ms max=117.95ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=44.84ms min=11.65ms max=110.16ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.90ms min=12.59ms max=76.35ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.68ms min=11.72ms max=78.01ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=50.38ms min=9.85ms max=98.74ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=34.95ms min=13.34ms max=65.58ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=34.90ms min=11.99ms max=59.67ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=39.75ms min=15.34ms max=87.61ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=51.86ms min=9.57ms max=81.01ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=36.50ms min=12.30ms max=61.05ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=42.26ms min=14.21ms max=81.99ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.46ms min=9.62ms max=83.76ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.96ms min=12.13ms max=77.97ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.63ms min=14.79ms max=87.06ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=43.99ms min=21.06ms max=84.91ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.12ms min=14.33ms max=62.81ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.48ms min=15.99ms max=78.56ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.69ms min=13.25ms max=79.01ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.37ms min=7.13ms max=66.27ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.83ms min=13.83ms max=71.35ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.18ms min=15.43ms max=79.35ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=53.66ms min=15.53ms max=83.85ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=48.37ms min=22.08ms max=85.28ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.64ms min=15.15ms max=64.92ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.12ms min=19.13ms max=79.18ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=52.32ms min=23.18ms max=94.79ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=36.75ms min=16.10ms max=66.45ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=34.87ms min=14.56ms max=77.83ms count=18
+I/flutter ( 7111): NKSTEP|thela|1795027809328
+D/EGL_emulation( 7111): app_time_stats: avg=41.64ms min=17.33ms max=66.57ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.10ms min=13.25ms max=74.81ms count=17
+I/flutter ( 7111): NKTAP|170.6|397.9|1795027810961
+D/EGL_emulation( 7111): app_time_stats: avg=36.97ms min=9.58ms max=63.04ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.75ms min=14.43ms max=83.22ms count=18
+W/WindowOnBackDispatcher( 7111): OnBackInvokedCallback is not enabled for the application.
+W/WindowOnBackDispatcher( 7111): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/EGL_emulation( 7111): app_time_stats: avg=52.22ms min=18.09ms max=166.50ms count=13
+I/Mbgl-EGLConfigChooser( 7111): In emulator: false
+D/EGL_emulation( 7111): app_time_stats: avg=75.29ms min=36.03ms max=148.72ms count=11
+W/Mbgl    ( 7111): {RenderThread 13}[ParseStyle]: line dasharray requires at least two elements
+W/Mbgl    ( 7111): {RenderThread 13}[ParseStyle]: line dasharray requires at least two elements
+D/EGL_emulation( 7111): app_time_stats: avg=43.56ms min=21.34ms max=135.87ms count=14
+D/EGL_emulation( 7111): app_time_stats: avg=39.00ms min=15.33ms max=80.94ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=79.77ms min=14.35ms max=675.68ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=862.93ms min=4.09ms max=3568.78ms count=5
+D/EGL_emulation( 7111): app_time_stats: avg=32.12ms min=8.56ms max=62.95ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=46.74ms min=16.34ms max=95.98ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=39.84ms min=16.73ms max=81.58ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.66ms min=14.40ms max=86.01ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=4116.57ms min=4116.57ms max=4116.57ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=35.50ms min=13.68ms max=76.83ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=39.98ms min=16.30ms max=71.69ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2752.00ms min=2752.00ms max=2752.00ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=38.24ms min=12.74ms max=77.62ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.38ms min=14.42ms max=104.91ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=56.09ms min=15.16ms max=116.13ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=2248.25ms min=2248.25ms max=2248.25ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=40.94ms min=15.23ms max=80.09ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.70ms min=16.37ms max=75.40ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.10ms min=11.51ms max=64.07ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=48.22ms min=12.21ms max=102.62ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.44ms min=17.97ms max=86.56ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.65ms min=15.70ms max=61.40ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.34ms min=16.74ms max=75.04ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.92ms min=20.24ms max=88.17ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=38.91ms min=5.28ms max=76.83ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.11ms min=16.23ms max=62.69ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.39ms min=20.13ms max=122.58ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.50ms min=14.56ms max=93.26ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.14ms min=16.46ms max=90.08ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=39.61ms min=12.45ms max=89.85ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.88ms min=11.11ms max=70.18ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=45.71ms min=13.31ms max=69.38ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=37.79ms min=13.65ms max=70.75ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.99ms min=14.98ms max=87.44ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.69ms min=10.40ms max=93.85ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.86ms min=13.18ms max=92.01ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=33.62ms min=9.03ms max=71.12ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=46.45ms min=12.80ms max=127.56ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.64ms min=11.20ms max=63.28ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.90ms min=16.57ms max=67.20ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.79ms min=16.31ms max=73.44ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=34.81ms min=7.26ms max=68.77ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.48ms min=17.70ms max=79.19ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.60ms min=10.99ms max=73.98ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.73ms min=12.21ms max=77.19ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.58ms min=15.98ms max=81.27ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=38.88ms min=14.47ms max=83.70ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.43ms min=17.62ms max=87.70ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.13ms min=17.97ms max=85.87ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.02ms min=17.07ms max=69.75ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.38ms min=13.87ms max=64.22ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.38ms min=15.96ms max=102.85ms count=18
+I/flutter ( 7111): NKSTEP|call|1795027865576
+D/EGL_emulation( 7111): app_time_stats: avg=42.39ms min=18.35ms max=61.88ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.88ms min=12.07ms max=92.37ms count=17
+I/flutter ( 7111): NKTAP|205.7|50.0|1795027867270
+D/EGL_emulation( 7111): app_time_stats: avg=53.46ms min=13.03ms max=109.23ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=48.15ms min=17.33ms max=85.50ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.07ms min=10.89ms max=71.88ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=38.11ms min=16.83ms max=68.19ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.41ms min=29.23ms max=70.15ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.77ms min=21.62ms max=67.33ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.99ms min=21.62ms max=81.22ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=46.25ms min=24.49ms max=73.35ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.08ms min=23.11ms max=107.26ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=57.60ms min=12.67ms max=103.75ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=30.95ms min=14.32ms max=60.83ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=38.97ms min=12.46ms max=73.98ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=49.73ms min=15.37ms max=86.15ms count=18
+I/flutter ( 7111): NKTAP|205.7|840.0|1795027880084
+D/EGL_emulation( 7111): app_time_stats: avg=40.23ms min=18.22ms max=93.23ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.99ms min=25.40ms max=86.07ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.52ms min=23.22ms max=91.23ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.14ms min=14.56ms max=89.10ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=47.63ms min=16.01ms max=78.83ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.35ms min=12.19ms max=87.18ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=41.89ms min=21.40ms max=72.42ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.75ms min=13.46ms max=72.14ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.28ms min=14.60ms max=82.37ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=45.80ms min=18.86ms max=95.40ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.32ms min=14.97ms max=78.86ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.12ms min=12.83ms max=91.53ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.07ms min=15.36ms max=74.92ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=44.20ms min=17.14ms max=82.41ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.39ms min=11.44ms max=68.23ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=51.91ms min=18.62ms max=110.82ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=59.09ms min=9.72ms max=100.41ms count=16
+I/flutter ( 7111): NKAPI|GET /v1/partner/calls|200
+I/flutter ( 7111): NKAPI|POST /v1/partner/calls/answer|200
+I/flutter ( 7111): NKSTEP|coming|1795027897845
+D/EGL_emulation( 7111): app_time_stats: avg=43.57ms min=14.14ms max=99.57ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.79ms min=13.05ms max=67.33ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=41.76ms min=12.74ms max=82.77ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.52ms min=15.80ms max=78.94ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.86ms min=21.16ms max=74.07ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=53.47ms min=11.90ms max=94.54ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=43.98ms min=23.91ms max=94.90ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=37.88ms min=19.29ms max=70.96ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=37.90ms min=21.52ms max=62.53ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.14ms min=22.29ms max=78.43ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.78ms min=8.38ms max=86.17ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=47.37ms min=20.89ms max=63.81ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=57.80ms min=17.87ms max=81.51ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=39.52ms min=15.13ms max=71.26ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=49.78ms min=12.21ms max=87.52ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=34.87ms min=17.52ms max=61.42ms count=19
+I/flutter ( 7111): NKTAP|205.7|17.0|1795027914953
+D/EGL_emulation( 7111): app_time_stats: avg=42.83ms min=12.13ms max=85.20ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=50.44ms min=13.70ms max=82.98ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=29.37ms min=12.23ms max=62.67ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=42.09ms min=14.05ms max=68.12ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=45.24ms min=16.21ms max=76.88ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=40.25ms min=8.46ms max=102.56ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.41ms min=16.60ms max=84.02ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.11ms min=17.14ms max=88.74ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=52.21ms min=10.69ms max=83.24ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.22ms min=17.29ms max=71.88ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=39.77ms min=18.29ms max=79.97ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=52.24ms min=19.44ms max=103.62ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.50ms min=15.70ms max=80.25ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=42.68ms min=25.93ms max=64.56ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=39.04ms min=16.09ms max=91.44ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=52.31ms min=13.76ms max=81.46ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.24ms min=12.85ms max=71.60ms count=17
+I/flutter ( 7111): NKSTEP|chat|1795027932125
+E/EGL_emulation( 7111): tid 22363: eglMakeCurrent(1920): error 0x3009 (EGL_BAD_MATCH)
+E/libEGL  ( 7111): eglMakeCurrentImpl:1053 error 3009 (EGL_BAD_MATCH)
+E/Surface ( 7111): freeAllBuffers: 1 buffers were freed while being dequeued!
+E/Surface ( 7111): freeAllBuffers: 1 buffers were freed while being dequeued!
+E/Surface ( 7111): getSlotFromBufferLocked: unknown buffer: 0x0
+W/WindowOnBackDispatcher( 7111): sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@d79a967
+E/BufferQueueProducer( 7111): [ImageReader-531x392f22m7-7111-1](id:1bc700000005,api:1,p:426,c:7111) requestBuffer: BufferQueue has been abandoned
+E/BufferQueueProducer( 7111): [ImageReader-531x392f22m7-7111-1](id:1bc700000005,api:1,p:426,c:7111) cancelBuffer: BufferQueue has been abandoned
+I/BpBinder( 7111): onLastStrongRef automatically unlinking death recipients: 
+D/EGL_emulation( 7111): app_time_stats: avg=51.50ms min=8.56ms max=131.83ms count=15
+D/EGL_emulation( 7111): app_time_stats: avg=39.09ms min=8.83ms max=96.88ms count=18
+I/flutter ( 7111): NKTAP|205.7|110.0|1795027933807
+D/EGL_emulation( 7111): app_time_stats: avg=42.38ms min=11.07ms max=100.84ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=44.45ms min=12.53ms max=84.24ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=50.70ms min=18.12ms max=94.06ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=42.77ms min=21.12ms max=72.90ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=33.13ms min=8.79ms max=76.13ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=37.43ms min=8.96ms max=80.99ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=28.79ms min=8.28ms max=64.36ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=40.81ms min=17.08ms max=74.48ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.44ms min=10.86ms max=58.57ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=34.27ms min=9.75ms max=69.88ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=35.58ms min=5.84ms max=76.13ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=38.98ms min=8.96ms max=82.96ms count=18
+I/flutter ( 7111): NKTAP|177.7|852.0|1795027946653
+D/EGL_emulation( 7111): app_time_stats: avg=42.22ms min=16.09ms max=76.84ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=41.57ms min=17.79ms max=86.10ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.08ms min=7.34ms max=57.75ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.03ms min=5.51ms max=79.49ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.38ms min=9.21ms max=96.40ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.27ms min=13.20ms max=76.46ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=31.72ms min=9.54ms max=57.45ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.01ms min=5.52ms max=87.42ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=30.31ms min=6.82ms max=86.44ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=26.57ms min=6.08ms max=67.89ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=42.48ms min=7.93ms max=105.01ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=44.49ms min=8.58ms max=91.72ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=46.08ms min=10.61ms max=87.00ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.72ms min=10.84ms max=78.98ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.02ms min=8.67ms max=60.49ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=34.18ms min=7.09ms max=73.98ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=32.77ms min=7.03ms max=101.19ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=34.52ms min=8.79ms max=69.46ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.53ms min=9.02ms max=65.16ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.25ms min=11.31ms max=56.18ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.23ms min=9.18ms max=78.64ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=30.22ms min=6.99ms max=62.76ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=29.88ms min=11.45ms max=57.98ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.53ms min=11.66ms max=55.85ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.33ms min=11.34ms max=78.30ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=31.72ms min=10.79ms max=59.77ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=36.20ms min=10.86ms max=66.28ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.50ms min=8.50ms max=76.99ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=35.92ms min=5.40ms max=76.12ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.99ms min=11.16ms max=90.82ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=30.37ms min=9.38ms max=61.47ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=28.61ms min=9.20ms max=56.43ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.17ms min=13.62ms max=61.33ms count=18
+I/flutter ( 7111): NKTAP|377.4|840.0|1795027980161
+D/EGL_emulation( 7111): app_time_stats: avg=36.12ms min=8.95ms max=73.83ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=51.00ms min=8.74ms max=80.30ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.99ms min=17.64ms max=63.04ms count=18
+I/Mbgl-EGLConfigChooser( 7111): In emulator: false
+D/EGL_emulation( 7111): app_time_stats: avg=52.87ms min=12.88ms max=229.96ms count=13
+D/EGL_emulation( 7111): app_time_stats: avg=429.57ms min=29.11ms max=1515.13ms count=4
+D/EGL_emulation( 7111): app_time_stats: avg=46.40ms min=10.22ms max=117.59ms count=12
+W/Mbgl    ( 7111): {RenderThread 14}[ParseStyle]: line dasharray requires at least two elements
+W/Mbgl    ( 7111): {RenderThread 14}[ParseStyle]: line dasharray requires at least two elements
+D/EGL_emulation( 7111): app_time_stats: avg=31.22ms min=10.59ms max=74.47ms count=20
+D/EGL_emulation( 7111): app_time_stats: avg=43.53ms min=8.05ms max=70.70ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=34.32ms min=7.14ms max=79.57ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=201.44ms min=28.49ms max=826.28ms count=5
+D/EGL_emulation( 7111): app_time_stats: avg=852.68ms min=16.55ms max=3985.88ms count=5
+D/EGL_emulation( 7111): app_time_stats: avg=33.62ms min=11.56ms max=107.26ms count=18
+I/flutter ( 7111): NKAPI|GET /v1/partner/chats|200
+I/flutter ( 7111): NKAPI|POST /v1/partner/chats/6e6222b2-c72b-40f3-a08e-97669fc9bb9d|200
+I/flutter ( 7111): NKSTEP|reply|1795027991413
+D/EGL_emulation( 7111): app_time_stats: avg=34.44ms min=8.80ms max=77.86ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=2801.81ms min=2801.81ms max=2801.81ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=40.26ms min=7.06ms max=83.65ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=36.08ms min=10.92ms max=78.10ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=33.22ms min=9.84ms max=65.03ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2677.46ms min=2677.46ms max=2677.46ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=37.99ms min=8.37ms max=73.16ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=34.62ms min=8.20ms max=133.09ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=2196.41ms min=2196.41ms max=2196.41ms count=1
+D/EGL_emulation( 7111): app_time_stats: avg=45.88ms min=14.61ms max=89.37ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=38.56ms min=11.42ms max=71.13ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=37.88ms min=12.62ms max=95.13ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=39.78ms min=9.08ms max=88.56ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=46.21ms min=23.18ms max=72.95ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=45.38ms min=9.43ms max=92.07ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.03ms min=7.31ms max=94.07ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=29.93ms min=8.47ms max=62.85ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=34.77ms min=5.42ms max=103.40ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=43.70ms min=12.48ms max=88.97ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=36.59ms min=5.69ms max=84.46ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.27ms min=17.94ms max=66.01ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=43.08ms min=13.18ms max=88.24ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=29.79ms min=10.21ms max=59.93ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=38.52ms min=10.11ms max=76.31ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.07ms min=11.30ms max=85.65ms count=19
+D/EGL_emulation( 7111): app_time_stats: avg=35.84ms min=11.85ms max=90.89ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=39.53ms min=14.94ms max=64.19ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=42.57ms min=9.64ms max=82.53ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=32.07ms min=7.26ms max=69.32ms count=18
+D/EGL_emulation( 7111): app_time_stats: avg=35.60ms min=15.21ms max=65.85ms count=17
+D/EGL_emulation( 7111): app_time_stats: avg=38.99ms min=11.90ms max=69.98ms count=16
+D/EGL_emulation( 7111): app_time_stats: avg=43.34ms min=8.14ms max=87.27ms count=16
+I/flutter ( 7111): NKSTEP|end|1795028021438
+I/flutter ( 7111): 13:25 +1: (tearDownAll)
+E/EGL_emulation( 7111): tid 26680: eglMakeCurrent(1920): error 0x3009 (EGL_BAD_MATCH)
+E/libEGL  ( 7111): eglMakeCurrentImpl:1053 error 3009 (EGL_BAD_MATCH)
+E/Surface ( 7111): freeAllBuffers: 1 buffers were freed while being dequeued!
+E/Surface ( 7111): freeAllBuffers: 1 buffers were freed while being dequeued!
+E/Surface ( 7111): getSlotFromBufferLocked: unknown buffer: 0x0
+W/WindowOnBackDispatcher( 7111): sendCancelIfRunning: isInProgress=falsecallback=android.view.ViewRootImpl$$ExternalSyntheticLambda17@8578c34
+E/BufferQueueProducer( 7111): [ImageReader-531x392f22m7-7111-2](id:1bc700000008,api:1,p:426,c:7111) dequeueBuffer: BufferQueue has been abandoned
+I/flutter ( 7111): 13:25 +2: All tests passed!
+All tests passed.
+I/BpBinder( 7111): onLastStrongRef automatically unlinking death recipients: 
+drive exit 0
