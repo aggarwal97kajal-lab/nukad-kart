@@ -2,19 +2,28 @@
 //   POST /v1/admin/loi            { clientId, kind, shopName, ownerName, area, years, mobile, delivers, upi, android, pass, sign, lat, lng, signedAt } (admin)
 //   GET  /v1/admin/loi            list + totals, no signatures (admin)
 //   GET  /v1/admin/loi/:id/sign   one signature as a PNG data URL (admin)
-// Admin only: the list holds sellers' names and mobile numbers, and the totals go into investor decks, so nobody else may add rows.
+// Only the founders: an admin's login, or the private link (header x-loi-key, its SHA-256 in LOI_KEY_HASHES).
+// The list holds sellers' names and mobile numbers, and the totals go into investor decks, so nobody else may add or read rows.
 import { HttpError, json, now } from './index.js';
-import { ctx, isAdmin } from './partner.js';
-import { cleanText } from './guard.js';
+import { ctx, isAdmin, sha256Hex } from './partner.js';
+import { cleanText, rateLimit, clientIp } from './guard.js';
 
 const KINDS = ['kirana', 'thela', 'dairy', 'other'];
 const YN = ['yes', 'no', ''];
 const PASSES = ['day', 'week', 'month', 'year', ''];
 
-async function adminUser(req, env) {
+/** Who may use the LOI routes: { by } for the private link, or the admin user. */
+async function founder(req, env) {
+  const key = req.headers.get('x-loi-key');
+  if (key) {
+    await rateLimit(env, `loi:${clientIp(req)}`, 120, 600);
+    const list = String(env.LOI_KEY_HASHES || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
+    if (key.length < 16 || key.length > 100 || !list.includes(await sha256Hex(key))) throw new HttpError(403, 'bad_link');
+    return { link: true };
+  }
   const { u } = await ctx(req, env);
   if (!(await isAdmin(env, u.email))) throw new HttpError(403, 'not_admin');
-  return u;
+  return { u };
 }
 
 export function checkLoi(b) {
@@ -57,13 +66,13 @@ const rowOut = (r) => ({ id: r.id, kind: r.kind, shopName: r.shop_name, ownerNam
 
 export async function loiRoute(req, env, path, m) {
   if (path !== '/v1/admin/loi' && !path.startsWith('/v1/admin/loi/')) return null;
-  const u = await adminUser(req, env);
+  const who = await founder(req, env);
   if (m === 'POST' && path === '/v1/admin/loi') {
     let b;
     try { b = await req.json(); } catch { throw new HttpError(400, 'bad_json'); }
     const l = checkLoi(b);
     const id = 'loi_' + crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-    const by = cleanText(u.name || String(u.email).split('@')[0], 60);
+    const by = who.u ? cleanText(who.u.name || String(who.u.email).split('@')[0], 60) : (cleanText(b.collector, 40) || 'Private link');
     await env.DB.prepare(
       `INSERT INTO loi (id, client_id, kind, shop_name, owner_name, area, years, mobile, delivers, upi, android, pass, sign_png, lat, lng,
         collected_by, signed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

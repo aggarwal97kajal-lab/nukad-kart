@@ -87,8 +87,11 @@ dialog dt{color:#7C877F;font-weight:600}dialog dd{margin:0;font-weight:600}
 var API='https://api.nukkadkart.in', CLIENT_ID='173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
 var QKEY='nk-loi-queue', TKEY='nk-loi-token';
 var root=document.getElementById('root');
-var S={token:null, me:null, tab:'new', items:null, f:{}, pos:null};
-try{ S.token=localStorage.getItem(TKEY); }catch(e){}
+var KKEY='nk-loi-key', BYKEY='nk-loi-by';
+var S={token:null, key:null, by:'', me:null, tab:'new', items:null, f:{}, pos:null};
+try{ S.token=localStorage.getItem(TKEY); S.key=localStorage.getItem(KKEY); S.by=localStorage.getItem(BYKEY)||''; }catch(e){}
+// The founders' private link: nukkadkart.in/loi#k=… . The key is kept on this phone and taken out of the address bar.
+(function(){ var m=location.hash.match(/k=([\w-]{16,100})/); if(m){ S.key=m[1]; try{localStorage.setItem(KKEY,S.key);}catch(e){} history.replaceState(null,'',location.pathname); } })();
 
 var KIND={kirana:['Kirana / Mart','किराना / मार्ट'],thela:['Fruit / Veg thela','फल-सब्ज़ी ठेला'],dairy:['Dairy','डेयरी'],other:['Other','अन्य']};
 var PASS={day:'₹19/day',week:'₹79/week',month:'₹199/month',year:'₹1,999/year'};
@@ -96,14 +99,14 @@ var PASS={day:'₹19/day',week:'₹79/week',month:'₹199/month',year:'₹1,999/
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function toast(t,bad){ var d=document.createElement('div'); d.className='toast'+(bad?' bad':''); d.setAttribute('role','status'); d.textContent=t; document.body.appendChild(d); setTimeout(function(){d.remove();},3200); }
 function api(method,path,body){
-  return fetch(API+path,{method:method,headers:Object.assign({'content-type':'application/json'},S.token?{authorization:'Bearer '+S.token}:{}),body:body?JSON.stringify(body):undefined})
+  return fetch(API+path,{method:method,headers:Object.assign({'content-type':'application/json'},S.key?{'x-loi-key':S.key}:S.token?{authorization:'Bearer '+S.token}:{}),body:body?JSON.stringify(body):undefined})
     .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){
-      if(r.status===401 && path!=='/v1/auth/google'){ logout(true); throw {code:'not_signed_in'}; }
+      if(r.status===401 && path!=='/v1/auth/google' && !S.key){ logout(true); throw {code:'not_signed_in'}; }
       if(!r.ok) throw {code:d.error||'server_error',status:r.status,field:d.field};
       return d; }); }, function(){ throw {code:'offline'}; });
 }
 function why(e){
-  return ({offline:'No internet right now.',not_admin:'This Google account is not a Nukkad Kart founder account.',
+  return ({offline:'No internet right now.',bad_link:'This link is not valid any more. Ask for the new link.',not_admin:'This Google account is not a Nukkad Kart founder account.',
     email_used_by_customer:'This Google account is used in the customer app. Use your founder account.',
     slow_down:'Too many tries. Wait a minute.'}[e.code])||('Something went wrong ('+e.code+').');
 }
@@ -113,7 +116,7 @@ function queue(){ try{ return JSON.parse(localStorage.getItem(QKEY)||'[]'); }cat
 function setQueue(q){ try{ localStorage.setItem(QKEY,JSON.stringify(q)); }catch(e){ toast('Phone storage is full. Send waiting forms first.',true); } }
 var flushing=false;
 function flush(){
-  if(flushing||!S.token) return Promise.resolve();
+  if(flushing||!(S.token||S.key)) return Promise.resolve();
   var q=queue(); if(!q.length) return Promise.resolve();
   flushing=true;
   var item=q[0];
@@ -156,6 +159,7 @@ function onGoogle(resp){
 }
 function logout(silent){
   if(queue().length && !silent && !confirm(queue().length+' form(s) are still waiting to be sent. Log out anyway? They stay on this phone.')) return;
+  if(S.key){ S.key=null; try{localStorage.removeItem(KKEY);}catch(e){} }
   if(S.token&&!silent) api('POST','/v1/me/logout').catch(function(){});
   S.token=null; S.me=null; try{localStorage.removeItem(TKEY);}catch(e){}
   loginView(silent===true?'Please log in again.':'');
@@ -163,7 +167,8 @@ function logout(silent){
 function start(){
   // Checks the account is an admin; without internet, a saved login is trusted and forms wait in the queue.
   return api('GET','/v1/admin/loi').then(function(d){ S.items=d.items; S.me=true; shell(); flush(); },function(e){
-    if(e.code==='offline'&&S.token){ S.me=true; shell(); return; }
+    if(e.code==='offline'&&(S.token||S.key)){ S.me=true; shell(); return; }
+    if(e.code==='bad_link'){ S.key=null; try{localStorage.removeItem(KKEY);}catch(_){} }
     if(e.code==='not_admin'){ try{localStorage.removeItem(TKEY);}catch(_){}; S.token=null; }
     if(e.code!=='not_signed_in') loginView(why(e));
   });
@@ -173,12 +178,26 @@ function start(){
 function shell(){
   var n=queue().length;
   root.innerHTML='<div class="top"><img src="/assets/img/logo.webp" alt=""><div><b>Letter of Intent</b><span>जुड़ने की सहमति · Partner interest</span></div>'+
-    '<div class="who">'+(n?'<div>'+n+' waiting to send</div>':'')+'<button id="out">Log out</button></div></div>'+
+    '<div class="who">'+(n?'<div>'+n+' waiting to send</div>':'')+(S.key&&S.by?'<div>'+esc(S.by)+' · <button id="chg">change</button></div>':'')+'<button id="out">'+(S.key?'Forget link':'Log out')+'</button></div></div>'+
     '<div class="tabs"><button id="tNew" class="'+(S.tab==='new'?'on':'')+'">New form</button><button id="tList" class="'+(S.tab==='list'?'on':'')+'">Collected</button></div><main id="main"></main><div id="bar"></div>';
   document.getElementById('out').onclick=function(){ logout(false); };
+  var chg=document.getElementById('chg'); if(chg) chg.onclick=function(){ S.by=''; try{localStorage.removeItem(BYKEY);}catch(e){} shell(); };
+  if(S.key&&!S.by){ nameView(); return; }
   document.getElementById('tNew').onclick=function(){ S.tab='new'; shell(); };
   document.getElementById('tList').onclick=function(){ S.tab='list'; shell(); };
   if(S.tab==='new') formStep1(); else listView();
+}
+
+/* ---------- who is collecting (private link only) ---------- */
+function nameView(){
+  document.getElementById('main').innerHTML='<p class="step">Before you start</p><label for="by">Your name<i>आपका नाम</i></label>'+
+    '<div class="chips" id="bych"><button type="button" class="chip" data-v="Suraj">Suraj</button><button type="button" class="chip" data-v="Somesh">Somesh</button></div>'+
+    '<input id="by" type="text" style="margin-top:10px" placeholder="Or type your name" autocomplete="off">'+
+    '<p style="color:var(--soft);font-size:13px;margin-top:10px">Each form shows who collected it. Asked only once on this phone.</p>';
+  document.getElementById('bych').onclick=function(e){ var b=e.target.closest('.chip'); if(b){ document.getElementById('by').value=b.getAttribute('data-v'); } };
+  bar('<button class="btn" id="go">Start</button>');
+  document.getElementById('go').onclick=function(){ var v=document.getElementById('by').value.trim(); if(v.length<2){ toast('Write your name',true); return; }
+    S.by=v.slice(0,40); try{localStorage.setItem(BYKEY,S.by);}catch(e){} shell(); };
 }
 
 /* ---------- form ---------- */
@@ -268,7 +287,7 @@ function submit(){
   if(!sig.drawn){ document.getElementById('w-sign').classList.add('bad'); toast('Please sign first',true); return; }
   var f=S.f, item={clientId:cid(),kind:f.kind,shopName:f.shopName.trim(),ownerName:f.ownerName.trim(),area:f.area.trim(),years:(f.years||'').trim(),
     mobile:(f.mobile||'').replace(/\D/g,''),delivers:f.delivers||'',upi:f.upi||'',android:f.android||'',pass:f.pass||'',sign:sigPng(),
-    lat:S.pos?S.pos.lat:null,lng:S.pos?S.pos.lng:null,signedAt:Math.floor(Date.now()/1000)};
+    lat:S.pos?S.pos.lat:null,lng:S.pos?S.pos.lng:null,signedAt:Math.floor(Date.now()/1000),collector:S.key?S.by:''};
   var q=queue(); q.push(item); setQueue(q);
   var name=item.shopName; S.f={};
   doneView(name);
@@ -325,7 +344,7 @@ function csv(){
   document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
 }
 
-if(S.token) start(); else loginView('');
+if(S.token||S.key) start(); else loginView('');
 })();
 </script>
 </body>

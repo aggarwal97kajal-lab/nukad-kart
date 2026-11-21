@@ -29,7 +29,7 @@ export function preflight(methods) {
     headers: {
       'access-control-allow-origin': WEB_ORIGIN,
       'access-control-allow-methods': methods,
-      'access-control-allow-headers': 'authorization, content-type',
+      'access-control-allow-headers': 'authorization, content-type, x-loi-key',
       'access-control-max-age': '86400',
       vary: 'origin',
     },

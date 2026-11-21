@@ -19,6 +19,8 @@ crons = ["*/5 * * * *"]
 GOOGLE_CLIENT_IDS = "173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com"
 # Admins: SHA-256 of their lower-case Google email, comma separated (the emails stay out of this public repo).
 ADMIN_EMAIL_HASHES = "1f5ddeb49d81be5faaa661510ca92c35d8d67e96e4bb5d5464ca4dabaad3057d"
+# The founders' private letter-of-intent link (nukkadkart.in/loi#k=…): only its SHA-256 is kept here.
+LOI_KEY_HASHES = "bfee13d094cd473cfc344e4ddee4f1ed18477c7d1b3adb1e2b14204d06502ac3"
 # The UPI ID for pass payments is set by an admin in the Partner app (stored in the database).
 
 [[d1_databases]]
