@@ -82,6 +82,7 @@ dialog dt{color:#7C877F;font-weight:600}dialog dd{margin:0;font-weight:600}
 <body>
 <div id="root"></div>
 <script>
+window.addEventListener('error',function(e){ var r=document.getElementById('root'); if(r&&!r.innerHTML.trim()) r.innerHTML='<div style="padding:24px;font:600 15px system-ui">Something went wrong loading the form. Please reload.<br><small style="color:#888">'+String(e.message||'').slice(0,200)+'</small></div>'; });
 (function(){
 'use strict';
 var API='https://api.nukkadkart.in', CLIENT_ID='173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
@@ -99,8 +100,9 @@ var PASS={day:'₹19/day',week:'₹79/week',month:'₹199/month',year:'₹1,999/
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 function toast(t,bad){ var d=document.createElement('div'); d.className='toast'+(bad?' bad':''); d.setAttribute('role','status'); d.textContent=t; document.body.appendChild(d); setTimeout(function(){d.remove();},3200); }
 function api(method,path,body){
-  return fetch(API+path,{method:method,headers:Object.assign({'content-type':'application/json'},S.key?{'x-loi-key':S.key}:S.token?{authorization:'Bearer '+S.token}:{}),body:body?JSON.stringify(body):undefined})
-    .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){
+  var ctl=window.AbortController?new AbortController():null; var tm=ctl?setTimeout(function(){ ctl.abort(); },20000):null;
+  return fetch(API+path,{signal:ctl?ctl.signal:undefined,method:method,headers:Object.assign({'content-type':'application/json'},S.key?{'x-loi-key':S.key}:S.token?{authorization:'Bearer '+S.token}:{}),body:body?JSON.stringify(body):undefined})
+    .then(function(r){ if(tm) clearTimeout(tm); return r.json().catch(function(){return {};}).then(function(d){
       if(r.status===401 && path!=='/v1/auth/google' && !S.key){ logout(true); throw {code:'not_signed_in'}; }
       if(!r.ok) throw {code:d.error||'server_error',status:r.status,field:d.field};
       return d; }); }, function(){ throw {code:'offline'}; });
@@ -165,9 +167,10 @@ function logout(silent){
   loginView(silent===true?'Please log in again.':'');
 }
 function start(){
-  // Checks the account is an admin; without internet, a saved login is trusted and forms wait in the queue.
-  return api('GET','/v1/admin/loi').then(function(d){ S.items=d.items; S.me=true; shell(); flush(); },function(e){
-    if(e.code==='offline'&&(S.token||S.key)){ S.me=true; shell(); return; }
+  // The form shows at once (it works offline); the link or login is checked in the background.
+  S.me=true; shell();
+  return api('GET','/v1/admin/loi').then(function(d){ S.items=d.items; if(S.tab==='list') listView(); flush(); },function(e){
+    if(e.code==='offline') return;
     if(e.code==='bad_link'){ S.key=null; try{localStorage.removeItem(KKEY);}catch(_){} }
     if(e.code==='not_admin'){ try{localStorage.removeItem(TKEY);}catch(_){}; S.token=null; }
     if(e.code!=='not_signed_in') loginView(why(e));
@@ -337,7 +340,8 @@ function show(x){
 }
 function csv(){
   var H=['Signed on','Shop / thela','Owner','Type','Area','Years','Mobile','Delivers now','UPI','Android','Pass','Collected by','Latitude','Longitude'];
-  var rows=S.items.slice().reverse().map(function(x){ // oldest first, so new forms sit at the bottom return [new Date(x.signedAt*1000).toLocaleString('en-IN'),x.shopName,x.ownerName,KIND[x.kind][0],x.area,x.years,x.mobile,x.delivers,x.upi,x.android,x.pass?PASS[x.pass]:'',x.collectedBy,x.lat==null?'':x.lat,x.lng==null?'':x.lng]; });
+  // oldest first, so new forms sit at the bottom
+  var rows=S.items.slice().reverse().map(function(x){ return [new Date(x.signedAt*1000).toLocaleString('en-IN'),x.shopName,x.ownerName,KIND[x.kind][0],x.area,x.years,x.mobile,x.delivers,x.upi,x.android,x.pass?PASS[x.pass]:'',x.collectedBy,x.lat==null?'':x.lat,x.lng==null?'':x.lng]; });
   var q=function(v){ v=String(v==null?'':v); if(/^[=+\-@]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; };
   var text='﻿'+[H].concat(rows).map(function(r){ return r.map(q).join(','); }).join('\r\n');
   var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download='NukkadKart-LOI-'+new Date().toISOString().slice(0,10)+'.csv';
