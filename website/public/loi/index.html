@@ -337,7 +337,7 @@ function show(x){
 }
 function csv(){
   var H=['Signed on','Shop / thela','Owner','Type','Area','Years','Mobile','Delivers now','UPI','Android','Pass','Collected by','Latitude','Longitude'];
-  var rows=S.items.map(function(x){ return [new Date(x.signedAt*1000).toLocaleString('en-IN'),x.shopName,x.ownerName,KIND[x.kind][0],x.area,x.years,x.mobile,x.delivers,x.upi,x.android,x.pass?PASS[x.pass]:'',x.collectedBy,x.lat==null?'':x.lat,x.lng==null?'':x.lng]; });
+  var rows=S.items.slice().reverse().map(function(x){ // oldest first, so new forms sit at the bottom return [new Date(x.signedAt*1000).toLocaleString('en-IN'),x.shopName,x.ownerName,KIND[x.kind][0],x.area,x.years,x.mobile,x.delivers,x.upi,x.android,x.pass?PASS[x.pass]:'',x.collectedBy,x.lat==null?'':x.lat,x.lng==null?'':x.lng]; });
   var q=function(v){ v=String(v==null?'':v); if(/^[=+\-@]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; };
   var text='﻿'+[H].concat(rows).map(function(r){ return r.map(q).join(','); }).join('\r\n');
   var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download='NukkadKart-LOI-'+new Date().toISOString().slice(0,10)+'.csv';
