@@ -2,6 +2,7 @@
 //   POST /v1/admin/loi            { clientId, kind, shopName, ownerName, area, years, mobile, delivers, upi, android, pass, sign, lat, lng, signedAt } (admin)
 //   GET  /v1/admin/loi            list + totals, no signatures (admin)
 //   GET  /v1/admin/loi/:id/sign   one signature as a PNG data URL (admin)
+//   GET  /v1/loi.csv?k=…          every form as CSV, oldest first, for the founders' Google Sheet (=IMPORTDATA)
 // Only the founders: an admin's login, or the private link (header x-loi-key, its SHA-256 in LOI_KEY_HASHES).
 // The list holds sellers' names and mobile numbers, and the totals go into investor decks, so nobody else may add or read rows.
 import { HttpError, json, now } from './index.js';
@@ -17,8 +18,7 @@ async function founder(req, env) {
   const key = req.headers.get('x-loi-key');
   if (key) {
     await rateLimit(env, `loi:${clientIp(req)}`, 120, 600);
-    const list = String(env.LOI_KEY_HASHES || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
-    if (key.length < 16 || key.length > 100 || !list.includes(await sha256Hex(key))) throw new HttpError(403, 'bad_link');
+    if (!(await linkOk(env, key))) throw new HttpError(403, 'bad_link');
     return { link: true };
   }
   const { u } = await ctx(req, env);
@@ -64,7 +64,33 @@ const rowOut = (r) => ({ id: r.id, kind: r.kind, shopName: r.shop_name, ownerNam
   mobile: r.mobile, delivers: r.delivers, upi: r.upi, android: r.android, pass: r.pass, lat: r.lat, lng: r.lng,
   collectedBy: r.collected_by, signedAt: r.signed_at });
 
+const KIND_NAME = { kirana: 'Kirana / Mart', thela: 'Fruit / Veg thela', dairy: 'Dairy', other: 'Other' };
+const PASS_NAME = { day: '₹19/day', week: '₹79/week', month: '₹199/month', year: '₹1,999/year' };
+
+async function linkOk(env, key) {
+  const list = String(env.LOI_KEY_HASHES || '').toLowerCase().split(',').map((s) => s.trim()).filter(Boolean);
+  return !!key && key.length >= 16 && key.length <= 100 && list.includes(await sha256Hex(key));
+}
+
+/** CSV for Google Sheets' IMPORTDATA: oldest first, so each new form lands at the bottom. */
+async function loiCsv(req, env) {
+  await rateLimit(env, `loicsv:${clientIp(req)}`, 120, 600);
+  if (!(await linkOk(env, new URL(req.url).searchParams.get('k') || ''))) throw new HttpError(403, 'bad_link');
+  const { results } = await env.DB.prepare(
+    `SELECT kind, shop_name, owner_name, area, years, mobile, delivers, upi, android, pass, lat, lng, collected_by, signed_at
+     FROM loi ORDER BY signed_at ASC LIMIT 5000`).all();
+  const q = (v) => { let s = String(v ?? ''); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };
+  const ist = (t) => new Date((t + 19800) * 1000).toISOString().slice(0, 16).replace('T', ' ');
+  const head = ['Signed on (IST)', 'Shop / thela', 'Owner', 'Type', 'Area', 'Years', 'Mobile', 'Delivers now', 'UPI', 'Android', 'Pass',
+    'Collected by', 'Latitude', 'Longitude'];
+  const rows = results.map((r) => [ist(r.signed_at), r.shop_name, r.owner_name, KIND_NAME[r.kind] || r.kind, r.area, r.years, r.mobile,
+    r.delivers, r.upi, r.android, PASS_NAME[r.pass] || '', r.collected_by, r.lat ?? '', r.lng ?? '']);
+  const body = [head, ...rows].map((r) => r.map(q).join(',')).join('\r\n');
+  return new Response(body, { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
+}
+
 export async function loiRoute(req, env, path, m) {
+  if (m === 'GET' && path === '/v1/loi.csv') return loiCsv(req, env);
   if (path !== '/v1/admin/loi' && !path.startsWith('/v1/admin/loi/')) return null;
   const who = await founder(req, env);
   if (m === 'POST' && path === '/v1/admin/loi') {
