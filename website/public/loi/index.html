@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#10301C">
+<title>Letter of Intent · Nukkad Kart</title>
+<link rel="icon" href="/assets/img/logo.webp">
+<style>
+@font-face{font-family:Fraunces;font-weight:600 800;font-display:swap;src:url(/assets/fonts/fraunces-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-weight:400;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-weight:500;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-weight:600;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Plus Jakarta Sans';font-weight:700 800;font-display:swap;src:url(/assets/fonts/plus-jakarta-sans-latin-700-normal.woff2) format('woff2')}
+:root{--g:#10301C;--leaf:#2F7A3B;--cream:#FBF8F0;--line:#D9D3C3;--ink:#13261A;--soft:#5A685E;--sun:#F5C518;--mint:#DDF3E4;--peach:#FFE3D0}
+*{box-sizing:border-box;margin:0}
+html,body{background:var(--cream);color:var(--ink);font-family:'Plus Jakarta Sans','Noto Sans Devanagari',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+.top{background:var(--g);color:#F6F2E7;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;display:flex;gap:12px;align-items:center;position:sticky;top:0;z-index:5}
+.top img{width:40px;height:40px;border-radius:10px}
+.top b{font:700 19px Fraunces,Georgia,serif;display:block}
+.top span{font-size:12px;font-weight:600;color:var(--sun)}
+.top .who{margin-left:auto;text-align:right;font-size:11.5px;color:#C9D3C9}
+.top .who button{background:none;border:0;color:var(--sun);font-weight:700;font-size:11.5px;padding:2px 0}
+.tabs{display:flex;gap:8px;padding:12px 18px 0;max-width:560px;margin:0 auto}
+.tabs button{flex:1;border:1.4px solid var(--line);background:#fff;border-radius:999px;padding:10px;font-weight:700;font-size:14px}
+.tabs button.on{background:var(--g);color:#F6F2E7;border-color:var(--g)}
+main{max-width:560px;margin:0 auto;padding:14px 18px 120px}
+.step{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--leaf);margin:8px 0 6px;text-transform:uppercase}
+label{display:block;font-weight:700;font-size:14px;margin:16px 0 6px}
+label i{font-style:normal;font-weight:600;color:#7C877F;font-size:13px;margin-left:6px}
+input[type=text],input[type=tel]{width:100%;height:48px;border:1.4px solid var(--line);border-radius:12px;background:#fff;padding:0 14px;font:500 16px inherit;font-family:inherit;color:var(--ink)}
+input:focus{outline:none;border-color:var(--leaf);box-shadow:0 0 0 3px rgba(47,122,59,.15)}
+.bad input,.bad .chips,.bad .sigbox{border-color:#C2410C!important}
+.err{color:#B42318;font-size:12.5px;font-weight:600;margin-top:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;border:1.4px solid transparent;border-radius:14px}
+.chip{border:1.4px solid var(--line);border-radius:999px;padding:10px 14px;font-weight:700;font-size:14px;background:#fff;min-height:44px}
+.chip small{font-weight:600;color:#7C877F;margin-left:4px}
+.chip.on{background:var(--g);color:#F6F2E7;border-color:var(--g)}.chip.on small{color:#C9D3C9}
+.decl{background:#fff;border:1.3px solid #E2DCCB;border-left:5px solid var(--sun);border-radius:14px;padding:14px 16px;font-weight:600;font-size:14.5px;line-height:1.6}
+.decl span{display:block;font-weight:500;color:var(--soft);font-size:13px;margin-top:6px}
+.sigbox{position:relative;height:200px;border:1.6px dashed #B9B2A0;border-radius:16px;background:#fff;touch-action:none;overflow:hidden}
+.sigbox canvas{width:100%;height:100%;display:block}
+.sigbox .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#A7AFA9;font-weight:600;font-size:14px;pointer-events:none}
+.sigbox .clr{position:absolute;right:10px;bottom:8px;border:0;background:#F3EFE4;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700}
+.gps{font-size:12.5px;font-weight:600;color:var(--leaf);margin-top:12px}
+.gps.no{color:#8C968E}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 18px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--cream) 30%)}
+.bar .in{max-width:560px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;height:54px;border-radius:16px;border:0;background:var(--sun);font-weight:800;font-size:16px}
+.btn.sec{flex:0 0 auto;padding:0 20px;background:#fff;border:1.4px solid var(--line)}
+.btn.dark{background:var(--g);color:#F6F2E7}
+.btn[disabled]{opacity:.55}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 14px}
+.st{background:var(--g);color:#F6F2E7;border-radius:16px;padding:14px}
+.st b{font:700 30px Fraunces,Georgia,serif;color:var(--sun);display:block;line-height:1.1}
+.st span{font-size:12.5px;font-weight:600}
+.row{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 8px 18px -14px rgba(16,48,28,.4);border:0;width:100%;text-align:left}
+.row b{font-size:14.5px;display:block}.row span{font-size:12px;color:#7C877F;display:block;margin-top:2px}
+.pill{font-size:10.5px;font-weight:800;padding:5px 9px;border-radius:999px;background:var(--mint);color:#0E5A2C;white-space:nowrap}
+.pill.t{background:var(--peach);color:#7A3309}.pill.q{background:#FFF0B8;color:#6B4F00}
+.empty{text-align:center;color:var(--soft);padding:40px 10px;font-size:14px}
+.login{max-width:440px;margin:0 auto;padding:40px 22px;text-align:center}
+.login h1{font:700 30px/1.15 Fraunces,Georgia,serif;margin:18px 0 10px}
+.login p{color:var(--soft);font-size:15px;line-height:1.5;margin-bottom:22px}
+.login .box{display:flex;justify-content:center;min-height:44px}
+.login .msg{margin-top:16px;color:#B42318;font-weight:600;font-size:14px}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--g);color:#F6F2E7;padding:12px 18px;border-radius:14px;font-weight:700;font-size:14px;z-index:20;max-width:90vw;text-align:center}
+.toast.bad{background:#B42318}
+.done{text-align:center;padding:40px 10px}
+.done .tick{width:72px;height:72px;border-radius:50%;background:var(--mint);color:#0E5A2C;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;font-weight:800}
+.done h2{font:700 24px Fraunces,Georgia,serif;margin-bottom:8px}
+.done p{color:var(--soft);font-size:14.5px;line-height:1.5}
+dialog{border:0;border-radius:20px;padding:18px;max-width:420px;width:92vw}
+dialog::backdrop{background:rgba(16,48,28,.45)}
+dialog img{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;margin:10px 0}
+dialog dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px}
+dialog dt{color:#7C877F;font-weight:600}dialog dd{margin:0;font-weight:600}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+(function(){
+'use strict';
+var API='https://api.nukkadkart.in', CLIENT_ID='173237735756-8p39j4pk1ekmtuvepo32enp4beqtst9g.apps.googleusercontent.com';
+var QKEY='nk-loi-queue', TKEY='nk-loi-token';
+var root=document.getElementById('root');
+var S={token:null, me:null, tab:'new', items:null, f:{}, pos:null};
+try{ S.token=localStorage.getItem(TKEY); }catch(e){}
+
+var KIND={kirana:['Kirana / Mart','किराना / मार्ट'],thela:['Fruit / Veg thela','फल-सब्ज़ी ठेला'],dairy:['Dairy','डेयरी'],other:['Other','अन्य']};
+var PASS={day:'₹19/day',week:'₹79/week',month:'₹199/month',year:'₹1,999/year'};
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function toast(t,bad){ var d=document.createElement('div'); d.className='toast'+(bad?' bad':''); d.setAttribute('role','status'); d.textContent=t; document.body.appendChild(d); setTimeout(function(){d.remove();},3200); }
+function api(method,path,body){
+  return fetch(API+path,{method:method,headers:Object.assign({'content-type':'application/json'},S.token?{authorization:'Bearer '+S.token}:{}),body:body?JSON.stringify(body):undefined})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(d){
+      if(r.status===401 && path!=='/v1/auth/google'){ logout(true); throw {code:'not_signed_in'}; }
+      if(!r.ok) throw {code:d.error||'server_error',status:r.status,field:d.field};
+      return d; }); }, function(){ throw {code:'offline'}; });
+}
+function why(e){
+  return ({offline:'No internet right now.',not_admin:'This Google account is not a Nukkad Kart founder account.',
+    email_used_by_customer:'This Google account is used in the customer app. Use your founder account.',
+    slow_down:'Too many tries. Wait a minute.'}[e.code])||('Something went wrong ('+e.code+').');
+}
+
+/* ---------- queue: every form is kept on the phone until the server has it ---------- */
+function queue(){ try{ return JSON.parse(localStorage.getItem(QKEY)||'[]'); }catch(e){ return []; } }
+function setQueue(q){ try{ localStorage.setItem(QKEY,JSON.stringify(q)); }catch(e){ toast('Phone storage is full. Send waiting forms first.',true); } }
+var flushing=false;
+function flush(){
+  if(flushing||!S.token) return Promise.resolve();
+  var q=queue(); if(!q.length) return Promise.resolve();
+  flushing=true;
+  var item=q[0];
+  return api('POST','/v1/admin/loi',item).then(function(){
+    setQueue(queue().filter(function(x){return x.clientId!==item.clientId;}));
+    flushing=false; S.items=null; if(S.tab==='list') listView(); return flush();
+  },function(e){
+    flushing=false;
+    if(e.code==='bad_field'||e.code==='bad_request'){ // never accepted: keep it aside so the rest can go
+      setQueue(queue().filter(function(x){return x.clientId!==item.clientId;}));
+      try{ var bad=JSON.parse(localStorage.getItem(QKEY+'-bad')||'[]'); bad.push(item); localStorage.setItem(QKEY+'-bad',JSON.stringify(bad)); }catch(_){}
+      toast('One form could not be saved ('+(e.field||e.code)+').',true);
+      return flush();
+    }
+  });
+}
+window.addEventListener('online',function(){ flush(); });
+setInterval(function(){ if(navigator.onLine) flush(); },30000);
+
+/* ---------- login ---------- */
+function loginView(msg){
+  root.innerHTML='<div class="top"><img src="/assets/img/logo.webp" alt=""><div><b>Letter of Intent</b><span>जुड़ने की सहमति · Partner interest</span></div></div>'+
+    '<div class="login"><h1>Collect signed letters, street by street.</h1><p>For the Nukkad Kart founders. Log in with your Google account once; forms you fill are saved even without internet.</p>'+
+    '<div class="box" id="gbtn"></div>'+(msg?'<div class="msg" role="alert">'+esc(msg)+'</div>':'')+'</div>';
+  var tries=0;
+  (function gis(){
+    if(window.google&&google.accounts&&google.accounts.id){
+      google.accounts.id.initialize({client_id:CLIENT_ID,callback:onGoogle,ux_mode:'popup',auto_select:false});
+      google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'outline',size:'large',shape:'pill',text:'continue_with',width:300});
+      return;
+    }
+    if(tries++===0){ var s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=gis;
+      s.onerror=function(){ document.getElementById('gbtn').innerHTML='<div class="msg">Google sign-in could not load. Check your internet and reload.</div>'; }; document.head.appendChild(s); }
+  })();
+}
+function onGoogle(resp){
+  api('POST','/v1/auth/google',{idToken:resp.credential,app:'partner',device:{name:'LOI form',platform:'web'}})
+    .then(function(d){ S.token=d.token; try{localStorage.setItem(TKEY,d.token);}catch(e){} return start(); })
+    .catch(function(e){ loginView(why(e)); });
+}
+function logout(silent){
+  if(queue().length && !silent && !confirm(queue().length+' form(s) are still waiting to be sent. Log out anyway? They stay on this phone.')) return;
+  if(S.token&&!silent) api('POST','/v1/me/logout').catch(function(){});
+  S.token=null; S.me=null; try{localStorage.removeItem(TKEY);}catch(e){}
+  loginView(silent===true?'Please log in again.':'');
+}
+function start(){
+  // Checks the account is an admin; without internet, a saved login is trusted and forms wait in the queue.
+  return api('GET','/v1/admin/loi').then(function(d){ S.items=d.items; S.me=true; shell(); flush(); },function(e){
+    if(e.code==='offline'&&S.token){ S.me=true; shell(); return; }
+    if(e.code==='not_admin'){ try{localStorage.removeItem(TKEY);}catch(_){}; S.token=null; }
+    if(e.code!=='not_signed_in') loginView(why(e));
+  });
+}
+
+/* ---------- shell ---------- */
+function shell(){
+  var n=queue().length;
+  root.innerHTML='<div class="top"><img src="/assets/img/logo.webp" alt=""><div><b>Letter of Intent</b><span>जुड़ने की सहमति · Partner interest</span></div>'+
+    '<div class="who">'+(n?'<div>'+n+' waiting to send</div>':'')+'<button id="out">Log out</button></div></div>'+
+    '<div class="tabs"><button id="tNew" class="'+(S.tab==='new'?'on':'')+'">New form</button><button id="tList" class="'+(S.tab==='list'?'on':'')+'">Collected</button></div><main id="main"></main><div id="bar"></div>';
+  document.getElementById('out').onclick=function(){ logout(false); };
+  document.getElementById('tNew').onclick=function(){ S.tab='new'; shell(); };
+  document.getElementById('tList').onclick=function(){ S.tab='list'; shell(); };
+  if(S.tab==='new') formStep1(); else listView();
+}
+
+/* ---------- form ---------- */
+function chips(name,opts,cur){
+  return '<div class="chips" data-name="'+name+'">'+opts.map(function(o){
+    return '<button type="button" class="chip'+(cur===o[0]?' on':'')+'" data-v="'+o[0]+'">'+esc(o[1])+(o[2]?'<small>'+esc(o[2])+'</small>':'')+'</button>'; }).join('')+'</div>';
+}
+var YN=[['yes','Yes','हाँ'],['no','No','नहीं']];
+function field(id,label,hi,type,ph){
+  return '<div id="w-'+id+'"><label for="'+id+'">'+label+'<i>'+hi+'</i></label><input id="'+id+'" type="'+(type||'text')+'" '+(type==='tel'?'inputmode="numeric" maxlength="10" ':'')+'autocomplete="off" placeholder="'+(ph||'')+'" value="'+esc(S.f[id]||'')+'"></div>';
+}
+function formStep1(){
+  var f=S.f;
+  document.getElementById('main').innerHTML='<p class="step">Step 1 of 2 · दुकान</p>'+
+    field('shopName','Shop or thela name','दुकान / ठेले का नाम')+field('ownerName',"Owner's name",'मालिक का नाम')+
+    '<div id="w-kind"><label>Type<i>प्रकार</i></label>'+chips('kind',Object.keys(KIND).map(function(k){return [k,KIND[k][0],KIND[k][1]];}),f.kind)+'</div>'+
+    field('area','Gali / landmark & area','गली, पहचान, इलाका','text','e.g. Gali 4, Raj Nagar Part-2')+
+    field('years','Years in business','कितने साल से')+field('mobile','Mobile (for our team only)','मोबाइल','tel','10 digits')+
+    '<label>Delivers to homes now?<i>अभी घर पहुँचाते हैं?</i></label>'+chips('delivers',YN,f.delivers)+
+    '<label>Takes UPI?<i>UPI लेते हैं?</i></label>'+chips('upi',YN,f.upi)+
+    '<label>Android smartphone?<i>एंड्रॉइड फ़ोन है?</i></label>'+chips('android',YN,f.android)+
+    '<label>Pass that suits you<i>कौन सा पास ठीक लगेगा</i></label>'+chips('pass',Object.keys(PASS).map(function(k){return [k,PASS[k]];}),f.pass);
+  wireChips();
+  ['shopName','ownerName','area','years','mobile'].forEach(function(id){ document.getElementById(id).oninput=function(e){ S.f[id]=e.target.value; document.getElementById('w-'+id).classList.remove('bad'); }; });
+  bar('<button class="btn" id="next">Next · आगे</button>');
+  document.getElementById('next').onclick=function(){
+    var bad=null;
+    function need(id,ok){ if(!ok&&!bad){ bad=id; } var w=document.getElementById('w-'+id); if(w) w.classList.toggle('bad',!ok); }
+    need('shopName',(f.shopName||'').trim().length>=2); need('ownerName',(f.ownerName||'').trim().length>=2);
+    need('kind',!!f.kind); need('area',(f.area||'').trim().length>=2);
+    var mob=(f.mobile||'').replace(/\D/g,''); need('mobile',!mob||/^[6-9]\d{9}$/.test(mob));
+    if(bad){ var el=document.getElementById('w-'+bad); el.scrollIntoView({block:'center',behavior:'smooth'}); toast('Fill the marked fields',true); return; }
+    formStep2();
+  };
+}
+function wireChips(){
+  Array.prototype.forEach.call(document.querySelectorAll('.chips'),function(c){
+    c.onclick=function(e){ var b=e.target.closest('.chip'); if(!b) return; var n=c.getAttribute('data-name');
+      S.f[n]=S.f[n]===b.getAttribute('data-v')&&n!=='kind'?'':b.getAttribute('data-v');
+      Array.prototype.forEach.call(c.querySelectorAll('.chip'),function(x){ x.classList.toggle('on',x.getAttribute('data-v')===S.f[n]); });
+      var w=document.getElementById('w-'+n); if(w) w.classList.remove('bad'); };
+  });
+}
+function bar(html){ document.getElementById('bar').innerHTML='<div class="bar"><div class="in">'+html+'</div></div>'; }
+
+var sig={drawn:false};
+function formStep2(){
+  window.scrollTo(0,0);
+  document.getElementById('main').innerHTML='<p class="step">Step 2 of 2 · सहमति</p>'+
+    '<div class="decl">मैं Nukkad Kart के लॉन्च होने पर अपनी दुकान / ठेला इससे जोड़ना चाहता/चाहती हूँ। 15 दिन के फ्री ट्रायल के बाद पास लेने पर विचार करूँगा/करूँगी।'+
+    '<span>I would like to put my shop / thela on Nukkad Kart when it launches, and will consider a pass after the 15-day free trial. This is not a contract and I can change my mind any time. My mobile is used only by the Nukkad Kart team.</span></div>'+
+    '<div id="w-sign"><label>Sign with your finger<i>उँगली से हस्ताक्षर करें</i></label><div class="sigbox"><canvas id="sig"></canvas><div class="ph" id="sigph">Sign here · यहाँ हस्ताक्षर करें</div><button type="button" class="clr" id="clr">Clear</button></div></div>'+
+    '<div class="gps no" id="gps">Getting location…</div>';
+  setupSig();
+  locate();
+  bar('<button class="btn sec" id="back">Back</button><button class="btn" id="submit">Submit · जमा करें</button>');
+  document.getElementById('back').onclick=function(){ formStep1(); };
+  document.getElementById('submit').onclick=submit;
+}
+function setupSig(){
+  var c=document.getElementById('sig'), box=c.parentNode, r=box.getBoundingClientRect(), dpr=Math.min(2,window.devicePixelRatio||1);
+  c.width=r.width*dpr; c.height=r.height*dpr;
+  var x=c.getContext('2d'); x.scale(dpr,dpr); x.lineWidth=2.6; x.lineCap='round'; x.lineJoin='round'; x.strokeStyle='#13261A';
+  sig={drawn:false,c:c};
+  var down=false,lx=0,ly=0;
+  function p(e){ var b=c.getBoundingClientRect(); return [e.clientX-b.left,e.clientY-b.top]; }
+  c.addEventListener('pointerdown',function(e){ down=true; c.setPointerCapture(e.pointerId); var q=p(e); lx=q[0]; ly=q[1]; x.beginPath(); x.arc(lx,ly,1.2,0,7); x.fill(); });
+  c.addEventListener('pointermove',function(e){ if(!down) return; var q=p(e); x.beginPath(); x.moveTo(lx,ly); x.lineTo(q[0],q[1]); x.stroke(); lx=q[0]; ly=q[1];
+    if(!sig.drawn){ sig.drawn=true; document.getElementById('sigph').style.display='none'; document.getElementById('w-sign').classList.remove('bad'); } });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(t){ c.addEventListener(t,function(){ down=false; }); });
+  document.getElementById('clr').onclick=function(){ x.clearRect(0,0,c.width,c.height); sig.drawn=false; document.getElementById('sigph').style.display=''; };
+}
+function sigPng(){
+  // Down to at most 600 px wide, white background, so it stays small and prints well.
+  var c=sig.c, w=Math.min(600,c.width), h=Math.round(c.height*w/c.width), o=document.createElement('canvas'); o.width=w; o.height=h;
+  var x=o.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,w,h); x.drawImage(c,0,0,w,h); return o.toDataURL('image/png');
+}
+function locate(){
+  S.pos=null; var g=document.getElementById('gps');
+  if(!navigator.geolocation){ g.textContent='Location not available on this phone'; return; }
+  navigator.geolocation.getCurrentPosition(function(p){ S.pos={lat:p.coords.latitude,lng:p.coords.longitude};
+    var el=document.getElementById('gps'); if(el){ el.className='gps'; el.textContent='● Location saved · '+new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}); } },
+    function(){ var el=document.getElementById('gps'); if(el) el.textContent='Location not shared (the form still saves)'; },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+}
+function cid(){ var a=new Uint8Array(12); crypto.getRandomValues(a); return Array.prototype.map.call(a,function(b){return ('0'+b.toString(16)).slice(-2);}).join(''); }
+function submit(){
+  if(!sig.drawn){ document.getElementById('w-sign').classList.add('bad'); toast('Please sign first',true); return; }
+  var f=S.f, item={clientId:cid(),kind:f.kind,shopName:f.shopName.trim(),ownerName:f.ownerName.trim(),area:f.area.trim(),years:(f.years||'').trim(),
+    mobile:(f.mobile||'').replace(/\D/g,''),delivers:f.delivers||'',upi:f.upi||'',android:f.android||'',pass:f.pass||'',sign:sigPng(),
+    lat:S.pos?S.pos.lat:null,lng:S.pos?S.pos.lng:null,signedAt:Math.floor(Date.now()/1000)};
+  var q=queue(); q.push(item); setQueue(q);
+  var name=item.shopName; S.f={};
+  doneView(name);
+  flush();
+}
+function doneView(name){
+  window.scrollTo(0,0);
+  var online=navigator.onLine;
+  document.getElementById('main').innerHTML='<div class="done"><div class="tick">✓</div><h2>Saved · धन्यवाद!</h2><p>'+esc(name)+' signed the letter.'+
+    (online?' It is being sent now.':' No internet: it is kept on this phone and goes out by itself when you are back online.')+'</p></div>';
+  bar('<button class="btn" id="again">Fill next form</button>');
+  document.getElementById('again').onclick=function(){ formStep1(); window.scrollTo(0,0); };
+}
+
+/* ---------- collected ---------- */
+function listView(){
+  var main=document.getElementById('main'); if(!main) return;
+  var q=queue();
+  if(!S.items){ main.innerHTML='<div class="empty">Loading…</div>'; api('GET','/v1/admin/loi').then(function(d){ S.items=d.items; listView(); },function(e){ main.innerHTML='<div class="empty">'+esc(why(e))+'</div>'+waiting(q); }); bar(''); return; }
+  var it=S.items, k=it.filter(function(x){return x.kind!=='thela';}).length, t=it.length-k;
+  var nd=it.filter(function(x){return x.kind!=='thela'&&x.delivers==='no';}).length, kd=it.filter(function(x){return x.kind!=='thela'&&x.delivers;}).length;
+  var pc={}; it.forEach(function(x){ if(x.pass) pc[x.pass]=(pc[x.pass]||0)+1; }); var top=Object.keys(pc).sort(function(a,b){return pc[b]-pc[a];})[0];
+  main.innerHTML='<div class="stat"><div class="st"><b>'+k+'</b><span>Kirana / Mart / Dairy</span></div><div class="st"><b>'+t+'</b><span>Thelas</span></div>'+
+    '<div class="st"><b>'+(kd?Math.round(nd*100/kd)+'%':'–')+'</b><span>shops with no delivery boy</span></div><div class="st"><b>'+(top?esc(PASS[top].split('/')[0]):'–')+'</b><span>most picked pass</span></div></div>'+
+    waiting(q)+
+    (it.length?it.map(function(x,i){ return '<button class="row" data-i="'+i+'"><div><b>'+esc(x.shopName)+'</b><span>'+esc(KIND[x.kind][0])+' · '+esc(x.area)+' · '+esc(x.collectedBy)+' · '+when(x.signedAt)+'</span></div><span class="pill'+(x.kind==='thela'?' t':'')+'">Signed</span></button>'; }).join('')
+      :'<div class="empty">No signed forms yet. Tap “New form” to collect the first one.</div>');
+  Array.prototype.forEach.call(main.querySelectorAll('.row[data-i]'),function(b){ b.onclick=function(){ show(S.items[+b.getAttribute('data-i')]); }; });
+  bar('<button class="btn sec" id="ref">Refresh</button><button class="btn dark" id="csv"'+(it.length?'':' disabled')+'>Download Excel (CSV)</button>');
+  document.getElementById('ref').onclick=function(){ S.items=null; flush(); listView(); };
+  document.getElementById('csv').onclick=csv;
+}
+function waiting(q){ return q.length?q.map(function(x){ return '<div class="row"><div><b>'+esc(x.shopName)+'</b><span>'+esc(KIND[x.kind][0])+' · '+esc(x.area)+' · on this phone</span></div><span class="pill q">Waiting to send</span></div>'; }).join(''):''; }
+function when(s){ var d=new Date(s*1000); return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}); }
+function show(x){
+  var d=document.createElement('dialog');
+  d.innerHTML='<h3 style="font:700 20px Fraunces,Georgia,serif">'+esc(x.shopName)+'</h3><img alt="Signature of '+esc(x.ownerName)+'" id="sgi">'+
+    '<dl><dt>Owner</dt><dd>'+esc(x.ownerName)+'</dd><dt>Type</dt><dd>'+esc(KIND[x.kind][0])+'</dd><dt>Area</dt><dd>'+esc(x.area)+'</dd>'+
+    (x.years?'<dt>Years</dt><dd>'+esc(x.years)+'</dd>':'')+(x.mobile?'<dt>Mobile</dt><dd>'+esc(x.mobile)+'</dd>':'')+
+    '<dt>Delivers</dt><dd>'+esc(x.delivers||'–')+'</dd><dt>UPI</dt><dd>'+esc(x.upi||'–')+'</dd><dt>Android</dt><dd>'+esc(x.android||'–')+'</dd>'+
+    '<dt>Pass</dt><dd>'+esc(x.pass?PASS[x.pass]:'–')+'</dd><dt>Signed</dt><dd>'+when(x.signedAt)+' · '+esc(x.collectedBy)+'</dd>'+
+    (x.lat!=null?'<dt>Location</dt><dd>'+x.lat.toFixed(5)+', '+x.lng.toFixed(5)+'</dd>':'')+'</dl>'+
+    '<button class="btn" style="width:100%;margin-top:14px" id="cl">Close</button>';
+  document.body.appendChild(d); d.showModal();
+  d.querySelector('#cl').onclick=function(){ d.close(); d.remove(); };
+  api('GET','/v1/admin/loi/'+x.id+'/sign').then(function(r){ var im=d.querySelector('#sgi'); if(im) im.src=r.sign; },function(){});
+}
+function csv(){
+  var H=['Signed on','Shop / thela','Owner','Type','Area','Years','Mobile','Delivers now','UPI','Android','Pass','Collected by','Latitude','Longitude'];
+  var rows=S.items.map(function(x){ return [new Date(x.signedAt*1000).toLocaleString('en-IN'),x.shopName,x.ownerName,KIND[x.kind][0],x.area,x.years,x.mobile,x.delivers,x.upi,x.android,x.pass?PASS[x.pass]:'',x.collectedBy,x.lat==null?'':x.lat,x.lng==null?'':x.lng]; });
+  var q=function(v){ v=String(v==null?'':v); if(/^[=+\-@]/.test(v)) v="'"+v; return '"'+v.replace(/"/g,'""')+'"'; };
+  var text='﻿'+[H].concat(rows).map(function(r){ return r.map(q).join(','); }).join('\r\n');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download='NukkadKart-LOI-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+
+if(S.token) start(); else loginView('');
+})();
+</script>
+</body>
+</html>

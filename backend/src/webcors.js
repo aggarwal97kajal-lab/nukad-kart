@@ -1,4 +1,4 @@
-// The kirana web panel (nukkadkart.in/partner) calls a few API routes from the browser.
+// The kirana web panel (nukkadkart.in/partner) and the founders' LOI form (nukkadkart.in/loi) call a few API routes from the browser.
 // Only that origin, only these routes; everything else answers browsers without CORS (so a page can't read it).
 // Sign-in is a Bearer token, never a cookie, so allowing this origin adds no cross-site request risk.
 export const WEB_ORIGIN = 'https://nukkadkart.in';
@@ -12,6 +12,8 @@ const WEB_ROUTES = [
   [/^\/v1\/partner\/products\/bulk$/, 'POST'],
   [/^\/v1\/partner\/products\/pr_\w+\/stock$/, 'PATCH'],
   [/^\/v1\/partner\/orders$/, 'GET'],
+  [/^\/v1\/admin\/loi$/, 'GET, POST'],
+  [/^\/v1\/admin\/loi\/loi_[a-f0-9]{16}\/sign$/, 'GET'],
 ];
 
 /** Allowed methods for this browser request, or null when the panel may not call it. */

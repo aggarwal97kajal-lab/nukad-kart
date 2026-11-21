@@ -41,16 +41,19 @@ export default {
     const section = SECTIONS.includes(url.pathname.replace(/\/$/, ''));
     // Panel pages (/partner, /partner/products…) are one page; its files (xlsx-lite.js) are served as they are.
     const panel = url.pathname === '/partner' || url.pathname.startsWith('/partner/');
+    // The founders' letter-of-intent form (/loi): same Google sign-in as the panel, and it may ask for the phone's location.
+    const loi = url.pathname === '/loi' || url.pathname === '/loi/';
     const panelPage = panel && !/\.[a-z0-9]+$/i.test(url.pathname);
-    const res = await env.ASSETS.fetch(section ? new Request(new URL('/', url), req) : panelPage ? new Request(new URL('/partner/', url), req) : req);
+    const res = await env.ASSETS.fetch(section ? new Request(new URL('/', url), req) : panelPage ? new Request(new URL('/partner/', url), req)
+      : loi ? new Request(new URL('/loi/', url), req) : req);
     const h = new Headers(res.headers);
-    h.set('content-security-policy', panel ? PANEL_CSP : CSP);
-    if (panel) h.set('cache-control', 'no-cache');
-    if (panel) h.set('x-robots-tag', 'noindex');
+    h.set('content-security-policy', panel || loi ? PANEL_CSP : CSP);
+    if (panel || loi) h.set('cache-control', 'no-cache');
+    if (panel || loi) h.set('x-robots-tag', 'noindex');
     h.set('strict-transport-security', 'max-age=31536000; includeSubDomains');
     h.set('x-content-type-options', 'nosniff');
     h.set('referrer-policy', 'strict-origin-when-cross-origin');
-    h.set('permissions-policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    h.set('permissions-policy', `camera=(), microphone=(), geolocation=${loi ? '(self)' : '()'}, payment=()`);
     h.set('x-frame-options', 'DENY');
     if (url.pathname.startsWith('/assets/')) h.set('cache-control', 'public, max-age=86400');
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });

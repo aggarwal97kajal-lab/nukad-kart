@@ -14,6 +14,7 @@
 //   GET  /v1/stores/nearby?lat=&lng=&radius=                  stores within radius (max 500 m); thelas by live location
 //   GET  /v1/stores/:id/products                              what a store / thela sells now
 //   POST /v1/waitlist           { name, email, phone, pincode, city, state, consent }  website early access (see waitlist.js)
+//   GET/POST /v1/admin/loi      letters of intent from the field (admin, see loi.js)
 
 import { orderChatRoute, cleanOrderChat } from './orderchat.js';
 import { voiceRoute, missOld } from './voice.js';
@@ -27,6 +28,7 @@ import { rateLimit, clientIp, checkFields, cleanDevice } from './guard.js';
 import { chatRoute, cleanChats, ChatRoom } from './chat.js';
 import { countView, passReminders, sundayReports, reportRoute } from './reminders.js';
 import { waitlistRoute, syncWaitlist } from './waitlist.js';
+import { loiRoute } from './loi.js';
 import { webMethods, preflight, withWebCors } from './webcors.js';
 export { ChatRoom };
 
@@ -366,6 +368,8 @@ async function route(req, env, ectx) {
   if (calls) return calls;
   const voice = await voiceRoute(req, env, path, m);
   if (voice) return voice;
+  const loi = await loiRoute(req, env, path, m);
+  if (loi) return loi;
   const partner = await partnerRoute(req, env, path, m);
   if (partner) return partner;
 
